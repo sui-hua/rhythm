@@ -7,8 +7,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY
 // 验证必需的环境变量
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase 环境变量缺失:', {
-    url: supabaseUrl ? '✓ 已配置' : '✗ 缺失 VITE_SUPABASE_URL',
-    key: supabaseAnonKey ? '✓ 已配置' : '✗ 缺失 VITE_SUPABASE_KEY'
+    url: supabaseUrl,
+    key: supabaseAnonKey
   })
 }
 

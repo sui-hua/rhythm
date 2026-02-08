@@ -3,8 +3,9 @@
 
     <DirectionSidebar 
       :categorized-goals="categorizedGoals"
-      :selected-goal-name="selectedGoal.name"
+      :selected-goal-name="selectedGoal?.name"
       @select-goal="selectGoal"
+      @add-goal="showAddModal = true"
     />
 
     <div class="flex-1 bg-zinc-50/50 relative overflow-hidden flex flex-col">
@@ -45,6 +46,12 @@
       />
       </div>
     </div>
+
+    <AddGoalModal 
+      v-model:show="showAddModal"
+      :plans="mockDb.plans.value"
+      @add="handleAddGoal"
+    />
   </div>
 </template>
 
@@ -57,6 +64,7 @@ import DirectionSidebar from './components/DirectionSidebar.vue'
 import GoalRangePicker from './components/GoalRangePicker.vue'
 import MissionBoard from './components/MissionBoard.vue'
 import MissionArchive from './components/MissionArchive.vue'
+import AddGoalModal from './components/AddGoalModal.vue'
 
 const months = [
   { label: '一月', value: 1, full: '一月 (January)' }, { label: '二月', value: 2, full: '二月 (February)' },
@@ -96,11 +104,20 @@ if (categorizedGoals.value.length > 0 && categorizedGoals.value[0].items.length 
 const selectedMonth = ref(null)
 const activePicker = ref('start')
 const isSelecting = ref(false)
+const showAddModal = ref(false)
 
 const monthlyMainGoals = reactive({})
 const dailyTasks = reactive({})
 const selectedDates = reactive({})
 const batchInput = ref('')
+
+const handleAddGoal = (newGoal) => {
+  const id = `mp${mockDb.monthlyPlans.value.length + 1}`
+  const goalWithId = { ...newGoal, id, name: newGoal.title }
+  mockDb.monthlyPlans.value.push(goalWithId)
+  selectedGoal.value = goalWithId
+  showAddModal.value = false
+}
 
 const goalKey = (m) => `${selectedGoal.value.name}-${m}`
 const dayTaskKey = (day) => `${goalKey(selectedMonth.value)}-${day}`

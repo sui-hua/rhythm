@@ -1,4 +1,6 @@
 <script setup>
+import { Plus } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 
@@ -16,7 +18,7 @@ defineProps({
 import { useResizable } from '@/composables/useResizable'
 const { width, startResize, isResizing } = useResizable()
 
-defineEmits(['select-goal'])
+defineEmits(['select-goal', 'add-goal'])
 </script>
 
 <template>
@@ -65,12 +67,19 @@ defineEmits(['select-goal'])
     </ScrollArea>
     
     <footer class="p-6 border-t border-border bg-zinc-50/50 backdrop-blur-sm relative z-10">
-      <div class="w-full">
+      <div class="w-full flex flex-col gap-4">
         <div class="flex justify-between items-center mb-2">
           <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">系统推进负载</span>
           <span class="text-[10px] font-bold text-primary">65%</span>
         </div>
         <Progress :model-value="65" class="h-1" />
+        <Button 
+          class="w-full gap-2 h-9 text-xs font-semibold"
+          @click="$emit('add-goal')"
+        >
+          <Plus class="w-4 h-4" />
+          添加目标
+        </Button>
       </div>
     </footer>
   </aside>

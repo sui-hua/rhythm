@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import Timeline from './components/Timeline.vue'
@@ -201,12 +201,20 @@ const goBackToMonth = () => {
 }
 
 // 动态时间线更新模拟
-onMounted(() => {
-  // 页面加载后自动滚动到当前时刻
-  if (timeline.value?.timelineContainer) {
+onMounted(async () => {
+  await nextTick()
+  
+  // 页面加载后自动滚动到第一任务
+  if (dailySchedule.value.length > 0) {
+    // 延迟一点以确保组件完全挂载和动画就绪
+    setTimeout(() => {
+      scrollToTask(0)
+    }, 300)
+  } else if (timeline.value?.timelineContainer) {
+    // 如果没有任务，滚动到当前时刻
     const vh = window.innerHeight / 100;
-    const scrollPos = (currentHour.value - 0.5) * (25 * vh);
-    timeline.value.timelineContainer.scrollTop = scrollPos;
+    const scrollPos = (currentHour.value - 2) * (25 * vh);
+    timeline.value.timelineContainer.scrollTo({ top: scrollPos, behavior: 'smooth' });
   }
 
   // 更新当前时间
