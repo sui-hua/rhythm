@@ -1,8 +1,15 @@
 <script setup>
-import { reactive, watch } from 'vue'
+import { ref, reactive, watch, nextTick } from 'vue'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Clock } from 'lucide-vue-next'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { PopoverAnchor } from 'radix-vue'
+import {
+  Popover,
+  PopoverContent,
+} from '@/components/ui/popover'
 
 const props = defineProps({
   show: Boolean,
@@ -25,6 +32,48 @@ const form = reactive({
   category: '工作',
   description: ''
 })
+
+const openTimePopover = ref(true)
+const triggerContainer = ref(null)
+const timeListRef = ref(null)
+
+const handleInteractOutside = (event) => {
+  if (triggerContainer.value && triggerContainer.value.contains(event.target)) {
+    event.preventDefault()
+  }
+}
+
+const onTimeInputFocus = () => {
+  setTimeout(() => {
+    openTimePopover.value = true
+  }, 100)
+}
+
+const scrollToDefaultTime = () => {
+  if (!timeListRef.value) return
+  const target = timeListRef.value.querySelector('[data-time="08:00"]')
+  if (target) {
+    target.scrollIntoView({ block: 'center' })
+  }
+}
+
+watch(openTimePopover, (open) => {
+  if (open) {
+    nextTick(() => scrollToDefaultTime())
+  }
+})
+
+const timeOptions = []
+for (let i = 0; i < 24; i++) {
+  const h = String(i).padStart(2, '0')
+  timeOptions.push(`${h}:00`)
+  timeOptions.push(`${h}:30`)
+}
+
+const selectTime = (t) => {
+  form.time = t
+  openTimePopover.value = false
+}
 
 watch(() => props.show, (newShow) => {
   if (newShow) {
@@ -93,12 +142,42 @@ const submit = () => {
           <div class="grid grid-cols-2 gap-4">
             <div class="grid gap-2">
               <label for="time" class="text-sm font-medium leading-none">开始时间</label>
-              <Input 
-                id="time"
-                v-model="form.time"
-                placeholder="09:00"
-                class="h-9 font-mono"
-              />
+              <Popover v-model:open="openTimePopover">
+                <PopoverAnchor as-child>
+                  <div class="relative" ref="triggerContainer">
+                    <Input 
+                      id="time"
+                      v-model="form.time"
+                      placeholder="08:40"
+                      class="h-9 font-mono pr-8"
+                      @focus="onTimeInputFocus"
+                      @input="openTimePopover = true"
+                      @keydown.down.prevent="openTimePopover = true"
+                    />
+                    <Clock class="absolute right-2.5 top-2.5 h-4 w-4 opacity-50 pointer-events-none" />
+                  </div>
+                </PopoverAnchor>
+                <PopoverContent 
+                  class="w-[var(--radix-popover-trigger-width)] p-0 z-[100]" 
+                  align="start"
+                  @open-auto-focus.prevent
+                  @interact-outside="handleInteractOutside"
+                >
+                  <div ref="timeListRef" class="h-[200px] p-1 overflow-y-auto">
+                    <Button
+                      v-for="t in timeOptions"
+                      :key="t"
+                      :data-time="t"
+                      variant="ghost"
+                      class="w-full justify-start font-mono h-8"
+                      :class="form.time === t && 'bg-accent text-accent-foreground'"
+                      @click="selectTime(t)"
+                    >
+                      {{ t }}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <div class="grid gap-2">
               <label for="duration" class="text-sm font-medium leading-none">时长 (小时)</label>
