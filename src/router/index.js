@@ -11,7 +11,7 @@ import SummaryView from '@/views/summary/index.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/year'
+    redirect: '/day'
   },
   {
     path: '/year',
