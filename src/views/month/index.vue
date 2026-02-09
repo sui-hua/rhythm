@@ -10,11 +10,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import MonthHeader from './components/MonthHeader.vue'
 import MonthGrid from './components/MonthGrid.vue'
-import { mockDb } from '@/services/mockDb'
+import { db } from '@/services/database'
 
 const router = useRouter()
 const route = useRoute()
@@ -34,6 +34,24 @@ const selectedMonth = computed(() => {
   }
 })
 
+const tasks = ref([])
+
+const fetchMonthTasks = async () => {
+  const monthIndex = parseInt(route.params.monthIndex)
+  if (isNaN(monthIndex)) return
+  
+  const year = 2026
+  const start = new Date(year, monthIndex, 1)
+  const end = new Date(year, monthIndex + 1, 0, 23, 59, 59)
+  
+  try {
+    tasks.value = await db.tasks.list(start, end)
+  } catch(e) { console.error(e) }
+}
+
+onMounted(fetchMonthTasks)
+watch(() => route.params.monthIndex, fetchMonthTasks)
+
 // 月数据逻辑
 const monthGridData = computed(() => {
   const grid = []
@@ -43,15 +61,17 @@ const monthGridData = computed(() => {
   for (let i = firstDayOffset - 1; i >= 0; i--) grid.push({ date: prevMonthLastDay - i, isCurrent: false })
   // 填充本月日期
   for (let i = 1; i <= days; i++) {
-    const dateStr = `2026-${String(index + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
-    const dayTasks = mockDb.tasks.value.filter(t => t.date === dateStr)
+    const dayTasks = tasks.value.filter(t => {
+        const d = new Date(t.start_time)
+        return d.getDate() === i && d.getMonth() === index && d.getFullYear() === 2026
+    })
     
     // Parse task hours for the grid indicator
     const taskHours = dayTasks.flatMap(task => {
-        const [sH, sM] = task.start_time.split(':').map(Number)
-        const [eH, eM] = task.end_time.split(':').map(Number)
-        const start = sH + sM / 60
-        const end = eH + eM / 60
+        const dStart = new Date(task.start_time)
+        const dEnd = new Date(task.end_time)
+        const start = dStart.getHours() + dStart.getMinutes() / 60
+        const end = dEnd.getHours() + dEnd.getMinutes() / 60
         // Return 1-hour segments for visual markers in the grid
         const hours = []
         for (let h = Math.floor(start); h < Math.ceil(end); h++) {

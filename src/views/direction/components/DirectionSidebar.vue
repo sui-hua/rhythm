@@ -1,5 +1,5 @@
 <script setup>
-import { Plus } from 'lucide-vue-next'
+import { Plus, Pencil } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
@@ -18,7 +18,7 @@ defineProps({
 import { useResizable } from '@/composables/useResizable'
 const { width, startResize, isResizing } = useResizable()
 
-defineEmits(['select-goal', 'add-goal'])
+defineEmits(['select-goal', 'add-goal', 'edit-goal'])
 </script>
 
 <template>
@@ -43,8 +43,8 @@ defineEmits(['select-goal', 'add-goal'])
     <ScrollArea class="flex-1 px-4 relative z-10 no-scrollbar">
       <div class="flex flex-col gap-8 pb-24 pt-2">
         <div v-for="group in categorizedGoals" :key="group.category">
-          <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4 pl-1">
-            {{ group.category === 'Main' ? '主攻方向' : '支线领域' }}
+          <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.02em] mb-4 pl-1">
+            {{ group.category }}
           </p>
           <div class="flex flex-col gap-2">
             <button v-for="(goal, idx) in group.items" :key="goal.name"
@@ -54,11 +54,17 @@ defineEmits(['select-goal', 'add-goal'])
             >
               <div class="flex items-center gap-3 w-full">
                 <span class="text-[10px] font-mono font-bold text-muted-foreground">0{{ idx + 1 }}</span>
-                <h4 class="text-sm font-semibold tracking-tight transition-colors"
+                <h4 class="text-sm font-semibold tracking-tight transition-colors flex-1 truncate"
                   :class="selectedGoalName === goal.name ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'"
                 >
                   {{ goal.name }}
                 </h4>
+                <div 
+                  class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/5 rounded-md cursor-pointer"
+                  @click.stop="$emit('edit-goal', goal)"
+                >
+                  <Pencil class="w-3 h-3 text-muted-foreground" />
+                </div>
               </div>
             </button>
           </div>

@@ -4,7 +4,7 @@ import SummarySidebar from './components/SummarySidebar.vue'
 import DailySummaryForm from './components/DailySummaryForm.vue'
 import GenericSummaryForm from './components/GenericSummaryForm.vue'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import summaryService from '@/services/summary'
+import { db } from '@/services/database'
 
 const activeTab = ref('day') // year, month, week, day
 const summaries = ref([])
@@ -14,10 +14,14 @@ const isCreating = ref(false)
 
 const loadSummaries = async () => {
   loading.value = true
-  const { data, error } = await summaryService.getSummaries(activeTab.value)
-  if (!error) {
-    summaries.value = data
-    // Auto specific selection logic if needed
+  try {
+    if (activeTab.value === 'day') {
+      summaries.value = await db.summaries.listDaily()
+    } else {
+      summaries.value = await db.summaries.list(activeTab.value)
+    }
+  } catch (error) {
+    console.error('Failed to load summaries', error)
   }
   loading.value = false
 }
@@ -40,24 +44,31 @@ const handleCreate = () => {
 }
 
 const handleSave = async (data) => {
-  // Determine if update or create
-  if (selectedSummary.value) {
-    await summaryService.updateSummary(selectedSummary.value.id, {
-      ...data,
-      type: activeTab.value
-    })
-  } else {
-    await summaryService.createSummary({
-      ...data,
-      type: activeTab.value,
-      date: new Date().toISOString()
-    })
+  try {
+    if (activeTab.value === 'day') {
+      const summaryData = { ...data }
+      if (selectedSummary.value) {
+        summaryData.id = selectedSummary.value.id
+      }
+      await db.summaries.saveDaily(summaryData)
+    } else {
+      const summaryData = {
+        ...data,
+        scope: activeTab.value
+      }
+      if (selectedSummary.value) {
+        await db.summaries.update(selectedSummary.value.id, summaryData)
+      } else {
+        await db.summaries.create(summaryData)
+      }
+    }
+    
+    // Refresh and select
+    await loadSummaries()
+    isCreating.value = false
+  } catch (error) {
+    console.error('Failed to save summary', error)
   }
-  
-  // Refresh and select
-  await loadSummaries()
-  isCreating.value = false
-  // Logic to select the newly created/updated one could go here
 }
 
 const handleCancel = () => {
@@ -69,9 +80,17 @@ const handleCancel = () => {
 
 const handleDelete = async (id) => {
   if (confirm('确定要删除这条总结吗？')) {
-    await summaryService.deleteSummary(id)
-    selectedSummary.value = null
-    loadSummaries()
+    try {
+      if (activeTab.value === 'day') {
+        await db.summaries.deleteDaily(id)
+      } else {
+        await db.summaries.delete(id)
+      }
+      selectedSummary.value = null
+      loadSummaries()
+    } catch (error) {
+      console.error('Failed to delete summary', error)
+    }
   }
 }
 

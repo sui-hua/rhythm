@@ -42,9 +42,11 @@ import { useRouter, useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import Timeline from './components/Timeline.vue'
 import AddEventModal from './components/AddEventModal.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 
 // 月份数据
 const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
@@ -63,25 +65,48 @@ const selectedMonth = computed(() => {
 const selectedDay = computed(() => parseInt(route.params.day))
 
 // 日日程数据
-import { mockDb } from '@/services/mockDb'
+import { db } from '@/services/database'
+
+const tasks = ref([])
+
+const fetchTasks = async () => {
+  try {
+    // Construct date range for the selected day
+    // Using 2026 as the base year based on project context
+    const year = 2026
+    const month = selectedMonth.value.index
+    const day = selectedDay.value
+    
+    // Create dates in local time
+    const startOfDay = new Date(year, month, day, 0, 0, 0)
+    const endOfDay = new Date(year, month, day, 23, 59, 59)
+    
+    tasks.value = await db.tasks.list(startOfDay, endOfDay)
+  } catch (error) {
+    console.error('Failed to fetch tasks:', error)
+  }
+}
 
 const dailySchedule = computed(() => {
-  return mockDb.tasks.value.map(task => {
-    // Parse times
-    const [sH, sM] = task.start_time.split(':').map(Number)
-    const [eH, eM] = task.end_time.split(':').map(Number)
-    const startHour = sH + sM / 60
-    const endHour = eH + eM / 60
-    const durationHours = endHour - startHour
+  return tasks.value.map(task => {
+    // Convert DB timestamp to HH:MM format for local UI logic
+    const startDate = new Date(task.start_time)
+    const endDate = new Date(task.end_time)
+    
+    const startHourVal = startDate.getHours() + startDate.getMinutes() / 60
+    const endHourVal = endDate.getHours() + endDate.getMinutes() / 60
+    const durationHours = endHourVal - startHourVal
+    
+    const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
     
     return {
-      id: task.id, // Keep ID for updates
-      original: task, // Keep ref to original
-      startHour,
+      id: task.id,
+      original: task,
+      startHour: startHourVal,
       durationHours,
-      time: task.start_time,
+      time: startTimeStr,
       duration: durationHours.toFixed(1) + '小时',
-      category: '个人任务', // Default for now
+      category: '个人任务',
       title: task.title,
       description: task.description,
       completed: task.completed
@@ -116,77 +141,97 @@ const openEditModal = (index) => {
   showAddModal.value = true
 }
 
-const handleAddEvent = (eventData) => {
+const handleAddEvent = async (eventData) => {
   const [hours, minutes] = eventData.time.split(':').map(Number)
   const duration = parseFloat(eventData.duration)
-  // Calculate end time
-  let endHours = hours + Math.floor(duration)
-  let endMinutes = minutes + (duration % 1) * 60
-  if (endMinutes >= 60) {
-    endHours += Math.floor(endMinutes / 60)
-    endMinutes = endMinutes % 60
-  }
-  const end_time = `${String(endHours).padStart(2,'0')}:${String(endMinutes).padStart(2,'0')}`
+  
+  // Construct Date objects
+  const year = 2026
+  const month = selectedMonth.value.index
+  const day = selectedDay.value
+  
+  const startTime = new Date(year, month, day, hours, minutes)
+  const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000)
+  
+  try {
+    // Get userId from pinia store
+    const userId = authStore.userId
+    if (!userId) {
+      console.error('User not authenticated')
+      return
+    }
 
-  mockDb.tasks.value.push({
-    id: crypto.randomUUID(),
-    title: eventData.title,
-    description: eventData.description,
-    start_time: eventData.time,
-    end_time,
-    completed: false,
-    priority: 2
-  })
+    await db.tasks.create({
+      user_id: userId,
+      title: eventData.title,
+      description: eventData.description,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      completed: false,
+    })
+    await fetchTasks()
+  } catch (e) {
+    console.error('Add task failed', e)
+  }
   
   showAddModal.value = false
 }
 
-const handleUpdateEvent = (updatedData) => {
+const handleUpdateEvent = async (updatedData) => {
   if (editingTaskIndex.value !== null) {
     const task = dailySchedule.value[editingTaskIndex.value]
     if (task) {
-      const original = mockDb.tasks.value.find(t => t.id === task.id)
-      if (original) {
-        // Calculate end time
         const [hours, minutes] = updatedData.time.split(':').map(Number)
         const duration = parseFloat(updatedData.duration)
-        let endHours = hours + Math.floor(duration)
-        let endMinutes = minutes + (duration % 1) * 60
-        if (endMinutes >= 60) {
-          endHours += Math.floor(endMinutes / 60)
-          endMinutes = endMinutes % 60
-        }
-        const end_time = `${String(endHours).padStart(2,'0')}:${String(endMinutes).padStart(2,'0')}`
+        
+        const year = 2026
+        const month = selectedMonth.value.index
+        const day = selectedDay.value
+        
+        const startTime = new Date(year, month, day, hours, minutes)
+        const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000)
 
-        // Update fields
-        original.title = updatedData.title
-        original.description = updatedData.description
-        original.start_time = updatedData.time
-        original.end_time = end_time
+        try {
+            await db.tasks.update(task.id, {
+                title: updatedData.title,
+                description: updatedData.description,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString()
+            })
+            await fetchTasks()
+        } catch (e) {
+            console.error('Update task failed', e)
+        }
+    }
+  }
+  showAddModal.value = false
+}
+
+const handleDeleteEvent = async () => {
+  if (editingTaskIndex.value !== null) {
+    const task = dailySchedule.value[editingTaskIndex.value]
+    if (task) {
+      try {
+        await db.tasks.delete(task.id)
+        await fetchTasks()
+      } catch (e) {
+        console.error('Delete task failed', e)
       }
     }
   }
   showAddModal.value = false
 }
 
-const handleDeleteEvent = () => {
-  if (editingTaskIndex.value !== null) {
-    const task = dailySchedule.value[editingTaskIndex.value]
-    if (task) {
-      const idx = mockDb.tasks.value.findIndex(t => t.id === task.id)
-      if (idx !== -1) mockDb.tasks.value.splice(idx, 1)
-    }
-  }
-  showAddModal.value = false
-}
-
 // 交互逻辑
-const toggleComplete = (index) => {
-  // Index matches the sorted dailySchedule, find the original task in mockDb
+const toggleComplete = async (index) => {
   const task = dailySchedule.value[index]
   if (task) {
-    const original = mockDb.tasks.value.find(t => t.id === task.id)
-    if (original) original.completed = !original.completed
+      try {
+          await db.tasks.update(task.id, { completed: !task.completed })
+          await fetchTasks()
+      } catch (e) {
+          console.error('Toggle complete failed', e)
+      }
   }
 }
 
@@ -202,6 +247,7 @@ const goBackToMonth = () => {
 
 // 动态时间线更新模拟
 onMounted(async () => {
+  await fetchTasks()
   await nextTick()
   
   // 页面加载后自动滚动到第一任务

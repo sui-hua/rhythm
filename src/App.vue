@@ -1,9 +1,11 @@
 <template>
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
     <Navbar />
-    <Transition :name="transitionName" mode="out-in">
-      <RouterView />
-    </Transition>
+    <RouterView v-slot="{ Component }">
+      <Transition :name="transitionName" mode="out-in">
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
   </div>
 </template>
 
@@ -12,8 +14,10 @@ import {ref, computed, onMounted} from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import supabase from './config/supabase'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 // 根据路由路径选择过渡效果
 const transitionName = computed(() => {
@@ -24,17 +28,50 @@ const transitionName = computed(() => {
     return 'view-fade'
   }
 })
-onMounted(async () => {
-  supabase.auth.onAuthStateChange((event, session) => {
-    console.log(event)   // SIGNED_IN / SIGNED_OUT
-    console.log(session)
-  })
-  // const {data, error} = await supabase.auth.signInWithPassword({
-  //   email: 'sizhanfeng1012@163.com',
-  //   password: 'szf1012wzs'
-  // })
-  const res = await supabase.auth.getUser()
 
+onMounted(async () => {
+  try {
+    // Pinia persisted plugin hydrates the store; check if we already have a user
+    if (authStore.userId) {
+      console.log('Loaded user from persisted store:', authStore.userId)
+      try {
+        const { data: userData } = await supabase.auth.getUser()
+        if (userData?.user && userData.user.id !== authStore.userId) {
+          authStore.setUser(userData.user)
+        }
+      } catch (e) {
+        console.warn('User verification failed:', e)
+      }
+    } else {
+      // No stored user, perform sign-in (this app uses a test account by default)
+      const {data, error} = await supabase.auth.signInWithPassword({
+        email: 'sizhanfeng1012@163.com',
+        password: 'szf1012wzs'
+      })
+
+      if (error) {
+        console.error('Login failed:', error)
+        return
+      }
+
+      // 获取并保存当前用户信息
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser()
+        if (userError) {
+          console.error('Failed to get user:', userError)
+          return
+        }
+        if (userData?.user) {
+          authStore.setUser(userData.user)
+          console.log('User logged in and stored:', userData.user.id)
+        }
+      } catch (e) {
+        console.error('Auth error:', e)
+      }
+    }
+  } finally {
+    // no-op: loading state removed from auth store
+  }
 })
 </script>
 

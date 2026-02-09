@@ -1,10 +1,11 @@
 <script setup>
+import { computed } from 'vue'
 import { Card, CardContent } from '@/components/ui/card'
 
 const props = defineProps({
   selectedGoal: {
     type: Object,
-    required: true
+    default: () => ({ name: '', startMonth: 1, endMonth: 1 })
   },
   months: {
     type: Array,
@@ -18,15 +19,19 @@ const props = defineProps({
 
 const emit = defineEmits(['update:activePicker', 'update-range'])
 
-const isMonthActive = (m) => props.selectedGoal.startMonth === m || props.selectedGoal.endMonth === m
-const isWithinRange = (m) => m >= props.selectedGoal.startMonth && m <= props.selectedGoal.endMonth
+const startMonth = computed(() => props.selectedGoal?.startMonth ?? 1)
+const endMonth = computed(() => props.selectedGoal?.endMonth ?? 1)
+const selectedGoalName = computed(() => props.selectedGoal?.name ?? '')
+
+const isMonthActive = (m) => startMonth.value === m || endMonth.value === m
+const isWithinRange = (m) => m >= startMonth.value && m <= endMonth.value
 </script>
 
 <template>
   <header class="p-6 md:p-10 flex flex-col gap-6">
-    <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1">
       <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">当前关注</span>
-      <h2 class="text-3xl font-bold tracking-tight">{{ selectedGoal.name }}</h2>
+      <h2 class="text-3xl font-bold tracking-tight">{{ selectedGoalName }}</h2>
     </div>
 
     <Card class="border shadow-sm rounded-xl overflow-hidden bg-background">
@@ -35,9 +40,9 @@ const isWithinRange = (m) => m >= props.selectedGoal.startMonth && m <= props.se
           <div class="flex flex-col gap-1">
             <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">执行时轴</span>
             <div class="flex items-baseline gap-2">
-              <span class="text-2xl font-bold tracking-tight">{{ months[selectedGoal.startMonth-1].label }}</span>
+              <span class="text-2xl font-bold tracking-tight">{{ months[startMonth-1].label }}</span>
               <span class="text-xs text-muted-foreground font-medium">到</span>
-              <span class="text-2xl font-bold tracking-tight">{{ months[selectedGoal.endMonth-1].label }}</span>
+              <span class="text-2xl font-bold tracking-tight">{{ months[endMonth-1].label }}</span>
             </div>
           </div>
           <div class="flex bg-secondary p-1 rounded-lg border">
@@ -57,7 +62,7 @@ const isWithinRange = (m) => m >= props.selectedGoal.startMonth && m <= props.se
         <div class="relative px-2 py-4">
           <div class="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-secondary rounded-full"></div>
           <div class="absolute top-1/2 -translate-y-1/2 h-1 bg-primary transition-all duration-700 rounded-full"
-               :style="{ left: `${((selectedGoal.startMonth - 1) / 11) * 100}%`, width: `${((selectedGoal.endMonth - selectedGoal.startMonth) / 11) * 100}%` }">
+            :style="{ left: `${((startMonth - 1) / 11) * 100}%`, width: `${((endMonth - startMonth) / 11) * 100}%` }">
           </div>
           <div class="relative flex justify-between">
             <div v-for="m in 12" :key="m" @click="emit('update-range', m)" class="flex flex-col items-center group cursor-pointer">

@@ -50,9 +50,9 @@
       <div class="w-full">
         <div class="flex justify-between items-center mb-2">
           <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">任务完成度</span>
-          <span class="text-[10px] font-bold text-primary">{{ Math.round((completedCount/dailySchedule.length * 100) || 0) }}%</span>
+          <span class="text-[10px] font-bold text-primary">{{ Math.round((dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)) }}%</span>
         </div>
-        <Progress :model-value="(completedCount/dailySchedule.length * 100)" class="h-1 shadow-none" />
+        <Progress :model-value="(dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)" class="h-1 shadow-none" />
       </div>
       <Button 
         class="w-full gap-2 h-9 text-xs font-semibold"

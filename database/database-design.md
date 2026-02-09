@@ -6,6 +6,7 @@
 | `user_id`     | UUID    | 用户ID                                 |
 | `title`       | Text    | 计划名称                                 |
 | `description` | Text    | 计划描述/愿景                              |
+| `year`        | Date    | 计划所属年份（以 `DATE` 存储，例如：'2026-01-01'，用于月计划的年份归属） |
 | `category`    | Varchar | 计划分类（例如：学习、健康、工作）                |
 | `status`      | Varchar | 状态：'active', 'completed', 'archived' |
 | `priority`    | Int     | 优先级（使用数字，1-低，2-中，3-高）       |
@@ -25,8 +26,8 @@
 | `description` | Text    | 月计划描述                                |
 | `status`      | Varchar | 状态：'active', 'completed', 'archived' |
 | `priority`    | Int     | 优先级（使用数字，1-低，2-中，3-高）       |
-| `start_date`  | Date    | 月计划开始日期                              |
-| `end_date`    | Date    | 月计划结束日期                              |
+| `year`        | Int     | 总计划所属年份（放在 `plans` 表中）            |
+| `month`       | Date    | 月计划所属月份（以 `DATE` 存储当月第一天，例如：'2026-02-01'） |
 
 ---
 
@@ -53,7 +54,6 @@
 | -------------- | ------- | ------------------------- |
 | `id`           | UUID    | 主键                        |
 | `user_id`      | UUID    | 用户ID                      |
-| `plan_id`      | UUID    | 关联的计划ID（可以是总计划、月计划或日计划）   |
 | `title`        | Text    | 习惯名称                      |
 | `frequency`    | JSONB   | 频率配置（如：{"type": "daily"}） |
 | `target_value` | Int     | 每日/每次的目标值（例如：8杯水）         |
@@ -65,9 +65,8 @@
 | -------------- | --------- | --------------- |
 | `id`           | UUID      | 主键              |
 | `habit_id`     | UUID      | 关联的习惯ID         |
-| `date`         | Date      | 打卡日期            |
-| `value`        | Int       | 完成值（例如：1 或具体数量） |
-| `completed_at` | Timestamp | 实际完成时间          |
+| `log`          | Text      | 打卡时的备注/记录文本（例如："30 分钟阅读"） |
+| `completed_at` | Timestamp | 实际完成时间           |
 
 ---
 
@@ -82,17 +81,31 @@
 | `start_time`  | Timestamp | 任务开始时间                |
 | `end_time`    | Timestamp | 任务结束时间                |
 | `completed`   | Boolean   | 是否完成                  |
-| `priority`    | Int       | 优先级（使用数字，1-低，2-中，3-高） |
 
 ---
 
 ### 6. **总结模块 (Summaries)**
 
-| 字段           | 类型        | 说明                                  |
-| ------------ | --------- | ----------------------------------- |
-| `id`         | UUID      | 主键                                  |
-| `user_id`    | UUID      | 用户ID                                |
-| `level`      | Varchar   | 总结层级：'year', 'month', 'week', 'day' |
-| `content`    | Text      | 用户手写的总结内容                           |
-| `source`     | Varchar   | 总结来源：'user'（用户手写）                   |
-| `created_at` | Timestamp | 创建时间                                |
+#### 6.1 **周期总结表 (summaries)**
+
+| 字段             | 类型        | 说明                                                 |
+| -------------- | --------- | -------------------------------------------------- |
+| `id`           | UUID      | 主键                                                 |
+| `user_id`      | UUID      | 用户ID                                               |
+| `scope`        | Varchar   | 总结范围：'year', 'quarter', 'month', 'week'             |
+| `title`        | Text      | 总结标题（可选，用于列表展示）                               |
+| `content`      | Text      | 原文总结（可选，富文本/Markdown）                         |
+| `mood`         | Int       | 心情评分（1-5，可选）                                    |
+| `created_at`   | Timestamp | 创建时间（可用于推导年月日）                              |
+
+#### 6.2 **日总结表 (daily_summaries)**
+
+| 字段             | 类型        | 说明                                  |
+| -------------- | --------- | ----------------------------------- |
+| `id`           | UUID      | 主键                                  |
+| `user_id`      | UUID      | 用户ID                                |
+| `today_did`    | Text      | 今天做了什么                            |
+| `today_issue` | Text      | 今天问题                            |
+| `tomorrow_fix` | Text      | 明天改进                              |
+| `mood`         | Int       | 心情评分（1-5，可选）                   |
+| `created_at`   | Timestamp | 创建时间                               |

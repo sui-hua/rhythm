@@ -36,19 +36,24 @@
             <CardContent class="p-4 flex items-center gap-6">
               <div class="shrink-0 flex flex-col border-r pr-6 gap-1">
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">今日记录</span>
-                <span class="text-sm font-bold tracking-tight">1月26日</span>
+                <span class="text-sm font-bold tracking-tight">{{ getCurrentDate() }}</span>
               </div>
               <Input 
+                v-model="habitNote"
                 placeholder="记录今天的习惯心得..."
                 class="flex-1 h-10 border shadow-none focus-visible:ring-1"
+                @keyup.enter="handleQuickLog"
               />
-              <Button size="icon" class="w-10 h-10 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground">
+              <Button 
+                size="icon" 
+                class="w-10 h-10 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground"
+                @click="handleQuickLog"
+              >
                 <ArrowUpRight class="w-5 h-5" />
               </Button>
             </CardContent>
           </Card>
-          
-          <HabitLogs />
+          <HabitLogs :logs="selectedHabit?.logs || []" />
         </div>
       </div>
     </div>
@@ -61,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,35 +79,105 @@ import HabitStats from './components/HabitStats.vue'
 import HabitCalendar from './components/HabitCalendar.vue'
 import HabitLogs from './components/HabitLogs.vue'
 import AddHabitModal from './components/AddHabitModal.vue'
-import { mockDb } from '@/services/mockDb'
+import { db } from '@/services/database'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
-const habits = mockDb.habits
+const authStore = useAuthStore()
+const habits = ref([])
 
-const selectedHabit = ref(habits.value[0])
-const showAddModal = ref(false)
+const currentYear = 2026
+const currentMonth = 1 // Feb (0-indexed 1 is Feb) - Aligning with seed data/current date
 
-const handleAddHabit = (newHabit) => {
-  const id = `h${habits.value.length + 1}`
-  const habitWithId = { ...newHabit, id, completedDays: [], total: 0, completionRate: 0, streak: 0 }
-  habits.value.push(habitWithId)
-  selectedHabit.value = habitWithId
-  showAddModal.value = false
+const fetchHabits = async () => {
+  try {
+    const rawHabits = await db.habits.list()
+    habits.value = rawHabits.map(h => {
+        const logs = h.habit_logs || []
+        // Filter logs for current view month
+        const monthlyLogs = logs.filter(log => {
+             const d = new Date(log.completed_at)
+             return d.getFullYear() === currentYear && d.getMonth() === currentMonth
+        })
+        
+        const completedDays = monthlyLogs.map(log => new Date(log.completed_at).getDate())
+        
+        return {
+            ...h,
+            completedDays, 
+            logs, // All logs
+            monthlyLogs,
+            total: logs.length,
+            completionRate: Math.round((logs.length / 30) * 100), // Simple calc
+            streak: calculateStreak(logs)
+        }
+    })
+    
+    if (selectedHabit.value) {
+        const updated = habits.value.find(h => h.id === selectedHabit.value.id)
+        if (updated) selectedHabit.value = updated
+    } else if (habits.value.length > 0) {
+        selectedHabit.value = habits.value[0]
+    }
+  } catch (e) {
+      console.error('Fetch habits failed', e)
+  }
 }
 
-const habitStats = computed(() => [
-  { label: '本月打卡', value: selectedHabit.value.completedDays.length, unit: '天' },
-  { label: '年度总计', value: selectedHabit.value.total, unit: '天' },
-  { label: '周期完成率', value: selectedHabit.value.completionRate, unit: '%' },
-  { label: '当前连击', value: selectedHabit.value.streak, unit: '天' }
-])
+const calculateStreak = (logs) => {
+    // Simple streak calc (placeholder)
+    return logs.length > 0 ? logs.length : 0
+}
+
+onMounted(fetchHabits)
+
+const selectedHabit = ref(null)
+const showAddModal = ref(false)
+const habitNote = ref('')
+
+const getCurrentDate = () => {
+  const now = new Date()
+  return `${now.getMonth() + 1}月${now.getDate()}日`
+}
+
+const handleAddHabit = async (newHabit) => {
+  try {
+      const userId = authStore.userId
+      if (!userId) {
+          console.error('User not authenticated')
+          return
+      }
+
+      await db.habits.create({
+          user_id: userId,
+          title: newHabit.title,
+          frequency: newHabit.frequency || { type: 'daily' },
+          target_value: newHabit.target_value || 1,
+          archived: false
+      })
+      await fetchHabits()
+      showAddModal.value = false
+  } catch (e) {
+      console.error('Add habit failed', e)
+  }
+}
+
+const habitStats = computed(() => {
+  if (!selectedHabit.value) return []
+  return [
+    { label: '本月打卡', value: selectedHabit.value.completedDays.length, unit: '天' },
+    { label: '年度总计', value: selectedHabit.value.total, unit: '天' },
+    { label: '周期完成率', value: selectedHabit.value.completionRate, unit: '%' },
+    { label: '当前连击', value: selectedHabit.value.streak, unit: '天' }
+  ]
+})
 
 const calendarGrid = computed(() => {
-  const year = 2026;
-  const month = 0;
+  const year = currentYear;
+  const month = currentMonth;
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-  const daysInMonth = 31;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const grid = [];
   for (let i = 0; i < offset; i++) grid.push(null);
@@ -110,12 +185,56 @@ const calendarGrid = computed(() => {
   return grid;
 })
 
-const toggleComplete = (day) => {
-  const list = selectedHabit.value.completedDays;
-  const index = list.indexOf(day);
-  if (index > -1) list.splice(index, 1);
-  else list.push(day);
+const toggleComplete = async (day) => {
+  if (!selectedHabit.value) return
+  
+  const habit = selectedHabit.value
+  const existingLog = habit.monthlyLogs.find(log => {
+      return new Date(log.completed_at).getDate() === day
+  })
+  
+  try {
+        if (existingLog) {
+          await db.habits.deleteLog(existingLog.id)
+        } else {
+          const date = new Date(currentYear, currentMonth, day, 12, 0, 0)
+          await db.habits.log(habit.id, '', date.toISOString())
+        }
+      await fetchHabits()
+  } catch (e) {
+      console.error('Toggle habit log failed', e)
+  }
 }
+
+const handleQuickLog = async () => {
+  if (!selectedHabit.value || !habitNote.value.trim()) {
+    console.warn('Habit not selected or note is empty')
+    return
+  }
+  
+  try {
+    const now = new Date()
+    const today = now.getDate()
+    
+    // Check if log already exists for today
+    const existingLog = selectedHabit.value.monthlyLogs.find(log => {
+      return new Date(log.completed_at).getDate() === today
+    })
+    
+    if (!existingLog) {
+      // Create new log for today
+      const date = new Date(currentYear, currentMonth, today, 12, 0, 0)
+      await db.habits.log(selectedHabit.value.id, habitNote.value.trim(), date.toISOString())
+    }
+    
+    // Clear input and refresh
+    habitNote.value = ''
+    await fetchHabits()
+  } catch (e) {
+    console.error('Quick log failed', e)
+  }
+}
+
 
 const goBack = () => {
   router.push('/year')

@@ -8,21 +8,38 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import YearGrid from './components/YearGrid.vue'
-import { mockDb } from '@/services/mockDb'
+import { db } from '@/services/database'
 
 const router = useRouter()
+const habits = ref([])
+
+onMounted(async () => {
+  try {
+    habits.value = await db.habits.list()
+  } catch (e) { console.error(e) }
+})
 
 // 年数据逻辑
 const yearData = computed(() => {
   const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
   
-  // Aggregate all completed days from all habits to show overall activity
-  const allCompletedDays = new Set()
-  mockDb.habits.value.forEach(habit => {
-    habit.completedDays.forEach(day => allCompletedDays.add(day))
+  // Aggregate all completed days from all habits by month
+  const completedByMonth = new Map()
+  
+  habits.value.forEach(habit => {
+    const logs = habit.habit_logs || []
+    logs.forEach(log => {
+      const d = new Date(log.completed_at)
+      if (d.getFullYear() === 2026) {
+        const m = d.getMonth()
+        const day = d.getDate()
+        if (!completedByMonth.has(m)) completedByMonth.set(m, new Set())
+        completedByMonth.get(m).add(day)
+      }
+    })
   })
 
   return months.map((name, index) => {
@@ -32,8 +49,7 @@ const yearData = computed(() => {
       days: daysInMonth,
       firstDayOffset: (new Date(2026, index, 1).getDay() + 6) % 7,
       index,
-      // For now, simplify: we only show completions in JAN (index 0) from mock habits
-      completedDays: index === 0 ? Array.from(allCompletedDays) : []
+      completedDays: completedByMonth.has(index) ? Array.from(completedByMonth.get(index)) : []
     }
   })
 })

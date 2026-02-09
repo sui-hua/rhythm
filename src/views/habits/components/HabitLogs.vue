@@ -1,12 +1,32 @@
 <script setup>
+import { computed } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
 
-defineProps({
+const props = defineProps({
   logs: {
     type: Array,
-    default: () => [1, 2, 3]
+    default: () => []
   }
+})
+
+// 格式化日志数据，按完成时间倒序排列
+const formattedLogs = computed(() => {
+  return (props.logs || [])
+    .map(log => {
+      const date = new Date(log.completed_at)
+      const month = date.getMonth() + 1
+      const day = date.getDate()
+      return {
+        id: log.id,
+        month,
+        day,
+        completedAt: log.completed_at,
+        date: `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`,
+        logText: log.log || ''
+      }
+    })
+    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
 })
 </script>
 
@@ -17,16 +37,20 @@ defineProps({
       <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">“坚持胜过爆发”</p>
     </div>
 
-    <div class="flex flex-col gap-4">
-      <Card v-for="i in logs" :key="i"
+    <div v-if="formattedLogs.length === 0" class="text-center py-8 text-muted-foreground">
+      <p class="text-sm">暂无日志记录，开始你的习惯旅程吧</p>
+    </div>
+
+    <div v-else class="flex flex-col gap-4">
+      <Card v-for="log in formattedLogs" :key="log.id"
            class="group cursor-pointer transition-all border shadow-sm rounded-xl hover:translate-x-1 duration-300">
         <CardContent class="p-4 flex items-center gap-6">
           <div class="shrink-0 flex flex-col border-r pr-6 gap-1">
-            <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">0{{i}} / 一月</span>
-            <span class="text-sm font-bold tracking-tight">日志</span>
+            <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">{{ log.date }}</span>
+            <span class="text-sm font-bold tracking-tight">打卡</span>
           </div>
           <p class="flex-1 text-sm font-medium tracking-tight text-muted-foreground group-hover:text-foreground transition-colors duration-300 leading-relaxed">
-            今天坚持完成了预定的习惯，感觉精力和专注度都有明显提升。记录下此刻的成就感。
+            {{ log.logText || '成功完成了今天的习惯打卡，继续坚持吧。' }}
           </p>
           <div class="w-8 h-8 rounded-full border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
             <ArrowUpRight class="w-4 h-4 text-muted-foreground" />
