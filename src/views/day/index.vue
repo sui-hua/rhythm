@@ -235,9 +235,9 @@ const toggleComplete = async (index) => {
   }
 }
 
-const scrollToTask = (index) => {
+const scrollToTask = (index, behavior = 'smooth') => {
   const el = document.getElementById(`task-${index}`)
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  if (el) el.scrollIntoView({ behavior, block: 'center' })
 }
 
 // 返回月视图
@@ -247,20 +247,22 @@ const goBackToMonth = () => {
 
 // 动态时间线更新模拟
 onMounted(async () => {
-  await fetchTasks()
+  // 1. 立即尝试滚动到 08:00 (默认位置)
+  // 此时数据还没加载，先让用户看到 08:00
   await nextTick()
+  const defaultEl = document.getElementById('hour-8')
+  if (defaultEl) {
+    defaultEl.scrollIntoView({ behavior: 'instant', block: 'start' })
+  }
+
+  // 2. 加载数据
+  await fetchTasks()
   
-  // 页面加载后自动滚动到第一任务
+  // 3. 如果有任务，修正滚动位置到第一个任务
+  // 使用 nextTick 确保任务元素已渲染
+  await nextTick()
   if (dailySchedule.value.length > 0) {
-    // 延迟一点以确保组件完全挂载和动画就绪
-    setTimeout(() => {
-      scrollToTask(0)
-    }, 300)
-  } else if (timeline.value?.timelineContainer) {
-    // 如果没有任务，滚动到当前时刻
-    const vh = window.innerHeight / 100;
-    const scrollPos = (currentHour.value - 2) * (25 * vh);
-    timeline.value.timelineContainer.scrollTo({ top: scrollPos, behavior: 'smooth' });
+    scrollToTask(0)
   }
 
   // 更新当前时间
