@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { ref, reactive, watch, nextTick, computed } from 'vue'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,13 @@ import {
   Popover,
   PopoverContent,
 } from '@/components/ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const props = defineProps({
   show: Boolean,
@@ -33,28 +40,62 @@ const form = reactive({
   description: ''
 })
 
+const durationUnit = ref('hour') // 'hour' | 'minute'
+
+const displayDuration = computed({
+  get() {
+    if (durationUnit.value === 'minute') {
+      return Math.round(form.duration * 60)
+    }
+    return form.duration
+  },
+  set(val) {
+    if (val === '' || val === null) return
+    const num = parseFloat(val)
+    if (isNaN(num)) return
+    
+    if (durationUnit.value === 'minute') {
+      form.duration = num / 60
+    } else {
+      form.duration = num
+    }
+  }
+})
+
+watch(durationUnit, (newUnit) => {
+  // When unit changes, we want to keep the underlying duration the same,
+  // but the display value will automatically update due to the computed getter.
+  // However, we might want to round purely for display niceness if going to minutes?
+  // Current logic in getter handles simple conversion.
+  // No explicit action needed for basic conversion as computed handles it.
+})
+
+
 const openTimePopover = ref(true)
 const triggerContainer = ref(null)
 const timeListRef = ref(null)
 
 const handleInteractOutside = (event) => {
-  if (triggerContainer.value && triggerContainer.value.contains(event.target)) {
+  const target = event.target
+  // Radix Vue might wrap the original event in detail.originalEvent
+  // We check both to be safe
+  const actualTarget = event.detail?.originalEvent?.target || target
+  
+  if (triggerContainer.value && triggerContainer.value.contains(actualTarget)) {
     event.preventDefault()
   }
 }
 
-const onTimeInputFocus = () => {
-  setTimeout(() => {
-    openTimePopover.value = true
-  }, 100)
+const scrollToTime = (timeStr) => {
+  if (!timeListRef.value) return
+  const target = timeListRef.value.querySelector(`[data-time="${timeStr}"]`)
+  if (target) {
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }
 }
 
 const scrollToDefaultTime = () => {
-  if (!timeListRef.value) return
-  const target = timeListRef.value.querySelector('[data-time="08:00"]')
-  if (target) {
-    target.scrollIntoView({ block: 'center' })
-  }
+  scrollToTime('08:00')
 }
 
 watch(openTimePopover, (open) => {
@@ -82,15 +123,17 @@ watch(() => props.show, (newShow) => {
       form.time = props.initialData.time || ''
       // Remove 'H' from duration string if it exists and convert to number
       const durationStr = props.initialData.duration || '1.0H'
-      form.duration = parseFloat(durationStr.replace('H', ''))
+      form.duration = parseFloat(String(durationStr).replace('H', ''))
       form.category = props.initialData.category || '工作'
       form.description = props.initialData.description || ''
+      durationUnit.value = 'hour' // Reset to hour when editing
     } else {
       form.title = ''
       form.time = ''
       form.duration = 1.0
       form.category = '工作'
       form.description = ''
+      durationUnit.value = 'hour'
     }
   }
 }, { immediate: true })
@@ -144,13 +187,13 @@ const submit = () => {
               <label for="time" class="text-sm font-medium leading-none">开始时间</label>
               <Popover v-model:open="openTimePopover">
                 <PopoverAnchor as-child>
-                  <div class="relative" ref="triggerContainer">
+                  <div class="relative" ref="triggerContainer" @pointerdown.stop>
                     <Input 
                       id="time"
                       v-model="form.time"
                       placeholder="08:40"
                       class="h-9 font-mono pr-8"
-                      @focus="onTimeInputFocus"
+                      @click="openTimePopover = true"
                       @input="openTimePopover = true"
                       @keydown.down.prevent="openTimePopover = true"
                     />
@@ -176,18 +219,47 @@ const submit = () => {
                       {{ t }}
                     </Button>
                   </div>
+                  <div class="flex border-t p-1 gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      class="flex-1 h-7 text-xs font-normal" 
+                      @click="scrollToTime('09:00')"
+                    >
+                      上午
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      class="flex-1 h-7 text-xs font-normal" 
+                      @click="scrollToTime('14:00')"
+                    >
+                      下午
+                    </Button>
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>
             <div class="grid gap-2">
-              <label for="duration" class="text-sm font-medium leading-none">时长 (小时)</label>
-              <Input 
-                id="duration"
-                v-model="form.duration"
-                type="number"
-                step="0.5"
-                class="h-9 font-mono"
-              />
+              <label for="duration" class="text-sm font-medium leading-none">时长</label>
+              <div class="flex gap-2">
+                <Input 
+                  id="duration"
+                  v-model="displayDuration"
+                  type="number"
+                  :step="durationUnit === 'hour' ? 0.5 : 30"
+                  class="h-9 font-mono flex-1"
+                />
+                <Select v-model="durationUnit">
+                  <SelectTrigger class="w-[80px] h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent class="w-[80px] min-w-[80px]">
+                    <SelectItem value="hour" :show-check="false">小时</SelectItem>
+                    <SelectItem value="minute" :show-check="false">分钟</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
