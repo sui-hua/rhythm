@@ -4,7 +4,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Clock } from 'lucide-vue-next'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { PopoverAnchor } from 'radix-vue'
 import {
   Popover,
@@ -100,7 +99,13 @@ const scrollToDefaultTime = () => {
 
 watch(openTimePopover, (open) => {
   if (open) {
-    nextTick(() => scrollToDefaultTime())
+    nextTick(() => {
+      if (form.time) {
+        scrollToTime(form.time)
+      } else {
+        scrollToDefaultTime()
+      }
+    })
   }
 })
 

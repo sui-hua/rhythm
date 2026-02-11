@@ -56,6 +56,6 @@ const yearData = computed(() => {
 
 // 进入月份视图
 const enterMonth = (month) => {
-  router.push(`/month/${month.index}`)
+  router.push(`/month/${month.index + 1}`)
 }
 </script>

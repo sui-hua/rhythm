@@ -54,7 +54,7 @@ const monthsFull = ['一月 (January)', '二月 (February)', '三月 (March)', '
 
 // 当前选中的月份和日期
 const selectedMonth = computed(() => {
-  const monthIndex = parseInt(route.params.monthIndex)
+  const monthIndex = parseInt(route.params.monthIndex) - 1
   return {
     name: months[monthIndex],
     full: monthsFull[monthIndex],
@@ -242,7 +242,7 @@ const scrollToTask = (index, behavior = 'smooth') => {
 
 // 返回月视图
 const goBackToMonth = () => {
-  router.push(`/month/${selectedMonth.value.index}`)
+  router.push(`/month/${selectedMonth.value.index + 1}`)
 }
 
 // 动态时间线更新模拟
@@ -274,8 +274,11 @@ onMounted(async () => {
   // 确保参数有效
   const monthIndex = parseInt(route.params.monthIndex)
   const day = parseInt(route.params.day)
-  if (isNaN(monthIndex) || monthIndex < 0 || monthIndex >= months.length || isNaN(day) || day < 1 || day > 31) {
+  if (isNaN(monthIndex) || monthIndex < 1 || monthIndex > 12 || isNaN(day) || day < 1 || day > 31) {
     router.push('/year')
   }
 })
+
+
+
 </script>

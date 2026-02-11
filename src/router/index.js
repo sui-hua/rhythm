@@ -34,7 +34,7 @@ const routes = [
     path: '/day',
     redirect: () => {
       const now = new Date()
-      return `/day/${now.getMonth()}/${now.getDate()}`
+      return `/day/${now.getMonth() + 1}/${now.getDate()}`
     }
   },
   {

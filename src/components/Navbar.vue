@@ -10,7 +10,7 @@ const route = useRoute()
 
 const getTodayPath = () => {
   const now = new Date() // As per user metadata context
-  return `/day/${now.getMonth()}/${now.getDate()}`
+  return `/day/${now.getMonth() + 1}/${now.getDate()}`
 }
 
 const navItems = [
@@ -33,15 +33,33 @@ const contextInfo = computed(() => {
     return {
       title: '2026',
       backPath: '/year',
-      show: true
+      show: true,
+      mode: 'month'
     }
   }
   if (path.startsWith('/day/')) {
-    const monthIndex = parseInt(route.params.monthIndex)
+    const monthIndex = parseInt(route.params.monthIndex) - 1 // Fix 1-based index
+    const day = parseInt(route.params.day)
+    
+    // Calculate Prev/Next Day
+    const currentYear = 2026
+    const currentDate = new Date(currentYear, monthIndex, day)
+    
+    const prevDate = new Date(currentDate)
+    prevDate.setDate(day - 1)
+    const prevDayPath = `/day/${prevDate.getMonth() + 1}/${prevDate.getDate()}`
+    
+    const nextDate = new Date(currentDate)
+    nextDate.setDate(day + 1)
+    const nextDayPath = `/day/${nextDate.getMonth() + 1}/${nextDate.getDate()}`
+
     return {
       title: months[monthIndex],
-      backPath: `/month/${monthIndex}`,
-      show: true
+      monthPath: `/month/${monthIndex + 1}`,
+      prevDayPath,
+      nextDayPath,
+      show: true,
+      mode: 'day'
     }
   }
   return { show: false }
@@ -53,19 +71,53 @@ const contextInfo = computed(() => {
     <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto">
       <div class="flex items-center gap-1">
         <!-- Back Button & Context Title -->
+        <!-- Back Button & Context Title -->
         <template v-if="contextInfo.show">
-          <div class="flex items-center gap-4 px-4 pr-6 border-r border-zinc-100 mr-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              @click="router.push(contextInfo.backPath)"
-              class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
-            >
-              <ArrowLeft class="w-4 h-4" />
-            </Button>
-            <span class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap">
-              {{ contextInfo.title }}
-            </span>
+          <div class="flex items-center gap-2 px-4 pr-6 border-r border-zinc-100 mr-2">
+            <!-- Year View Mode: Back to Year -->
+            <template v-if="contextInfo.mode === 'month'">
+               <Button
+                variant="ghost"
+                size="icon"
+                @click="router.push(contextInfo.backPath)"
+                class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
+              >
+                <ArrowLeft class="w-4 h-4" />
+              </Button>
+              <span class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap">
+                {{ contextInfo.title }}
+              </span>
+            </template>
+
+            <!-- Day View Mode: Prev/Next Day & Clickable Month -->
+            <template v-else-if="contextInfo.mode === 'day'">
+              <div class="flex items-center gap-1">
+                 <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="router.push(contextInfo.prevDayPath)"
+                  class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
+                >
+                  <ArrowLeft class="w-4 h-4" />
+                </Button>
+                
+                <button 
+                  @click="router.push(contextInfo.monthPath)"
+                  class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors mx-1"
+                >
+                  {{ contextInfo.title }}
+                </button>
+
+                 <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="router.push(contextInfo.nextDayPath)"
+                  class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all transform rotate-180"
+                >
+                  <ArrowLeft class="w-4 h-4" />
+                </Button>
+              </div>
+            </template>
           </div>
         </template>
 

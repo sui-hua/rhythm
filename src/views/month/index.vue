@@ -24,7 +24,7 @@ const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 
 
 // 当前选中的月份
 const selectedMonth = computed(() => {
-  const monthIndex = parseInt(route.params.monthIndex)
+  const monthIndex = parseInt(route.params.monthIndex) - 1
   const daysInMonth = new Date(2026, monthIndex + 1, 0).getDate()
   return {
     name: months[monthIndex],
@@ -37,7 +37,7 @@ const selectedMonth = computed(() => {
 const tasks = ref([])
 
 const fetchMonthTasks = async () => {
-  const monthIndex = parseInt(route.params.monthIndex)
+  const monthIndex = parseInt(route.params.monthIndex) - 1
   if (isNaN(monthIndex)) return
   
   const year = 2026
@@ -99,13 +99,13 @@ const goBackToYear = () => {
 
 // 进入日视图
 const enterDay = (date) => {
-  router.push(`/day/${selectedMonth.value.index}/${date}`)
+  router.push(`/day/${selectedMonth.value.index + 1}/${date}`)
 }
 
 // 确保参数有效
 onMounted(() => {
   const monthIndex = parseInt(route.params.monthIndex)
-  if (isNaN(monthIndex) || monthIndex < 0 || monthIndex >= months.length) {
+  if (isNaN(monthIndex) || monthIndex < 1 || monthIndex > 12) {
     router.push('/year')
   }
 })
