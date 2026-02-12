@@ -46,12 +46,14 @@ const displayDuration = computed({
     if (durationUnit.value === 'minute') {
       return Math.round(form.duration * 60)
     }
-    return form.duration
+    // Round to 2 decimal places for hour display to avoid long floats (e.g. 22/60)
+    return Math.round(form.duration * 100) / 100
   },
   set(val) {
     if (val === '' || val === null) return
-    const num = parseFloat(val)
+    let num = parseFloat(val)
     if (isNaN(num)) return
+    if (num < 0) num = 0
     
     if (durationUnit.value === 'minute') {
       form.duration = num / 60
@@ -128,17 +130,31 @@ watch(() => props.show, (newShow) => {
       form.time = props.initialData.time || ''
       // Remove 'H' from duration string if it exists and convert to number
       const durationStr = props.initialData.duration || '1.0H'
-      form.duration = parseFloat(String(durationStr).replace('H', ''))
+      
+      // Use raw duration if available to avoid precision loss from toFixed(1)
+      let durationVal
+      if (props.initialData.rawDuration !== undefined) {
+        durationVal = props.initialData.rawDuration
+      } else {
+        durationVal = parseFloat(String(durationStr).replace('H', ''))
+      }
+      
+      form.duration = durationVal
       form.category = props.initialData.category || '工作'
       form.description = props.initialData.description || ''
-      durationUnit.value = 'hour' // Reset to hour when editing
+      // If duration is greater than 1 hour, default to hour unit, otherwise minute
+      if (durationVal > 1) {
+        durationUnit.value = 'hour'
+      } else {
+        durationUnit.value = 'minute'
+      }
     } else {
       form.title = ''
-      form.time = ''
-      form.duration = 1.0
+      form.time = '08:00'
+      form.duration = 0.5
       form.category = '工作'
       form.description = ''
-      durationUnit.value = 'hour'
+      durationUnit.value = 'minute'
     }
   }
 }, { immediate: true })
@@ -196,7 +212,7 @@ const submit = () => {
                     <Input 
                       id="time"
                       v-model="form.time"
-                      placeholder="08:40"
+                      placeholder="08:00"
                       class="h-9 font-mono pr-8"
                       @click="openTimePopover = true"
                       @input="openTimePopover = true"
@@ -229,7 +245,7 @@ const submit = () => {
                       variant="ghost" 
                       size="sm" 
                       class="flex-1 h-7 text-xs font-normal" 
-                      @click="scrollToTime('09:00')"
+                      @click="scrollToTime('08:00')"
                     >
                       上午
                     </Button>
@@ -252,7 +268,8 @@ const submit = () => {
                   id="duration"
                   v-model="displayDuration"
                   type="number"
-                  :step="durationUnit === 'hour' ? 0.5 : 30"
+                  min="0"
+                  :step="durationUnit === 'hour' ? 0.5 : 10"
                   class="h-9 font-mono flex-1"
                 />
                 <Select v-model="durationUnit">

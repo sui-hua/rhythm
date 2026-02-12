@@ -104,6 +104,7 @@ const dailySchedule = computed(() => {
       original: task,
       startHour: startHourVal,
       durationHours,
+      rawDuration: durationHours,
       time: startTimeStr,
       duration: durationHours.toFixed(1) + '小时',
       category: '个人任务',
