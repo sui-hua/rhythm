@@ -116,7 +116,8 @@ const dailySchedule = computed(() => {
 })
 
 const timeline = ref(null)
-const currentHour = ref(12.2) // 模拟当前时间位置
+const now = new Date();
+const currentHour = ref(now.getHours() + now.getMinutes() / 60);
 
 // 任务完成统计
 const completedCount = computed(() => dailySchedule.value.filter(t => t.completed).length)
@@ -270,7 +271,7 @@ onMounted(async () => {
   setInterval(() => {
     const now = new Date();
     currentHour.value = now.getHours() + now.getMinutes() / 60;
-  }, 60000);
+  }, 1000);
 
   // 确保参数有效
   const monthIndex = parseInt(route.params.monthIndex)
