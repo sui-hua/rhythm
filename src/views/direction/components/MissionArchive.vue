@@ -1,38 +1,6 @@
-<script setup>
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Card, CardContent } from '@/components/ui/card'
-
-defineProps({
-  selectedMonth: {
-    type: Number,
-    default: null
-  },
-  months: {
-    type: Array,
-    required: true
-  },
-  sortedSelectedDates: {
-    type: Array,
-    required: true
-  },
-  dailyTasks: {
-    type: Object,
-    required: true
-  },
-  dayTaskKey: {
-    type: Function,
-    required: true
-  }
-})
-
-const autoGrow = (e) => {
-  e.target.style.height = 'auto'
-  e.target.style.height = e.target.scrollHeight + 'px'
-}
-</script>
-
 <template>
-  <div class="flex-1 bg-background flex flex-col overflow-hidden">
+  <div class="flex-1 bg-white flex flex-col overflow-hidden">
+    <!-- 顶部统计栏 -->
     <header class="p-6 md:p-10 border-b">
       <div class="flex justify-between items-end">
         <div class="flex flex-col gap-1">
@@ -51,35 +19,86 @@ const autoGrow = (e) => {
       </div>
     </header>
 
-    <ScrollArea class="flex-1 px-6 md:px-10 py-6 pb-32">
-      <div v-if="sortedSelectedDates.length > 0" class="flex flex-col gap-6">
-        <TransitionGroup name="task-list">
-          <div v-for="day in sortedSelectedDates" :key="day" class="flex items-start gap-8 group">
-            <span class="text-3xl font-bold tracking-tighter text-muted-foreground/30 group-hover:text-primary transition-colors w-12 pt-1 shrink-0">
-              {{ String(day).padStart(2, '0') }}
-            </span>
+    <!-- 任务列表滚动区域 -->
+    <ScrollArea class="flex-1 px-6 md:px-10 py-6 pb-6">
+      <div v-if="sortedSelectedDates.length > 0" class="flex flex-col relative">
+        <!-- 时间轴线 -->
+        <div class="absolute left-5 top-4 bottom-4 w-px bg-zinc-100"></div>
 
-            <div class="flex-1">
-              <textarea
-                  v-model="dailyTasks[dayTaskKey(day)]"
-                  rows="2"
-                  class="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-medium tracking-tight leading-relaxed resize-none text-foreground"
-                  placeholder="请输入任务详情..."
-              ></textarea>
-              <div class="flex justify-between mt-2 px-1">
-                <span class="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">已确认任务</span>
-                <span class="text-[9px] font-mono font-medium text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity uppercase">任务索引_{{ day }}</span>
+        <TransitionGroup name="task-list">
+          <div v-for="day in sortedSelectedDates" :key="day" class="pl-10 pb-6 group last:pb-0">
+            <!-- 内容容器 (相对定位用于放置 Dot) -->
+            <div class="flex items-center gap-3 relative">
+              <!-- 时间节点 (绝对定位 + 垂直居中) -->
+              <!-- Line at left-5 (20px). Container padding 40px. Dot center target -20px. Dot Left = -20 - 5 = -25px -->
+              <div class="absolute left-[-25px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-zinc-200 ring-4 ring-white group-hover:bg-primary transition-colors z-10"></div>
+              
+              <!-- 日期 -->
+              <span class="text-xs font-bold font-mono text-muted-foreground/50 uppercase tracking-widest group-hover:text-primary transition-colors w-10 text-right shrink-0">
+                 {{ String(day).padStart(2, '0') }}
+              </span>
+
+              <!-- 任务内容卡片 -->
+              <div v-if="dailyTasks[dayTaskKey(day)]" 
+                   class="min-h-[50px] flex-1 rounded-xl border border-zinc-100 bg-white px-5 text-sm font-medium tracking-tight leading-relaxed text-foreground shadow-sm hover:shadow-md transition-all group-hover:border-zinc-200 flex items-center">
+                {{ dailyTasks[dayTaskKey(day)].title }}
               </div>
             </div>
           </div>
         </TransitionGroup>
       </div>
-      <div v-else class="h-64 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-xl bg-zinc-50/50">
+      <!-- 空状态 -->
+      <div v-else class="h-64 flex flex-col items-center justify-center text-center p-6 border border-zinc-100 rounded-xl bg-zinc-50/30">
         <p class="text-sm text-muted-foreground">暂无归档内容，请先在下方日期面板中规划任务。</p>
       </div>
     </ScrollArea>
   </div>
 </template>
+
+<script setup>
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Card, CardContent } from '@/components/ui/card'
+
+const emit = defineEmits(['update-task'])
+
+const props = defineProps({
+  // 当前选中的月份
+  selectedMonth: {
+    type: Number,
+    default: null
+  },
+  // 月份数据列表
+  months: {
+    type: Array,
+    required: true
+  },
+  // 已选中并排序的日期列表 [1, 5, 12...]
+  sortedSelectedDates: {
+    type: Array,
+    required: true
+  },
+  // 日任务字典 {key: taskContent}
+  dailyTasks: {
+    type: Object,
+    required: true
+  },
+  // 生成日任务Key的辅助函数 (day => string)
+  dayTaskKey: {
+    type: Function,
+    required: true
+  }
+})
+
+/**
+ * 文本域高度自适应
+ * @param {Event} e - 输入事件
+ * 功能：根据内容自动调整 textarea 高度，防止滚动条出现。
+ */
+const autoGrow = (e) => {
+  e.target.style.height = 'auto'
+  e.target.style.height = e.target.scrollHeight + 'px'
+}
+</script>
 
 <style scoped>
 .task-list-enter-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }

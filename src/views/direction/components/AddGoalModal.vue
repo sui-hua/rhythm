@@ -10,7 +10,7 @@ const props = defineProps<{
   initialData?: any
 }>()
 
-const emit = defineEmits(['add', 'update', 'update:show'])
+const emit = defineEmits(['add', 'update', 'delete', 'update:show'])
 
 const form = reactive({
   title: '',
@@ -120,9 +120,21 @@ const submit = () => {
         </div>
       </div>
 
-      <DialogFooter class="pt-2">
-        <Button variant="outline" @click="$emit('update:show', false)" class="h-10 rounded-lg">取消</Button>
-        <Button @click="submit" class="h-10 rounded-lg font-bold px-8 shadow-md hover:scale-[1.02] active:scale-95 transition-all">{{ isEdit ? '确认修改' : '确认创建' }}</Button>
+      <DialogFooter class="pt-2 flex justify-between items-center w-full">
+        <div class="flex-1">
+          <button 
+            v-if="isEdit"
+            type="button"
+            @click="emit('delete', props.initialData); emit('update:show', false)"
+            class="text-xs text-destructive hover:underline underline-offset-4"
+          >
+            删除此目标
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <Button variant="outline" @click="$emit('update:show', false)" class="h-10 rounded-lg">取消</Button>
+          <Button @click="submit" class="h-10 rounded-lg font-bold px-8 shadow-md hover:scale-[1.02] active:scale-95 transition-all">{{ isEdit ? '确认修改' : '确认创建' }}</Button>
+        </div>
       </DialogFooter>
     </DialogContent>
   </Dialog>
