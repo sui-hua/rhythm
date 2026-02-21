@@ -40,6 +40,7 @@ const form = reactive({
 })
 
 const durationUnit = ref('hour') // 'hour' | 'minute'
+let lastUsedTime = '08:00'
 
 const displayDuration = computed({
   get() {
@@ -150,7 +151,7 @@ watch(() => props.show, (newShow) => {
       }
     } else {
       form.title = ''
-      form.time = '08:00'
+      form.time = lastUsedTime
       form.duration = 0.5
       form.category = '工作'
       form.description = ''
@@ -168,6 +169,7 @@ const submit = () => {
       ...form
     })
   } else {
+    lastUsedTime = form.time
     emit('add', {
       ...form,
       completed: false
