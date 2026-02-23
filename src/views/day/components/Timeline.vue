@@ -18,14 +18,15 @@
       </div>
 
       <!-- TaskItem 组件 -->
-      <TaskItem
-          v-for="(item, index) in dailySchedule"
-          :key="index"
-          :task="item"
-          :index="index"
-          @select="$emit('select-task', $event)"
-          @edit="$emit('edit-task', $event)"
-      />
+      <template v-for="(item, index) in dailySchedule" :key="index">
+        <TaskItem
+            v-if="item.startHour !== undefined"
+            :task="item"
+            :index="index"
+            @select="$emit('select-task', $event)"
+            @edit="$emit('edit-task', $event)"
+        />
+      </template>
       
       <!-- TimelineMarker 组件 -->
       <TimelineMarker :current-hour="currentHour" />

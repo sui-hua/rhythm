@@ -76,6 +76,16 @@ export const db = {
     async delete(id) {
       const { error } = await supabase.from('daily_plans').delete().eq('id', id)
       if (error) throw error
+    },
+    async listByDate(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${day}`
+
+      const { data, error } = await supabase.from('daily_plans').select('*').eq('date', dateStr)
+      if (error) throw error
+      return data
     }
   },
 
@@ -114,8 +124,8 @@ export const db = {
       return data
     },
     async deleteLog(logId) {
-        const { error } = await supabase.from('habit_logs').delete().eq('id', logId)
-        if (error) throw error
+      const { error } = await supabase.from('habit_logs').delete().eq('id', logId)
+      if (error) throw error
     }
   },
 
@@ -126,7 +136,7 @@ export const db = {
       // If start/end provided, filter. Assuming start_time is used for filtering day view.
       if (start) query = query.gte('start_time', start.toISOString())
       if (end) query = query.lte('start_time', end.toISOString())
-      
+
       const { data, error } = await query
       if (error) throw error
       return data
@@ -171,42 +181,42 @@ export const db = {
       if (error) throw error
     },
     async listDaily() {
-        const { data, error } = await supabase.from('daily_summaries').select('*').order('created_at', { ascending: false })
-        if (error) throw error
-        return data
+      const { data, error } = await supabase.from('daily_summaries').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      return data
     },
     async getDaily(date) {
-        const startOfDay = new Date(date)
-        startOfDay.setHours(0,0,0,0)
-        const endOfDay = new Date(date)
-        endOfDay.setHours(23,59,59,999)
-        
-        const { data, error } = await supabase
-            .from('daily_summaries')
-            .select('*')
-            .gte('created_at', startOfDay.toISOString())
-            .lte('created_at', endOfDay.toISOString())
-            .maybeSingle()
-        
-        if (error) throw error
-        return data
+      const startOfDay = new Date(date)
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date(date)
+      endOfDay.setHours(23, 59, 59, 999)
+
+      const { data, error } = await supabase
+        .from('daily_summaries')
+        .select('*')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString())
+        .maybeSingle()
+
+      if (error) throw error
+      return data
     },
     async saveDaily(summary) {
-        // Upsert logic if ID exists, or insert if new. 
-        // For simplicity, just insert or update based on passed data.
-        if (summary.id) {
-             const { data, error } = await supabase.from('daily_summaries').update(summary).eq('id', summary.id).select().single()
-             if (error) throw error
-             return data
-        } else {
-             const { data, error } = await supabase.from('daily_summaries').insert(summary).select().single()
-             if (error) throw error
-             return data
-        }
+      // Upsert logic if ID exists, or insert if new. 
+      // For simplicity, just insert or update based on passed data.
+      if (summary.id) {
+        const { data, error } = await supabase.from('daily_summaries').update(summary).eq('id', summary.id).select().single()
+        if (error) throw error
+        return data
+      } else {
+        const { data, error } = await supabase.from('daily_summaries').insert(summary).select().single()
+        if (error) throw error
+        return data
+      }
     },
     async deleteDaily(id) {
-        const { error } = await supabase.from('daily_summaries').delete().eq('id', id)
-        if (error) throw error
+      const { error } = await supabase.from('daily_summaries').delete().eq('id', id)
+      if (error) throw error
     }
   }
 }

@@ -7,8 +7,8 @@
     <div 
       class="absolute right-0 top-0 bottom-0 w-1 hover:bg-primary/10 cursor-col-resize z-50 transition-colors opacity-0 group-hover/sidebar:opacity-100"
       :class="{ 'bg-primary/20 opacity-100': isResizing }"
-      @mousedown="startResize"
-    ></div>
+      @mousedown="startResize">
+    </div>
 
     <header class="px-6 pt-10 pb-6 shrink-0 border-b border-border mb-4">
       <div class="flex flex-col gap-2">

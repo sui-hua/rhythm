@@ -43,6 +43,7 @@
 | `status`          | Varchar | 状态：'active', 'completed', 'archived' |
 | `priority`        | Int     | 优先级（使用数字，1-低，2-中，3-高）       |
 | `date`            | Date    | 日计划日期                                |
+| `task_time`       | Time    | 计划时间（用于在天视图显示）               |
 
 ---
 
@@ -58,6 +59,8 @@
 | `frequency`    | JSONB   | 频率配置（如：{"type": "daily"}） |
 | `target_value` | Int     | 每日/每次的目标值（例如：8杯水）         |
 | `archived`     | Boolean | 是否已归档                     |
+| `task_time`    | Time    | 计划时间（用于在天视图显示）   |
+| `duration`     | Int     | 持续时间（分钟），用于在天视图显示其占用长度 |
 
 #### 4.2 **习惯打卡记录表 (habit_logs)**
 

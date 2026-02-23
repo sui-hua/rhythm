@@ -68,28 +68,45 @@ const selectedDay = computed(() => parseInt(route.params.day))
 import { db } from '@/services/database'
 
 const tasks = ref([])
+const dailyPlans = ref([])
+const habits = ref([])
+const habitLogs = ref([])
 
 const fetchTasks = async () => {
   try {
-    // Construct date range for the selected day
-    // Using 2026 as the base year based on project context
     const year = 2026
     const month = selectedMonth.value.index
     const day = selectedDay.value
     
-    // Create dates in local time
     const startOfDay = new Date(year, month, day, 0, 0, 0)
     const endOfDay = new Date(year, month, day, 23, 59, 59)
     
+    // Fetch tasks
     tasks.value = await db.tasks.list(startOfDay, endOfDay)
+    
+    // Fetch daily plans for the day
+    dailyPlans.value = await db.dailyPlans.listByDate(startOfDay)
+    
+    // Fetch all habits and their logs
+    const allHabits = await db.habits.list()
+    // For now, show active habits that have a task_time
+    habits.value = allHabits.filter(h => !h.archived && h.task_time)
+    
+    // Collect habit logs for today to determine completion
+    habitLogs.value = habits.value.flatMap(h => h.habit_logs || []).filter(log => {
+      const logDate = new Date(log.completed_at)
+      return logDate >= startOfDay && logDate <= endOfDay
+    })
   } catch (error) {
-    console.error('Failed to fetch tasks:', error)
+    console.error('Failed to fetch data:', error)
   }
 }
 
 const dailySchedule = computed(() => {
-  return tasks.value.map(task => {
-    // Convert DB timestamp to HH:MM format for local UI logic
+  const schedule = []
+  
+  // 1. Process tasks
+  tasks.value.forEach(task => {
     const startDate = new Date(task.start_time)
     const endDate = new Date(task.end_time)
     
@@ -99,8 +116,9 @@ const dailySchedule = computed(() => {
     
     const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
     
-    return {
+    schedule.push({
       id: task.id,
+      type: 'task',
       original: task,
       startHour: startHourVal,
       durationHours,
@@ -111,8 +129,89 @@ const dailySchedule = computed(() => {
       title: task.title,
       description: task.description,
       completed: task.completed
+    })
+  })
+  
+  // 2. Process daily plans (assuming they have task_time)
+  dailyPlans.value.forEach(plan => {
+    let startHourVal, startTimeStr, durationHours, durationStr
+    if (plan.task_time) {
+      const [hours, minutes] = plan.task_time.split(':').map(Number)
+      startHourVal = hours + minutes / 60
+      startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+      durationHours = 0.5 // default duration 30min
+      durationStr = '30分钟'
+    } else {
+      startHourVal = undefined
+      startTimeStr = '未安排'
+      durationHours = 0
+      durationStr = '-'
     }
-  }).sort((a, b) => a.startHour - b.startHour)
+    
+    schedule.push({
+      id: plan.id,
+      type: 'daily_plan',
+      original: plan,
+      startHour: startHourVal,
+      durationHours,
+      rawDuration: durationHours,
+      time: startTimeStr,
+      duration: durationStr,
+      category: '今日计划',
+      title: plan.title,
+      description: plan.description || '',
+      completed: plan.status === 'completed'
+    })
+  })
+  
+  // 3. Process habits
+  habits.value.forEach(habit => {
+    let startHourVal, startTimeStr, durationHours, durationStr
+    if (habit.task_time) {
+      const [hours, minutes] = habit.task_time.split(':').map(Number)
+      startHourVal = hours + minutes / 60
+      startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+      
+      const durationMins = habit.duration || 30
+      durationHours = durationMins / 60
+      
+      if (durationHours < 1) {
+          durationStr = `${durationMins}分钟`
+      } else {
+          durationStr = `${durationHours.toFixed(1)}小时`
+      }
+    } else {
+      startHourVal = undefined
+      startTimeStr = '未安排'
+      durationHours = 0
+      durationStr = '-'
+    }
+    
+    // Check if there is a log for today
+    const isCompleted = habitLogs.value.some(log => log.habit_id === habit.id)
+    
+    schedule.push({
+      id: habit.id,
+      type: 'habit',
+      original: habit,
+      startHour: startHourVal,
+      durationHours,
+      rawDuration: durationHours,
+      time: startTimeStr,
+      duration: durationStr,
+      category: '日常习惯',
+      title: habit.title,
+      description: habit.target_value ? `目标: ${habit.target_value}` : '',
+      completed: isCompleted
+    })
+  })
+  
+  return schedule.sort((a, b) => {
+    if (a.startHour !== undefined && b.startHour !== undefined) return a.startHour - b.startHour
+    if (a.startHour !== undefined) return -1
+    if (b.startHour !== undefined) return 1
+    return 0
+  })
 })
 
 const timeline = ref(null)
