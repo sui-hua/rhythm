@@ -1,5 +1,7 @@
 <script setup>
 import { ref, reactive, watch, nextTick, computed } from 'vue'
+import { db } from '@/services/database'
+import { useAuthStore } from '@/stores/authStore'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -26,10 +28,15 @@ const props = defineProps({
   categories: {
     type: Array,
     default: () => ['工作', '个人', '会议', '设计', '其他']
-  }
+  },
+  selectedYear: Number,
+  selectedMonth: Number,
+  selectedDay: Number
 })
 
-const emit = defineEmits(['close', 'add', 'update', 'delete', 'update:show'])
+const emit = defineEmits(['close', 'refresh', 'update:show'])
+
+const authStore = useAuthStore()
 
 const form = reactive({
   title: '',
@@ -160,20 +167,62 @@ watch(() => props.show, (newShow) => {
   }
 }, { immediate: true })
 
-const submit = () => {
+const submit = async () => {
   if (!form.title || !form.time) return
   
+  const [hours, minutes] = form.time.split(':').map(Number)
+  const durationValue = parseFloat(form.duration)
+  
+  const year = props.selectedYear || 2026
+  const month = props.selectedMonth || 0
+  const day = props.selectedDay || 1
+  
+  const startTime = new Date(year, month, day, hours, minutes)
+  const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
+  
+  try {
+    if (props.initialData) {
+      // 执行更新操作
+      await db.tasks.update(props.initialData.id, {
+        title: form.title,
+        description: form.description,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString()
+      })
+    } else {
+      lastUsedTime = form.time
+      const userId = authStore.userId
+      if (!userId) {
+        console.error('User not authenticated')
+        return
+      }
+      // 执行新增操作
+      await db.tasks.create({
+        user_id: userId,
+        title: form.title,
+        description: form.description,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        completed: false,
+      })
+    }
+    // 通知父组件刷新列表
+    emit('refresh')
+  } catch (e) {
+    console.error('Failed to save task', e)
+  }
+  
+  emit('update:show', false)
+}
+
+const handleDelete = async () => {
   if (props.initialData) {
-    emit('update', {
-      ...props.initialData,
-      ...form
-    })
-  } else {
-    lastUsedTime = form.time
-    emit('add', {
-      ...form,
-      completed: false
-    })
+    try {
+      await db.tasks.delete(props.initialData.id)
+      emit('refresh')
+    } catch (e) {
+      console.error('Failed to delete task', e)
+    }
   }
   emit('update:show', false)
 }
@@ -339,7 +388,7 @@ const submit = () => {
             <button 
               v-if="initialData"
               type="button"
-              @click="emit('delete', initialData); emit('update:show', false)"
+              @click="handleDelete"
               class="text-xs text-destructive hover:underline underline-offset-4 mt-2"
             >
               删除此任务

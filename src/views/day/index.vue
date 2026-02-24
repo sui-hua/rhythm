@@ -3,13 +3,14 @@
     <div class="flex flex-1 h-full relative overflow-hidden bg-zinc-50/50">
       <!-- Sidebar Panel -->
       <Sidebar
-        :selected-day="selectedDay"
+        :selected-year="2026"
         :selected-month="selectedMonth"
+        :selected-day="selectedDay"
         :daily-schedule="dailySchedule"
         :completed-count="completedCount"
         @go-back="goBackToMonth"
         @scroll-to-task="scrollToTask"
-        @toggle-complete="toggleComplete"
+        @refresh="fetchTasks"
         @add-event="openAddModal"
         @edit-task="openEditModal"
       />
@@ -28,9 +29,10 @@
       <AddEventModal
         v-model:show="showAddModal"
         :initial-data="editingTask"
-        @add="handleAddEvent"
-        @update="handleUpdateEvent"
-        @delete="handleDeleteEvent"
+        :selected-year="2026"
+        :selected-month="selectedMonth.index"
+        :selected-day="selectedDay"
+        @refresh="fetchTasks"
       />
     </div>
   </div>
@@ -48,7 +50,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// 月份数据（中英文对照）
+// 月份数据
 const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
 const monthsFull = ['一月 (January)', '二月 (February)', '三月 (March)', '四月 (April)', '五月 (May)', '六月 (June)', '七月 (July)', '八月 (August)', '九月 (September)', '十月 (October)', '十一月 (November)', '十二月 (December)']
 
@@ -217,17 +219,18 @@ const dailySchedule = computed(() => {
   })
 })
 
-const timeline = ref(null)
+const timeline = ref(null) // Timeline 组件引用
 const now = new Date();
-const currentHour = ref(now.getHours() + now.getMinutes() / 60);
+const currentHour = ref(now.getHours() + now.getMinutes() / 60); // 当前时间，以小时为单位的小数表示 (如 8.5 表示 08:30)
 
-// 任务完成统计
+// 任务完成统计：统计每日日程列表中已完成的数量
 const completedCount = computed(() => dailySchedule.value.filter(t => t.completed).length)
 
-// Modal 控制
+// 新增/修改事件 Modal (弹窗) 状态控制
 const showAddModal = ref(false)
 const editingTaskIndex = ref(null)
 
+// 计算正在编辑的任务数据，如果为 null 则表示是在新建任务
 const editingTask = computed(() => {
   if (editingTaskIndex.value !== null) {
     return dailySchedule.value[editingTaskIndex.value]
@@ -235,148 +238,33 @@ const editingTask = computed(() => {
   return null
 })
 
+// 打开添加任务弹窗
 const openAddModal = () => {
   editingTaskIndex.value = null
   showAddModal.value = true
 }
 
+// 打开编辑任务弹窗（传入要编辑的任务在列表中的索引）
 const openEditModal = (index) => {
   editingTaskIndex.value = index
   showAddModal.value = true
 }
 
-const handleAddEvent = async (eventData) => {
-  const [hours, minutes] = eventData.time.split(':').map(Number)
-  const duration = parseFloat(eventData.duration)
-  
-  // Construct Date objects
-  const year = 2026
-  const month = selectedMonth.value.index
-  const day = selectedDay.value
-  
-  const startTime = new Date(year, month, day, hours, minutes)
-  const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000)
-  
-  try {
-    // Get userId from pinia store
-    const userId = authStore.userId
-    if (!userId) {
-      console.error('User not authenticated')
-      return
-    }
 
-    await db.tasks.create({
-      user_id: userId,
-      title: eventData.title,
-      description: eventData.description,
-      start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(),
-      completed: false,
-    })
-    await fetchTasks()
-  } catch (e) {
-    console.error('Add task failed', e)
-  }
-  
-  showAddModal.value = false
-}
-
-const handleUpdateEvent = async (updatedData) => {
-  if (editingTaskIndex.value !== null) {
-    const task = dailySchedule.value[editingTaskIndex.value]
-    if (task) {
-        const [hours, minutes] = updatedData.time.split(':').map(Number)
-        const duration = parseFloat(updatedData.duration)
-        
-        const year = 2026
-        const month = selectedMonth.value.index
-        const day = selectedDay.value
-        
-        const startTime = new Date(year, month, day, hours, minutes)
-        const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000)
-
-        try {
-            await db.tasks.update(task.id, {
-                title: updatedData.title,
-                description: updatedData.description,
-                start_time: startTime.toISOString(),
-                end_time: endTime.toISOString()
-            })
-            await fetchTasks()
-        } catch (e) {
-            console.error('Update task failed', e)
-        }
-    }
-  }
-  showAddModal.value = false
-}
-
-const handleDeleteEvent = async () => {
-  if (editingTaskIndex.value !== null) {
-    const task = dailySchedule.value[editingTaskIndex.value]
-    if (task) {
-      try {
-        await db.tasks.delete(task.id)
-        await fetchTasks()
-      } catch (e) {
-        console.error('Delete task failed', e)
-      }
-    }
-  }
-  showAddModal.value = false
-}
 
 // 交互逻辑
-const toggleComplete = async (index) => {
-  const task = dailySchedule.value[index]
-  if (task) {
-      try {
-          if (task.type === 'task') {
-              // 处理普通任务：直接切换 completed 状态（ true / false ）
-              await db.tasks.update(task.id, { completed: !task.completed })
-          } else if (task.type === 'habit') {
-              // 处理日常习惯打卡：习惯的完成是通过在 habit_logs 表中增加记录来实现的
-              if (task.completed) {
-                  // 如果当前是已完成状态，说明要取消打卡，需要找到当天的打卡记录并删除
-                  const log = habitLogs.value.find(l => l.habit_id === task.id)
-                  if (log) {
-                      await db.habits.deleteLog(log.id)
-                  }
-              } else {
-                  // 如果当前是未完成状态，说明要进行打卡，新增一条打卡记录
-                  // 使用当天中午 12:00 作为打卡时间，避免跨时区计算时出现日期偏移到前一天的问题
-                  const year = 2026 // TODO: 动态获取当前年份
-                  const month = selectedMonth.value.index
-                  const day = selectedDay.value
-                  const completedDate = new Date(year, month, day, 12, 0, 0)
-                  await db.habits.log(task.id, '')
-              }
-          } else if (task.type === 'daily_plan') {
-              // 处理今日计划：支持数字类型 (0/1) 或字符串类型 ('pending'/'completed') 的状态
-              const isNumeric = typeof task.original.status === 'number'
-              const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
-              await db.dailyPlans.update(task.id, { status: newStatus })
-          }
-          
-          // 状态更新后，重新拉取所有数据以刷新页面显示
-          await fetchTasks()
-      } catch (e) {
-          console.error('切换完成状态失败', e)
-      }
-  }
-}
-
 const scrollToTask = (index, behavior = 'smooth') => {
+  // 根据任务索引将视图滚动到相应的时间块
   const el = document.getElementById(`task-${index}`)
   if (el) el.scrollIntoView({ behavior, block: 'center' })
 }
 
-// 返回月视图
+// 返回上一级月视图
 const goBackToMonth = () => {
   router.push(`/month/${selectedMonth.value.index + 1}`)
 }
 
-// 动态时间线更新模拟
+// 动态时间线更新及初始滚动位置设置
 onMounted(async () => {
   // 1. 立即尝试滚动到 08:00 (默认位置)
   // 此时数据还没加载，先让用户看到 08:00
@@ -396,7 +284,7 @@ onMounted(async () => {
     scrollToTask(0)
   }
 
-  // 更新当前时间
+  // 更新当前时间指示线：每秒重新获取最新时间
   setInterval(() => {
     const now = new Date();
     currentHour.value = now.getHours() + now.getMinutes() / 60;

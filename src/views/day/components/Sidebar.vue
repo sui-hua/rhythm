@@ -29,7 +29,7 @@
           <div @click.stop @dblclick.stop>
             <Checkbox 
               :checked="item.completed" 
-              @update:checked="$emit('toggleComplete', index)"
+              @update:checked="handleToggleComplete(item)"
               class="shrink-0 w-5 h-5 rounded-md"
             />
           </div>
@@ -69,6 +69,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { db } from '@/services/database'
 import { Plus, Pencil } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -78,6 +79,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useResizable } from '@/composables/useResizable'
 
 const props = defineProps({
+  selectedYear: Number,
   selectedDay: Number, // 选中的几号
   selectedMonth: Object, // 选中的月份信息
   dailySchedule: Array, // 整合后的每日日程列表
@@ -88,5 +90,50 @@ const props = defineProps({
 const { width, startResize, isResizing } = useResizable()
 
 // 定义向外暴露的自定义事件
-defineEmits(['goBack', 'scrollToTask', 'toggleComplete', 'addEvent', 'edit-task'])
+const emit = defineEmits(['goBack', 'scrollToTask', 'refresh', 'addEvent', 'edit-task'])
+
+// 替代原本在父组件的交互逻辑：支持各类日程项的完成切换
+const handleToggleComplete = async (task) => {
+  if (task) {
+      try {
+          if (task.type === 'task') {
+              // 处理普通任务：直接切换 completed 状态（ true / false ）
+              await db.tasks.update(task.id, { completed: !task.completed })
+          } else if (task.type === 'habit') {
+              // 处理日常习惯打卡：习惯的完成是通过在 habit_logs 表中增加记录来实现的
+              if (task.completed) {
+                  // 如果当前是已完成状态，说明要取消打卡，需要查找打卡记录并删除
+                  const logs = await db.habits.list().then(res => res.find(h => h.id === task.id)?.habit_logs || [])
+                  
+                  const year = props.selectedYear || 2026
+                  const month = props.selectedMonth ? props.selectedMonth.index : 0
+                  const day = props.selectedDay || 1
+                  const startOfDay = new Date(year, month, day, 0, 0, 0)
+                  const endOfDay = new Date(year, month, day, 23, 59, 59)
+                  
+                  const log = logs.find(l => {
+                    const logDate = new Date(l.completed_at)
+                    return logDate >= startOfDay && logDate <= endOfDay
+                  })
+                  
+                  if (log) {
+                      await db.habits.deleteLog(log.id)
+                  }
+              } else {
+                  // 如果当前是未完成状态，说明要进行打卡，新增一条打卡记录（会自动采用当前系统时间）
+                  await db.habits.log(task.id, '')
+              }
+          } else if (task.type === 'daily_plan') {
+              // 处理今日计划：支持数字类型 (0/1) 或字符串类型 ('pending'/'completed') 的状态
+              const isNumeric = typeof task.original.status === 'number'
+              const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
+              await db.dailyPlans.update(task.id, { status: newStatus })
+          }
+          // 状态更新后，触发父组件刷新数据
+          emit('refresh')
+      } catch (e) {
+          console.error('切换完成状态失败', e)
+      }
+  }
+}
 </script>
