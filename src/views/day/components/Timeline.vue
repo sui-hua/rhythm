@@ -17,7 +17,7 @@
         </div>
       </div>
 
-      <!-- TaskItem 组件 -->
+      <!-- 渲染具体日程项目 (TaskItem 组件) -->
       <template v-for="(item, index) in dailySchedule" :key="index">
         <TaskItem
             v-if="item.startHour !== undefined"
@@ -28,7 +28,7 @@
         />
       </template>
       
-      <!-- TimelineMarker 组件 -->
+      <!-- 当前时间指示线 (TimelineMarker 组件) -->
       <TimelineMarker :current-hour="currentHour" />
     </div>
   </ScrollArea>
@@ -40,17 +40,19 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import TaskItem from './TaskItem.vue'
 import TimelineMarker from './TimelineMarker.vue'
 
-defineProps({
-  selectedDay: Number,
-  dailySchedule: Array,
-  currentHour: Number
+const props = defineProps({
+  selectedDay: Number, // 选中的几号
+  dailySchedule: Array, // 整合后的每日日程列表，包含各任务的具体显示参数
+  currentHour: Number // 当前时间（以小数形式表示的小时数，用于计算当前时间线位置）
 })
 
 const timelineContainerRef = ref(null)
 
+// 将滚动容器的元素暴露给父组件使用
 defineExpose({
   timelineContainer: computed(() => timelineContainerRef.value?.viewportElement)
 })
 
+// 定义向父组件发射的事件
 defineEmits(['edit-task', 'select-task'])
 </script>

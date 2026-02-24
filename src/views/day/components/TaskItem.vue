@@ -59,10 +59,11 @@
 <script setup>
 import { Badge } from '@/components/ui/badge'
 
-defineProps({
-  task: Object,
-  index: Number
+const props = defineProps({
+  task: Object, // 单个任务的详细数据
+  index: Number // 任务在列表中的索引
 })
 
+// 向父组件触发的自定义事件：单击选择任务、双击编辑任务
 defineEmits(['select', 'edit'])
 </script>

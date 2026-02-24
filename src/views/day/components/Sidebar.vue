@@ -3,7 +3,7 @@
     class="border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden group/sidebar"
     :style="{ width: width + 'px' }"
   >
-    <!-- Resize Handle -->
+    <!-- 侧边栏宽度拖拽调整手柄 -->
     <div 
       class="absolute right-0 top-0 bottom-0 w-1 hover:bg-primary/10 cursor-col-resize z-50 transition-colors opacity-0 group-hover/sidebar:opacity-100"
       :class="{ 'bg-primary/20 opacity-100': isResizing }"
@@ -17,6 +17,7 @@
       </div>
     </header>
 
+    <!-- 侧边栏任务列表，可滚动 -->
     <ScrollArea class="flex-1 px-4 relative z-10 no-scrollbar">
       <div class="flex flex-col gap-2 pb-24 pt-2">
         <div v-for="(item, index) in dailySchedule" :key="index" 
@@ -46,6 +47,7 @@
       </div>
     </ScrollArea>
 
+    <!-- 侧边栏底部统计和添加按钮 -->
     <footer class="p-6 border-t border-border bg-zinc-50/50 backdrop-blur-sm relative z-10 flex flex-col gap-4">
       <div class="w-full">
         <div class="flex justify-between items-center mb-2">
@@ -76,13 +78,15 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useResizable } from '@/composables/useResizable'
 
 const props = defineProps({
-  selectedDay: Number,
-  selectedMonth: Object,
-  dailySchedule: Array,
-  completedCount: Number
+  selectedDay: Number, // 选中的几号
+  selectedMonth: Object, // 选中的月份信息
+  dailySchedule: Array, // 整合后的每日日程列表
+  completedCount: Number // 已完成的任务数量
 })
 
+// 侧边栏宽度拖拽逻辑
 const { width, startResize, isResizing } = useResizable()
 
+// 定义向外暴露的自定义事件
 defineEmits(['goBack', 'scrollToTask', 'toggleComplete', 'addEvent', 'edit-task'])
 </script>

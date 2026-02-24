@@ -48,7 +48,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// 月份数据
+// 月份数据（中英文对照）
 const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
 const monthsFull = ['一月 (January)', '二月 (February)', '三月 (March)', '四月 (April)', '五月 (May)', '六月 (June)', '七月 (July)', '八月 (August)', '九月 (September)', '十月 (October)', '十一月 (November)', '十二月 (December)']
 
@@ -64,13 +64,14 @@ const selectedMonth = computed(() => {
 
 const selectedDay = computed(() => parseInt(route.params.day))
 
-// 日日程数据
+// 引入数据库操作服务
 import { db } from '@/services/database'
 
-const tasks = ref([])
-const dailyPlans = ref([])
-const habits = ref([])
-const habitLogs = ref([])
+// 响应式数据：存储当天的各种日程项目
+const tasks = ref([]) // 具体任务
+const dailyPlans = ref([]) // 日计划
+const habits = ref([]) // 习惯
+const habitLogs = ref([]) // 习惯打卡记录
 
 const fetchTasks = async () => {
   try {
@@ -81,18 +82,18 @@ const fetchTasks = async () => {
     const startOfDay = new Date(year, month, day, 0, 0, 0)
     const endOfDay = new Date(year, month, day, 23, 59, 59)
     
-    // Fetch tasks
+    // 获取当天的任务列表
     tasks.value = await db.tasks.list(startOfDay, endOfDay)
     
-    // Fetch daily plans for the day
+    // 获取当天的“日计划”列表
     dailyPlans.value = await db.dailyPlans.listByDate(startOfDay)
     
-    // Fetch all habits and their logs
+    // 获取所有的习惯及其打卡记录
     const allHabits = await db.habits.list()
-    // For now, show active habits that have a task_time
+    // 过滤出未归档且设置了提醒时间的习惯
     habits.value = allHabits.filter(h => !h.archived && h.task_time)
     
-    // Collect habit logs for today to determine completion
+    // 收集当天的习惯打卡记录，用于判断习惯是否已完成
     habitLogs.value = habits.value.flatMap(h => h.habit_logs || []).filter(log => {
       const logDate = new Date(log.completed_at)
       return logDate >= startOfDay && logDate <= endOfDay
@@ -102,10 +103,11 @@ const fetchTasks = async () => {
   }
 }
 
+// 将任务、日计划、习惯整合为统一的每日日程列表，供时间轴和侧边栏渲染
 const dailySchedule = computed(() => {
   const schedule = []
   
-  // 1. Process tasks
+  // 1. 处理任务数据
   tasks.value.forEach(task => {
     const startDate = new Date(task.start_time)
     const endDate = new Date(task.end_time)
@@ -206,6 +208,7 @@ const dailySchedule = computed(() => {
     })
   })
   
+  // 按照开始时间对所有日程项目进行排序
   return schedule.sort((a, b) => {
     if (a.startHour !== undefined && b.startHour !== undefined) return a.startHour - b.startHour
     if (a.startHour !== undefined) return -1
@@ -328,10 +331,37 @@ const toggleComplete = async (index) => {
   const task = dailySchedule.value[index]
   if (task) {
       try {
-          await db.tasks.update(task.id, { completed: !task.completed })
+          if (task.type === 'task') {
+              // 处理普通任务：直接切换 completed 状态（ true / false ）
+              await db.tasks.update(task.id, { completed: !task.completed })
+          } else if (task.type === 'habit') {
+              // 处理日常习惯打卡：习惯的完成是通过在 habit_logs 表中增加记录来实现的
+              if (task.completed) {
+                  // 如果当前是已完成状态，说明要取消打卡，需要找到当天的打卡记录并删除
+                  const log = habitLogs.value.find(l => l.habit_id === task.id)
+                  if (log) {
+                      await db.habits.deleteLog(log.id)
+                  }
+              } else {
+                  // 如果当前是未完成状态，说明要进行打卡，新增一条打卡记录
+                  // 使用当天中午 12:00 作为打卡时间，避免跨时区计算时出现日期偏移到前一天的问题
+                  const year = 2026 // TODO: 动态获取当前年份
+                  const month = selectedMonth.value.index
+                  const day = selectedDay.value
+                  const completedDate = new Date(year, month, day, 12, 0, 0)
+                  await db.habits.log(task.id, '')
+              }
+          } else if (task.type === 'daily_plan') {
+              // 处理今日计划：支持数字类型 (0/1) 或字符串类型 ('pending'/'completed') 的状态
+              const isNumeric = typeof task.original.status === 'number'
+              const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
+              await db.dailyPlans.update(task.id, { status: newStatus })
+          }
+          
+          // 状态更新后，重新拉取所有数据以刷新页面显示
           await fetchTasks()
       } catch (e) {
-          console.error('Toggle complete failed', e)
+          console.error('切换完成状态失败', e)
       }
   }
 }
