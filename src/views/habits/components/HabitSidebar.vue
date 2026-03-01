@@ -1,26 +1,3 @@
-<script setup>
-import { Plus } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { ScrollArea } from '@/components/ui/scroll-area'
-
-defineProps({
-  habits: {
-    type: Array,
-    required: true
-  },
-  selectedHabitId: {
-    type: String,
-    default: null
-  }
-})
-
-import { useResizable } from '@/composables/useResizable'
-const { width, startResize, isResizing } = useResizable()
-
-defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
-</script>
-
 <template>
   <aside 
     class="border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden group/sidebar"
@@ -40,14 +17,14 @@ defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
       </div>
     </header>
 
-    <ScrollArea class="flex-1 px-4 relative z-10 no-scrollbar">
-      <div class="flex flex-col gap-2 pb-24 pt-2">
+    <ScrollArea class="flex-1 px-2 relative z-10 no-scrollbar">
+      <div class="flex flex-col gap-2 pb-24 pt-2 px-2">
         <button 
           v-for="habit in habits" 
           :key="habit.id"
           @click="$emit('select-habit', habit)"
           @dblclick="$emit('edit-habit', habit)"
-          class="flex flex-col items-start gap-1 p-3 rounded-lg transition-all text-left group"
+          class="flex flex-col items-start gap-1 p-3 mx-1 rounded-lg transition-all text-left group"
           :class="selectedHabitId === habit.id ? 'bg-secondary ring-1 ring-border shadow-sm' : 'hover:bg-zinc-50'"
         >
           <h4 class="text-sm font-semibold tracking-tight transition-colors"
@@ -62,10 +39,10 @@ defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
     <footer class="p-6 border-t border-border bg-zinc-50/50 backdrop-blur-sm relative z-10 flex flex-col gap-4">
       <div class="w-full">
         <div class="flex justify-between items-center mb-2">
-          <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">习惯坚持度</span>
-          <span class="text-[10px] font-bold text-primary">65%</span>
+          <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">今日习惯完成度</span>
+          <span class="text-[10px] font-bold text-primary">{{ todayCompletionRate }}%</span>
         </div>
-        <Progress :model-value="65" class="h-1" />
+        <Progress :model-value="todayCompletionRate" class="h-1 shadow-none" />
       </div>
       <Button 
         class="w-full gap-2 h-9 text-xs font-semibold"
@@ -77,3 +54,30 @@ defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
     </footer>
   </aside>
 </template>
+
+<script setup>
+import { Plus } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { ScrollArea } from '@/components/ui/scroll-area'
+
+defineProps({
+  habits: {
+    type: Array,
+    required: true
+  },
+  selectedHabitId: {
+    type: String,
+    default: null
+  },
+  todayCompletionRate: {
+    type: Number,
+    default: 0
+  }
+})
+
+import { useResizable } from '@/composables/useResizable'
+const { width, startResize, isResizing } = useResizable()
+
+defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
+</script>

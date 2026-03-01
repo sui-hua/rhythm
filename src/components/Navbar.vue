@@ -18,7 +18,6 @@
         <template v-if="contextInfo.show">
           <div class="flex items-center gap-2 px-4 pr-6 border-r border-zinc-100 mr-2">
             <template v-if="contextInfo.mode === 'month'">
-          
               <button 
                   @click="router.push(contextInfo.backPath)"
                   class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors mx-1"

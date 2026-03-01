@@ -4,10 +4,10 @@
     <HabitSidebar 
       :habits="habits" 
       :selected-habit-id="selectedHabit?.id"
+      :today-completion-rate="todayCompletionRate"
       @select-habit="selectedHabit = $event"
       @edit-habit="handleSidebarEdit"
       @add-habit="showAddModal = true"
-      @back="goBack"
     />
 
     <div class="flex-1 bg-zinc-50/50 relative overflow-hidden flex flex-col">
@@ -16,23 +16,17 @@
         <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
           <header class="flex flex-col gap-2 mb-2">
             <h3 class="text-3xl font-bold tracking-tight text-foreground">{{ selectedHabit.title }}</h3>
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{{ dateStore.currentDate.getFullYear() }}年度计划</span>
-              <span class="w-1 h-1 rounded-full bg-border" />
-              <span>坚持就是胜利</span>
-            </div>
           </header>
 
           <HabitStats :stats="habitStats" />
 
           <HabitCalendar 
-            :month-name="'一月'"
-            :calendar-grid="calendarGrid"
             :completed-days="selectedHabit.completedDays"
             @toggle-complete="toggleComplete"
+            @month-changed="handleMonthChange"
           />
 
-          <!-- Quick Log Card -->
+          <!-- Today Log Card -->
           <Card class="border shadow-sm rounded-xl overflow-hidden bg-background">
             <CardContent class="p-4 flex items-center gap-6">
               <div class="shrink-0 flex flex-col border-r pr-6 gap-1">
@@ -61,14 +55,14 @@
 
     <AddHabitModal 
       v-model:show="showAddModal"
-      @add="handleAddHabit"
+      @refresh="fetchHabits"
     />
 
     <EditHabitModal 
       v-model:show="showEditModal"
       :habitData="selectedHabit"
-      @update="handleUpdateHabit"
-      @delete="handleDeleteHabit"
+      @refresh="fetchHabits"
+      @deleted="selectedHabit = null"
     />
   </div>
 </template>
@@ -95,20 +89,28 @@ import { useDateStore } from '@/stores/dateStore'
 const router = useRouter()
 const authStore = useAuthStore()
 const dateStore = useDateStore()
-const habits = ref([])
 
-const currentYear = computed(() => dateStore.currentDate.getFullYear())
-const currentMonth = computed(() => dateStore.currentDate.getMonth())
+// 用于在日历上查看不同时间刻的月份参数（独立于全局真实时间）
+const viewYear = ref(dateStore.currentDate.getFullYear())
+const viewMonth = ref(dateStore.currentDate.getMonth())
+
+const handleMonthChange = ({ year, month }) => {
+  viewYear.value = year
+  viewMonth.value = month
+  fetchHabits()
+}
+
+const habits = ref([])
 
 const fetchHabits = async () => {
   try {
     const rawHabits = await db.habits.list()
     habits.value = rawHabits.map(h => {
         const logs = h.habit_logs || []
-        // Filter logs for current view month
+        // Filter logs for view month
         const monthlyLogs = logs.filter(log => {
              const d = new Date(log.completed_at)
-             return d.getFullYear() === currentYear.value && d.getMonth() === currentMonth.value
+             return d.getFullYear() === viewYear.value && d.getMonth() === viewMonth.value
         })
         
         const completedDays = monthlyLogs.map(log => new Date(log.completed_at).getDate())
@@ -142,6 +144,18 @@ const calculateStreak = (logs) => {
 
 onMounted(fetchHabits)
 
+const todayCompletionRate = computed(() => {
+  if (!habits.value || habits.value.length === 0) return 0
+  
+  const today = dateStore.currentDate.getDate()
+  // 筛选出今天有打卡记录的习惯数
+  const completedTodayCount = habits.value.filter(h => {
+    return h.monthlyLogs.some(log => new Date(log.completed_at).getDate() === today)
+  }).length
+  
+  return Math.round((completedTodayCount / habits.value.length) * 100)
+})
+
 const selectedHabit = ref(null)
 const showAddModal = ref(false)
 const showEditModal = ref(false)
@@ -157,48 +171,6 @@ const getCurrentDate = () => {
   return `${now.getMonth() + 1}月${now.getDate()}日`
 }
 
-const handleAddHabit = async (newHabit) => {
-  try {
-      const userId = authStore.userId
-      if (!userId) {
-          console.error('User not authenticated')
-          return
-      }
-
-      await db.habits.create({
-          user_id: userId,
-          title: newHabit.title,
-          frequency: newHabit.frequency || { type: 'daily' },
-          target_value: newHabit.target_value || 1,
-          archived: false
-      })
-      await fetchHabits()
-      showAddModal.value = false
-  } catch (e) {
-      console.error('Add habit failed', e)
-  }
-}
-
-const handleUpdateHabit = async (updatedData) => {
-  try {
-    await db.habits.update(updatedData.id, {
-      title: updatedData.title
-    })
-    await fetchHabits()
-  } catch (e) {
-    console.error('Update habit failed', e)
-  }
-}
-
-const handleDeleteHabit = async (habitId) => {
-  try {
-    await db.habits.delete(habitId)
-    selectedHabit.value = null
-    await fetchHabits()
-  } catch (e) {
-    console.error('Delete habit failed', e)
-  }
-}
 
 const habitStats = computed(() => {
   if (!selectedHabit.value) return []
@@ -210,18 +182,7 @@ const habitStats = computed(() => {
   ]
 })
 
-const calendarGrid = computed(() => {
-  const year = currentYear.value;
-  const month = currentMonth.value;
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const grid = [];
-  for (let i = 0; i < offset; i++) grid.push(null);
-  for (let i = 1; i <= daysInMonth; i++) grid.push(i);
-  return grid;
-})
 
 const toggleComplete = async (day) => {
   if (!selectedHabit.value) return
@@ -235,7 +196,8 @@ const toggleComplete = async (day) => {
         if (existingLog) {
           await db.habits.deleteLog(existingLog.id)
         } else {
-          const date = new Date(currentYear.value, currentMonth.value, day, 12, 0, 0)
+          // 只允许打卡记录当前日历选中的那年、那月、那天，否则可能导致紊乱
+          const date = new Date(viewYear.value, viewMonth.value, day, 12, 0, 0)
           await db.habits.log(habit.id, '', date.toISOString())
         }
       await fetchHabits()
@@ -261,7 +223,7 @@ const handleQuickLog = async () => {
     
     if (!existingLog) {
       // Create new log for today
-      const date = new Date(currentYear.value, currentMonth.value, today, 12, 0, 0)
+      const date = new Date(dateStore.currentDate.getFullYear(), dateStore.currentDate.getMonth(), today, 12, 0, 0)
       await db.habits.log(selectedHabit.value.id, habitNote.value.trim(), date.toISOString())
     }
     
@@ -274,9 +236,6 @@ const handleQuickLog = async () => {
 }
 
 
-const goBack = () => {
-  router.push('/year')
-}
 </script>
 
 <style scoped>
