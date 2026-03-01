@@ -67,9 +67,10 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
 
             // 如果未被打卡覆盖，则伴随文本存储到最新记录体系内
             if (!existingLog) {
+                // 同样基于系统当前的现实时间，不被左侧日历面板等其它组件的操作带偏
                 const date = new Date(
-                    dateStore.currentDate.getFullYear(),
-                    dateStore.currentDate.getMonth(),
+                    now.getFullYear(),
+                    now.getMonth(),
                     today,
                     12,
                     0,
@@ -85,9 +86,10 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
             return false
         }
     }
-
     return {
         toggleComplete,
         handleQuickLog
     }
 }
+
+

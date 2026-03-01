@@ -39,10 +39,8 @@ const routes = [
   },
   {
     path: '/day',
-    redirect: () => {
-      const now = new Date()
-      return `/day/${now.getMonth() + 1}/${now.getDate()}`
-    }
+    name: 'DayViewToday',
+    component: DayView
   },
   {
     path: '/habits',

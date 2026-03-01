@@ -24,11 +24,15 @@ export const habits = {
         const { error } = await supabase.from('habits').delete().eq('id', id)
         if (error) throw error
     },
-    async log(habitId, log = '') {
-        const { data, error } = await supabase.from('habit_logs').insert({
+    async log(habitId, log = '', completedAt = null) {
+        const payload = {
             habit_id: habitId,
             log
-        }).select().single()
+        }
+        if (completedAt) {
+            payload.completed_at = completedAt
+        }
+        const { data, error } = await supabase.from('habit_logs').insert(payload).select().single()
         if (error) throw error
         return data
     },

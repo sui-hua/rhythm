@@ -17,13 +17,21 @@ export function useHabitStats(habits, selectedHabit) {
     const todayCompletionRate = computed(() => {
         // 若尚未加载习惯项目，率值为 0
         if (!habits.value || habits.value.length === 0) return 0
+        // 直接抓取系统真实今天，不受日历或其它视图干扰
+        const todayDate = new Date()
+        const currentYear = todayDate.getFullYear()
+        const currentMonth = todayDate.getMonth()
+        const currentDay = todayDate.getDate()
 
-        const today = dateStore.currentDate.getDate()
-
-        // 遍历习惯列表，检查它们每项在“今日”是否存在记录被标记为了完成的痕迹
+        // 遍历习惯列表，检查它们每项在真实系统时间“今日”是否存在打卡记录
         const completedTodayCount = habits.value.filter((h) => {
-            // 遍历月内细分日志来核实今日时间段匹配项
-            return h.monthlyLogs.some((log) => new Date(log.completed_at).getDate() === today)
+            // 使用不受页面翻页控制的全量 logs 过滤
+            return h.logs.some((log) => {
+                const logDate = new Date(log.completed_at)
+                return logDate.getFullYear() === currentYear &&
+                    logDate.getMonth() === currentMonth &&
+                    logDate.getDate() === currentDay
+            })
         }).length
 
         return Math.round((completedTodayCount / habits.value.length) * 100)

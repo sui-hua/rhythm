@@ -15,8 +15,8 @@
     <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out translate-y-0opacity-100 pointer-events-auto">
       <div class="flex items-center gap-1">
         <!-- 例如身处月或者日页面，显示左侧快捷返回及切换区域 -->
-        <template v-if="contextInfo.show">
-          <div class="flex items-center gap-2 px-4 pr-6 border-r border-zinc-100 mr-2">
+        <Transition name="nav-context">
+          <div v-if="contextInfo.show" class="flex items-center gap-2 px-4 pr-6 border-r border-zinc-100 mr-2 overflow-hidden">
             <template v-if="contextInfo.mode === 'month'">
               <button 
                   @click="router.push(contextInfo.backPath)"
@@ -56,7 +56,7 @@
               </div>
             </template>
           </div>
-        </template>
+        </Transition>
 
         <Button
           v-for="item in navItems"
@@ -67,7 +67,7 @@
           :class="cn(
             'rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500',
             isActive(item) 
-              ? 'bg-black text-white hover:bg-black hover:text-white shadow-lg' 
+              ? 'bg-black text-white shadow-lg hover:bg-black hover:text-white' 
               : 'text-zinc-400 hover:text-black hover:bg-zinc-50'
           )"
         >
@@ -114,12 +114,12 @@ const route = useRoute()
 // 动态获取当天的路由路径，用于进入“时序”时默认跳转
 const getTodayPath = () => {
   const now = new Date() // As per user metadata context
-  return `/day/${now.getMonth() + 1}/${now.getDate()}`
+  return '/day'
 }
 
 // 导航栏菜单配置
 const navItems = [
-  { name: '时序 ', path: getTodayPath(), icon: LayoutGrid, base: '/year' },
+  { name: '时序 ', path: getTodayPath(), icon: LayoutGrid, base: '/day' },
   { name: '习惯', path: '/habits', icon: CheckCircle2, base: '/habits' },
   { name: '所向 ', path: '/direction', icon: Compass, base: '/direction' },
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
@@ -128,8 +128,9 @@ const navItems = [
 // 判断导航项是否激活
 // 特殊情况处理：因为时序拥有多层级(年、月、日)，如果处在其中任何一层，都算“时序”处于激活状态
 const isActive = (item) => {
-  if (item.base === '/year' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path === '/year')) return true
-  return route.path === item.path
+  // 时序拥有多层级(年、月、日)，处在任何一层都算激活
+  if (item.base === '/day' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path === '/year')) return true
+  return route.path === item.path || route.path.startsWith(item.base)
 }
 
 /**
@@ -148,11 +149,12 @@ const contextInfo = computed(() => {
       mode: 'month'
     }
   }
-  if (path.startsWith('/day/')) {
-    const monthIndex = parseInt(route.params.monthIndex) - 1 // Fix 1-based index
-    const day = parseInt(route.params.day)
+  if (path.startsWith('/day')) {
+    const now = new Date()
+    const monthIndex = route.params.monthIndex ? parseInt(route.params.monthIndex) - 1 : now.getMonth()
+    const day = route.params.day ? parseInt(route.params.day) : now.getDate()
     
-    // 计算前一天与后一天的跳转路由路径，用于左右切换按钮
+    // 计算前一天与后一天的跳转路由路径
     const currentDate = new Date(currentYear, monthIndex, day)
     
     const prevDate = new Date(currentDate)
@@ -179,3 +181,24 @@ const handleLogout = async () => {
   await supabase.auth.signOut()
 }
 </script>
+
+<style scoped>
+/* 导航栏左侧面包屑区域的展开/收起过渡 */
+.nav-context-enter-active,
+.nav-context-leave-active {
+  transition: max-width 0.4s ease, opacity 0.3s ease, margin 0.4s ease, padding 0.4s ease;
+}
+.nav-context-enter-from,
+.nav-context-leave-to {
+  max-width: 0;
+  opacity: 0;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+.nav-context-enter-to,
+.nav-context-leave-from {
+  max-width: 300px;
+  opacity: 1;
+}
+</style>

@@ -4,10 +4,10 @@
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-2 text-center">
           <h1 class="text-2xl font-semibold tracking-tight">
-            {{ initialData ? '编辑任务' : '新增任务' }}
+            {{ initialData ? (isHabit ? '编辑习惯' : '编辑任务') : '新增任务' }}
           </h1>
           <p class="text-sm text-muted-foreground">
-            {{ initialData ? '更新您的任务详情' : '填写下方信息以创建新任务' }}
+            {{ initialData ? (isHabit ? '更新您的习惯详情' : '更新您的任务详情') : '填写下方信息以创建新任务' }}
           </p>
         </div>
 
@@ -38,8 +38,8 @@
             />
           </div>
 
-          <!-- Description Group -->
-          <div class="grid gap-2">
+          <!-- Description Group (仅任务类型显示) -->
+          <div v-if="!isHabit" class="grid gap-2">
             <label for="description" class="text-sm font-medium leading-none">任务描述</label>
             <Input 
               id="description"
@@ -49,8 +49,8 @@
             />
           </div>
 
-          <!-- Category Group -->
-          <div class="grid gap-2">
+          <!-- Category Group (仅任务类型显示) -->
+          <div v-if="!isHabit" class="grid gap-2">
             <label class="text-sm font-medium leading-none">分类</label>
             <div class="flex gap-2 flex-wrap">
               <Button 
@@ -88,7 +88,7 @@
               取消
             </Button>
             <button 
-              v-if="initialData"
+              v-if="initialData && !isHabit"
               type="button"
               @click="handleDelete"
               class="text-xs text-destructive hover:underline underline-offset-4 mt-2"
@@ -131,6 +131,9 @@ const emit = defineEmits(['close', 'refresh', 'update:show'])
 
 const authStore = useAuthStore()
 
+// 判断当前编辑的项目是否为习惯类型
+const isHabit = computed(() => props.initialData?.type === 'habit')
+
 const form = reactive({
   title: '',
   time: '',
@@ -146,14 +149,13 @@ watch(() => props.show, (newShow) => {
     if (props.initialData) {
       form.title = props.initialData.title || ''
       form.time = props.initialData.time || ''
-      // Remove 'H' from duration string if it exists and convert to number
-      const durationStr = props.initialData.duration || '1.0H'
-      
-      // Use raw duration if available to avoid precision loss from toFixed(1)
+
+      // 根据类型正确解析时长
       let durationVal
       if (props.initialData.rawDuration !== undefined) {
         durationVal = props.initialData.rawDuration
       } else {
+        const durationStr = props.initialData.duration || '1.0H'
         durationVal = parseFloat(String(durationStr).replace('H', ''))
       }
       
@@ -175,31 +177,48 @@ const submit = async () => {
   
   const [hours, minutes] = form.time.split(':').map(Number)
   const durationValue = parseFloat(form.duration)
-  
-  const year = dateStore.currentDate.getFullYear()
-  const month = dateStore.currentDate.getMonth()
-  const day = dateStore.currentDate.getDate()
-  
-  const startTime = new Date(year, month, day, hours, minutes)
-  const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
-  
+
   try {
     if (props.initialData) {
-      // 执行更新操作
-      await db.tasks.update(props.initialData.id, {
-        title: form.title,
-        description: form.description,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString()
-      })
+      // === 编辑模式：根据类型调用不同的数据库 API ===
+      if (isHabit.value) {
+        // 习惯类型：更新 title / task_time / duration
+        const taskTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+        await db.habits.update(props.initialData.id, {
+          title: form.title,
+          task_time: taskTimeStr,
+          duration: Math.round(durationValue * 60) || 10
+        })
+      } else {
+        // 任务类型：更新 title / description / start_time / end_time
+        const year = dateStore.currentDate.getFullYear()
+        const month = dateStore.currentDate.getMonth()
+        const day = dateStore.currentDate.getDate()
+        const startTime = new Date(year, month, day, hours, minutes)
+        const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
+        
+        await db.tasks.update(props.initialData.id, {
+          title: form.title,
+          description: form.description,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString()
+        })
+      }
     } else {
+      // === 新建模式：始终创建任务 ===
       lastUsedTime = form.time
       const userId = authStore.userId
       if (!userId) {
         console.error('User not authenticated')
         return
       }
-      // 执行新增操作
+      
+      const year = dateStore.currentDate.getFullYear()
+      const month = dateStore.currentDate.getMonth()
+      const day = dateStore.currentDate.getDate()
+      const startTime = new Date(year, month, day, hours, minutes)
+      const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
+      
       await db.tasks.create({
         user_id: userId,
         title: form.title,
@@ -212,7 +231,7 @@ const submit = async () => {
     // 通知父组件刷新列表
     emit('refresh')
   } catch (e) {
-    console.error('Failed to save task', e)
+    console.error('Failed to save', e)
   }
   
   emit('update:show', false)
@@ -221,10 +240,15 @@ const submit = async () => {
 const handleDelete = async () => {
   if (props.initialData) {
     try {
-      await db.tasks.delete(props.initialData.id)
+      // 根据类型调用不同的删除 API
+      if (isHabit.value) {
+        await db.habits.delete(props.initialData.id)
+      } else {
+        await db.tasks.delete(props.initialData.id)
+      }
       emit('refresh')
     } catch (e) {
-      console.error('Failed to delete task', e)
+      console.error('Failed to delete', e)
     }
   }
   emit('update:show', false)

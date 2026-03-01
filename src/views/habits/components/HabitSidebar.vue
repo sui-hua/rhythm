@@ -12,8 +12,7 @@
 
     <header class="px-6 pt-10 pb-6 shrink-0 border-b border-border mb-4">
       <div class="flex flex-col gap-2">
-        <h2 class="text-2xl font-semibold tracking-tight">习惯养成</h2>
-        <p class="text-xs text-muted-foreground italic">自律即自由</p>
+        <h2 class="text-2xl font-semibold tracking-tight">日常习惯</h2>
       </div>
     </header>
 
