@@ -1,10 +1,6 @@
 <template>
   <div class="min-h-screen w-full bg-white flex items-center justify-center p-4">
     <div class="w-full max-w-sm">
-      <div class="flex flex-col space-y-2 text-center mb-8">
-        <h1 class="text-2xl font-black tracking-tighter">登录</h1>
-        <p class="text-sm text-zinc-500">请输入您的邮箱和密码进入系统</p>
-      </div>
 
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div class="space-y-2">
@@ -45,6 +41,9 @@
           {{ loading ? '登录中...' : '登录' }}
         </button>
       </form>
+       <div class="mt-4 text-sm font-medium text-center">
+          访客账号：123456@163.com 密码：123456
+        </div>
     </div>
   </div>
 </template>
