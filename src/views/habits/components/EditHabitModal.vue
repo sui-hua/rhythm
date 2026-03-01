@@ -63,6 +63,10 @@
 </template>
 
 <script setup>
+/**
+ * 修改习惯弹窗组件 (EditHabitModal.vue)
+ * 提供一个弹窗用于编辑已有习惯各项属性或者直接执行删除习惯。
+ */
 import { reactive, watch } from 'vue'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -72,33 +76,45 @@ import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 
 const props = defineProps({
+  /** 控制弹窗的显示与隐藏状态 */
   show: {
     type: Boolean,
     required: true
   },
+  /** 初始化弹窗时传入的现存习惯对象数据 */
   habitData: {
     type: Object,
     default: () => ({})
   }
 })
 
-const emit = defineEmits(['close', 'refresh', 'deleted', 'update:show'])
+const emit = defineEmits([
+  'close', // 关闭弹窗事件
+  'refresh', // 修改完成后触发的数据刷新请求
+  'deleted', // 删除当前习惯后向父级汇报的事件，用于父级重置选中状态
+  'update:show' // 支持双向绑定的更新显示状态
+])
 
+// 弹窗内的可编辑表单数据
 const form = reactive({
-  title: '',
-  task_time: '',
-  duration: 10 / 60
+  title: '', // 习惯名称
+  task_time: '', // 计划执行时间 (HH:mm)
+  duration: 10 / 60 // 预估时长 (转换为以小时为基数的数字)
 })
 
-// 当有传入数据时，更新至表单
+// 监听传入的 habitData 对象，一旦变化立即重新赋值到表单状态
 watch(() => props.habitData, (newVal) => {
   if (newVal) {
     form.title = newVal.title || ''
-    form.task_time = newVal.task_time || ''
+    // 若原数据包含时间则截断前5位展示为 HH:mm
+    form.task_time = newVal.task_time ? newVal.task_time.substring(0, 5) : ''
     form.duration = (newVal.duration || 10) / 60
   }
 }, { immediate: true })
 
+/**
+ * 提交并保存更改的方法
+ */
 const submit = async () => {
   if (!form.title.trim()) return
   if (!props.habitData?.id) return
@@ -116,6 +132,9 @@ const submit = async () => {
   }
 }
 
+/**
+ * 删除当前习惯并通知外部
+ */
 const handleDelete = async () => {
   if (!props.habitData?.id) return
   try {

@@ -56,28 +56,47 @@
 </template>
 
 <script setup>
+/**
+ * 习惯应用侧边导航栏 (HabitSidebar.vue)
+ * 提供所有的习惯列表项入口展示区域，用户可点击切换焦点，以及展示全局本日完成度的大盘状况。
+ */
 import { Plus } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 defineProps({
+  /**
+   * 全部可用习惯的对象数组，用以循环渲染左侧的习惯选择卡片。
+   */
   habits: {
     type: Array,
     required: true
   },
+  /**
+   * 用于接收指示当前哪一项才是“被选中的”标识，以在左侧赋予阴影高亮。
+   */
   selectedHabitId: {
     type: String,
     default: null
   },
+  /**
+   * 整体项目当日的打卡覆盖百分比 (0-100的数值)，用于在角落的横幅进度条进行展现。
+   */
   todayCompletionRate: {
     type: Number,
     default: 0
   }
 })
 
+// 控制侧边栏可拉伸宽度的自定义 Composable
 import { useResizable } from '@/composables/useResizable'
 const { width, startResize, isResizing } = useResizable()
 
-defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
+defineEmits([
+  'select-habit', // 单击某一习惯项时触发，请求将该项设为视点选中
+  'back',         // 返回动作预留位
+  'add-habit',    // 单击底部 "添加项目" 按钮时触发，指示打开新建弹窗
+  'edit-habit'    // 双击某一习惯项目标触发侧边快捷改名的编辑功能
+])
 </script>

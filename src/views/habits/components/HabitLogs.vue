@@ -1,16 +1,26 @@
 <script setup>
+/**
+ * 习惯打卡流水日志组件 (HabitLogs.vue)
+ * 列出特定习惯最近打卡的列表，用于展示随手记录下的每一条打卡心得语录。
+ */
 import { computed } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
 
 const props = defineProps({
+  /**
+   * 包含所有打卡记录数据节点的原始数据库返回数组
+   */
   logs: {
     type: Array,
     default: () => []
   }
 })
 
-// 格式化日志数据，按完成时间倒序排列
+/**
+ * 格式化后的日志数据源
+ * 对原有的乱序或不统一的记录按 `completed_at` 打卡时间做格式转换并降序排列 (最近的数据优先展出)。
+ */
 const formattedLogs = computed(() => {
   return (props.logs || [])
     .map(log => {

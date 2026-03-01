@@ -6,7 +6,7 @@
         <div class="relative" ref="triggerContainer" @pointerdown.stop>
           <Input 
             :id="id"
-            :model-value="modelValue"
+            :model-value="displayValue"
             @update:model-value="$emit('update:modelValue', $event)"
             :placeholder="placeholder"
             class="h-9 font-mono pr-8"
@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Clock } from 'lucide-vue-next'
@@ -76,6 +76,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'submit'])
+
+const displayValue = computed(() => {
+  if (!props.modelValue) return ''
+  // 仅保留 HH:mm 格式，去除秒数
+  return props.modelValue.length > 5 ? props.modelValue.substring(0, 5) : props.modelValue
+})
 
 const openTimePopover = ref(false)
 const triggerContainer = ref(null)

@@ -57,6 +57,10 @@
 </template>
 
 <script setup>
+/**
+ * 添加习惯弹窗组件 (AddHabitModal.vue)
+ * 提供一个弹窗用于收集用户输入并创建新的习惯。
+ */
 import { reactive } from 'vue'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -67,19 +71,28 @@ import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 
 const props = defineProps({
+  /** 控制弹窗的显示与隐藏状态 */
   show: Boolean
 })
 
 const authStore = useAuthStore()
 
-const emit = defineEmits(['close', 'refresh', 'update:show'])
+const emit = defineEmits([
+  'close', // 关闭弹窗事件 (暂未使用该单独事件)
+  'refresh', // 创建成功后触发的数据刷新请求
+  'update:show' // 支持 v-model:show 的双向数据绑定更新事件
+])
 
+// 弹窗内的表单响应式数据
 const form = reactive({
-  title: '',
-  task_time: '',
-  duration: 10 / 60 // 存储为小时基数，10分钟
+  title: '', // 习惯名称
+  task_time: '', // 习惯指定的执行时间 (HH:mm)
+  duration: 10 / 60 // 习惯预估的持续时长, UI 表现层使用小时基数 (比如 10 分钟为 10/60)
 })
 
+/**
+ * 提交表单创建新记录
+ */
 const submit = async () => {
   if (!form.title.trim()) return
   
