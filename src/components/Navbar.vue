@@ -81,6 +81,18 @@
           <component :is="item.icon" class="w-3.5 h-3.5 mr-2" />
           {{ item.name }}
         </Button>
+
+        <div class="w-px h-4 bg-zinc-200 mx-1"></div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          @click="handleLogout"
+          class="rounded-full px-4 h-10 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 text-zinc-400 hover:text-red-600 hover:bg-red-50"
+        >
+          <LogOut class="w-3.5 h-3.5 mr-2" />
+          登出
+        </Button>
       </div>
     </nav>
     <!-- 
@@ -96,8 +108,9 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { Calendar, CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen } from 'lucide-vue-next'
+import { Calendar, CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
+import supabase from '@/config/supabase'
 
 const router = useRouter()
 const route = useRoute()
@@ -158,4 +171,8 @@ const contextInfo = computed(() => {
   }
   return { show: false }
 })
+
+const handleLogout = async () => {
+  await supabase.auth.signOut()
+}
 </script>
