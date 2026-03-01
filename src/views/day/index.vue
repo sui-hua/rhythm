@@ -3,9 +3,6 @@
     <div class="flex flex-1 h-full relative overflow-hidden bg-zinc-50/50">
       <!-- Sidebar Panel -->
       <Sidebar
-        :selected-year="2026"
-        :selected-month="selectedMonth"
-        :selected-day="selectedDay"
         :daily-schedule="dailySchedule"
         :completed-count="completedCount"
         @go-back="goBackToMonth"
@@ -18,7 +15,6 @@
       <!-- Main Timeline Area -->
       <Timeline
         ref="timeline"
-        :selected-day="selectedDay"
         :daily-schedule="dailySchedule"
         :current-hour="currentHour"
         @edit-task="openEditModal"
@@ -29,9 +25,6 @@
       <AddEventModal
         v-model:show="showAddModal"
         :initial-data="editingTask"
-        :selected-year="2026"
-        :selected-month="selectedMonth.index"
-        :selected-day="selectedDay"
         @refresh="fetchTasks"
       />
     </div>
@@ -50,24 +43,25 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// 月份数据
-const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
-const monthsFull = ['一月 (January)', '二月 (February)', '三月 (March)', '四月 (April)', '五月 (May)', '六月 (June)', '七月 (July)', '八月 (August)', '九月 (September)', '十月 (October)', '十一月 (November)', '十二月 (December)']
+import { useDateStore } from '@/stores/dateStore'
+const dateStore = useDateStore()
+
+// 引入数据库操作服务
+import { db } from '@/services/database'
+import { getMonthName } from '@/utils/dateFormatter'
 
 // 当前选中的月份和日期
 const selectedMonth = computed(() => {
-  const monthIndex = parseInt(route.params.monthIndex) - 1
+  const monthNum = parseInt(route.params.monthIndex)
+  const monthIndex = monthNum - 1
   return {
-    name: months[monthIndex],
-    full: monthsFull[monthIndex],
+    name: getMonthName(monthNum, 'zh'),
+    full: getMonthName(monthNum, 'full'),
     index: monthIndex
   }
 })
 
 const selectedDay = computed(() => parseInt(route.params.day))
-
-// 引入数据库操作服务
-import { db } from '@/services/database'
 
 // 响应式数据：存储当天的各种日程项目
 const tasks = ref([]) // 具体任务
@@ -77,7 +71,7 @@ const habitLogs = ref([]) // 习惯打卡记录
 
 const fetchTasks = async () => {
   try {
-    const year = 2026
+    const year = dateStore.currentDate.getFullYear()
     const month = selectedMonth.value.index
     const day = selectedDay.value
     

@@ -15,21 +15,24 @@ import { useRouter, useRoute } from 'vue-router'
 import MonthHeader from './components/MonthHeader.vue'
 import MonthGrid from './components/MonthGrid.vue'
 import { db } from '@/services/database'
+import { useDateStore } from '@/stores/dateStore'
+import { getMonthName } from '@/utils/dateFormatter'
+
+const dateStore = useDateStore()
 
 const router = useRouter()
 const route = useRoute()
 
-// 月份数据
-const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
-
 // 当前选中的月份
 const selectedMonth = computed(() => {
-  const monthIndex = parseInt(route.params.monthIndex) - 1
-  const daysInMonth = new Date(2026, monthIndex + 1, 0).getDate()
+  const currentYear = dateStore.currentDate.getFullYear()
+  const monthNum = parseInt(route.params.monthIndex)
+  const monthIndex = monthNum - 1
+  const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate()
   return {
-    name: months[monthIndex],
+    name: getMonthName(monthNum, 'en'),
     days: daysInMonth,
-    firstDayOffset: (new Date(2026, monthIndex, 1).getDay() + 6) % 7,
+    firstDayOffset: (new Date(currentYear, monthIndex, 1).getDay() + 6) % 7,
     index: monthIndex
   }
 })
@@ -40,9 +43,9 @@ const fetchMonthTasks = async () => {
   const monthIndex = parseInt(route.params.monthIndex) - 1
   if (isNaN(monthIndex)) return
   
-  const year = 2026
-  const start = new Date(year, monthIndex, 1)
-  const end = new Date(year, monthIndex + 1, 0, 23, 59, 59)
+  const currentYear = dateStore.currentDate.getFullYear()
+  const start = new Date(currentYear, monthIndex, 1)
+  const end = new Date(currentYear, monthIndex + 1, 0, 23, 59, 59)
   
   try {
     tasks.value = await db.tasks.list(start, end)
@@ -54,16 +57,17 @@ watch(() => route.params.monthIndex, fetchMonthTasks)
 
 // 月数据逻辑
 const monthGridData = computed(() => {
+  const currentYear = dateStore.currentDate.getFullYear()
   const grid = []
   const { index, days, firstDayOffset } = selectedMonth.value
-  const prevMonthLastDay = new Date(2026, index, 0).getDate()
+  const prevMonthLastDay = new Date(currentYear, index, 0).getDate()
   // 填充上月日期
   for (let i = firstDayOffset - 1; i >= 0; i--) grid.push({ date: prevMonthLastDay - i, isCurrent: false })
   // 填充本月日期
   for (let i = 1; i <= days; i++) {
     const dayTasks = tasks.value.filter(t => {
         const d = new Date(t.start_time)
-        return d.getDate() === i && d.getMonth() === index && d.getFullYear() === 2026
+        return d.getDate() === i && d.getMonth() === index && d.getFullYear() === currentYear
     })
     
     // Parse task hours for the grid indicator

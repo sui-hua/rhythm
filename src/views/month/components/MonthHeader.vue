@@ -9,7 +9,7 @@
       >
         <ArrowLeft class="w-6 h-6" />
       </Button>
-      <h2 class="text-4xl font-black tracking-tighter uppercase italic">{{ selectedMonth?.name }} 2026</h2>
+      <h2 class="text-4xl font-black tracking-tighter uppercase italic">{{ selectedMonth?.name }} {{ year }}</h2>
     </div>
   </header>
 </template>
@@ -19,7 +19,8 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 
 defineProps({
-  selectedMonth: Object
+  selectedMonth: Object,
+  year: Number
 })
 
 defineEmits(['goBack'])

@@ -28,11 +28,11 @@ const props = defineProps({
   categories: {
     type: Array,
     default: () => ['工作', '个人', '会议', '设计', '其他']
-  },
-  selectedYear: Number,
-  selectedMonth: Number,
-  selectedDay: Number
+  }
 })
+
+import { useDateStore } from '@/stores/dateStore'
+const dateStore = useDateStore()
 
 const emit = defineEmits(['close', 'refresh', 'update:show'])
 
@@ -173,9 +173,9 @@ const submit = async () => {
   const [hours, minutes] = form.time.split(':').map(Number)
   const durationValue = parseFloat(form.duration)
   
-  const year = props.selectedYear || 2026
-  const month = props.selectedMonth || 0
-  const day = props.selectedDay || 1
+  const year = dateStore.currentDate.getFullYear()
+  const month = dateStore.currentDate.getMonth()
+  const day = dateStore.currentDate.getDate()
   
   const startTime = new Date(year, month, day, hours, minutes)
   const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)

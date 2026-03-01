@@ -96,23 +96,16 @@ import AddGoalModal from './components/AddGoalModal.vue'
 
 import { useAuthStore } from '@/stores/authStore'
 
-// 月份常量定义
-const months = [
-  { label: '一月', value: 1, full: '一月 (January)' }, 
-  { label: '二月', value: 2, full: '二月 (February)' },
-  { label: '三月', value: 3, full: '三月 (March)' }, 
-  { label: '四月', value: 4, full: '四月 (April)' },
-  { label: '五月', value: 5, full: '五月 (May)' }, 
-  { label: '六月', value: 6, full: '六月 (June)' },
-  { label: '七月', value: 7, full: '七月 (July)' }, 
-  { label: '八月', value: 8, full: '八月 (August)' },
-  { label: '九月', value: 9, full: '九月 (September)' }, 
-  { label: '十月', value: 10, full: '十月 (October)' },
-  { label: '十一月', value: 11, full: '十一月 (November)' }, { label: '十二月', value: 12, full: '十二月 (December)' }
-]
-
 import { onMounted } from 'vue'
 import { db } from '@/services/database'
+import { getMonthName } from '@/utils/dateFormatter'
+
+// 月份常量定义（动态生成）
+const months = Array.from({ length: 12 }, (_, i) => ({
+  label: getMonthName(i + 1, 'zh'),
+  value: i + 1,
+  full: getMonthName(i + 1, 'full')
+}))
 
 const authStore = useAuthStore()
 const plans = ref([])

@@ -10,7 +10,7 @@ defineProps({
     required: true
   },
   selectedHabitId: {
-    type: Number,
+    type: String,
     default: null
   }
 })
@@ -18,7 +18,7 @@ defineProps({
 import { useResizable } from '@/composables/useResizable'
 const { width, startResize, isResizing } = useResizable()
 
-defineEmits(['select-habit', 'back', 'add-habit'])
+defineEmits(['select-habit', 'back', 'add-habit', 'edit-habit'])
 </script>
 
 <template>
@@ -46,7 +46,8 @@ defineEmits(['select-habit', 'back', 'add-habit'])
           v-for="habit in habits" 
           :key="habit.id"
           @click="$emit('select-habit', habit)"
-          class="flex flex-col items-start gap-1 p-3 rounded-lg transition-all text-left"
+          @dblclick="$emit('edit-habit', habit)"
+          class="flex flex-col items-start gap-1 p-3 rounded-lg transition-all text-left group"
           :class="selectedHabitId === habit.id ? 'bg-secondary ring-1 ring-border shadow-sm' : 'hover:bg-zinc-50'"
         >
           <h4 class="text-sm font-semibold tracking-tight transition-colors"

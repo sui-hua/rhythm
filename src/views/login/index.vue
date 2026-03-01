@@ -41,9 +41,13 @@
           {{ loading ? '登录中...' : '登录' }}
         </button>
       </form>
-       <div class="mt-4 text-sm font-medium text-center">
-          访客账号：123456@163.com 密码：123456
-        </div>
+
+      <div class="mt-8 text-center sm:mx-auto sm:w-full sm:max-w-sm">
+        <p class="text-sm text-zinc-500">
+          访客体验账号：<span class="font-medium text-black">123456@163.com</span><br/>
+          密码：<span class="font-medium text-black">123456</span>
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -57,8 +61,8 @@ import supabase from '@/config/supabase'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('')
-const password = ref('')
+const email = ref('123456@163.com')
+const password = ref('123456')
 const loading = ref(false)
 const error = ref('')
 

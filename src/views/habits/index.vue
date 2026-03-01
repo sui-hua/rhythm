@@ -5,6 +5,7 @@
       :habits="habits" 
       :selected-habit-id="selectedHabit?.id"
       @select-habit="selectedHabit = $event"
+      @edit-habit="handleSidebarEdit"
       @add-habit="showAddModal = true"
       @back="goBack"
     />
@@ -16,7 +17,7 @@
           <header class="flex flex-col gap-2 mb-2">
             <h3 class="text-3xl font-bold tracking-tight text-foreground">{{ selectedHabit.title }}</h3>
             <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>2026年度计划</span>
+              <span>{{ dateStore.currentDate.getFullYear() }}年度计划</span>
               <span class="w-1 h-1 rounded-full bg-border" />
               <span>坚持就是胜利</span>
             </div>
@@ -62,12 +63,19 @@
       v-model:show="showAddModal"
       @add="handleAddHabit"
     />
+
+    <EditHabitModal 
+      v-model:show="showEditModal"
+      :habitData="selectedHabit"
+      @update="handleUpdateHabit"
+      @delete="handleDeleteHabit"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ArrowUpRight } from 'lucide-vue-next'
+import { ArrowUpRight, Pencil } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -79,15 +87,18 @@ import HabitStats from './components/HabitStats.vue'
 import HabitCalendar from './components/HabitCalendar.vue'
 import HabitLogs from './components/HabitLogs.vue'
 import AddHabitModal from './components/AddHabitModal.vue'
+import EditHabitModal from './components/EditHabitModal.vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
+import { useDateStore } from '@/stores/dateStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const dateStore = useDateStore()
 const habits = ref([])
 
-const currentYear = 2026
-const currentMonth = 1 // Feb (0-indexed 1 is Feb) - Aligning with seed data/current date
+const currentYear = computed(() => dateStore.currentDate.getFullYear())
+const currentMonth = computed(() => dateStore.currentDate.getMonth())
 
 const fetchHabits = async () => {
   try {
@@ -97,7 +108,7 @@ const fetchHabits = async () => {
         // Filter logs for current view month
         const monthlyLogs = logs.filter(log => {
              const d = new Date(log.completed_at)
-             return d.getFullYear() === currentYear && d.getMonth() === currentMonth
+             return d.getFullYear() === currentYear.value && d.getMonth() === currentMonth.value
         })
         
         const completedDays = monthlyLogs.map(log => new Date(log.completed_at).getDate())
@@ -133,7 +144,13 @@ onMounted(fetchHabits)
 
 const selectedHabit = ref(null)
 const showAddModal = ref(false)
+const showEditModal = ref(false)
 const habitNote = ref('')
+
+const handleSidebarEdit = (habit) => {
+  selectedHabit.value = habit
+  showEditModal.value = true
+}
 
 const getCurrentDate = () => {
   const now = new Date()
@@ -162,6 +179,27 @@ const handleAddHabit = async (newHabit) => {
   }
 }
 
+const handleUpdateHabit = async (updatedData) => {
+  try {
+    await db.habits.update(updatedData.id, {
+      title: updatedData.title
+    })
+    await fetchHabits()
+  } catch (e) {
+    console.error('Update habit failed', e)
+  }
+}
+
+const handleDeleteHabit = async (habitId) => {
+  try {
+    await db.habits.delete(habitId)
+    selectedHabit.value = null
+    await fetchHabits()
+  } catch (e) {
+    console.error('Delete habit failed', e)
+  }
+}
+
 const habitStats = computed(() => {
   if (!selectedHabit.value) return []
   return [
@@ -173,8 +211,8 @@ const habitStats = computed(() => {
 })
 
 const calendarGrid = computed(() => {
-  const year = currentYear;
-  const month = currentMonth;
+  const year = currentYear.value;
+  const month = currentMonth.value;
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -197,7 +235,7 @@ const toggleComplete = async (day) => {
         if (existingLog) {
           await db.habits.deleteLog(existingLog.id)
         } else {
-          const date = new Date(currentYear, currentMonth, day, 12, 0, 0)
+          const date = new Date(currentYear.value, currentMonth.value, day, 12, 0, 0)
           await db.habits.log(habit.id, '', date.toISOString())
         }
       await fetchHabits()
@@ -223,7 +261,7 @@ const handleQuickLog = async () => {
     
     if (!existingLog) {
       // Create new log for today
-      const date = new Date(currentYear, currentMonth, today, 12, 0, 0)
+      const date = new Date(currentYear.value, currentMonth.value, today, 12, 0, 0)
       await db.habits.log(selectedHabit.value.id, habitNote.value.trim(), date.toISOString())
     }
     

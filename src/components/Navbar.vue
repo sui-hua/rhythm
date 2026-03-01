@@ -14,26 +14,20 @@
     <!-- <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto"> -->
     <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out translate-y-0opacity-100 pointer-events-auto">
       <div class="flex items-center gap-1">
-        <!-- Back Button & Context Title -->
-        <!-- Back Button & Context Title -->
+        <!-- 例如身处月或者日页面，显示左侧快捷返回及切换区域 -->
         <template v-if="contextInfo.show">
           <div class="flex items-center gap-2 px-4 pr-6 border-r border-zinc-100 mr-2">
-            <!-- Year View Mode: Back to Year -->
             <template v-if="contextInfo.mode === 'month'">
-               <Button
-                variant="ghost"
-                size="icon"
-                @click="router.push(contextInfo.backPath)"
-                class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
-              >
-                <ArrowLeft class="w-4 h-4" />
-              </Button>
-              <span class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap">
-                {{ contextInfo.title }}
-              </span>
+          
+              <button 
+                  @click="router.push(contextInfo.backPath)"
+                  class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors mx-1"
+                >
+                  {{ contextInfo.title }}
+                </button>
+              
             </template>
 
-            <!-- Day View Mode: Prev/Next Day & Clickable Month -->
             <template v-else-if="contextInfo.mode === 'day'">
               <div class="flex items-center gap-1">
                  <Button
@@ -111,15 +105,20 @@ import { Button } from '@/components/ui/button'
 import { Calendar, CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import supabase from '@/config/supabase'
+import { useDateStore } from '@/stores/dateStore'
+import { getMonthName } from '@/utils/dateFormatter'
 
+const dateStore = useDateStore()
 const router = useRouter()
 const route = useRoute()
 
+// 动态获取当天的路由路径，用于进入“时序”时默认跳转
 const getTodayPath = () => {
   const now = new Date() // As per user metadata context
   return `/day/${now.getMonth() + 1}/${now.getDate()}`
 }
 
+// 导航栏菜单配置
 const navItems = [
   { name: '时序 ', path: getTodayPath(), icon: LayoutGrid, base: '/year' },
   { name: '习惯', path: '/habits', icon: CheckCircle2, base: '/habits' },
@@ -127,18 +126,24 @@ const navItems = [
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
 ]
 
+// 判断导航项是否激活
+// 特殊情况处理：因为时序拥有多层级(年、月、日)，如果处在其中任何一层，都算“时序”处于激活状态
 const isActive = (item) => {
   if (item.base === '/year' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path === '/year')) return true
   return route.path === item.path
 }
 
-const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
-
+/**
+ * contextInfo: 结合 current route 计算导航栏左侧的面包屑辅助控件状态
+ * 用于指示目前正在查看的具体是哪一年、哪一月，并提供左右翻页及上层返回按钮
+ */
 const contextInfo = computed(() => {
   const path = route.path
+  const currentYear = dateStore.currentDate.getFullYear()
+  
   if (path.startsWith('/month/')) {
     return {
-      title: '2026',
+      title: `${currentYear}`,
       backPath: '/year',
       show: true,
       mode: 'month'
@@ -148,8 +153,7 @@ const contextInfo = computed(() => {
     const monthIndex = parseInt(route.params.monthIndex) - 1 // Fix 1-based index
     const day = parseInt(route.params.day)
     
-    // Calculate Prev/Next Day
-    const currentYear = 2026
+    // 计算前一天与后一天的跳转路由路径，用于左右切换按钮
     const currentDate = new Date(currentYear, monthIndex, day)
     
     const prevDate = new Date(currentDate)
@@ -161,7 +165,7 @@ const contextInfo = computed(() => {
     const nextDayPath = `/day/${nextDate.getMonth() + 1}/${nextDate.getDate()}`
 
     return {
-      title: months[monthIndex],
+      title: getMonthName(monthIndex + 1, 'en'),
       monthPath: `/month/${monthIndex + 1}`,
       prevDayPath,
       nextDayPath,

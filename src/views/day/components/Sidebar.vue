@@ -13,7 +13,7 @@
     <header class="px-6 pt-10 pb-6 shrink-0 border-b border-border mb-4">
       <div class="flex flex-col gap-2">
         <h2 class="text-2xl font-semibold tracking-tight">{{ selectedDay }}日</h2>
-        <p class="text-xs text-muted-foreground">{{ selectedMonth.full }} 任务清单</p>
+        <p class="text-xs text-muted-foreground">{{ selectedMonthName }} 任务清单</p>
       </div>
     </header>
 
@@ -79,12 +79,17 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useResizable } from '@/composables/useResizable'
 
 const props = defineProps({
-  selectedYear: Number,
-  selectedDay: Number, // 选中的几号
-  selectedMonth: Object, // 选中的月份信息
   dailySchedule: Array, // 整合后的每日日程列表
   completedCount: Number // 已完成的任务数量
 })
+
+import { useDateStore } from '@/stores/dateStore'
+import { getMonthName } from '@/utils/dateFormatter'
+
+const dateStore = useDateStore()
+
+const selectedDay = computed(() => dateStore.currentDate.getDate())
+const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
 
 // 侧边栏宽度拖拽逻辑
 const { width, startResize, isResizing } = useResizable()
@@ -105,9 +110,9 @@ const handleToggleComplete = async (task) => {
                   // 如果当前是已完成状态，说明要取消打卡，需要查找打卡记录并删除
                   const logs = await db.habits.list().then(res => res.find(h => h.id === task.id)?.habit_logs || [])
                   
-                  const year = props.selectedYear || 2026
-                  const month = props.selectedMonth ? props.selectedMonth.index : 0
-                  const day = props.selectedDay || 1
+                  const year = dateStore.currentDate.getFullYear()
+                  const month = dateStore.currentDate.getMonth()
+                  const day = dateStore.currentDate.getDate()
                   const startOfDay = new Date(year, month, day, 0, 0, 0)
                   const endOfDay = new Date(year, month, day, 23, 59, 59)
                   
