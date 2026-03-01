@@ -1,106 +1,66 @@
-# schedule-manage
+# 项目经历：极简节奏 (Rhythm) - 个人效能管理系统
 
-This template should help get you started developing with Vue 3 in Vite.
+**项目描述**：
+一款基于 Vue 3 + Supabase + Tailwind CSS 开发的个人效能管理应用。不同于传统的 To-Do List，本项目基于“目标-关键结果-日程”的效能逻辑，通过 Direction（方向）、Habits（习惯）、Timeline（时序）三个维度的视图，实现了从宏观年度目标到微观分钟级日程的闭环管理。
 
-## Recommended IDE Setup
+**技术栈**：
+- **前端**：Vue 3 (Composition API), Vite, Pinia
+- **UI**：Tailwind CSS (JIT 模式), Radix Vue (Headless UI)
+- **后端服务**：Supabase (PostgreSQL, Row Level Security)
+- **工具库**：VueUse, date-fns
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+**核心模块与技术实现**：
 
-## Recommended Browser Setup
+1.  **时序 (Timeline) - 把时间具象化**
+    *   **可视化日程管理**：将一天 24 小时映射为垂直时间轴，直观展示任务的时间跨度与冲突情况。
+    *   **智能视口跟随**：进入页面自动定位到当前时间点，让用户能立刻关注当下的任务进度。
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+2.  **习惯 (Habits) - 数据的可视化驱动**
+    *   **多维度数据统计**：自动计算“连续打卡天数”、“月度完成率”等核心指标，帮助用户量化坚持的成果。
+    *   **打卡热力图**：以日历热力图的形式直观呈现每月的打卡记录，通过颜色的深浅给予用户即时的正向反馈。
 
-## Customize configuration
+3.  **所向 (Direction) - 复杂状态的联动**
+    *   **全链路目标拆解**：实现了从“年度目标 (Direction)”到“月度规划 (Month)”再到“每日执行 (Day)”的层级联动，保证宏观目标能通过每日行动落地。
+    *   **高效任务分配**：在月度看板中实现了类似 Excel 的“鼠标拖拽批量选中”功能，可以快速将一个任务分配给多个日期。
+    *   **灵活的周期规划**：支持可视化拖拽调整目标的起止月份，方便用户灵活制定季度或月度计划。
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+**项目难点解决**：
+- **数据安全**：在数据库层面配置了 **RLS (行级安全策略)**，简单说就是“谁的数据谁才能看”，在后端层面保证了每个用户的数据隔离。
+- **性能优化**：针对复杂的日历交互，使用了 Vue 的 `TransitionGroup` 处理列表动画，并配合 `v-memo` 减少不必要的 DOM 重绘，确保在拖拽选区时始终保持流畅。
 
-## Project Setup
+---
 
-```sh
-npm install
-```
+## 模块亮点与简历话术
 
-### Supabase Setup
+这三个模块分别代表了系统里“**长期宏观规划**”、“**周期性行为追踪**”和“**每日高精度执行**”的三阶核心逻辑。构成了“**自上而下的目标拆解**”与“**自下而上的执行反馈**”的业务闭环。
 
-1. **Create a Supabase project**
-   - Go to [Supabase](https://supabase.com/) and create a new project
-   - Make a note of your `Project URL` and `Project API Key` (anon public)
+如果你想把它们写在简历上，可以按照“**业务价值 + 技术实现与亮点**”的专业范式来描述。以下是为你整理的简历描述话术，非常适合作为前端项目的亮点包装：
 
-2. **Create database table**
-   - In your Supabase dashboard, navigate to the `Table Editor`
-   - Create a new table called `schedules` with the following columns:
-     - `id` (UUID, Primary Key, auto-generated)
-     - `date` (Date, required)
-     - `start_time` (Time, required)
-     - `end_time` (Time, required)
-     - `title` (Text, required)
-     - `description` (Text)
-     - `tag` (Text, required)
-     - `dot_color` (Text, required)
-     - `bg_color` (Text, required)
-     - `border_color` (Text, required)
-     - `created_at` (Timestamptz, auto-generated)
-     - `updated_at` (Timestamptz, auto-generated)
+### 1. 所向（Direction）模块 —— 长期目标与宏观拆解
+*   **业务作用**：系统顶层模块，负责将抽象的“长期目标 (Plan)”拆落实为“月度计划 (MonthlyPlan)”，并最终分发指派到具体的“每一天 (DailyPlan)”。
+*   **简历描述话术**：
+    *   **三级级联架构**：设计并实现了 `长期目标 -> 月度计划 -> 日常任务` 的三级连动数据视图结构，支持多维度的目标追踪与下钻查看。
+    *   **高级交互开发（亮点）**：负责开发任务核心排期视板（Mission Board），自行封装基于事件监听的“画笔拖拽式”多选交互组件。通过维护全局选区状态并拦截 `mousedown/mouseenter/mouseup` 轨迹，实现跨天日期的批量滑动选中、以及任务的“批量下派 / 删除”，大幅度降低了用户管理复杂日程的操作成本。
+    *   **局部状态一致性处理**：对批量操作进行防错校验，实现了拖拽多选时的严格类型判定（防止同时选中已排期和未排期日期），保障数据状态的一致流转。
 
-3. **Configure environment variables**
-   - Create a `.env` file in the project root
-   - Add your Supabase credentials:
-     ```
-     VITE_SUPABASE_URL=YOUR_SUPABASE_URL
-     VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-     ```
+### 2. 习惯（Habits）模块 —— 周期行为与可视化数据反馈
+*   **业务作用**：用于周期性行为习惯的打卡积累，提供数据可视化和结构化的快速心得记录。
+*   **简历描述话术**：
+    *   **多维数据统计与视图渲染**：基于原生 JS 日期 API 编写自定义日历网格算法（Calendar Grid），计算每月前后偏移量，实现高低频打卡行为“热力可视化日历图”渲染；在前端实时处理日志数组，计算并派生出“当前连续打卡（Streak）”、“月度完成率”、“年度总计”等统计指标。
+    *   **闭环交互流**：通过组合式 UI 设计打卡流与日志联动区域（Quick Log Card），允许用户在极简的点按操作外，便捷挂载每日打卡心得。
+    *   **状态与数据解耦**：从底层重构习惯的状态计算逻辑，在拉取习惯主表数据后，将历史 Log 日志记录按月度区间实施前端过滤，确保组件重新渲染时不卡顿。
 
-4. **Set up Row Level Security (RLS)**
-   - In the Supabase dashboard, go to `Authentication` > `Policies`
-   - Enable RLS for the `schedules` table
-   - Create appropriate policies for reading and writing data
+### 3. 时序（Timeline）模块 —— 每日待办的统一时间轴调度
+*   **业务作用**：作为每日执行的主线，将多个割裂模块（独立任务、日计划任务、日常习惯）在一天的时间轴上进行统一渲染收口与集中调度。
+*   **简历描述话术**：
+    *   **多源异构数据聚合（亮点）**：在前端封装数据适配器（Adapter层），利用 Vue 的 `computed` 将底层结构差异极大的三张数据表（Task, DailyPlan, Habit）统一转换为标准化的时间流维度模型，抹平异构数据并在时间轴（Timeline）上实现统一渲染与排序。
+    *   **动态可视化时间定位**：封装基于实时时间驱动的动态刻度线轮询（`setInterval` 计算时分比例）；并结合 DOM `scrollIntoView` API 实现初始化页面及路由跳转时，智能判断并平滑滚动（Smooth Scroll）至自动首个待办事项。
+    *   **视图通信与组件通信**：通过组件的高度拆分解耦主时间轴（Timeline）、控制面板（Sidebar）与事件弹窗（Modal），规范化 `emit` 和 `props` 处理局部刷新，完成修改数据的视图无缝更新。
 
-### Compile and Hot-Reload for Development
+---
 
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-## Project Structure
-
-```
-src/
-├── assets/            # Static assets
-├── components/        # Vue components
-├── config/            # Configuration files
-│   └── supabase.js    # Supabase client configuration
-├── models/            # Data models
-│   └── Schedule.js    # Schedule model
-├── services/          # Service layer
-│   └── scheduleService.js  # Schedule service
-├── App.vue            # Root component
-└── main.js            # Application entry point
-```
-
-## Key Features
-
-- **Year View**: Calendar overview showing all 12 months
-- **Month View**: Detailed view of a single month with daily schedules
-- **Timeline View**: Schedule timeline for the selected date
-- **Supabase Integration**: Real-time database integration for storing and retrieving schedules
-- **Responsive Design**: Works on different screen sizes
-- **Modern UI**: Clean, modern interface with smooth animations
-
-## Technologies Used
-
-- **Vue 3**: Frontend framework
-- **Vite**: Build tool
-- **Tailwind CSS**: CSS framework
-- **Supabase**: Backend as a Service (BaaS)
-- **JavaScript**: Programming language
+**💡 面试延伸准备（如果面试官问及细节）：**
+1.  **“拖拽多选功能”有没有遇到什么卡顿或bug？** 
+    你可以说：拖拽时鼠标移动非常快，所以需要严格把控 `mouseenter` 触发的频率，我使用了一个响应式的 `isSelecting` 标志进行快速拦截判断；同时判断如果起始点是没有任务的空白天，拖动期间就会屏蔽并过滤掉已经有任务的天数，以此实现安全校验。
+2.  **不同来源的数据结构是怎么做到时间轴统一显示的？** 
+    你可以说：在这个视图下，不管底层关联多复杂，展示时只关心“什么时候开始”和“时长”，所以在外层容器使用计算属性拦截了这批 Promise 数据，提取所有的 `start_time` 和 `task_time`，转换为十进制的小数 `startHour`（比如上午8点半转换成 8.5），将它们整合成标准对象并作一个 sort 排序，后续所有子组件渲染只依赖这个提纯后的新列表，实现了高内聚低耦合。
