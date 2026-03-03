@@ -7,7 +7,7 @@
 - **前端**：Vue 3 (Composition API), Vite, Pinia
 - **UI**：Tailwind CSS (JIT 模式), Radix Vue (Headless UI)
 - **后端服务**：Supabase (PostgreSQL, Row Level Security)
-- **工具库**：VueUse, date-fns
+- **工具库**：VueUse
 
 **核心模块与技术实现**：
 
