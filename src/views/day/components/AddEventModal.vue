@@ -142,7 +142,7 @@ const form = reactive({
   description: ''
 })
 
-const lastUsedTime = '08:00'
+let lastUsedTime = '08:00'
 
 watch(() => props.show, (newShow) => {
   if (newShow) {
