@@ -1,24 +1,24 @@
 <template>
   <div
       :id="'task-' + index"
-      class="absolute left-32 right-0 transition-all duration-700 group cursor-pointer select-none"
+      class="task-item group"
       :style="{ top: (task.startHour * 25) + 'vh', height: (task.durationHours * 25) + 'vh' }"
       @click="$emit('select', index)"
       @dblclick="$emit('edit', index)"
   >
     <div 
-      class="flex h-full border-l-4 border-primary pl-6 pr-4 overflow-hidden bg-background shadow-sm border border-border transition-all duration-300 rounded-r-xl"
+      class="task-item__card"
       :class="[
-        (task.durationHours || 1) < 0.4 ? 'flex-col justify-center py-1' : 
-        (task.durationHours || 1) < 0.8 ? 'flex-row items-center py-2' : 'flex-col py-4 gap-2',
-        task.completed ? 'opacity-40 grayscale scale-[0.98]' : 'hover:-translate-x-1 hover:shadow-md'
+        (task.durationHours || 1) < 0.4 ? 'task-item__card--short' : 
+        (task.durationHours || 1) < 0.8 ? 'task-item__card--medium' : 'task-item__card--long',
+        task.completed ? 'task-item__card--completed' : 'task-item__card--active'
       ]"
     >
       <!-- Title for MEDIUM tasks - Simple mode -->
       <template v-if="(task.durationHours || 1) >= 0.4 && (task.durationHours || 1) < 0.8">
         <h3 
-          class="flex-1 text-sm font-semibold tracking-tight transition-transform duration-300 truncate"
-          :class="[!task.completed ? 'group-hover:translate-x-2' : '']"
+          class="task-item__title-medium"
+          :class="[!task.completed ? 'task-item__title--hoverable' : '']"
         >
           {{ task.title }}
         </h3>
@@ -26,19 +26,19 @@
 
       <!-- Original STACKED layout for LONG tasks (>= 0.8h) -->
       <template v-else-if="(task.durationHours || 1) >= 0.8">
-        <div class="flex items-center gap-3 shrink-0">
-          <Badge variant="outline" class="text-[9px] font-bold uppercase tracking-wider py-0 h-4 rounded-md">
+        <div class="task-item__meta">
+          <Badge variant="outline" class="task-item__badge">
             {{ task.category }}
           </Badge>
-          <span class="text-[10px] font-mono font-medium text-muted-foreground/50 tracking-tight">{{ task.time }} — {{ task.duration }}</span>
+          <span class="task-item__time">{{ task.time }} — {{ task.duration }}</span>
         </div>
         <h3 
-          class="text-lg font-bold tracking-tight transition-transform duration-300 shrink-0 truncate leading-tight"
-          :class="[!task.completed ? 'group-hover:translate-x-2' : 'line-through text-muted-foreground']"
+          class="task-item__title-long"
+          :class="[!task.completed ? 'task-item__title--hoverable' : 'task-item__title--done']"
         >
           {{ task.title }}
         </h3>
-        <p v-if="(task.durationHours || 1) >= 1.2" class="text-xs text-muted-foreground font-medium leading-relaxed max-w-2xl line-clamp-2 border-l-2 pl-3">
+        <p v-if="(task.durationHours || 1) >= 1.2" class="task-item__description">
           {{ task.description }}
         </p>
       </template>
@@ -46,8 +46,8 @@
       <!-- Minimal layout for SHORT tasks (< 0.4h) -->
       <template v-else>
         <h3 
-          class="text-xs font-semibold tracking-tight transition-transform duration-300 truncate w-full"
-          :class="[!task.completed ? 'group-hover:translate-x-2' : 'line-through text-muted-foreground']"
+          class="task-item__title-short"
+          :class="[!task.completed ? 'task-item__title--hoverable' : 'task-item__title--done']"
         >
           {{ task.title }}
         </h3>
@@ -67,3 +67,55 @@ const props = defineProps({
 // 向父组件触发的自定义事件：单击选择任务、双击编辑任务
 defineEmits(['select', 'edit'])
 </script>
+
+<style scoped>
+@reference "@/assets/main.css";
+.task-item {
+  @apply absolute left-32 right-0 transition-all duration-700 cursor-pointer select-none;
+}
+.task-item__card {
+  @apply flex h-full border-l-4 border-primary pl-6 pr-4 overflow-hidden bg-background shadow-sm border border-border transition-all duration-300 rounded-r-xl;
+}
+.task-item__card--short {
+  @apply flex-col justify-center py-1;
+}
+.task-item__card--medium {
+  @apply flex-row items-center py-2;
+}
+.task-item__card--long {
+  @apply flex-col py-4 gap-2;
+}
+.task-item__card--completed {
+  @apply opacity-40 grayscale scale-[0.98];
+}
+.task-item__card--active:hover {
+  @apply -translate-x-1 shadow-md;
+}
+.task-item__title-medium {
+  @apply flex-1 text-sm font-semibold tracking-tight transition-transform duration-300 truncate;
+}
+.task-item__title-long {
+  @apply text-lg font-bold tracking-tight transition-transform duration-300 shrink-0 truncate leading-tight;
+}
+.task-item__title-short {
+  @apply text-xs font-semibold tracking-tight transition-transform duration-300 truncate w-full;
+}
+.task-item:hover .task-item__title--hoverable {
+  @apply translate-x-2;
+}
+.task-item__title--done {
+  @apply line-through text-muted-foreground;
+}
+.task-item__meta {
+  @apply flex items-center gap-3 shrink-0;
+}
+.task-item__badge {
+  @apply text-[9px] font-bold uppercase tracking-wider py-0 h-4 rounded-md;
+}
+.task-item__time {
+  @apply text-[10px] font-mono font-medium text-muted-foreground/50 tracking-tight;
+}
+.task-item__description {
+  @apply text-xs text-muted-foreground font-medium leading-relaxed max-w-2xl line-clamp-2 border-l-2 pl-3;
+}
+</style>

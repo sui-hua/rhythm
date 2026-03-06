@@ -1,10 +1,12 @@
 import { ref, computed } from 'vue'
+import { useDayData } from './useDayData'
 
 /**
  * Day 视图模态框控制层 (Composable)
  * 托管“新建/编辑”对话框的状态和数据
  */
-export function useDayModal(dailySchedule) {
+export function useDayModal() {
+    const { dailySchedule } = useDayData()
     const showAddModal = ref(false)
     const editingTaskIndex = ref(null)
 

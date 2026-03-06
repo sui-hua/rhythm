@@ -172,11 +172,45 @@ export function useDayData() {
 
     const completedCount = computed(() => dailySchedule.value.filter(t => t.completed).length)
 
+    // 切换各类日程项的完成状态
+    const handleToggleComplete = async (task) => {
+        if (!task) return
+        try {
+            if (task.type === 'task') {
+                await db.tasks.update(task.id, { completed: !task.completed })
+            } else if (task.type === 'habit') {
+                if (task.completed) {
+                    const logs = await db.habits.list().then(res => res.find(h => h.id === task.id)?.habit_logs || [])
+                    const year = dateStore.currentDate.getFullYear()
+                    const month = dateStore.currentDate.getMonth()
+                    const day = dateStore.currentDate.getDate()
+                    const startOfDay = new Date(year, month, day, 0, 0, 0)
+                    const endOfDay = new Date(year, month, day, 23, 59, 59)
+                    const log = logs.find(l => {
+                        const logDate = new Date(l.completed_at)
+                        return logDate >= startOfDay && logDate <= endOfDay
+                    })
+                    if (log) await db.habits.deleteLog(log.id)
+                } else {
+                    await db.habits.log(task.id, '')
+                }
+            } else if (task.type === 'daily_plan') {
+                const isNumeric = typeof task.original.status === 'number'
+                const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
+                await db.dailyPlans.update(task.id, { status: newStatus })
+            }
+            await fetchTasks()
+        } catch (e) {
+            console.error('切换完成状态失败', e)
+        }
+    }
+
     return {
         selectedMonth,
         selectedDay,
         dailySchedule,
         completedCount,
-        fetchTasks
+        fetchTasks,
+        handleToggleComplete
     }
 }
