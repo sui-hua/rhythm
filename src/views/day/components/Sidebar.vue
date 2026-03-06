@@ -63,7 +63,7 @@
       </div>
       <Button 
         class="w-full gap-2 h-9 text-xs font-semibold"
-        @click="$emit('addEvent')"
+        @click="$emit('add-event')"
       >
         <Plus class="w-4 h-4" />
         添加项目
@@ -90,8 +90,10 @@ const props = defineProps({
 
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
+import { useDayData } from '../composables/useDayData'
 
 const dateStore = useDateStore()
+const { dailySchedule, completedCount, fetchTasks } = useDayData()
 
 const selectedDay = computed(() => dateStore.currentDate.getDate())
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
@@ -100,7 +102,7 @@ const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getM
 const { width, startResize, isResizing } = useResizable()
 
 // 定义向外暴露的自定义事件
-const emit = defineEmits(['goBack', 'scrollToTask', 'refresh', 'addEvent', 'edit-task'])
+const emit = defineEmits(['goBack', 'scrollToTask', 'add-event', 'edit-task'])
 
 // 替代原本在父组件的交互逻辑：支持各类日程项的完成切换
 const handleToggleComplete = async (task) => {
@@ -139,8 +141,8 @@ const handleToggleComplete = async (task) => {
               const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
               await db.dailyPlans.update(task.id, { status: newStatus })
           }
-          // 状态更新后，触发父组件刷新数据
-          emit('refresh')
+          // 状态更新后，直接在组件内部重新抓取最新组装的日程单例数据
+          await fetchTasks()
       } catch (e) {
           console.error('切换完成状态失败', e)
       }

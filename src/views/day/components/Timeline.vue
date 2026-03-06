@@ -40,10 +40,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import TaskItem from './TaskItem.vue'
 import TimelineMarker from './TimelineMarker.vue'
 
-const props = defineProps({
-  dailySchedule: Array, // 整合后的每日日程列表，包含各任务的具体显示参数
-  currentHour: Number // 当前时间（以小数形式表示的小时数，用于计算当前时间线位置）
-})
+import { useDayData } from '../composables/useDayData'
+import { useDayNavigation } from '../composables/useDayNavigation'
+
+const { dailySchedule } = useDayData()
+const { currentHour } = useDayNavigation()
 
 const timelineContainerRef = ref(null)
 

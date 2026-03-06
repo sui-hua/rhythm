@@ -3,11 +3,9 @@
     <div class="flex flex-1 h-full relative overflow-hidden bg-zinc-50/50">
       <!-- Sidebar Panel -->
       <Sidebar
-        :daily-schedule="dailySchedule"
-        :completed-count="completedCount"
+        :class="['transition-opacity duration-300 ease-in-out', isReady ? 'opacity-100' : 'opacity-0']"
         @go-back="goBackToMonth"
         @scroll-to-task="scrollToTask"
-        @refresh="fetchTasks"
         @add-event="openAddModal"
         @edit-task="openEditModal"
       />
@@ -15,8 +13,7 @@
       <!-- Main Timeline Area -->
       <Timeline
         ref="timeline"
-        :daily-schedule="dailySchedule"
-        :current-hour="currentHour"
+        :class="['transition-opacity duration-300 ease-in-out', isReady ? 'opacity-100' : 'opacity-0']"
         @edit-task="openEditModal"
         @select-task="scrollToTask"
       />
@@ -69,26 +66,36 @@ const {
 } = useDayModal(dailySchedule)
 
 const timeline = ref(null) // Timeline 组件引用
+const isReady = ref(false) // 控制页面初始显示状态以隐藏滚动闪烁
 
 // 页面加载时的动态时间线更新及初始滚动位置设置
 onMounted(async () => {
   validateDayRoute()
 
-  // 1. 立即尝试滚动到 08:00 (默认位置)
-  await nextTick()
-  const defaultEl = document.getElementById('hour-8')
-  if (defaultEl) {
-    defaultEl.scrollIntoView({ behavior: 'instant', block: 'start' })
-  }
-
-  // 2. 加载日程相关数据
+  // 1. 加载日程相关数据
   await fetchTasks()
   
-  // 3. 如果有任务，修正滚动位置到第一个任务
   await nextTick()
-  if (dailySchedule.value.length > 0) {
-    scrollToTask(0)
+  const schedule = dailySchedule.value
+  
+  // 2. 决定滚动位置：如果有任务，优先找第一个未完成的；全完成则找第一个；没有任务则跳转 08:00
+  if (schedule.length > 0) {
+    const firstUncompletedIndex = schedule.findIndex(task => !task.completed)
+    const targetIndex = firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0
+    scrollToTask(targetIndex, 'instant')
+  } else {
+    const defaultEl = document.getElementById('hour-8')
+    if (defaultEl) {
+      defaultEl.scrollIntoView({ behavior: 'instant', block: 'start' })
+    }
   }
+
+  // 滚动完成后，显示内容
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      isReady.value = true
+    }, 50) // 给予一小段缓冲让 DOM 稳定渲染和跳转完毕
+  })
 
   // 更新当前时间指示线：每秒重新计算最新时间
   setInterval(updateCurrentHour, 1000)

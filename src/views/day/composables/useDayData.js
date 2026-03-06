@@ -4,6 +4,12 @@ import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 
+// 提升原始数据存储到模块顶层，实现跨组件共享数据单例
+const tasks = ref([])
+const dailyPlans = ref([])
+const habits = ref([])
+const habitLogs = ref([])
+
 /**
  * Day 视图核心数据管理层 (Composable)
  * 负责解析时间参数、获取并组装统一日程列表以及统计数据
@@ -29,12 +35,6 @@ export function useDayData() {
         return route.params.day ? parseInt(route.params.day) : now.getDate()
     })
 
-    // 原始数据存储
-    const tasks = ref([])
-    const dailyPlans = ref([])
-    const habits = ref([])
-    const habitLogs = ref([])
-
     // 获取数据
     const fetchTasks = async () => {
         try {
@@ -45,10 +45,14 @@ export function useDayData() {
             const startOfDay = new Date(year, month, day, 0, 0, 0)
             const endOfDay = new Date(year, month, day, 23, 59, 59)
 
-            tasks.value = await db.tasks.list(startOfDay, endOfDay)
-            dailyPlans.value = await db.dailyPlans.listByDate(startOfDay)
+            const [fetchedTasks, fetchedPlans, allHabits] = await Promise.all([
+                db.tasks.list(startOfDay, endOfDay),
+                db.dailyPlans.listByDate(startOfDay),
+                db.habits.list()
+            ])
 
-            const allHabits = await db.habits.list()
+            tasks.value = fetchedTasks
+            dailyPlans.value = fetchedPlans
             habits.value = allHabits.filter(h => !h.is_archived && h.task_time)
 
             habitLogs.value = habits.value.flatMap(h => h.habit_logs || []).filter(log => {
