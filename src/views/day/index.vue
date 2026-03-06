@@ -27,11 +27,14 @@
 </template>
 
 <script setup>
+import { defineAsyncComponent } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import Timeline from './components/Timeline.vue'
-import AddEventModal from './components/AddEventModal.vue'
 import { useDayNavigation } from './composables/useDayNavigation'
 import { useDayModal } from './composables/useDayModal'
+
+// 弹窗组件按需加载 - 打开时才加载
+const AddEventModal = defineAsyncComponent(() => import('./components/AddEventModal.vue'))
 
 const { isReady, scrollToTask } = useDayNavigation()
 const { showAddModal, editingTask, openAddModal, openEditModal } = useDayModal()

@@ -2,7 +2,7 @@
   <div
       :id="'task-' + index"
       class="task-item group"
-      :style="{ top: (task.startHour * 25) + 'vh', height: (task.durationHours * 25) + 'vh' }"
+      :style="{ top: `calc(${task.startHour} * var(--hour-height))`, height: `calc(${task.durationHours} * var(--hour-height))` }"
       @click="$emit('select', index)"
       @dblclick="$emit('edit', index)"
   >
@@ -72,12 +72,13 @@ defineEmits(['select', 'edit'])
 @reference "@/assets/main.css";
 .task-item {
   @apply absolute left-32 right-0 transition-all duration-700 cursor-pointer select-none;
+  min-height: 28px;
 }
 .task-item__card {
   @apply flex h-full border-l-4 border-primary pl-6 pr-4 overflow-hidden bg-background shadow-sm border border-border transition-all duration-300 rounded-r-xl;
 }
 .task-item__card--short {
-  @apply flex-col justify-center py-1;
+  @apply flex-col justify-center py-0.5 px-3 min-h-[28px];
 }
 .task-item__card--medium {
   @apply flex-row items-center py-2;
@@ -98,7 +99,7 @@ defineEmits(['select', 'edit'])
   @apply text-lg font-bold tracking-tight transition-transform duration-300 shrink-0 truncate leading-tight;
 }
 .task-item__title-short {
-  @apply text-xs font-semibold tracking-tight transition-transform duration-300 truncate w-full;
+  @apply text-[11px] font-bold tracking-tight transition-transform duration-300 truncate w-full leading-none;
 }
 .task-item:hover .task-item__title--hoverable {
   @apply translate-x-2;

@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, defineAsyncComponent } from 'vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 // 子组件引用
@@ -92,7 +92,9 @@ import DirectionSidebar from './components/DirectionSidebar.vue'
 import GoalRangePicker from './components/GoalRangePicker.vue'
 import MissionBoard from './components/MissionBoard.vue'
 import MissionArchive from './components/MissionArchive.vue'
-import AddGoalModal from './components/AddGoalModal.vue'
+
+// 弹窗组件按需加载
+const AddGoalModal = defineAsyncComponent(() => import('./components/AddGoalModal.vue'))
 
 import { useAuthStore } from '@/stores/authStore'
 

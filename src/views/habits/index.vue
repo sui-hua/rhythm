@@ -74,7 +74,7 @@
  * 编排并整合习惯列表侧边栏、中心动态看板、各项统计以及编辑/新建弹窗模块。
  * 数据源由底部抽离出的多个 hooks 提供支持。
  */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -84,8 +84,10 @@ import HabitSidebar from './components/HabitSidebar.vue'
 import HabitStats from './components/HabitStats.vue'
 import HabitCalendar from './components/HabitCalendar.vue'
 import HabitLogs from './components/HabitLogs.vue'
-import AddHabitModal from './components/AddHabitModal.vue'
-import EditHabitModal from './components/EditHabitModal.vue'
+
+// 弹窗组件按需加载
+const AddHabitModal = defineAsyncComponent(() => import('./components/AddHabitModal.vue'))
+const EditHabitModal = defineAsyncComponent(() => import('./components/EditHabitModal.vue'))
 import { useHabitData } from './composables/useHabitData'
 import { useHabitStats } from './composables/useHabitStats'
 import { useHabitLogs } from './composables/useHabitLogs'

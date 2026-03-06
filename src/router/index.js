@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
-// 导入页面组件
-import LoginView from '@/views/login/index.vue'
-import YearView from '@/views/year/index.vue'
-import MonthView from '@/views/month/index.vue'
-import DayView from '@/views/day/index.vue'
-import HabitsView from '@/views/habits/index.vue'
-import DirectionView from '@/views/direction/index.vue'
-import SummaryView from '@/views/summary/index.vue'
+// 页面组件按需加载 - 仅在访问对应路由时才加载
+const LoginView = () => import('@/views/login/index.vue')
+const YearView = () => import('@/views/year/index.vue')
+const MonthView = () => import('@/views/month/index.vue')
+const DayView = () => import('@/views/day/index.vue')
+const HabitsView = () => import('@/views/habits/index.vue')
+const DirectionView = () => import('@/views/direction/index.vue')
+const SummaryView = () => import('@/views/summary/index.vue')
 
 const routes = [
   {

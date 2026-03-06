@@ -1,6 +1,6 @@
 <template>
   <ScrollArea ref="timelineContainerRef" class="timeline">
-    <div class="timeline__canvas">
+    <div class="timeline__canvas" :style="{ '--hour-height': 'max(25vh, 180px)' }">
       <!-- 背景时间轴线 -->
       <div class="timeline__grid">
         <div 
@@ -66,7 +66,8 @@ defineEmits(['edit-task', 'select-task'])
   @apply absolute inset-x-0 top-0 z-0 px-10 md:px-20;
 }
 .timeline__hour-row {
-  @apply h-[25vh] border-b transition-colors duration-300 flex items-start pt-3;
+  @apply border-b transition-colors duration-300 flex items-start pt-3;
+  height: var(--hour-height);
 }
 .timeline__hour-row--major {
   @apply border-border/60;
