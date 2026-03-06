@@ -49,7 +49,7 @@ export function useDayData() {
             dailyPlans.value = await db.dailyPlans.listByDate(startOfDay)
 
             const allHabits = await db.habits.list()
-            habits.value = allHabits.filter(h => !h.archived && h.task_time)
+            habits.value = allHabits.filter(h => !h.is_archived && h.task_time)
 
             habitLogs.value = habits.value.flatMap(h => h.habit_logs || []).filter(log => {
                 const logDate = new Date(log.completed_at)

@@ -21,7 +21,8 @@ const habits = ref([])
 
 onMounted(async () => {
   try {
-    habits.value = await db.habits.list()
+    const allHabits = await db.habits.list()
+    habits.value = allHabits.filter(h => !h.is_archived)
   } catch (e) { console.error(e) }
 })
 
