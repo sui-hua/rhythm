@@ -11,8 +11,8 @@
       - 悬停状态 (group-hover): translate-y-0 opacity-100 (往下滑出并显示)
       - pointer-events-auto: 恢复本身的鼠标交互，使得内部按钮可以点击，且鼠标悬停在它身上时面板不会消失
     -->
-    <!-- <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto"> -->
-    <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out translate-y-0opacity-100 pointer-events-auto">
+    <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto">
+    <!-- <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out translate-y-0opacity-100 pointer-events-auto"> -->
       <div class="flex items-center gap-1">
         <!-- 例如身处月或者日页面，显示左侧快捷返回及切换区域 -->
         <Transition name="nav-context">

@@ -23,7 +23,7 @@
         <div v-for="(item, index) in dailySchedule" :key="index" 
              @click="$emit('scrollToTask', index)"
              @dblclick="$emit('edit-task', index)"
-             class="flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer"
+             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all group cursor-pointer"
              :class="[item.completed ? 'opacity-50' : 'hover:bg-zinc-50']">
           
           <div @click.stop @dblclick.stop>
@@ -35,12 +35,17 @@
           </div>
 
           <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span class="text-[10px] font-mono font-medium text-muted-foreground">{{ item.time }}</span>
-            <div class="flex items-center justify-between gap-2">
-              <h4 class="text-sm font-semibold tracking-tight truncate transition-all" :class="{ 'line-through text-muted-foreground': item.completed }">
+            <!-- <span class="text-[10px] font-mono font-medium text-muted-foreground">{{ item.time }}</span> -->
+            <div class="flex items-center justify-between gap-2 w-full">
+              <h4 class="text-sm font-semibold tracking-tight truncate transition-all" :class="{ 'line-through text-muted-foreground': item.completed, 'group-hover:text-foreground': !item.completed }">
                 {{ item.title }}
               </h4>
-              <Pencil class="w-3 h-3 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-all shrink-0" />
+              <div 
+                class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-200/50 rounded flex items-center justify-center shrink-0 cursor-pointer"
+                @click.stop="$emit('edit-task', index)"
+              >
+                <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
             </div>
           </div>
         </div>
@@ -70,7 +75,7 @@
 <script setup>
 import { computed } from 'vue'
 import { db } from '@/services/database'
-import { Plus, Pencil } from 'lucide-vue-next'
+import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'

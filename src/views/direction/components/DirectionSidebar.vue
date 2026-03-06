@@ -1,5 +1,5 @@
 <script setup>
-import { Plus, Pencil } from 'lucide-vue-next'
+import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
@@ -36,7 +36,6 @@ defineEmits(['select-goal', 'add-goal', 'edit-goal'])
     <header class="px-6 pt-10 pb-6 shrink-0 border-b border-border mb-4">
       <div class="flex flex-col gap-2">
         <h2 class="text-2xl font-semibold tracking-tight">所向目标</h2>
-        <p class="text-xs text-muted-foreground italic">知所向，行致远</p>
       </div>
     </header>
 
@@ -49,21 +48,21 @@ defineEmits(['select-goal', 'add-goal', 'edit-goal'])
           <div class="flex flex-col gap-2">
             <button v-for="(goal, idx) in group.items" :key="goal.name"
                  @click="$emit('select-goal', goal)"
-                 class="flex flex-col items-start gap-1 p-3 rounded-lg transition-all text-left group"
+                 @dblclick="$emit('edit-goal', goal)"
+                 class="flex flex-col items-start gap-1 p-3 mx-1 rounded-lg transition-all text-left group"
                  :class="selectedGoalName === goal.name ? 'bg-secondary ring-1 ring-border shadow-sm' : 'hover:bg-zinc-50'"
             >
-              <div class="flex items-center gap-3 w-full">
-                <span class="text-[10px] font-mono font-bold text-muted-foreground">0{{ idx + 1 }}</span>
+              <div class="flex items-center justify-between w-full gap-3">
                 <h4 class="text-sm font-semibold tracking-tight transition-colors flex-1 truncate"
                   :class="selectedGoalName === goal.name ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'"
                 >
                   {{ goal.name }}
                 </h4>
                 <div 
-                  class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/5 rounded-md cursor-pointer"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-200/50 rounded flex items-center justify-center shrink-0 cursor-pointer"
                   @click.stop="$emit('edit-goal', goal)"
                 >
-                  <Pencil class="w-3 h-3 text-muted-foreground" />
+                  <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
                 </div>
               </div>
             </button>
