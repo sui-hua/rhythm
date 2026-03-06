@@ -33,29 +33,45 @@
             />
           </div>
 
-          <div class="flex flex-col gap-3 pt-2">
-            <Button 
-              class="w-full h-9 bg-primary text-primary-foreground font-semibold"
-              @click="submit"
-              :disabled="!form.title.trim() || (form.title === habitData?.title && form.task_time === (habitData?.task_time || '') && Math.round(form.duration * 60) === (habitData?.duration || 10))"
-            >
-              保存修改
-            </Button>
-            <Button 
-              variant="outline"
-              class="w-full h-9"
-              @click="$emit('update:show', false)"
-            >
-              取消
-            </Button>
-            <Button 
-              title="危险操作：删除无法恢复"
-              class="w-full h-9 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white font-medium transition-colors border-none mt-1"
-              @click="handleDelete"
-            >
-              删除该习惯
-            </Button>
-          </div>
+            <div class="flex flex-col gap-3 pt-2">
+              <Button 
+                class="w-full h-9 bg-primary text-primary-foreground font-semibold"
+                @click="submit"
+                :disabled="!form.title.trim() || (form.title === habitData?.title && form.task_time === (habitData?.task_time || '') && Math.round(form.duration * 60) === (habitData?.duration || 10))"
+              >
+                保存修改
+              </Button>
+              <Button 
+                variant="outline"
+                class="w-full h-9"
+                @click="$emit('update:show', false)"
+              >
+                取消
+              </Button>
+              <div class="flex flex-row gap-3 w-full mt-1">
+                <Button 
+                  v-if="!habitData?.is_archived"
+                  class="flex-1 h-9 bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white font-medium transition-colors border-none"
+                  @click="handleArchive(true)"
+                >
+                  归档该习惯
+                </Button>
+                <Button 
+                  v-else
+                  class="flex-1 h-9 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white font-medium transition-colors border-none"
+                  @click="handleArchive(false)"
+                >
+                  取消归档
+                </Button>
+                <Button 
+                  title="危险操作：删除无法恢复"
+                  class="flex-1 h-9 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white font-medium transition-colors border-none"
+                  @click="handleDelete"
+                >
+                  删除该习惯
+                </Button>
+              </div>
+            </div>
         </div>
       </div>
     </DialogContent>
@@ -144,6 +160,22 @@ const handleDelete = async () => {
     emit('update:show', false)
   } catch (e) {
     console.error('Delete habit failed in modal', e)
+  }
+}
+
+/**
+ * 归档 / 取消归档当前习惯
+ */
+const handleArchive = async (isArchived) => {
+  if (!props.habitData?.id) return
+  try {
+    await db.habits.update(props.habitData.id, {
+      is_archived: isArchived
+    })
+    emit('refresh')
+    emit('update:show', false)
+  } catch (e) {
+    console.error('Archive habit failed in modal', e)
   }
 }
 </script>

@@ -26,12 +26,48 @@
           class="flex flex-col items-start gap-1 p-3 mx-1 rounded-lg transition-all text-left group"
           :class="selectedHabitId === habit.id ? 'bg-secondary ring-1 ring-border shadow-sm' : 'hover:bg-zinc-50'"
         >
-          <h4 class="text-sm font-semibold tracking-tight transition-colors"
-              :class="selectedHabitId === habit.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'"
-          >
-            {{ habit.title }}
-          </h4>
+          <div class="flex items-center justify-between w-full">
+            <h4 class="text-sm font-semibold tracking-tight transition-colors"
+                :class="selectedHabitId === habit.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+            >
+              {{ habit.title }}
+            </h4>
+            <div 
+              class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-200/50 rounded flex items-center justify-center shrink-0"
+              @click.stop="$emit('edit-habit', habit)"
+            >
+              <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
+          </div>
         </button>
+
+        <template v-if="archivedHabits && archivedHabits.length > 0">
+          <div class="mt-4 mb-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            归档项目
+          </div>
+          <button 
+            v-for="habit in archivedHabits" 
+            :key="habit.id"
+            @click="$emit('select-habit', habit)"
+            @dblclick="$emit('edit-habit', habit)"
+            class="flex flex-col items-start gap-1 p-3 mx-1 rounded-lg transition-all text-left group opacity-60 hover:opacity-100"
+            :class="selectedHabitId === habit.id ? 'bg-secondary ring-1 ring-border shadow-sm' : 'hover:bg-zinc-50'"
+          >
+          <div class="flex items-center justify-between w-full">
+            <h4 class="text-sm tracking-tight transition-colors line-through"
+                :class="selectedHabitId === habit.id ? 'text-foreground font-semibold' : 'text-muted-foreground'"
+            >
+              {{ habit.title }}
+            </h4>
+            <div 
+              class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-200/50 rounded flex items-center justify-center shrink-0"
+              @click.stop="$emit('edit-habit', habit)"
+            >
+              <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
+          </div>
+          </button>
+        </template>
       </div>
     </ScrollArea>
 
@@ -59,7 +95,7 @@
  * 习惯应用侧边导航栏 (HabitSidebar.vue)
  * 提供所有的习惯列表项入口展示区域，用户可点击切换焦点，以及展示全局本日完成度的大盘状况。
  */
-import { Plus } from 'lucide-vue-next'
+import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -71,6 +107,13 @@ defineProps({
   habits: {
     type: Array,
     required: true
+  },
+  /**
+   * 已归档的习惯，用于展示下方的归档项目列表。
+   */
+  archivedHabits: {
+    type: Array,
+    default: () => []
   },
   /**
    * 用于接收指示当前哪一项才是“被选中的”标识，以在左侧赋予阴影高亮。

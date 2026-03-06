@@ -3,6 +3,7 @@
     
     <HabitSidebar 
       :habits="habits" 
+      :archived-habits="archivedHabits"
       :selected-habit-id="selectedHabit?.id"
       :today-completion-rate="todayCompletionRate"
       @select-habit="selectedHabit = $event"
@@ -92,6 +93,7 @@ import { useHabitLogs } from './composables/useHabitLogs'
 // 1. 获取核心数据层面能力支撑
 const {
   habits,
+  archivedHabits,
   selectedHabit,
   viewYear,
   viewMonth,

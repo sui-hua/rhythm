@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 
@@ -9,8 +9,14 @@ import { useDateStore } from '@/stores/dateStore'
 export function useHabitData() {
     const dateStore = useDateStore()
 
-    // 存储所有的习惯列表数据
-    const habits = ref([])
+    // 存储所有的习惯列表数据（包含已归档）
+    const allHabits = ref([])
+
+    // 向外暴露的活跃习惯（过滤掉已归档）
+    const habits = computed(() => allHabits.value.filter(h => !h.is_archived))
+    // 向外暴露的已归档习惯
+    const archivedHabits = computed(() => allHabits.value.filter(h => h.is_archived))
+
     // 存储当前用户在左侧列表选中的某项具体习惯对象
     const selectedHabit = ref(null)
 
@@ -43,7 +49,7 @@ export function useHabitData() {
     const fetchHabits = async () => {
         try {
             const rawHabits = await db.habits.list()
-            habits.value = rawHabits.map((h) => {
+            allHabits.value = rawHabits.map((h) => {
                 const logs = h.habit_logs || []
 
                 // 基于当前展示月(viewYear, viewMonth)过滤对应时间内的打卡记录打卡数据
@@ -68,12 +74,14 @@ export function useHabitData() {
 
             // 拉取刷新数据时，保证视图之前的“选中状态”得以继续维持不至于在列表重新渲染时丢失聚焦
             if (selectedHabit.value) {
-                const updated = habits.value.find((h) => h.id === selectedHabit.value.id)
+                const updated = allHabits.value.find((h) => h.id === selectedHabit.value.id)
                 if (updated) selectedHabit.value = updated
                 else selectedHabit.value = null
             } else if (habits.value.length > 0) {
-                // 或者首次加载默认先展示第一项内容
+                // 或者首次加载默认先展示未归档的第一项内容
                 selectedHabit.value = habits.value[0]
+            } else if (archivedHabits.value.length > 0) {
+                selectedHabit.value = archivedHabits.value[0]
             }
         } catch (e) {
             console.error('Fetch habits failed', e)
@@ -82,6 +90,7 @@ export function useHabitData() {
 
     return {
         habits,
+        archivedHabits,
         selectedHabit,
         viewYear,
         viewMonth,
