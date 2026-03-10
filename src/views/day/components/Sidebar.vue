@@ -1,7 +1,15 @@
 <template>
-  <aside class="sidebar" :style="{ width: width + 'px' }">
-    <!-- 侧边栏宽度拖拽调整手柄 -->
+  <aside 
+    class="sidebar" 
+    :class="{ 
+      'sidebar--mobile': isMobile,
+      'sidebar--open': isMobile && show
+    }"
+    :style="{ width: isMobile ? '280px' : width + 'px' }"
+  >
+    <!-- 侧边栏宽度拖拽调整手柄 (仅桌面端) -->
     <div 
+      v-if="!isMobile"
       class="sidebar__resize-handle"
       :class="{ 'sidebar__resize-handle--active': isResizing }"
       @mousedown="startResize">
@@ -9,7 +17,18 @@
 
     <header class="sidebar__header">
       <div class="sidebar__header-content">
-        <h2 class="sidebar__title">{{ selectedDay }}日</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="sidebar__title">{{ selectedDay }}日</h2>
+          <Button 
+            v-if="isMobile" 
+            variant="ghost" 
+            size="icon" 
+            class="-mr-2 h-8 w-8"
+            @click="$emit('close')"
+          >
+            <X class="h-4 w-4" />
+          </Button>
+        </div>
         <p class="sidebar__subtitle">{{ selectedMonthName }} 任务清单</p>
       </div>
     </header>
@@ -70,7 +89,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Plus, Settings2 } from 'lucide-vue-next'
+import { Plus, Settings2, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -80,6 +99,11 @@ import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '../composables/useDayData'
 
+const props = defineProps({
+  isMobile: Boolean,
+  show: Boolean
+})
+
 const dateStore = useDateStore()
 const { dailySchedule, completedCount, handleToggleComplete } = useDayData()
 const { width, startResize, isResizing } = useResizable()
@@ -87,13 +111,22 @@ const { width, startResize, isResizing } = useResizable()
 const selectedDay = computed(() => dateStore.currentDate.getDate())
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
 
-defineEmits(['scrollToTask', 'add-event', 'edit-task'])
+defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 </script>
 
 <style scoped>
 @reference "@/assets/main.css";
 .sidebar {
-  @apply border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden;
+  @apply border-r border-zinc-100 flex flex-col z-20 relative overflow-hidden transition-all duration-300;
+}
+.sidebar:not(.sidebar--mobile) {
+  @apply bg-background;
+}
+.sidebar--mobile {
+  @apply fixed left-0 top-0 bottom-0 z-50 border-r bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl shadow-xl;
+}
+.sidebar--open {
+  @apply shadow-2xl;
 }
 .sidebar__resize-handle {
   @apply absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0;
@@ -108,7 +141,7 @@ defineEmits(['scrollToTask', 'add-event', 'edit-task'])
   @apply bg-primary/20 opacity-100;
 }
 .sidebar__header {
-  @apply px-6 pt-10 pb-6 shrink-0 border-b border-border mb-4;
+  @apply px-6 pt-10 pb-6 shrink-0 border-b border-border/10 mb-4 bg-transparent;
 }
 .sidebar__header-content {
   @apply flex flex-col gap-2;
@@ -165,7 +198,7 @@ defineEmits(['scrollToTask', 'add-event', 'edit-task'])
   @apply w-3.5 h-3.5 text-muted-foreground;
 }
 .sidebar__footer {
-  @apply p-6 border-t border-border bg-zinc-50/50 backdrop-blur-sm relative z-10 flex flex-col gap-4;
+  @apply p-6 border-t border-border/10 bg-transparent relative z-10 flex flex-col gap-4;
 }
 .sidebar__progress-header {
   @apply flex justify-between items-center mb-2;

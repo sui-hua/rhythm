@@ -71,11 +71,11 @@ defineEmits(['select', 'edit'])
 <style scoped>
 @reference "@/assets/main.css";
 .task-item {
-  @apply absolute left-32 right-0 transition-all duration-700 cursor-pointer select-none;
+  @apply absolute left-20 md:left-32 right-0 transition-all duration-700 cursor-pointer select-none;
   min-height: 28px;
 }
 .task-item__card {
-  @apply flex h-full border-l-4 border-primary pl-6 pr-4 overflow-hidden bg-background shadow-sm border border-border transition-all duration-300 rounded-r-xl;
+  @apply flex h-full border border-border border-l-4 border-l-primary pl-6 pr-4 overflow-hidden bg-background shadow-sm transition-all duration-300 rounded-r-xl;
 }
 .task-item__card--short {
   @apply flex-col justify-center py-0.5 px-3 min-h-[28px];
@@ -93,13 +93,13 @@ defineEmits(['select', 'edit'])
   @apply -translate-x-1 shadow-md;
 }
 .task-item__title-medium {
-  @apply flex-1 text-sm font-semibold tracking-tight transition-transform duration-300 truncate;
+  @apply flex-1 text-xs md:text-sm font-semibold tracking-tight transition-transform duration-300 truncate;
 }
 .task-item__title-long {
-  @apply text-lg font-bold tracking-tight transition-transform duration-300 shrink-0 truncate leading-tight;
+  @apply text-base md:text-lg font-bold tracking-tight transition-transform duration-300 shrink-0 truncate leading-tight;
 }
 .task-item__title-short {
-  @apply text-[11px] font-bold tracking-tight transition-transform duration-300 truncate w-full leading-none;
+  @apply text-[10px] md:text-[11px] font-bold tracking-tight transition-transform duration-300 truncate w-full leading-none;
 }
 .task-item:hover .task-item__title--hoverable {
   @apply translate-x-2;

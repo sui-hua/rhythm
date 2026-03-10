@@ -40,10 +40,15 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import TaskItem from './TaskItem.vue'
 import TimelineMarker from './TimelineMarker.vue'
 import { useDayData } from '../composables/useDayData'
-import { useDayNavigation } from '../composables/useDayNavigation'
+
+const props = defineProps({
+  currentHour: {
+    type: Number,
+    required: true
+  }
+})
 
 const { dailySchedule } = useDayData()
-const { currentHour } = useDayNavigation()
 
 const timelineContainerRef = ref(null)
 
@@ -57,13 +62,13 @@ defineEmits(['edit-task', 'select-task'])
 <style scoped>
 @reference "@/assets/main.css";
 .timeline {
-  @apply flex-1 bg-gradient-to-br from-zinc-50/50 to-zinc-100/30 relative;
+  @apply flex-1 bg-linear-to-br from-zinc-50/50 to-zinc-100/30 relative;
 }
 .timeline__canvas {
-  @apply relative z-10 px-10 md:px-20 py-10 min-h-[600vh];
+  @apply relative z-10 px-4 md:px-20 py-10 min-h-[600vh];
 }
 .timeline__grid {
-  @apply absolute inset-x-0 top-0 z-0 px-10 md:px-20;
+  @apply absolute inset-x-0 top-0 z-0 px-4 md:px-20;
 }
 .timeline__hour-row {
   @apply border-b transition-colors duration-300 flex items-start pt-3;
