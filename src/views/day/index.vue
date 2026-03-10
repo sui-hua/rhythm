@@ -35,8 +35,15 @@
         <X v-else class="w-5 h-5" />
       </button>
 
-      <!-- Add/Edit Event Modal -->
+      <!-- Add/Edit Event Modal/Drawer -->
       <AddEventModal
+        v-if="!isMobile"
+        v-model:show="showAddModal"
+        :initial-data="editingTask"
+      />
+
+      <MobileAddEventDrawer
+        v-else
         v-model:show="showAddModal"
         :initial-data="editingTask"
       />
@@ -55,6 +62,7 @@ import { useMobile } from '@/composables/useMobile'
 
 // 弹窗组件按需加载 - 打开时才加载
 const AddEventModal = defineAsyncComponent(() => import('./components/AddEventModal.vue'))
+const MobileAddEventDrawer = defineAsyncComponent(() => import('./components/MobileAddEventDrawer.vue'))
 
 const { isReady, scrollToTask, currentHour } = useDayNavigation()
 const { showAddModal, editingTask, openAddModal, openEditModal } = useDayModal()
