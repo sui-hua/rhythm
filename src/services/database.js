@@ -4,10 +4,13 @@ import { dailyPlans } from './db/dailyPlans'
 import { habits } from './db/habits'
 import { tasks } from './db/tasks'
 import { summaries } from './db/summaries'
+import { plansCategory } from './db/plansCategory'
 
 export const db = {
   // Plans (总计划/年度计划表操作)
   plans,
+  // Plan Categories
+  plansCategory,
   // Monthly Plans (月计划表操作)
   monthlyPlans,
   // Daily Plans (日计划表操作)

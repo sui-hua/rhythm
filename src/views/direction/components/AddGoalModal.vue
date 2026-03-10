@@ -1,9 +1,22 @@
 <script setup lang="ts">
-import { reactive, watch, computed } from 'vue'
+import { reactive, watch, computed, onMounted, ref } from 'vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import TimePicker from '@/components/ui/TimePicker.vue'
+import DurationPicker from '@/components/ui/DurationPicker.vue'
+import { db } from '@/services/database'
+
+const categories = ref([])
+
+onMounted(async () => {
+  try {
+    categories.value = await db.plansCategory.list()
+  } catch (e) {
+    console.error('Failed to fetch categories', e)
+  }
+})
 
 const props = defineProps<{
   show: boolean
@@ -16,7 +29,9 @@ const form = reactive({
   title: '',
   startMonth: new Date().getMonth() + 1,
   endMonth: new Date().getMonth() + 1,
-  category: ''
+  category_id: '',
+  task_time: '09:00',
+  duration: 30
 })
 
 watch(() => props.show, (newVal) => {
@@ -25,12 +40,16 @@ watch(() => props.show, (newVal) => {
       form.title = props.initialData.name || props.initialData.title
       form.startMonth = props.initialData.startMonth || new Date().getMonth() + 1
       form.endMonth = props.initialData.endMonth || props.initialData.startMonth || new Date().getMonth() + 1
-      form.category = props.initialData.category || ''
+      form.category_id = props.initialData.category_id || ''
+      form.task_time = props.initialData.task_time || '09:00'
+      form.duration = props.initialData.duration || 30
     } else {
       form.title = ''
-      form.category = ''
+      form.category_id = ''
       form.startMonth = new Date().getMonth() + 1
       form.endMonth = new Date().getMonth() + 1
+      form.task_time = '09:00'
+      form.duration = 30
     }
   }
 })
@@ -59,7 +78,9 @@ const submit = () => {
     title: form.title,
     startMonth: form.startMonth,
     endMonth: form.endMonth,
-    category: form.category,
+    category_id: form.category_id || null,
+    task_time: form.task_time,
+    duration: form.duration,
     status: 'active',
   }
 
@@ -116,7 +137,26 @@ const submit = () => {
         </div>
         <div class="grid gap-2">
           <Label for="goal-category" class="text-xs font-bold uppercase tracking-widest text-muted-foreground">目标分类</Label>
-          <Input id="goal-category" v-model="form.category" placeholder="目标分类" class="h-10 border shadow-none" />
+          <select 
+            id="goal-category"
+            v-model="form.category_id"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">未分类</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <TimePicker 
+            v-model="form.task_time" 
+            label="任务时间"
+            id="task-time"
+          />
+          <DurationPicker 
+            v-model="form.duration" 
+            label="预计时长 (分钟)"
+            id="task-duration"
+          />
         </div>
       </div>
 

@@ -4,7 +4,7 @@ export const plans = {
     async list() {
         const { data, error } = await supabase
             .from('plans')
-            .select('*')
+            .select('*, plans_category(id, name)')
             .order('priority', { ascending: false })
             .order('created_at', { ascending: false })
         if (error) throw error

@@ -42,11 +42,13 @@ defineEmits(['select-goal', 'add-goal', 'edit-goal'])
     <ScrollArea class="flex-1 px-4 relative z-10 no-scrollbar">
       <div class="flex flex-col gap-8 pb-24 pt-2">
         <div v-for="group in categorizedGoals" :key="group.category">
-          <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.02em] mb-4 pl-1">
-            {{ group.category }}
-          </p>
+          <div class="flex items-center gap-2 mb-4 pl-1">
+            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.02em]">
+              {{ group.category }}
+            </p>
+          </div>
           <div class="flex flex-col gap-2">
-            <button v-for="(goal, idx) in group.items" :key="goal.name"
+            <button v-for="(goal, idx) in group.items" :key="goal.plan_id"
                  @click="$emit('select-goal', goal)"
                  @dblclick="$emit('edit-goal', goal)"
                  class="flex flex-col items-start gap-1 p-3 mx-1 rounded-lg transition-all text-left group"

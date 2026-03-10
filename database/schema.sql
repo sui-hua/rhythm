@@ -8,11 +8,23 @@ CREATE TABLE plans (
     title TEXT NOT NULL,
     description TEXT,
     category VARCHAR(255),
+    category_id UUID,
     year DATE NOT NULL,
     status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'archived')),
     priority INTEGER DEFAULT 2 CHECK (priority BETWEEN 1 AND 3),
     start_date DATE,
     target_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 1.1 Plan Categories (计划分类)
+CREATE TABLE plans_category (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT,
+    icon TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -104,6 +116,8 @@ CREATE TABLE daily_summaries (
 
 -- Create indexes for better query performance
 CREATE INDEX idx_plans_user_id ON plans(user_id);
+CREATE INDEX idx_plans_category_id ON plans(category_id);
+CREATE INDEX idx_plans_category_user_id ON plans_category(user_id);
 CREATE INDEX idx_monthly_plans_user_id ON monthly_plans(user_id);
 CREATE INDEX idx_monthly_plans_plan_id ON monthly_plans(plan_id);
 CREATE INDEX idx_daily_plans_user_id ON daily_plans(user_id);
@@ -121,6 +135,7 @@ CREATE INDEX idx_daily_summaries_user_id ON daily_summaries(user_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plans_category ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monthly_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
@@ -137,6 +152,12 @@ CREATE POLICY "Users can view their own plans" ON plans FOR SELECT USING (auth.u
 CREATE POLICY "Users can insert their own plans" ON plans FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own plans" ON plans FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own plans" ON plans FOR DELETE USING (auth.uid() = user_id);
+
+-- Plan Categories Policies
+CREATE POLICY "Users can view their own plan categories" ON plans_category FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own plan categories" ON plans_category FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own plan categories" ON plans_category FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own plan categories" ON plans_category FOR DELETE USING (auth.uid() = user_id);
 
 -- Monthly Plans Policies
 CREATE POLICY "Users can view their own monthly plans" ON monthly_plans FOR SELECT USING (auth.uid() = user_id);

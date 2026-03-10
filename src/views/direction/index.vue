@@ -199,11 +199,11 @@ onMounted(fetchData)
  * 2. 计算每个 plan 的 startMonth 和 endMonth (根据 monthlyPlans)。
  */
 const categorizedGoals = computed(() => {
-  // 按父计划的分类分组月度计划 (plans[].category)
+  // 按父计划的分类分组月度计划 (plans[].plans_category.name)
   const map = new Map()
   for (const plan of plans.value) {
-    const category = plan.category || '未分类'
-    if (!map.has(category)) map.set(category, [])
+    const categoryName = plan.plans_category?.name || '未分类'
+    if (!map.has(categoryName)) map.set(categoryName, [])
 
     const mps = monthlyPlans.value.filter(mp => mp.plan_id === plan.id)
     
@@ -219,12 +219,13 @@ const categorizedGoals = computed(() => {
        }
     }
 
-    map.get(category).push({
+    map.get(categoryName).push({
       ...plan,
       name: plan.title,
       startMonth: minMonth,
       endMonth: maxMonth,
-      plan_id: plan.id
+      plan_id: plan.id,
+      category_name: categoryName
     })
   }
   return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
@@ -304,16 +305,18 @@ const handleEditGoal = (goal) => {
  *    - 更新范围内现有的 MonthlyPlans 标题。
  *    - 删除范围外的 MonthlyPlans (实现范围缩减)。
  */
-const updateGoalData = async (goalToUpdate, newTitle, newCategory) => {
+const updateGoalData = async (goalToUpdate, newTitle, newCategoryId, newTaskTime, newDuration) => {
   try {
     const planId = goalToUpdate.plan_id
     const year = new Date().getFullYear()
     
-    // 更新父计划 (分类和标题)
-    if (planId && (newTitle !== undefined || newCategory !== undefined)) {
+    // 更新父计划 (分类、标题、时间、时长)
+    if (planId && (newTitle !== undefined || newCategoryId !== undefined || newTaskTime !== undefined || newDuration !== undefined)) {
       const updates = {}
       if (newTitle !== undefined) updates.title = newTitle
-      if (newCategory !== undefined) updates.category = newCategory
+      if (newCategoryId !== undefined) updates.category_id = newCategoryId
+      if (newTaskTime !== undefined) updates.task_time = newTaskTime
+      if (newDuration !== undefined) updates.duration = newDuration
       
       await db.plans.update(planId, updates)
     }
@@ -386,7 +389,9 @@ const handleUpdateGoal = async (updatedGoal) => {
   const success = await updateGoalData(
     editingGoal.value, 
     updatedGoal.title, 
-    updatedGoal.category
+    updatedGoal.category_id,
+    updatedGoal.task_time,
+    updatedGoal.duration
   )
   
   if (success) {
@@ -421,7 +426,9 @@ const handleAddGoal = async (newGoal) => {
       title: newGoal.title,
       description: newGoal.description || '',
       year: `${year}-01-01`,
-      category: newGoal.category || '',
+      category_id: newGoal.category_id || null,
+      task_time: newGoal.task_time || '09:00',
+      duration: newGoal.duration || 30,
       status: 'active',
       priority: 2,
     }

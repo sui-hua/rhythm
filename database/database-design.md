@@ -7,11 +7,25 @@
 | `title`       | Text    | 计划名称                                 |
 | `description` | Text    | 计划描述/愿景                              |
 | `year`        | Date    | 计划所属年份（以 `DATE` 存储，例如：'2026-01-01'，用于月计划的年份归属） |
-| `category`    | Varchar | 计划分类（例如：学习、健康、工作）                |
+| `category`    | Varchar | 计划分类（例如：学习、健康、工作 - 旧版）                |
+| `category_id` | UUID    | 关联的分组ID（外键，指向 `plans_category.id`）         |
 | `status`      | Varchar | 状态：'active', 'completed', 'archived' |
 | `priority`    | Int     | 优先级（使用数字，1-低，2-中，3-高）       |
 | `start_date`  | Date    | 计划开始日期                               |
 | `target_date` | Date    | 预计达成日期                               |
+
+---
+
+### 1.1 **计划分类模块 (Plan Categories)**
+
+| 字段         | 类型      | 说明               |
+| ---------- | ------- | ---------------- |
+| `id`       | UUID    | 主键               |
+| `user_id`  | UUID    | 用户ID             |
+| `name`     | Text    | 分类名称           |
+| `color`    | Text    | 分类颜色（Hex/HSL） |
+| `icon`     | Text    | 分类图标名称       |
+| `created_at` | Timestamp | 创建时间           |
 
 ---
 
