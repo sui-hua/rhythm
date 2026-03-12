@@ -1,14 +1,14 @@
-import supabaseClient, { createBaseSupabase } from '@/config/supabase'
+import client from '@/config/supabase'
 
-const supabase = createBaseSupabase('daily_plans')
+const supabase = client.createBase('daily_plans')
 
 export const dailyPlans = {
     async list(monthlyPlanId) {
-        let query = supabaseClient.from('daily_plans').select('*').order('day', { ascending: true })
-        if (monthlyPlanId) query = query.eq('monthly_plan_id', monthlyPlanId)
-        const { data, error } = await query
-        if (error) throw error
-        return data
+        return await supabase.query(q => {
+            let query = q.select('*').order('day', { ascending: true })
+            if (monthlyPlanId) query = query.eq('monthly_plan_id', monthlyPlanId)
+            return query
+        })
     },
     async create(plan) {
         return await supabase.create(plan)
@@ -25,8 +25,7 @@ export const dailyPlans = {
         const day = String(date.getDate()).padStart(2, '0')
         const dateStr = `${year}-${month}-${day}`
 
-        const { data, error } = await supabaseClient
-            .from('daily_plans')
+        return await supabase.query(q => q
             .select(`
                 *,
                 monthly_plans (
@@ -41,7 +40,6 @@ export const dailyPlans = {
                 )
             `)
             .eq('date', dateStr)
-        if (error) throw error
-        return data
+        )
     }
 }

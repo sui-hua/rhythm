@@ -1,16 +1,14 @@
-import supabaseClient, { createBaseSupabase } from '@/config/supabase'
+import client from '@/config/supabase'
 
-const supabase = createBaseSupabase('plans')
+const supabase = client.createBase('plans')
 
 export const plans = {
     async list() {
-        const { data, error } = await supabaseClient
-            .from('plans')
+        return await supabase.query(q => q
             .select('*, plans_category(id, name)')
             .order('priority', { ascending: false })
             .order('created_at', { ascending: false })
-        if (error) throw error
-        return data
+        )
     },
     async create(plan) {
         return await supabase.create(plan)

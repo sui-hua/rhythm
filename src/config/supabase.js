@@ -15,14 +15,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // 创建 Supabase 客户端实例
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export default supabase
-
 /**
  * 创建一个基础的数据库服务对象
  * @param {string} tableName - 目标表名
  * @returns {object} 包含标准 CRUD 操作的对象
  */
-export const createBaseSupabase = (tableName) => {
+supabase.createBase = (tableName) => {
   return {
     async list(options = {}) {
       const { 
@@ -84,6 +82,19 @@ export const createBaseSupabase = (tableName) => {
       return data
     },
 
+    /**
+     * 执行自定义复杂查询
+     * @param {Function} queryFn - 接收 query builder 的回调函数，返回构建好的查询对象
+     */
+    async query(queryFn) {
+      if (typeof queryFn !== 'function') {
+        throw new Error('queryFn 必须是一个函数')
+      }
+      const { data, error } = await queryFn(supabase.from(tableName))
+      if (error) throw error
+      return data
+    },
+
     async delete(id) {
       const { error } = await supabase
         .from(tableName)
@@ -94,3 +105,5 @@ export const createBaseSupabase = (tableName) => {
     }
   }
 }
+
+export default supabase
