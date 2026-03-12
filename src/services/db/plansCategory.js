@@ -1,8 +1,10 @@
-import supabase from '@/config/supabase'
+import supabaseClient, { createBaseSupabase } from '@/config/supabase'
+
+const supabase = createBaseSupabase('plans_category')
 
 export const plansCategory = {
     async list() {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('plans_category')
             .select('*')
             .order('name', { ascending: true })
@@ -10,17 +12,12 @@ export const plansCategory = {
         return data
     },
     async create(category) {
-        const { data, error } = await supabase.from('plans_category').insert(category).select().single()
-        if (error) throw error
-        return data
+        return await supabase.create(category)
     },
     async update(id, updates) {
-        const { data, error } = await supabase.from('plans_category').update(updates).eq('id', id).select().single()
-        if (error) throw error
-        return data
+        return await supabase.update(id, updates)
     },
     async delete(id) {
-        const { error } = await supabase.from('plans_category').delete().eq('id', id)
-        if (error) throw error
+        return await supabase.delete(id)
     }
 }

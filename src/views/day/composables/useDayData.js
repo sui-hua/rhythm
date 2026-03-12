@@ -96,12 +96,17 @@ export function useDayData() {
         // 2. 处理日计划
         dailyPlans.value.forEach(plan => {
             let startHourVal, startTimeStr, durationHours, durationStr
-            if (plan.task_time) {
-                const [hours, minutes] = plan.task_time.split(':').map(Number)
+            
+            // 计算继承的时间和时长
+            const inheritedTime = plan.task_time || plan.monthly_plans?.task_time || plan.monthly_plans?.plans?.task_time
+            const inheritedDuration = plan.duration || plan.monthly_plans?.duration || plan.monthly_plans?.plans?.duration || 30
+
+            if (inheritedTime) {
+                const [hours, minutes] = inheritedTime.split(':').map(Number)
                 startHourVal = hours + minutes / 60
                 startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-                durationHours = 0.5
-                durationStr = '30分钟'
+                durationHours = inheritedDuration / 60
+                durationStr = durationHours < 1 ? `${inheritedDuration}分钟` : `${parseFloat(durationHours.toFixed(1))}小时`
             } else {
                 startHourVal = undefined
                 startTimeStr = '未安排'

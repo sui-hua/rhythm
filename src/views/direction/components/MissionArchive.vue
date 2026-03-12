@@ -40,8 +40,38 @@
 
               <!-- 任务内容卡片 -->
               <div v-if="dailyTasks[dayTaskKey(day)]" 
-                   class="min-h-[50px] flex-1 rounded-xl border border-zinc-100 bg-white px-5 text-sm font-medium tracking-tight leading-relaxed text-foreground shadow-sm hover:shadow-md transition-all group-hover:border-zinc-200 flex items-center">
-                {{ dailyTasks[dayTaskKey(day)].title }}
+                   class="min-h-[50px] flex-1 rounded-xl border border-zinc-100 bg-white p-3 text-sm font-medium tracking-tight leading-relaxed text-foreground shadow-sm hover:shadow-md transition-all group-hover:border-zinc-200 flex flex-col gap-2">
+                <input
+                  class="font-medium bg-transparent border-none outline-none w-full"
+                  :value="dailyTasks[dayTaskKey(day)].title"
+                  @blur="(e) => $emit('update-task', { ...dailyTasks[dayTaskKey(day)], title: e.target.value })"
+                  @keyup.enter="(e) => e.target.blur()"
+                />
+                <div class="flex items-center gap-4 border-t border-zinc-50 pt-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">时间</span>
+                    <input 
+                      type="time" 
+                      class="text-xs bg-transparent border-none outline-none text-muted-foreground font-mono w-[60px]"
+                      :value="dailyTasks[dayTaskKey(day)].task_time ? dailyTasks[dayTaskKey(day)].task_time.slice(0, 5) : ''"
+                      @blur="(e) => $emit('update-task', { ...dailyTasks[dayTaskKey(day)], task_time: e.target.value || null })"
+                      @keyup.enter="(e) => e.target.blur()"
+                    />
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">时长</span>
+                    <div class="flex items-center">
+                      <input 
+                        type="number" 
+                        class="text-xs bg-transparent border-none outline-none text-muted-foreground font-mono w-[40px] text-right"
+                        :value="dailyTasks[dayTaskKey(day)].duration"
+                        @blur="(e) => $emit('update-task', { ...dailyTasks[dayTaskKey(day)], duration: e.target.value ? parseInt(e.target.value) : null })"
+                        @keyup.enter="(e) => e.target.blur()"
+                      />
+                      <span class="text-xs text-muted-foreground font-mono ml-1">m</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -13,19 +13,51 @@
             
             <div class="flex-1 min-w-0 max-w-xl">
               <!-- 编辑模式：输入月度目标 -->
-              <div v-if="selectedMonth === m" @click.stop class="mb-1">
+              <div v-if="selectedMonth === m" @click.stop class="mb-1 flex flex-col gap-2">
                 <Input 
-                  :model-value="monthlyMainGoals[goalKey(m)]"
-                  @update:model-value="monthlyMainGoals[goalKey(m)] = $event"
+                  :model-value="monthlyMainGoals[goalKey(m)]?.title || ''"
+                  @update:model-value="val => { if(monthlyMainGoals[goalKey(m)]) monthlyMainGoals[goalKey(m)].title = val }"
+                  @blur="() => $emit('update-monthly-plan', m, { title: monthlyMainGoals[goalKey(m)]?.title })"
+                  @keyup.enter="() => $emit('update-monthly-plan', m, { title: monthlyMainGoals[goalKey(m)]?.title })"
                   class="bg-background text-lg font-semibold tracking-tight h-10 shadow-sm w-full"
                   placeholder="点此分配本月主要任务..." 
                 />
+                
+                <div class="flex gap-4 items-center pl-1">
+                  <div class="flex flex-col gap-1 w-32">
+                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">默认时间</span>
+                    <Input 
+                      type="time"
+                      :model-value="monthlyMainGoals[goalKey(m)]?.task_time || ''"
+                      @update:model-value="val => { if(monthlyMainGoals[goalKey(m)]) monthlyMainGoals[goalKey(m)].task_time = val || null }"
+                      @blur="() => $emit('update-monthly-plan', m, { task_time: monthlyMainGoals[goalKey(m)]?.task_time || null })"
+                      @keyup.enter="() => $emit('update-monthly-plan', m, { task_time: monthlyMainGoals[goalKey(m)]?.task_time || null })"
+                      class="h-8 text-sm"
+                    />
+                  </div>
+                  <div class="flex flex-col gap-1 w-32">
+                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">默认时长(分)</span>
+                    <Input 
+                      type="number"
+                      :model-value="monthlyMainGoals[goalKey(m)]?.duration || ''"
+                      @update:model-value="val => { if(monthlyMainGoals[goalKey(m)]) monthlyMainGoals[goalKey(m)].duration = val ? parseInt(val) : null }"
+                      @blur="() => $emit('update-monthly-plan', m, { duration: monthlyMainGoals[goalKey(m)]?.duration || null })"
+                      @keyup.enter="() => $emit('update-monthly-plan', m, { duration: monthlyMainGoals[goalKey(m)]?.duration || null })"
+                      class="h-8 text-sm"
+                    />
+                  </div>
+                </div>
               </div>
               <!-- 展示模式：显示月度目标 -->
-              <h3 v-else class="text-xl font-bold tracking-tight truncate transition-all" 
-                  :class="monthlyMainGoals[goalKey(m)] ? 'text-foreground' : 'text-muted-foreground/30'">
-                {{ monthlyMainGoals[goalKey(m)] || '暂无计划' }}
-              </h3>
+              <div v-else class="flex items-baseline gap-3">
+                <h3 class="text-xl font-bold tracking-tight truncate transition-all" 
+                    :class="monthlyMainGoals[goalKey(m)]?.title ? 'text-foreground' : 'text-muted-foreground/30'">
+                  {{ monthlyMainGoals[goalKey(m)]?.title || '暂无计划' }}
+                </h3>
+                <span v-if="monthlyMainGoals[goalKey(m)]?.task_time" class="text-xs font-mono text-muted-foreground/60">
+                  {{ monthlyMainGoals[goalKey(m)]?.task_time.slice(0, 5) }} ({{ monthlyMainGoals[goalKey(m)]?.duration }}m)
+                </span>
+              </div>
             </div>
           </div>
           
@@ -180,7 +212,8 @@ defineEmits([
   'start-selection', 
   'enter-selection', 
   'end-selection',
-  'delete-batch'
+  'delete-batch',
+  'update-monthly-plan'
 ])
 
 /**

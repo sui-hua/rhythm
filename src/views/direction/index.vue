@@ -50,6 +50,7 @@
             :can-select="canSelect"
             v-model:batch-input="batchInput"
             @toggle-month="toggleMonth"
+            @update-monthly-plan="saveMonthlyPlan"
             @apply-batch="applyBatchTask"
             @deselect-all="deselectAllInMonth"
             @start-selection="startSelection"
@@ -132,12 +133,12 @@ const fetchData = async () => {
     }
     monthlyPlans.value = allMonthlyPlans
     
-    // 初始化月度主要目标映射 { "plan-123-1": "Title" }
+    // 初始化月度主要目标映射 { "plan-123-1": mp_object }
     for (const mp of monthlyPlans.value) {
         if (!mp.month || !mp.plan_id) continue
         const m = new Date(mp.month).getMonth() + 1
         const key = `plan-${mp.plan_id}-${m}`
-        monthlyMainGoals[key] = mp.title
+        monthlyMainGoals[key] = mp
     }
     
     // 4. 加载所有 DailyPlans
@@ -245,7 +246,7 @@ watch(showAddModal, (val) => {
   }
 })
 
-const monthlyMainGoals = reactive({})
+const monthlyMainGoals = reactive({}) // Now stores objects instead of strings: { "plan_id-m": { title, task_time, duration, ... } }
 const dailyTasks = reactive({})
 const selectedDates = reactive({})
 const batchInput = ref('')
@@ -348,6 +349,8 @@ const updateGoalData = async (goalToUpdate, newTitle, newCategoryId, newTaskTime
           month: `${year}-${String(m).padStart(2, '0')}-01`,
           status: 'active',
           priority: 2,
+          task_time: null,
+          duration: null
         }))
       }
     }
@@ -400,6 +403,21 @@ const handleUpdateGoal = async (updatedGoal) => {
 }
 
 /**
+ * Single Monthly Plan Save
+ */
+const saveMonthlyPlan = async (m, payload) => {
+  const currentMp = monthlyPlans.value.find(mp => mp.plan_id === selectedGoal.value.plan_id && new Date(mp.month).getMonth() + 1 === m)
+  if (currentMp) {
+    try {
+      await db.monthlyPlans.update(currentMp.id, payload)
+      // fetch not strictly needed as local state is already updated via v-model, but good to ensure sync
+    } catch (e) {
+      console.error('Failed to save monthly plan details', e)
+    }
+  }
+}
+
+/**
  * 添加新目标
  * @param {Object} newGoal - 新目标数据
  * 逻辑：
@@ -448,6 +466,8 @@ const handleAddGoal = async (newGoal) => {
         month: `${year}-${String(m).padStart(2, '0')}-01`,
         status: 'active',
         priority: 2,
+        task_time: null,
+        duration: null
       }
       promises.push(db.monthlyPlans.create(monthlyPlanData))
     }
@@ -612,6 +632,8 @@ const applyBatchTask = async () => {
           user_id: authStore.userId,
           date: dateStr,
           title: content,
+          task_time: null,
+          duration: null
         })
         dailyTasks[key] = newDp
       }
@@ -649,7 +671,26 @@ const handleBatchDelete = async () => {
 const handleUpdateTask = async (task) => {
   if (!task || !task.id) return
   try {
-    await db.dailyPlans.update(task.id, { title: task.title })
+    const payload = { 
+      title: task.title,
+      task_time: task.task_time,
+      duration: task.duration
+    }
+    await db.dailyPlans.update(task.id, payload)
+    
+    // 乐观更新本地状态
+    const dateObj = new Date(task.date)
+    const m = dateObj.getMonth() + 1
+    const d = dateObj.getDate()
+    const key = `plan-${task.monthly_plan_id ? task.monthly_plan_id.split('-')[1] /* approximated plan_id mapping */ : selectedGoal.value?.plan_id}-${m}-${d}` // Or just update it via object reference if direct prop mutation works, but it's better to find the key
+    
+    // Reactivity should handle it if task is a reference, but to be sure we can search:
+    for (const [k, v] of Object.entries(dailyTasks)) {
+      if (v.id === task.id) {
+        dailyTasks[k] = { ...v, ...payload }
+        break
+      }
+    }
   } catch (e) {
     console.error('Failed to update task', e)
   }

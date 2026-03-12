@@ -1,26 +1,23 @@
-import supabase from '@/config/supabase'
+import supabaseClient, { createBaseSupabase } from '@/config/supabase'
+
+const supabase = createBaseSupabase('daily_plans')
 
 export const dailyPlans = {
     async list(monthlyPlanId) {
-        let query = supabase.from('daily_plans').select('*').order('day', { ascending: true })
+        let query = supabaseClient.from('daily_plans').select('*').order('day', { ascending: true })
         if (monthlyPlanId) query = query.eq('monthly_plan_id', monthlyPlanId)
         const { data, error } = await query
         if (error) throw error
         return data
     },
     async create(plan) {
-        const { data, error } = await supabase.from('daily_plans').insert(plan).select().single()
-        if (error) throw error
-        return data
+        return await supabase.create(plan)
     },
     async update(id, updates) {
-        const { data, error } = await supabase.from('daily_plans').update(updates).eq('id', id).select().single()
-        if (error) throw error
-        return data
+        return await supabase.update(id, updates)
     },
     async delete(id) {
-        const { error } = await supabase.from('daily_plans').delete().eq('id', id)
-        if (error) throw error
+        return await supabase.delete(id)
     },
     async listByDate(date) {
         const year = date.getFullYear()
@@ -28,7 +25,22 @@ export const dailyPlans = {
         const day = String(date.getDate()).padStart(2, '0')
         const dateStr = `${year}-${month}-${day}`
 
-        const { data, error } = await supabase.from('daily_plans').select('*').eq('date', dateStr)
+        const { data, error } = await supabaseClient
+            .from('daily_plans')
+            .select(`
+                *,
+                monthly_plans (
+                    id,
+                    task_time,
+                    duration,
+                    plans (
+                        id,
+                        task_time,
+                        duration
+                    )
+                )
+            `)
+            .eq('date', dateStr)
         if (error) throw error
         return data
     }
