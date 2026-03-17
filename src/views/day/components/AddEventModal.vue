@@ -128,7 +128,8 @@ const { form, isHabit, submit, handleDelete } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 .modal {
   @apply sm:max-w-[400px] p-6 rounded-xl border shadow-lg bg-background;
 }

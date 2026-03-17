@@ -19,7 +19,8 @@ defineProps({
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 .marker {
   @apply absolute left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 via-red-400 to-transparent z-50 flex items-center pointer-events-none transition-all duration-500 animate-pulse;
 }

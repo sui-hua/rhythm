@@ -1,11 +1,11 @@
 <template>
   <header class="h-24 px-12 flex items-center justify-between border-b border-zinc-100 shrink-0">
     <div class="flex items-center gap-8">
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         size="icon"
-        @click="$emit('goBack')" 
-        class="w-12 h-12 rounded-full border-zinc-100 hover:bg-black hover:text-white hover:border-black transition-all"
+        class="w-12 h-12 rounded-full border-zinc-100 transition-all hover:bg-foreground hover:text-background hover:border-foreground"
+        @click="$emit('goBack')"
       >
         <ArrowLeft class="w-6 h-6" />
       </Button>
@@ -25,3 +25,8 @@ defineProps({
 
 defineEmits(['goBack'])
 </script>
+
+<style scoped>
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
+</style>

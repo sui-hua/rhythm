@@ -1,54 +1,12 @@
-<script setup>
-import { computed } from 'vue'
-import { Plus } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-
-const props = defineProps({
-  activeTab: String,
-  summaries: Array,
-  selectedSummaryId: String
-})
-
-import { useResizable } from '@/composables/useResizable'
-const { width, startResize, isResizing } = useResizable()
-
-const emit = defineEmits(['update:activeTab', 'select', 'create'])
-
-const tabs = [
-  { id: 'day', label: '日总结' },
-  { id: 'week', label: '周总结' },
-  { id: 'month', label: '月总结' },
-  { id: 'year', label: '年总结' }
-]
-
-const formatDate = (dateString, type) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  if (type === 'year') return `${date.getFullYear()}年`
-  if (type === 'month') return `${date.getFullYear()}年${date.getMonth() + 1}月`
-  if (type === 'week') return `${date.toLocaleDateString()} 周总结`
-  return `${date.getMonth() + 1}月${date.getDate()}日`
-}
-
-const getSummaryTitle = (summary) => {
-    if (props.activeTab === 'day') {
-        return summary.content.done || '暂无可编辑内容'
-    }
-    return summary.content.substring(0, 30) + (summary.content.length > 30 ? '...' : '')
-}
-
-</script>
-
 <template>
   <aside 
-    class="border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden group/sidebar"
+    class="group border-zinc-100 border-r flex flex-col z-20 bg-background relative overflow-hidden"
     :style="{ width: width + 'px' }"
   >
     <!-- Resize Handle -->
     <div 
-      class="absolute right-0 top-0 bottom-0 w-1 hover:bg-primary/10 cursor-col-resize z-50 transition-colors opacity-0 group-hover/sidebar:opacity-100"
-      :class="{ 'bg-primary/20 opacity-100': isResizing }"
+      class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0 hover:bg-foreground/10 group-hover:opacity-100"
+      :class="{ 'bg-foreground/20 opacity-100': isResizing }"
       @mousedown="startResize"
     ></div>
 
@@ -66,10 +24,10 @@ const getSummaryTitle = (summary) => {
           :key="tab.id"
           @click="emit('update:activeTab', tab.id)"
           class="text-xs font-medium transition-all relative pb-2"
-          :class="activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
+          :class="activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'"
         >
           {{ tab.label }}
-          <div v-if="activeTab === tab.id" class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+          <div v-if="activeTab === tab.id" class="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />
         </button>
       </div>
     </header>
@@ -91,8 +49,9 @@ const getSummaryTitle = (summary) => {
           <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             {{ formatDate(summary.date, activeTab) }}
           </span>
-          <h4 class="text-sm font-semibold tracking-tight line-clamp-1"
-              :class="selectedSummaryId === summary.id ? 'text-foreground' : 'text-muted-foreground'"
+          <h4
+            class="text-sm font-semibold tracking-tight line-clamp-1"
+            :class="selectedSummaryId === summary.id ? 'text-foreground' : 'text-muted-foreground'"
           >
             {{ getSummaryTitle(summary) }}
           </h4>
@@ -105,10 +64,35 @@ const getSummaryTitle = (summary) => {
       <Button 
         size="icon"
         @click="emit('create')"
-        class="w-12 h-12 rounded-full shadow-xl hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground"
+        class="w-12 h-12 rounded-full shadow-xl transition-all bg-foreground text-background hover:scale-105 active:scale-95"
       >
         <Plus class="w-6 h-6" />
       </Button>
     </div>
   </aside>
 </template>
+
+<script setup>
+import { useSummarySidebar } from '@/views/summary/composables/useSummarySidebar'
+import { useResizable } from '@/composables/useResizable'
+import { Plus } from 'lucide-vue-next'
+import { toRef } from 'vue'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+
+const props = defineProps({
+  activeTab: String,
+  summaries: Array,
+  selectedSummaryId: String
+})
+
+const emit = defineEmits(['update:activeTab', 'select', 'create'])
+
+const { width, startResize, isResizing } = useResizable()
+const { tabs, formatDate, getSummaryTitle } = useSummarySidebar(toRef(props, 'activeTab'))
+</script>
+
+<style scoped>
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
+</style>

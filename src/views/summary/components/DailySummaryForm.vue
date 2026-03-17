@@ -1,45 +1,3 @@
-<script setup>
-import { ref, watch } from 'vue'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-
-const props = defineProps({
-  initialData: {
-    type: Object,
-    default: null
-  }
-})
-
-const emit = defineEmits(['save', 'cancel'])
-
-const formData = ref({
-  done: '',
-  improve: '',
-  tomorrow: ''
-})
-
-watch(() => props.initialData, (newVal) => {
-  if (newVal && newVal.content) {
-    try {
-      formData.value = typeof newVal.content === 'string' 
-        ? JSON.parse(newVal.content) 
-        : { ...newVal.content }
-    } catch (e) {
-      console.error('Failed to parse summary content:', e)
-      formData.value = { done: '', improve: '', tomorrow: '' }
-    }
-  } else {
-    formData.value = { done: '', improve: '', tomorrow: '' }
-  }
-}, { immediate: true })
-
-const handleSubmit = () => {
-  emit('save', {
-    content: { ...formData.value }
-  })
-}
-</script>
-
 <template>
   <div class="flex flex-col gap-6">
     <div class="grid gap-2">
@@ -70,10 +28,37 @@ const handleSubmit = () => {
     </div>
 
     <div class="flex justify-end gap-3 pt-4">
-      <Button variant="outline" @click="$emit('cancel')">取消</Button>
-      <Button @click="handleSubmit" class="bg-primary text-primary-foreground font-semibold px-8 whitespace-nowrap">
+      <Button variant="outline" class="whitespace-nowrap" @click="$emit('cancel')">取消</Button>
+      <Button class="bg-foreground text-background font-semibold px-8 whitespace-nowrap" @click="handleSubmit">
         保存今日总结
       </Button>
     </div>
   </div>
 </template>
+
+<script setup>
+import { useDailySummaryForm } from '@/views/summary/composables/useDailySummaryForm'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { toRef } from 'vue'
+
+const props = defineProps({
+  initialData: {
+    type: Object,
+    default: null
+  }
+})
+
+const emit = defineEmits(['save', 'cancel'])
+
+const { formData, buildPayload } = useDailySummaryForm(toRef(props, 'initialData'))
+
+const handleSubmit = () => {
+  emit('save', buildPayload())
+}
+</script>
+
+<style scoped>
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
+</style>

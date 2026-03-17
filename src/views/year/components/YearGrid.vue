@@ -12,8 +12,7 @@
 </template>
 
 <script setup>
-import { ScrollArea } from '@/components/ui/scroll-area'
-import MonthCell from './MonthCell.vue'
+import MonthCell from '@/views/year/components/MonthCell.vue'
 
 defineProps({
   yearData: Array
@@ -21,3 +20,8 @@ defineProps({
 
 defineEmits(['enterMonth'])
 </script>
+
+<style scoped>
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
+</style>

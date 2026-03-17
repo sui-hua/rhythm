@@ -72,7 +72,8 @@ const showSidebar = ref(false)
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 .day-page {
   @apply h-screen w-full bg-background flex overflow-hidden font-sans text-foreground relative;
 }

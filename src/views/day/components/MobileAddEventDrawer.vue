@@ -144,7 +144,8 @@ const { form, isHabit, submit, handleDelete } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 
 /* 遮罩层样式 */
 .mobile-drawer-overlay {

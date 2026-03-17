@@ -115,7 +115,8 @@ defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 .sidebar {
   @apply border-r border-zinc-100 flex flex-col z-20 relative overflow-hidden transition-all duration-300;
 }

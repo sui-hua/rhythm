@@ -60,7 +60,8 @@ defineEmits(['edit-task', 'select-task'])
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 .timeline {
   @apply flex-1 bg-linear-to-br from-zinc-50/50 to-zinc-100/30 relative;
 }

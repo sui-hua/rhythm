@@ -69,7 +69,8 @@ defineEmits(['select', 'edit'])
 </script>
 
 <style scoped>
-@reference "@/assets/main.css";
+@reference "@/assets/tw-theme.css";
+@reference "tailwindcss/utilities";
 .task-item {
   @apply absolute left-20 md:left-32 right-0 transition-all duration-700 cursor-pointer select-none;
   min-height: 28px;
