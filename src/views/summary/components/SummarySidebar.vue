@@ -1,17 +1,18 @@
 <template>
   <aside 
-    class="group border-zinc-100 border-r flex flex-col z-20 bg-background relative overflow-hidden"
-    :style="{ width: width + 'px' }"
+    class="group w-full md:w-auto border-zinc-100 border-b md:border-b-0 md:border-r flex flex-col z-20 bg-background relative overflow-hidden"
+    :style="isMobile ? { width: '100%' } : { width: width + 'px' }"
   >
     <!-- Resize Handle -->
     <div 
+      v-if="!isMobile"
       class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0 hover:bg-foreground/10 group-hover:opacity-100"
       :class="{ 'bg-foreground/20 opacity-100': isResizing }"
       @mousedown="startResize"
     ></div>
 
     <!-- Header -->
-    <header class="px-6 pt-10 pb-4 shrink-0 border-b border-border mb-4">
+    <header class="px-6 pt-6 md:pt-10 pb-4 shrink-0 border-b border-border mb-4">
       <div class="flex flex-col gap-2 mb-6">
         <h2 class="text-2xl font-semibold tracking-tight">总结回顾</h2>
         <p class="text-xs text-muted-foreground">在这里回顾您的过去与规划未来</p>
@@ -75,6 +76,7 @@
 <script setup>
 import { useSummarySidebar } from '@/views/summary/composables/useSummarySidebar'
 import { useResizable } from '@/composables/useResizable'
+import { useMobile } from '@/composables/useMobile'
 import { Plus } from 'lucide-vue-next'
 import { toRef } from 'vue'
 import { Button } from '@/components/ui/button'
@@ -89,6 +91,7 @@ const props = defineProps({
 const emit = defineEmits(['update:activeTab', 'select', 'create'])
 
 const { width, startResize, isResizing } = useResizable()
+const { isMobile } = useMobile()
 const { tabs, formatDate, getSummaryTitle } = useSummarySidebar(toRef(props, 'activeTab'))
 </script>
 

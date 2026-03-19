@@ -1,6 +1,6 @@
 <template>
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
-    <Navbar v-if="authStore.userId" />
+    <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />
     <RouterView v-slot="{ Component }">
       <Transition :name="transitionName" mode="out-in">
         <component :is="Component" :key="route.path" />
@@ -16,10 +16,12 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import supabase from './config/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { useUiStore } from '@/stores/uiStore'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const uiStore = useUiStore()
 
 // 根据路由路径选择过渡效果
 const transitionName = computed(() => {

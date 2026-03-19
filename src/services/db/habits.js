@@ -9,6 +9,22 @@ export const habits = {
             .order('created_at', { ascending: true })
         )
     },
+    async listLite() {
+        return await supabase.query(q => q
+            .select('*')
+            .order('created_at', { ascending: true })
+        )
+    },
+    async listLogsByDate(startDate, endDate) {
+        const { data, error } = await client
+            .from('habit_logs')
+            .select('*')
+            .gte('completed_at', startDate.toISOString())
+            .lte('completed_at', endDate.toISOString())
+
+        if (error) throw error
+        return data
+    },
     async create(habit) {
         return await supabase.create(habit)
     },

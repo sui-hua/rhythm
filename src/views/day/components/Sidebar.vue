@@ -1,24 +1,34 @@
 <template>
   <aside 
-    class="sidebar" 
-    :class="{ 
-      'sidebar--mobile': isMobile,
-      'sidebar--open': isMobile && show
-    }"
+    class="border-r border-zinc-100 flex flex-col z-20 overflow-hidden transition-all duration-300 group"
+    :class="[
+      !isMobile ? 'relative bg-background' : 'fixed left-0 top-0 bottom-0 z-50 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl shadow-xl',
+      isMobile && show ? 'shadow-2xl' : ''
+    ]"
     :style="{ width: isMobile ? '280px' : width + 'px' }"
   >
+    <!-- Loading overlay inside sidebar -->
+    <div
+      v-if="isLoading"
+      class="absolute inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+    >
+      <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-white/80 border border-zinc-100 shadow-lg">
+        <div class="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin"></div>
+        <span class="text-xs font-semibold text-zinc-600 tracking-wide">加载中…</span>
+      </div>
+    </div>
     <!-- 侧边栏宽度拖拽调整手柄 (仅桌面端) -->
     <div 
       v-if="!isMobile"
-      class="sidebar__resize-handle"
-      :class="{ 'sidebar__resize-handle--active': isResizing }"
+      class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0 group-hover:opacity-100 hover:bg-primary/10"
+      :class="{ 'bg-primary/20 opacity-100': isResizing }"
       @mousedown="startResize">
     </div>
 
-    <header class="sidebar__header">
-      <div class="sidebar__header-content">
+    <header class="px-6 pt-10 pb-6 shrink-0 border-b border-border/10 mb-4 bg-transparent">
+      <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <h2 class="sidebar__title">{{ selectedDay }}日</h2>
+          <h2 class="text-2xl font-semibold tracking-tight">{{ selectedDay }}日</h2>
           <Button 
             v-if="isMobile" 
             variant="ghost" 
@@ -29,37 +39,39 @@
             <X class="h-4 w-4" />
           </Button>
         </div>
-        <p class="sidebar__subtitle">{{ selectedMonthName }} 任务清单</p>
+        <p class="text-xs text-muted-foreground">{{ selectedMonthName }} 任务清单</p>
       </div>
     </header>
 
     <!-- 侧边栏任务列表，可滚动 -->
-    <ScrollArea class="sidebar__list">
-      <div class="sidebar__list-inner">
+    <ScrollArea class="flex-1 px-4 relative z-10">
+      <div class="flex flex-col gap-2 pb-24 pt-2">
         <div v-for="(item, index) in dailySchedule" :key="index" 
              @click="$emit('scrollToTask', index)"
              @dblclick="$emit('edit-task', index)"
-             class="sidebar__item group"
-             :class="[item.completed ? 'sidebar__item--completed' : 'sidebar__item--active']">
+             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
+             :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'">
           
           <div @click.stop @dblclick.stop>
             <Checkbox 
               :checked="item.completed" 
               @update:checked="handleToggleComplete(item)"
-              class="sidebar__checkbox"
+              class="shrink-0 w-5 h-5 rounded-md"
             />
           </div>
 
-          <div class="sidebar__item-content">
-            <div class="sidebar__item-row">
-              <h4 class="sidebar__item-title" :class="{ 'sidebar__item-title--done': item.completed, 'sidebar__item-title--hover': !item.completed }">
+          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+            <div class="flex items-center justify-between gap-2 w-full">
+              <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
+                :class="item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+              >
                 {{ item.title }}
               </h4>
               <div 
-                class="sidebar__edit-btn"
+                class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                 @click.stop="$emit('edit-task', index)"
               >
-                <Settings2 class="sidebar__edit-icon" />
+                <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -68,16 +80,16 @@
     </ScrollArea>
 
     <!-- 侧边栏底部统计和添加按钮 -->
-    <footer class="sidebar__footer">
+    <footer class="p-6 border-t border-border/10 bg-transparent relative z-10 flex flex-col gap-4">
       <div class="w-full">
-        <div class="sidebar__progress-header">
-          <span class="sidebar__progress-label">任务完成度</span>
-          <span class="sidebar__progress-value">{{ Math.round((dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)) }}%</span>
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">任务完成度</span>
+          <span class="text-[10px] font-bold text-primary">{{ Math.round((dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)) }}%</span>
         </div>
         <Progress :model-value="(dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)" class="h-1 shadow-none" />
       </div>
       <Button 
-        class="sidebar__add-btn"
+        class="w-full gap-2 h-9 text-xs font-semibold"
         @click="$emit('add-event')"
       >
         <Plus class="w-4 h-4" />
@@ -97,11 +109,15 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useResizable } from '@/composables/useResizable'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
-import { useDayData } from '../composables/useDayData'
+import { useDayData } from '@/views/day/composables/useDayData'
 
 const props = defineProps({
   isMobile: Boolean,
-  show: Boolean
+  show: Boolean,
+  isLoading: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const dateStore = useDateStore()
@@ -117,100 +133,4 @@ defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 <style scoped>
 @reference "@/assets/tw-theme.css";
 @reference "tailwindcss/utilities";
-.sidebar {
-  @apply border-r border-zinc-100 flex flex-col z-20 relative overflow-hidden transition-all duration-300;
-}
-.sidebar:not(.sidebar--mobile) {
-  @apply bg-background;
-}
-.sidebar--mobile {
-  @apply fixed left-0 top-0 bottom-0 z-50 border-r bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl shadow-xl;
-}
-.sidebar--open {
-  @apply shadow-2xl;
-}
-.sidebar__resize-handle {
-  @apply absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0;
-}
-.sidebar:hover .sidebar__resize-handle {
-  @apply opacity-100;
-}
-.sidebar__resize-handle:hover {
-  @apply bg-primary/10;
-}
-.sidebar__resize-handle--active {
-  @apply bg-primary/20 opacity-100;
-}
-.sidebar__header {
-  @apply px-6 pt-10 pb-6 shrink-0 border-b border-border/10 mb-4 bg-transparent;
-}
-.sidebar__header-content {
-  @apply flex flex-col gap-2;
-}
-.sidebar__title {
-  @apply text-2xl font-semibold tracking-tight;
-}
-.sidebar__subtitle {
-  @apply text-xs text-muted-foreground;
-}
-.sidebar__list {
-  @apply flex-1 px-4 relative z-10;
-}
-.sidebar__list-inner {
-  @apply flex flex-col gap-2 pb-24 pt-2;
-}
-.sidebar__item {
-  @apply flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer;
-}
-.sidebar__item--completed {
-  @apply opacity-50;
-}
-.sidebar__item--active:hover {
-  @apply bg-zinc-50;
-}
-.sidebar__checkbox {
-  @apply shrink-0 w-5 h-5 rounded-md;
-}
-.sidebar__item-content {
-  @apply flex-1 min-w-0 flex flex-col gap-0.5;
-}
-.sidebar__item-row {
-  @apply flex items-center justify-between gap-2 w-full;
-}
-.sidebar__item-title {
-  @apply text-sm font-semibold tracking-tight truncate transition-all;
-}
-.sidebar__item-title--done {
-  @apply line-through text-muted-foreground;
-}
-.sidebar__item--active:hover .sidebar__item-title--hover {
-  @apply text-foreground;
-}
-.sidebar__edit-btn {
-  @apply opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer;
-}
-.sidebar__edit-btn:hover {
-  @apply bg-zinc-200/50;
-}
-.sidebar__item:hover .sidebar__edit-btn {
-  @apply opacity-100;
-}
-.sidebar__edit-icon {
-  @apply w-3.5 h-3.5 text-muted-foreground;
-}
-.sidebar__footer {
-  @apply p-6 border-t border-border/10 bg-transparent relative z-10 flex flex-col gap-4;
-}
-.sidebar__progress-header {
-  @apply flex justify-between items-center mb-2;
-}
-.sidebar__progress-label {
-  @apply text-[10px] font-medium text-muted-foreground uppercase tracking-widest;
-}
-.sidebar__progress-value {
-  @apply text-[10px] font-bold text-primary;
-}
-.sidebar__add-btn {
-  @apply w-full gap-2 h-9 text-xs font-semibold;
-}
 </style>

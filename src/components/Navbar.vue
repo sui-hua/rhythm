@@ -4,7 +4,8 @@
     - group: 定义一个 hover 组，当鼠标悬停在其内部有效区域时，触发整个组的 group-hover 状态
     - pointer-events-none: 作为全宽块级元素，使其不会阻挡页面下方原有内容的点击事件
   -->
-  <div class="fixed top-0 left-0 right-0 h-24 z-[200] group pointer-events-none">
+  <!-- Desktop Navbar (hover reveal) -->
+  <div class="fixed top-0 left-0 right-0 h-24 z-[200] group pointer-events-none hidden md:block">
     <!-- 
       实际的导航面板
       - 默认状态:  -translate-y-[150%] (隐藏在顶部之外) 且 opacity-0 (透明)
@@ -75,18 +76,8 @@
           {{ item.name }}
         </Button>
 
-        <div class="w-px h-4 bg-zinc-200 mx-1"></div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          @click="handleLogout"
-          class="rounded-full px-4 h-10 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 text-zinc-400 hover:text-red-600 hover:bg-red-50"
-        >
-          <LogOut class="w-3.5 h-3.5 mr-2" />
-          登出
-        </Button>
       </div>
+
     </nav>
     <!-- 
       顶部隐形触发热区 (Invisible Trigger Area)
@@ -94,6 +85,89 @@
       - pointer-events-auto: 恢复鼠标事件捕捉。当鼠标触碰到这个区域时，就会触发外层 div 的 group:hover 动作，从而使 nav 导航栏滑出
     -->
     <div class="absolute top-0 left-0 right-0 h-10 pointer-events-auto"></div>
+
+    <!-- Desktop logout (top-right, reveal with navbar) -->
+    <button
+      class="fixed top-6 right-6 z-[210] w-11 h-11 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"
+      @click="handleLogout"
+    >
+      <LogOut class="w-4 h-4" />
+    </button>
+  </div>
+
+  <!-- Mobile Navbar (always visible) -->
+  <div class="md:hidden">
+    <!-- Context pill (month/day navigation) -->
+    <div
+      v-if="contextInfo.show"
+      class="fixed top-3 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto"
+    >
+      <div class="flex items-center gap-2 px-3 py-2 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full shadow-2xl shadow-black/5">
+        <template v-if="contextInfo.mode === 'month'">
+          <button
+            @click="router.push(contextInfo.backPath)"
+            class="text-[11px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors"
+          >
+            {{ contextInfo.title }}
+          </button>
+        </template>
+
+        <template v-else-if="contextInfo.mode === 'day'">
+          <Button
+            variant="ghost"
+            size="icon"
+            @click="router.push(contextInfo.prevDayPath)"
+            class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
+          >
+            <ArrowLeft class="w-4 h-4" />
+          </Button>
+
+          <button
+            @click="router.push(contextInfo.monthPath)"
+            class="text-[11px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors"
+          >
+            {{ contextInfo.title }}
+          </button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            @click="router.push(contextInfo.nextDayPath)"
+            class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all transform rotate-180"
+          >
+            <ArrowLeft class="w-4 h-4" />
+          </Button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-1 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full px-2 py-2 shadow-2xl shadow-black/5 pointer-events-auto">
+      <Button
+        v-for="item in navItems"
+        :key="item.path"
+        variant="ghost"
+        size="icon"
+        @click="router.push(item.path)"
+        :class="cn(
+          'rounded-full w-11 h-11 transition-all duration-300',
+          isActive(item)
+            ? 'bg-black text-white shadow-lg hover:bg-black hover:text-white'
+            : 'text-zinc-400 hover:text-black hover:bg-zinc-50'
+        )"
+      >
+        <component :is="item.icon" class="w-4 h-4" />
+      </Button>
+
+    </nav>
+
+    <!-- Mobile logout (top-right) -->
+    <button
+      class="fixed top-3 right-3 z-[200] w-11 h-11 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-auto"
+      @click="handleLogout"
+    >
+      <LogOut class="w-4 h-4" />
+    </button>
   </div>
 </template>
 

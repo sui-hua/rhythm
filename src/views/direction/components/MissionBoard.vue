@@ -20,6 +20,12 @@ const { endSelection } = useDirectionSelection()
 @reference "tailwindcss/utilities";
 
 .board-root {
-  @apply pb-32 px-6 md:px-10;
+  @apply pb-32 px-6;
+}
+
+@media (min-width: 768px) {
+  .board-root {
+    @apply px-10;
+  }
 }
 </style>

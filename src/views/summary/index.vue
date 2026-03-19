@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-full bg-background flex overflow-hidden font-sans text-foreground relative selection:bg-foreground selection:text-background">
+  <div class="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden font-sans text-foreground relative selection:bg-foreground selection:text-background">
     <!-- Sidebar -->
     <SummarySidebar
       :active-tab="activeTab"
@@ -11,7 +11,7 @@
     />
 
     <!-- Main Content -->
-    <main class="flex-1 h-full relative overflow-hidden bg-zinc-50/50 flex flex-col items-center justify-center p-6 md:p-10">
+    <main class="flex-1 h-full relative overflow-hidden bg-zinc-50/50 flex flex-col items-center justify-center p-4 md:p-10">
       <div v-if="loading" class="flex justify-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
       </div>

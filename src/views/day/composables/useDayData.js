@@ -9,6 +9,7 @@ const tasks = ref([])
 const dailyPlans = ref([])
 const habits = ref([])
 const habitLogs = ref([])
+const isLoading = ref(false)
 
 /**
  * Day 视图核心数据管理层 (Composable)
@@ -36,8 +37,10 @@ export function useDayData() {
     })
 
     // 获取数据
-    const fetchTasks = async () => {
+    const fetchTasks = async (options = {}) => {
+        const { showLoading = true } = options
         try {
+            if (showLoading) isLoading.value = true
             const year = dateStore.currentDate.getFullYear()
             const month = selectedMonth.value.index
             const day = selectedDay.value
@@ -45,22 +48,21 @@ export function useDayData() {
             const startOfDay = new Date(year, month, day, 0, 0, 0)
             const endOfDay = new Date(year, month, day, 23, 59, 59)
 
-            const [fetchedTasks, fetchedPlans, allHabits] = await Promise.all([
+            const [fetchedTasks, fetchedPlans, allHabits, dayHabitLogs] = await Promise.all([
                 db.tasks.list(startOfDay, endOfDay),
                 db.dailyPlans.listByDate(startOfDay),
-                db.habits.list()
+                db.habits.listLite(),
+                db.habits.listLogsByDate(startOfDay, endOfDay)
             ])
 
             tasks.value = fetchedTasks
             dailyPlans.value = fetchedPlans
             habits.value = allHabits.filter(h => !h.is_archived && h.task_time)
-
-            habitLogs.value = habits.value.flatMap(h => h.habit_logs || []).filter(log => {
-                const logDate = new Date(log.completed_at)
-                return logDate >= startOfDay && logDate <= endOfDay
-            })
+            habitLogs.value = dayHabitLogs
         } catch (error) {
             console.error('获取日数据失败:', error)
+        } finally {
+            if (showLoading) isLoading.value = false
         }
     }
 
@@ -131,6 +133,8 @@ export function useDayData() {
         })
 
         // 3. 处理习惯
+        const habitLogIds = new Set(habitLogs.value.map(log => log.habit_id))
+
         habits.value.forEach(habit => {
             let startHourVal, startTimeStr, durationHours, durationStr
             if (habit.task_time) {
@@ -148,7 +152,7 @@ export function useDayData() {
                 durationStr = '-'
             }
 
-            const isCompleted = habitLogs.value.some(log => log.habit_id === habit.id)
+            const isCompleted = habitLogIds.has(habit.id)
 
             schedule.push({
                 id: habit.id,
@@ -177,6 +181,51 @@ export function useDayData() {
 
     const completedCount = computed(() => dailySchedule.value.filter(t => t.completed).length)
 
+    const setLoading = (value) => {
+        isLoading.value = value
+    }
+
+    const carryOverUncompletedTasksTo = async (targetDate) => {
+        if (!targetDate) return
+
+        const sourceDate = new Date(targetDate)
+        sourceDate.setDate(sourceDate.getDate() - 1)
+
+        const startOfSource = new Date(sourceDate.getFullYear(), sourceDate.getMonth(), sourceDate.getDate(), 0, 0, 0)
+        const endOfSource = new Date(sourceDate.getFullYear(), sourceDate.getMonth(), sourceDate.getDate(), 23, 59, 59)
+        const oneWeekMs = 7 * 24 * 60 * 60 * 1000
+        const targetStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0)
+
+        try {
+            const sourceTasks = await db.tasks.list(startOfSource, endOfSource)
+            const uncompleted = (sourceTasks || []).filter(t => !t.completed).filter(t => {
+                const createdAt = t.created_at ? new Date(t.created_at) : null
+                if (!createdAt || isNaN(createdAt.getTime())) return false
+                // Only carry over tasks created within the last 7 days.
+                return (targetStart.getTime() - createdAt.getTime()) < oneWeekMs
+            })
+
+            if (!uncompleted.length) return
+
+            await Promise.all(
+                uncompleted.map(task => {
+                    const start = new Date(task.start_time)
+                    const end = new Date(task.end_time)
+                    const newStart = new Date(start)
+                    const newEnd = new Date(end)
+                    newStart.setDate(newStart.getDate() + 1)
+                    newEnd.setDate(newEnd.getDate() + 1)
+                    return db.tasks.update(task.id, {
+                        start_time: newStart.toISOString(),
+                        end_time: newEnd.toISOString()
+                    })
+                })
+            )
+        } catch (e) {
+            console.error('顺延未完成任务失败:', e)
+        }
+    }
+
     // 切换各类日程项的完成状态
     const handleToggleComplete = async (task) => {
         if (!task) return
@@ -185,16 +234,13 @@ export function useDayData() {
                 await db.tasks.update(task.id, { completed: !task.completed })
             } else if (task.type === 'habit') {
                 if (task.completed) {
-                    const logs = await db.habits.list().then(res => res.find(h => h.id === task.id)?.habit_logs || [])
                     const year = dateStore.currentDate.getFullYear()
                     const month = dateStore.currentDate.getMonth()
                     const day = dateStore.currentDate.getDate()
                     const startOfDay = new Date(year, month, day, 0, 0, 0)
                     const endOfDay = new Date(year, month, day, 23, 59, 59)
-                    const log = logs.find(l => {
-                        const logDate = new Date(l.completed_at)
-                        return logDate >= startOfDay && logDate <= endOfDay
-                    })
+                    const logs = await db.habits.listLogsByDate(startOfDay, endOfDay)
+                    const log = logs.find(l => l.habit_id === task.id)
                     if (log) await db.habits.deleteLog(log.id)
                 } else {
                     await db.habits.log(task.id, '')
@@ -204,18 +250,21 @@ export function useDayData() {
                 const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
                 await db.dailyPlans.update(task.id, { status: newStatus })
             }
-            await fetchTasks()
+            await fetchTasks({ showLoading: false })
         } catch (e) {
             console.error('切换完成状态失败', e)
         }
     }
 
     return {
+        isLoading,
+        setLoading,
         selectedMonth,
         selectedDay,
         dailySchedule,
         completedCount,
         fetchTasks,
+        carryOverUncompletedTasksTo,
         handleToggleComplete
     }
 }

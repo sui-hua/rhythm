@@ -107,7 +107,7 @@ export function useAddEventForm(props, emit) {
                     completed: false,
                 })
             }
-            await fetchTasks()
+            await fetchTasks({ showLoading: false })
         } catch (e) {
             console.error('Failed to save', e)
         }
@@ -124,7 +124,7 @@ export function useAddEventForm(props, emit) {
                 } else {
                     await db.tasks.delete(props.initialData.id)
                 }
-                await fetchTasks()
+                await fetchTasks({ showLoading: false })
             } catch (e) {
                 console.error('Failed to delete', e)
             }
