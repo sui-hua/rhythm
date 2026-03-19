@@ -60,7 +60,6 @@ defineEmits(['close', 'confirm', 'confirm-carryover'])
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .daily-report-backdrop {
   animation: daily-report-fade 200ms ease-out;

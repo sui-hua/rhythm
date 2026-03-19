@@ -1,11 +1,10 @@
 <template>
   <ScrollArea ref="timelineContainerRef" class="flex-1 bg-linear-to-br from-zinc-50/50 to-zinc-100/30 relative">
-    <!-- Loading overlay inside timeline -->
     <div
       v-if="isLoading"
-      class="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+      class="absolute inset-0 z-20 flex items-center justify-center bg-background/70 backdrop-blur-sm"
     >
-      <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-white/80 border border-zinc-100 shadow-lg">
+      <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-background/80 border border-zinc-100 shadow-lg">
         <div class="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin"></div>
         <span class="text-xs font-semibold text-zinc-600 tracking-wide">加载中…</span>
       </div>
@@ -84,5 +83,4 @@ defineEmits(['edit-task', 'select-task'])
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 </style>

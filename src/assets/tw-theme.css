@@ -1,4 +1,7 @@
+@reference "tailwindcss";
+@reference "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
+
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -30,6 +33,8 @@
   --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-white: oklch(1 0 0);
+  --color-black: oklch(0 0 0);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);

@@ -127,5 +127,4 @@ const { form, isHabit, submit, handleDelete } = useAddEventForm(props, emit)
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 </style>

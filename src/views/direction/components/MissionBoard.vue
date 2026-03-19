@@ -17,7 +17,6 @@ const { endSelection } = useDirectionSelection()
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .board-root {
   @apply pb-32 px-6;

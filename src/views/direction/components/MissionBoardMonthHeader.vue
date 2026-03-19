@@ -81,7 +81,6 @@ const { selectedMonth, goalKey, toggleMonth } = useDirectionSelection()
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .month-header {
   @apply px-6 py-4 cursor-pointer flex items-center justify-between bg-zinc-50/30 transition-colors hover:bg-zinc-100/50;

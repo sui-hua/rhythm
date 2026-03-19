@@ -60,5 +60,4 @@ const handleSubmit = () => {
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 </style>

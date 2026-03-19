@@ -83,7 +83,6 @@ const { handleUpdateTask } = useDirectionTasks()
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .archive-root {
   @apply flex-1 bg-white flex flex-col overflow-hidden;

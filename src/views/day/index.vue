@@ -37,6 +37,8 @@
         <X v-else class="w-5 h-5" />
       </button>
 
+
+
       <!-- Add/Edit Event Modal/Drawer -->
       <AddEventModal
         v-if="!isMobile"
@@ -115,5 +117,4 @@ const handleDailyReportCarryover = async () => {
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 </style>

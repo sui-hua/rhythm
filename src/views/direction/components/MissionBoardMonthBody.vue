@@ -126,7 +126,7 @@ const isAllSelectedDatesHaveTask = (m) => {
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
+
 
 .month-content {
   @apply p-6 space-y-8 animate-in slide-in-from-top-2 border-t bg-background/50;

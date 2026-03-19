@@ -36,7 +36,6 @@ const AddGoalModal = defineAsyncComponent(() => import('@/views/direction/compon
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .direction-content::-webkit-scrollbar { display: none; }

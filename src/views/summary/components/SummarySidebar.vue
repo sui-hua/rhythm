@@ -97,5 +97,4 @@ const { tabs, formatDate, getSummaryTitle } = useSummarySidebar(toRef(props, 'ac
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 </style>

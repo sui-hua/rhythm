@@ -75,7 +75,6 @@ const { width, startResize, isResizing } = useResizable()
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .sidebar {
   @apply border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden h-full shrink-0;

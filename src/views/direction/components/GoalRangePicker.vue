@@ -127,7 +127,6 @@ const handleConfirm = () => {
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .picker-root {
   @apply p-6 md:p-10 flex flex-col gap-6;

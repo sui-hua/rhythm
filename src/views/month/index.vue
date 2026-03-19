@@ -18,5 +18,4 @@ const { monthGridData, enterDay } = useMonthView()
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 </style>

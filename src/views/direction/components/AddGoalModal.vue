@@ -155,7 +155,6 @@ const submit = async () => {
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .modal-content {
   @apply sm:max-w-[450px] p-6 rounded-xl border shadow-lg bg-background;

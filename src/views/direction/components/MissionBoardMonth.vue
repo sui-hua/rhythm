@@ -23,7 +23,6 @@ const { selectedMonth } = useDirectionSelection()
 
 <style scoped>
 @reference "@/assets/tw-theme.css";
-@reference "tailwindcss/utilities";
 
 .month-card {
   @apply mb-4 rounded-xl transition-all duration-300 overflow-hidden border shadow-sm hover:bg-accent/30;
