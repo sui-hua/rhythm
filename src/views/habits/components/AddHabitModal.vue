@@ -69,6 +69,7 @@ import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
+import { withLoadingLock } from '@/utils/throttle'
 
 const props = defineProps({
   /** 控制弹窗的显示与隐藏状态 */
@@ -93,7 +94,7 @@ const form = reactive({
 /**
  * 提交表单创建新记录
  */
-const submit = async () => {
+const submit = withLoadingLock(async () => {
   if (!form.title.trim()) return
   
   const userId = authStore.userId
@@ -121,5 +122,5 @@ const submit = async () => {
   } catch (e) {
     console.error('Add habit failed in modal', e)
   }
-}
+})
 </script>

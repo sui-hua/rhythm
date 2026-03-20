@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
+import { playSuccessSound } from '@/utils/audio'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -250,6 +251,12 @@ export function useDayData() {
                 const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
                 await db.dailyPlans.update(task.id, { status: newStatus })
             }
+
+            // 如果操作是将状态改为已完成，则播放成功音效
+            if (!task.completed) {
+                playSuccessSound()
+            }
+
             await fetchTasks({ showLoading: false })
         } catch (e) {
             console.error('切换完成状态失败', e)

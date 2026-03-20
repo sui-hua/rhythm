@@ -74,6 +74,8 @@ import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 
+import { withLoadingLock } from '@/utils/throttle'
+
 const { showAddModal, editingGoal, handleAddGoal, handleUpdateGoal, handleDeleteGoal } = useDirectionGoals()
 
 const categories = ref([])
@@ -132,7 +134,7 @@ const months = [
   { label: '11月', value: 11 }, { label: '12月', value: 12 }
 ]
 
-const submit = async () => {
+const submit = withLoadingLock(async () => {
   if (!form.title.trim()) return
 
   const payload = {
@@ -150,7 +152,7 @@ const submit = async () => {
   } else {
     await handleAddGoal(payload)
   }
-}
+})
 </script>
 
 <style scoped>

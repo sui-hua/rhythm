@@ -90,6 +90,7 @@ import { Button } from '@/components/ui/button'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
+import { withLoadingLock } from '@/utils/throttle'
 
 const props = defineProps({
   /** 控制弹窗的显示与隐藏状态 */
@@ -131,7 +132,7 @@ watch(() => props.habitData, (newVal) => {
 /**
  * 提交并保存更改的方法
  */
-const submit = async () => {
+const submit = withLoadingLock(async () => {
   if (!form.title.trim()) return
   if (!props.habitData?.id) return
   
@@ -146,12 +147,12 @@ const submit = async () => {
   } catch (e) {
     console.error('Update habit failed in modal', e)
   }
-}
+})
 
 /**
  * 删除当前习惯并通知外部
  */
-const handleDelete = async () => {
+const handleDelete = withLoadingLock(async () => {
   if (!props.habitData?.id) return
   try {
     await db.habits.delete(props.habitData.id)
@@ -161,12 +162,12 @@ const handleDelete = async () => {
   } catch (e) {
     console.error('Delete habit failed in modal', e)
   }
-}
+})
 
 /**
  * 归档 / 取消归档当前习惯
  */
-const handleArchive = async (isArchived) => {
+const handleArchive = withLoadingLock(async (isArchived) => {
   if (!props.habitData?.id) return
   try {
     await db.habits.update(props.habitData.id, {
@@ -177,5 +178,5 @@ const handleArchive = async (isArchived) => {
   } catch (e) {
     console.error('Archive habit failed in modal', e)
   }
-}
+})
 </script>

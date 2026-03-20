@@ -3,6 +3,7 @@ import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { useDateStore } from '@/stores/dateStore'
 import { useDayData } from './useDayData'
+import { withLoadingLock } from '@/utils/throttle'
 
 /**
  * AddEventModal 表单逻辑层 (Composable)
@@ -55,7 +56,7 @@ export function useAddEventForm(props, emit) {
     }, { immediate: true })
 
     // 提交表单（新建或编辑）
-    const submit = async () => {
+    const submit = withLoadingLock(async () => {
         if (!form.title || !form.time) return
 
         const [hours, minutes] = form.time.split(':').map(Number)
@@ -108,15 +109,14 @@ export function useAddEventForm(props, emit) {
                 })
             }
             await fetchTasks({ showLoading: false })
+            emit('update:show', false)
         } catch (e) {
             console.error('Failed to save', e)
         }
-
-        emit('update:show', false)
-    }
+    })
 
     // 删除当前编辑的项目
-    const handleDelete = async () => {
+    const handleDelete = withLoadingLock(async () => {
         if (props.initialData) {
             try {
                 if (isHabit.value) {
@@ -125,12 +125,12 @@ export function useAddEventForm(props, emit) {
                     await db.tasks.delete(props.initialData.id)
                 }
                 await fetchTasks({ showLoading: false })
+                emit('update:show', false)
             } catch (e) {
                 console.error('Failed to delete', e)
             }
         }
-        emit('update:show', false)
-    }
+    })
 
     return {
         form,
