@@ -60,6 +60,9 @@
         @confirm="handleDailyReportConfirm"
         @confirm-carryover="handleDailyReportCarryover"
       />
+
+      <!-- Pomodoro Timer Modal -->
+      <PomodoroTimerModal />
     </div>
   </div>
 </template>
@@ -70,6 +73,7 @@ import { Menu, X } from 'lucide-vue-next'
 import Sidebar from '@/views/day/components/Sidebar.vue'
 import Timeline from '@/views/day/components/Timeline.vue'
 import DailyReportModal from '@/views/day/components/DailyReportModal.vue'
+import PomodoroTimerModal from '@/views/day/components/PomodoroTimerModal.vue'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 import { useDayModal } from '@/views/day/composables/useDayModal'
 import { useMobile } from '@/composables/useMobile'

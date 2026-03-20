@@ -4,6 +4,7 @@ import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
+import { usePomodoroStore } from '@/stores/pomodoroStore'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -56,7 +57,19 @@ export function useDayData() {
                 db.habits.listLogsByDate(startOfDay, endOfDay)
             ])
 
-            tasks.value = fetchedTasks
+            tasks.value = fetchedTasks || []
+        
+            // 自动恢复：如果存在正在运行中的任务，且当前没有活跃记录，则自动弹出模态框
+            const runningTask = tasks.value.find(t => t.actual_start_time && !t.actual_end_time && !t.completed)
+            if (runningTask) {
+                const pomodoroStore = usePomodoroStore()
+                if (!pomodoroStore.activeTask) {
+                    pomodoroStore.setActiveTask({
+                        ...runningTask,
+                        type: 'task' // 确保类型正确
+                    })
+                }
+            }
             dailyPlans.value = fetchedPlans
             habits.value = allHabits.filter(h => !h.is_archived && h.task_time)
             habitLogs.value = dayHabitLogs
@@ -92,7 +105,9 @@ export function useDayData() {
                 category: '个人任务',
                 title: task.title,
                 description: task.description,
-                completed: task.completed
+                completed: task.completed,
+                actual_start_time: task.actual_start_time,
+                actual_end_time: task.actual_end_time
             })
         })
 
@@ -232,7 +247,12 @@ export function useDayData() {
         if (!task) return
         try {
             if (task.type === 'task') {
-                await db.tasks.update(task.id, { completed: !task.completed })
+                const updates = { completed: !task.completed }
+                // 如果是标记为完成，且已经开始了计时，则记录结束时间
+                if (!task.completed) {
+                    updates.actual_end_time = new Date().toISOString()
+                }
+                await db.tasks.update(task.id, updates)
             } else if (task.type === 'habit') {
                 if (task.completed) {
                     const year = dateStore.currentDate.getFullYear()
@@ -263,6 +283,25 @@ export function useDayData() {
         }
     }
 
+    // 开始任务计时
+    const handleStartTask = async (task) => {
+        if (!task || task.type !== 'task') return
+        const pomodoroStore = usePomodoroStore()
+        try {
+            const startTime = new Date().toISOString()
+            await db.tasks.update(task.id, { 
+                actual_start_time: startTime,
+                actual_end_time: null // 重置结束时间以防重复开始
+            })
+            await fetchTasks({ showLoading: false })
+            
+            // 弹出计时模态框
+            pomodoroStore.setActiveTask({ ...task, actual_start_time: startTime })
+        } catch (e) {
+            console.error('开始计时失败', e)
+        }
+    }
+
     return {
         isLoading,
         setLoading,
@@ -272,6 +311,7 @@ export function useDayData() {
         completedCount,
         fetchTasks,
         carryOverUncompletedTasksTo,
-        handleToggleComplete
+        handleToggleComplete,
+        handleStartTask
     }
 }
