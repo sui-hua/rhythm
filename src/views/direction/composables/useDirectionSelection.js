@@ -55,6 +55,56 @@ export function useDirectionSelection() {
 
   const deselectAllInMonth = () => { selectedDates[selectedMonth.value] = [] }
 
+/**
+ * 获取指定月份的偏移量（该月第一天是星期几）
+ * @param {number} month - 月份（1-12）
+ */
+const getMonthOffset = (month) => {
+  const year = new Date().getFullYear()
+  const date = new Date(year, month - 1, 1)
+  return date.getDay()
+}
+
+/**
+ * 按星期索引选择该月所有对应的日期
+ * @param {number} month - 月份（1-12）
+ * @param {number} weekIndex - 星期索引（0=周日, 1=周一, ..., 6=周六）
+ */
+const selectWeekDay = (month, weekIndex) => {
+  const year = new Date().getFullYear()
+  const daysInMonth = new Date(year, month, 0).getDate()
+
+  const targetDays = []
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayOfWeek = new Date(year, month - 1, d).getDay()
+    if (dayOfWeek === weekIndex) {
+      targetDays.push(d)
+    }
+  }
+
+  const currentSelection = selectedDates[month] || []
+  const isAllSelected = targetDays.every(d => currentSelection.includes(d))
+
+  let newSelection
+  if (isAllSelected) {
+    newSelection = currentSelection.filter(d => !targetDays.includes(d))
+  } else {
+    newSelection = [...new Set([...currentSelection, ...targetDays])]
+  }
+
+  selectedDates[month] = newSelection.sort((a, b) => a - b)
+}
+
+/**
+ * 判断指定月份的所有选中日期是否都有任务
+ * @param {number} month - 月份（1-12）
+ */
+const isAllSelectedDatesHaveTask = (month) => {
+  const dates = selectedDates[month] || []
+  if (dates.length === 0) return false
+  return dates.every(day => hasTask(month, day))
+}
+
   const toggleMonth = (m) => {
     selectedMonth.value = selectedMonth.value === m ? null : m
     if (selectedMonth.value && !selectedDates[m]) selectedDates[m] = []
@@ -93,6 +143,9 @@ export function useDirectionSelection() {
     endSelection,
     deselectAllInMonth,
     toggleMonth,
-    selectGoal
+    selectGoal,
+    getMonthOffset,
+    selectWeekDay,
+    isAllSelectedDatesHaveTask
   }
 }

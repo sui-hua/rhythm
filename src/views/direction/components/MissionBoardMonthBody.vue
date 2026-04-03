@@ -82,46 +82,12 @@ const {
   canSelect,
   startSelection,
   handleMouseEnter,
-  endSelection
+  endSelection,
+  getMonthOffset,
+  selectWeekDay,
+  isAllSelectedDatesHaveTask
 } = useDirectionSelection()
 const { batchInput, applyBatchTask, handleBatchDelete } = useDirectionBatch()
-
-const getMonthOffset = (m) => {
-  const year = new Date().getFullYear()
-  const date = new Date(year, m - 1, 1)
-  return date.getDay()
-}
-
-const selectWeekDay = (m, weekIndex) => {
-  const year = new Date().getFullYear()
-  const daysInMonth = new Date(year, m, 0).getDate()
-
-  const targetDays = []
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dayOfWeek = new Date(year, m - 1, d).getDay()
-    if (dayOfWeek === weekIndex) {
-      targetDays.push(d)
-    }
-  }
-
-  const currentSelection = selectedDates[m] || []
-  const isAllSelected = targetDays.every(d => currentSelection.includes(d))
-
-  let newSelection
-  if (isAllSelected) {
-    newSelection = currentSelection.filter(d => !targetDays.includes(d))
-  } else {
-    newSelection = [...new Set([...currentSelection, ...targetDays])]
-  }
-
-  selectedDates[m] = newSelection.sort((a, b) => a - b)
-}
-
-const isAllSelectedDatesHaveTask = (m) => {
-  const dates = selectedDates[m] || []
-  if (dates.length === 0) return false
-  return dates.every(day => hasTask(m, day))
-}
 </script>
 
 <style scoped>

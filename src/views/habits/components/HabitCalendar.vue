@@ -53,20 +53,16 @@
  * 习惯日历展示组件 (HabitCalendar.vue)
  * 用于呈现网格状的当月日历，并在特定的日期上标绘高亮。支持前后月份翻阅以及点击特定日期抛出打卡事件。
  */
-import { ref, computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import { useDateStore } from '@/stores/dateStore'
-import { getMonthName as formatMonth } from '@/utils/dateFormatter'
-
-const dateStore = useDateStore()
+import { useHabitCalendar } from '@/views/habits/composables/useHabitCalendar'
 
 const props = defineProps({
-  /** 
-   * 当月每一天中，已经被判定为成功打卡了的日期数组 
-   * 例如 `[1, 15, 23]` 
+  /**
+   * 当月每一天中，已经被判定为成功打卡了的日期数组
+   * 例如 `[1, 15, 23]`
    */
   completedDays: {
     type: Array,
@@ -79,77 +75,19 @@ const emit = defineEmits([
   'month-changed'    // 月份翻页动作触发时抛出，以便外部组件感知最新查阅的年月再拉取对应的记录
 ])
 
-// 独立维护日历中查阅的年份与月份
-const viewYear = ref(dateStore.currentDate.getFullYear())
-const viewMonth = ref(dateStore.currentDate.getMonth())
-
-// 用于展示对应的月份
-const monthName = computed(() => {
-  return formatMonth(viewMonth.value + 1, 'zh')
-})
-
-// 根据 viewYear 和 viewMonth 动态计算要展示的网格
-const calendarGrid = computed(() => {
-  const year = viewYear.value;
-  const month = viewMonth.value;
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const grid = [];
-  for (let i = 0; i < offset; i++) grid.push(null);
-  for (let i = 1; i <= daysInMonth; i++) grid.push(i);
-  return grid;
-})
-
-/**
- * 点击上一月按钮的翻页处理逻辑
- * 处理跨年减岁边界情况并调用对外发出事件。
- */
-const handlePrevMonth = () => {
-  if (viewMonth.value === 0) {
-    viewMonth.value = 11
-    viewYear.value--
-  } else {
-    viewMonth.value--
-  }
-  emitMonthChange()
-}
-
-/**
- * 点击下一月按钮的翻页处理逻辑
- * 处理跨年增岁边界情况并调用对外发出事件。
- */
-const handleNextMonth = () => {
-  if (viewMonth.value === 11) {
-    viewMonth.value = 0
-    viewYear.value++
-  } else {
-    viewMonth.value++
-  }
-  emitMonthChange()
-}
-
-/** 包装好的抛出含带最新年月状态的通用事件方法 */
-const emitMonthChange = () => {
-  emit('month-changed', { year: viewYear.value, month: viewMonth.value })
-}
-
-/**
- * 判断日历格子中遍历的日是否等同于真实的“今天”，提供高亮光圈样式
- */
-const isToday = (day) => {
-  const now = new Date()
-  return (
-    now.getFullYear() === viewYear.value && 
-    now.getMonth() === viewMonth.value && 
-    now.getDate() === day
-  )
-}
+const {
+  viewYear,
+  viewMonth,
+  calendarGrid,
+  monthName,
+  handlePrevMonth,
+  handleNextMonth,
+  isToday,
+  emitMonthChange
+} = useHabitCalendar(emit)
 
 onMounted(() => {
   // 组件初次挂载时将当前时间上报给父组件以备数据同步
   emitMonthChange()
 })
-
 </script>

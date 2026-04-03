@@ -1,8 +1,8 @@
 <template>
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
-    
-    <HabitSidebar 
-      :habits="habits" 
+
+    <HabitSidebar
+      :habits="habits"
       :archived-habits="archivedHabits"
       :selected-habit-id="selectedHabit?.id"
       :today-completion-rate="todayCompletionRate"
@@ -13,55 +13,36 @@
 
     <div class="flex-1 bg-zinc-50/50 relative overflow-hidden flex flex-col">
       <div v-if="selectedHabit" class="w-full h-full flex flex-col p-6 md:p-10 overflow-auto relative z-10 no-scrollbar">
-        
+
         <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
-          <header class="flex flex-col gap-2 mb-2">
-            <h3 class="text-3xl font-bold tracking-tight text-foreground">{{ selectedHabit.title }}</h3>
-          </header>
+          <HabitHeader :title="selectedHabit.title" />
 
           <HabitStats :stats="habitStats" />
 
-          <HabitCalendar 
+          <HabitCalendar
             :completed-days="selectedHabit.completedDays"
             @toggle-complete="toggleComplete"
             @month-changed="handleMonthChange"
           />
 
-          <!-- Today Log Card -->
-          <Card class="border shadow-sm rounded-xl overflow-hidden bg-background">
-            <CardContent class="p-4 flex items-center gap-6">
-              <div class="shrink-0 flex flex-col border-r pr-6 gap-1">
-                <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">今日记录</span>
-                <span class="text-sm font-bold tracking-tight">{{ getCurrentDate() }}</span>
-              </div>
-              <Input 
-                v-model="habitNote"
-                placeholder="记录今天的习惯心得..."
-                class="flex-1 h-10 border shadow-none focus-visible:ring-1"
-                @keyup.enter="handleQuickLog"
-              />
-              <Button 
-                size="icon" 
-                class="w-10 h-10 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground"
-                @click="handleQuickLog"
-              >
-                <ArrowUpRight class="w-5 h-5" />
-              </Button>
-            </CardContent>
-          </Card>
+          <HabitTodayCard
+            :current-date="getCurrentDate()"
+            @quick-log="handleQuickLog"
+          />
+
           <HabitLogs :logs="selectedHabit?.logs || []" />
         </div>
       </div>
     </div>
 
-    <AddHabitModal 
+    <AddHabitModal
       v-model:show="showAddModal"
       @refresh="fetchHabits"
     />
 
-    <EditHabitModal 
+    <EditHabitModal
       v-model:show="showEditModal"
-      :habitData="selectedHabit"
+      :habit-data="selectedHabit"
       @refresh="fetchHabits"
       @deleted="selectedHabit = null"
     />
@@ -75,14 +56,11 @@
  * 数据源由底部抽离出的多个 hooks 提供支持。
  */
 import { ref, onMounted, defineAsyncComponent } from 'vue'
-import { ArrowUpRight } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-
 import HabitSidebar from './components/HabitSidebar.vue'
+import HabitHeader from './components/HabitHeader.vue'
 import HabitStats from './components/HabitStats.vue'
 import HabitCalendar from './components/HabitCalendar.vue'
+import HabitTodayCard from './components/HabitTodayCard.vue'
 import HabitLogs from './components/HabitLogs.vue'
 
 // 弹窗组件按需加载
@@ -122,7 +100,6 @@ onMounted(fetchHabits)
 
 const showAddModal = ref(false) // 开启和关闭新建习惯弹窗状态位
 const showEditModal = ref(false) // 开启和关闭编辑习惯弹窗状态位
-const habitNote = ref('') // 给“今日记录”卡片绑定的临时短文本输入内容
 
 /**
  * 响应来自左侧边栏触发的编辑命令 (例如鼠标双击)
@@ -145,11 +122,8 @@ const getCurrentDate = () => {
 /**
  * 将绑定的文本传递给底层的日志创建 hook，执行打卡后清空文字框本身。
  */
-const handleQuickLog = async () => {
-  const success = await performQuickLog(habitNote.value)
-  if (success) {
-    habitNote.value = ''
-  }
+const handleQuickLog = async (note) => {
+  await performQuickLog(note)
 }
 </script>
 

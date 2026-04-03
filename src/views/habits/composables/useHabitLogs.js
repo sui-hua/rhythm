@@ -1,5 +1,37 @@
+import { computed } from 'vue'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
+
+/**
+ * 格式化习惯打卡日志 (Composable)
+ * 将原始日志数据格式化为组件所需的展示格式，并按时间降序排列。
+ * @param {Array} logs - 原始打卡日志数组
+ */
+export function useHabitLogsFormatter(logs) {
+  /**
+   * 格式化后的日志数据源
+   * 对原有的乱序或不统一的记录按 `completed_at` 打卡时间做格式转换并降序排列 (最近的数据优先展出)。
+   */
+  const formattedLogs = computed(() => {
+    return (logs || [])
+      .map(log => {
+        const date = new Date(log.completed_at)
+        const month = date.getMonth() + 1
+        const day = date.getDate()
+        return {
+          id: log.id,
+          month,
+          day,
+          completedAt: log.completed_at,
+          date: `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`,
+          logText: log.log || ''
+        }
+      })
+      .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+  })
+
+  return { formattedLogs }
+}
 
 /**
  * 习惯打卡与日志记录提交逻辑 (Composable)

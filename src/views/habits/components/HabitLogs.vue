@@ -33,9 +33,9 @@
  * 习惯打卡流水日志组件 (HabitLogs.vue)
  * 列出特定习惯最近打卡的列表，用于展示随手记录下的每一条打卡心得语录。
  */
-import { computed } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
+import { useHabitLogsFormatter } from '@/views/habits/composables/useHabitLogs'
 
 const props = defineProps({
   /**
@@ -47,25 +47,5 @@ const props = defineProps({
   }
 })
 
-/**
- * 格式化后的日志数据源
- * 对原有的乱序或不统一的记录按 `completed_at` 打卡时间做格式转换并降序排列 (最近的数据优先展出)。
- */
-const formattedLogs = computed(() => {
-  return (props.logs || [])
-    .map(log => {
-      const date = new Date(log.completed_at)
-      const month = date.getMonth() + 1
-      const day = date.getDate()
-      return {
-        id: log.id,
-        month,
-        day,
-        completedAt: log.completed_at,
-        date: `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`,
-        logText: log.log || ''
-      }
-    })
-    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
-})
+const { formattedLogs } = useHabitLogsFormatter(props.logs)
 </script>
