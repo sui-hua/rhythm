@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, defineAsyncComponent, watch, onBeforeUnmount } from 'vue'
+import { ref, defineAsyncComponent, watch, onBeforeUnmount, onMounted } from 'vue'
 import { Menu, X } from 'lucide-vue-next'
 import Sidebar from '@/views/day/components/Sidebar.vue'
 import Timeline from '@/views/day/components/Timeline.vue'
@@ -78,8 +78,10 @@ import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 import { useDayModal } from '@/views/day/composables/useDayModal'
 import { useMobile } from '@/composables/useMobile'
 import { useUiStore } from '@/stores/uiStore'
+import { useDateStore } from '@/stores/dateStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { useDayData } from '@/views/day/composables/useDayData'
+import { useNotifications } from '@/composables/useNotifications'
 
 const AddEventModal = defineAsyncComponent(() => import('@/views/day/components/AddEventModal.vue'))
 const MobileAddEventDrawer = defineAsyncComponent(() => import('@/views/day/components/MobileAddEventDrawer.vue'))
@@ -90,7 +92,18 @@ const { isMobile } = useMobile()
 const uiStore = useUiStore()
 
 const { reportVisible, reportStats, closeReport } = useDailyReport()
-const { carryOverUncompletedTasksTo, fetchTasks, setLoading } = useDayData()
+const { dailySchedule, carryOverUncompletedTasksTo, fetchTasks, setLoading } = useDayData()
+
+const dateStore = useDateStore()
+const { startListening, clearNotifiedHistory } = useNotifications()
+
+onMounted(() => {
+  startListening(() => dailySchedule.value)
+})
+
+watch(() => dateStore.currentDate, () => {
+  clearNotifiedHistory()
+})
 
 const showSidebar = ref(false)
 watch([showSidebar, isMobile], ([open, mobile]) => {

@@ -1,9 +1,7 @@
 <template>
   <Dialog :open="store.showModal" @update:open="store.showModal = $event">
-    <DialogContent 
+    <DialogContent
       class="sm:max-w-[440px] p-0 overflow-hidden border bg-background text-foreground shadow-xl rounded-[2.5rem] [&>button]:hidden"
-      @interact-outside="(e) => e.preventDefault()"
-      @escape-keydown="(e) => e.preventDefault()"
     >
       <div class="relative p-10 flex flex-col items-center gap-10 min-h-[460px] justify-center overflow-hidden">
         <!-- Animated Background Glows -->

@@ -16,6 +16,7 @@ import Navbar from '@/components/Navbar.vue'
 import supabase from './config/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,6 +45,9 @@ onMounted(async () => {
 
     if (session?.user) {
       authStore.setUser(session.user)
+      // 请求通知权限
+      const { requestPermission } = useNotifications()
+      requestPermission()
     } else {
       // 当前没有登录用户
       authStore.clearAuth()
