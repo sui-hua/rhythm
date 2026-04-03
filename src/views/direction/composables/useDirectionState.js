@@ -19,6 +19,8 @@ export const selectedMonth = ref(null)
 export const activePicker = ref('start')
 export const isSelecting = ref(false)
 export const showAddModal = ref(false)
+export const showCategoryModal = ref(false)
+
 
 export const monthlyMainGoals = reactive({})
 export const dailyTasks = reactive({})

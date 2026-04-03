@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -51,10 +51,7 @@ const displayDuration = computed({
       emit('update:modelValue', 0)
       return
     }
-    let num = parseFloat(val)
-    if (isNaN(num)) return
-    if (num < 0) num = 0
-    
+    const num = parseFloat(val) || 0
     if (durationUnit.value === 'minute') {
       emit('update:modelValue', num / 60)
     } else {
@@ -63,12 +60,36 @@ const displayDuration = computed({
   }
 })
 
-// 当外部的值大幅变更时（比如加载不同任务），自动调整单位
-watch(() => props.modelValue, (newVal) => {
-  if (newVal > 1 && durationUnit.value === 'minute') {
-    durationUnit.value = 'hour'
-  } else if (newVal > 0 && newVal <= 1 && durationUnit.value === 'hour') {
-    durationUnit.value = 'minute'
+// 当单位改变时，我们尝试维持输入框中的“字面数值”不变
+let switchingUnit = false
+watch(durationUnit, async (newUnit, oldUnit) => {
+  if (switchingUnit) return
+  if (newUnit === oldUnit) return
+  
+  switchingUnit = true
+  // 1. 获取旧状态下的显示数值（例如 30 分钟 -> 30）
+  const previousDisplayValue = (oldUnit === 'minute' ? Math.round(props.modelValue * 60) : props.modelValue)
+  
+  // 2. 根据新单位 emit 调整后的 modelValue
+  if (newUnit === 'hour') {
+    emit('update:modelValue', previousDisplayValue)
+  } else {
+    emit('update:modelValue', previousDisplayValue / 60)
   }
-}, { immediate: true })
+  
+  await nextTick()
+  switchingUnit = false
+})
+
+// 初始化/外部重置：如果 props.modelValue 发生了根本性改变（例如从 0 变成 0.5），同步单位
+watch(() => props.modelValue, (newVal, oldVal) => {
+  if (switchingUnit) return
+  // 如果是从 0 或 undefined 加载出来的初始值，强制根据大小定一次单位
+  if (oldVal === undefined || oldVal === 0) {
+    durationUnit.value = newVal > 1 ? 'hour' : 'minute'
+  }
+})
 </script>
+
+<style scoped>
+</style>

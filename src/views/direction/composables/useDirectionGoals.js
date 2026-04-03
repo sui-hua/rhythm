@@ -9,8 +9,10 @@ import {
   editingGoal,
   selectedMonth,
   activePicker,
-  showAddModal
+  showAddModal,
+  showCategoryModal
 } from '@/views/direction/composables/useDirectionState'
+
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionGoals() {
@@ -251,7 +253,9 @@ export function useDirectionGoals() {
     editingGoal,
     activePicker,
     showAddModal,
+    showCategoryModal,
     monthlyMainGoals,
+
     activeMonthRange,
     handleAddClick,
     handleEditGoal,

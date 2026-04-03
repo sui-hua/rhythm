@@ -20,31 +20,67 @@
         <div class="form-row">
           <div class="form-group">
             <Label class="form-label">{{ isEdit ? '目标月份' : '开始月份' }}</Label>
-            <select v-model="form.startMonth" class="form-select">
-              <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
-            </select>
+            <Select v-model="form.startMonth">
+              <SelectTrigger class="form-select-trigger">
+                <SelectValue placeholder="选择月份" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="m in months" :key="m.value" :value="m.value.toString()">
+                  {{ m.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="form-group">
             <Label class="form-label">结束月份</Label>
-            <select v-model="form.endMonth" class="form-select">
-              <option v-for="m in months" :key="m.value" :value="m.value" :disabled="m.value < form.startMonth">
-                {{ m.label }}
-              </option>
-            </select>
+            <Select v-model="form.endMonth">
+              <SelectTrigger class="form-select-trigger">
+                <SelectValue placeholder="选择月份" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="m in months"
+                  :key="m.value"
+                  :value="m.value.toString()"
+                  :disabled="m.value < Number(form.startMonth)"
+                >
+                  {{ m.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div class="form-group">
-          <Label for="goal-category" class="form-label">目标分类</Label>
-          <select id="goal-category" v-model="form.category_id" class="form-select">
-            <option value="">未分类</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-          </select>
+          <div class="flex items-center justify-between">
+            <Label for="goal-category" class="form-label">目标分类</Label>
+            <button
+              type="button"
+              class="manage-categories-btn"
+              @click="showCategoryModal = true"
+            >
+              <Settings2 class="w-3.5 h-3.5 mr-1" />
+              管理类型
+            </button>
+          </div>
+          <Select v-model="form.category_id">
+            <SelectTrigger class="form-select-trigger">
+              <SelectValue placeholder="选择分类" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">未分类</SelectItem>
+              <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <Separator class="my-2" />
 
         <div class="form-row">
           <TimePicker v-model="form.task_time" label="任务时间" id="task-time" />
-          <DurationPicker v-model="form.duration" label="预计时长 (分钟)" id="task-duration" />
+          <DurationPicker v-model="form.duration" label="预计时长" id="task-duration" />
         </div>
       </div>
 
@@ -61,6 +97,9 @@
       </DialogFooter>
     </DialogContent>
   </Dialog>
+
+  <!-- 类别管理弹窗 -->
+  <CategoryManagementModal @updated="fetchCategories" />
 </template>
 
 <script setup lang="ts">
@@ -70,49 +109,67 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
+import CategoryManagementModal from './CategoryManagementModal.vue'
+import { Settings2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
 
 import { withLoadingLock } from '@/utils/throttle'
 
-const { showAddModal, editingGoal, handleAddGoal, handleUpdateGoal, handleDeleteGoal } = useDirectionGoals()
+const { showAddModal, showCategoryModal, editingGoal, handleAddGoal, handleUpdateGoal, handleDeleteGoal } = useDirectionGoals()
 
 const categories = ref([])
 
-onMounted(async () => {
+const fetchCategories = async () => {
   try {
     categories.value = await db.plansCategory.list()
   } catch (e) {
     console.error('Failed to fetch categories', e)
   }
+}
+
+onMounted(fetchCategories)
+
+watch(() => showCategoryModal.value, (newVal) => {
+  if (!newVal) {
+    fetchCategories()
+  }
 })
 
 const form = reactive({
   title: '',
-  startMonth: new Date().getMonth() + 1,
-  endMonth: new Date().getMonth() + 1,
-  category_id: '',
+  startMonth: (new Date().getMonth() + 1).toString(),
+  endMonth: (new Date().getMonth() + 1).toString(),
+  category_id: 'none',
   task_time: '09:00',
-  duration: 30
+  duration: 0.5
 })
 
 watch(() => showAddModal.value, (newVal) => {
   if (newVal) {
     if (editingGoal.value) {
       form.title = editingGoal.value.name || editingGoal.value.title
-      form.startMonth = editingGoal.value.startMonth || new Date().getMonth() + 1
-      form.endMonth = editingGoal.value.endMonth || editingGoal.value.startMonth || new Date().getMonth() + 1
-      form.category_id = editingGoal.value.category_id || ''
+      form.startMonth = (editingGoal.value.startMonth || new Date().getMonth() + 1).toString()
+      form.endMonth = (editingGoal.value.endMonth || editingGoal.value.startMonth || new Date().getMonth() + 1).toString()
+      form.category_id = editingGoal.value.category_id || 'none'
       form.task_time = editingGoal.value.task_time || '09:00'
-      form.duration = editingGoal.value.duration || 30
+      form.duration = editingGoal.value.duration ? editingGoal.value.duration / 60 : 0.5
     } else {
       form.title = ''
-      form.category_id = ''
-      form.startMonth = new Date().getMonth() + 1
-      form.endMonth = new Date().getMonth() + 1
+      form.category_id = 'none'
+      form.startMonth = (new Date().getMonth() + 1).toString()
+      form.endMonth = (new Date().getMonth() + 1).toString()
       form.task_time = '09:00'
-      form.duration = 30
+      form.duration = 0.5
     }
   }
 })
@@ -126,12 +183,18 @@ watch(() => form.startMonth, (newVal) => {
 const isEdit = computed(() => !!editingGoal.value)
 
 const months = [
-  { label: '1月', value: 1 }, { label: '2月', value: 2 },
-  { label: '3月', value: 3 }, { label: '4月', value: 4 },
-  { label: '5月', value: 5 }, { label: '6月', value: 6 },
-  { label: '7月', value: 7 }, { label: '8月', value: 8 },
-  { label: '9月', value: 9 }, { label: '10月', value: 10 },
-  { label: '11月', value: 11 }, { label: '12月', value: 12 }
+  { label: '1月', value: 1 }, 
+  { label: '2月', value: 2 },
+  { label: '3月', value: 3 }, 
+  { label: '4月', value: 4 },
+  { label: '5月', value: 5 }, 
+  { label: '6月', value: 6 },
+  { label: '7月', value: 7 }, 
+  { label: '8月', value: 8 },
+  { label: '9月', value: 9 }, 
+  { label: '10月', value: 10 },
+  { label: '11月', value: 11 }, 
+  { label: '12月', value: 12 }
 ]
 
 const submit = withLoadingLock(async () => {
@@ -139,11 +202,11 @@ const submit = withLoadingLock(async () => {
 
   const payload = {
     title: form.title,
-    startMonth: form.startMonth,
-    endMonth: form.endMonth,
-    category_id: form.category_id || null,
+    startMonth: parseInt(form.startMonth),
+    endMonth: parseInt(form.endMonth),
+    category_id: form.category_id === 'none' ? null : form.category_id,
     task_time: form.task_time,
-    duration: form.duration,
+    duration: Math.round(form.duration * 60),
     status: 'active',
   }
 
@@ -186,8 +249,8 @@ const submit = withLoadingLock(async () => {
   @apply h-10 border shadow-none focus-visible:ring-1;
 }
 
-.form-select {
-  @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring;
+.form-select-trigger {
+  @apply h-10 border shadow-none focus:ring-1;
 }
 
 .modal-footer {
@@ -204,6 +267,10 @@ const submit = withLoadingLock(async () => {
 
 .delete-link {
   @apply text-xs text-destructive hover:underline underline-offset-4;
+}
+
+.manage-categories-btn {
+  @apply flex items-center text-[10px] font-bold text-primary/70 hover:text-primary transition-colors uppercase tracking-wider mb-1;
 }
 
 .btn-cancel {

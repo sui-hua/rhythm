@@ -1,6 +1,10 @@
 <template>
   <Dialog :open="store.showModal" @update:open="store.showModal = $event">
-    <DialogContent class="sm:max-w-[440px] p-0 overflow-hidden border bg-background text-foreground shadow-xl rounded-[2.5rem]">
+    <DialogContent 
+      class="sm:max-w-[440px] p-0 overflow-hidden border bg-background text-foreground shadow-xl rounded-[2.5rem] [&>button]:hidden"
+      @interact-outside="(e) => e.preventDefault()"
+      @escape-keydown="(e) => e.preventDefault()"
+    >
       <div class="relative p-10 flex flex-col items-center gap-10 min-h-[460px] justify-center overflow-hidden">
         <!-- Animated Background Glows -->
         <div class="absolute -top-32 -right-32 w-80 h-80 bg-primary/10 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
@@ -48,7 +52,7 @@
             <div class="relative flex flex-col items-center">
                 <div class="text-6xl font-mono font-black tracking-tighter tabular-nums drop-shadow-sm transition-all" 
                      :class="isOvertime ? 'text-destructive scale-110' : 'text-foreground'">
-                     {{ formattedTime }}
+                     {{ store.formattedTime }}
                 </div>
                 <div v-if="isOvertime" class="absolute -bottom-6 text-[9px] font-black text-destructive mt-2 flex items-center gap-1 uppercase tracking-widest animate-pulse whitespace-nowrap">
                    OVERTIME • {{ store.activeTask?.original?.duration || 30 }}m limit
@@ -56,21 +60,13 @@
             </div>
         </div>
 
-        <div class="z-10 w-full flex flex-col gap-4 px-4">
+        <div class="z-10 w-full flex flex-col gap-4 px-4 pb-4">
             <Button 
                 class="w-full h-16 rounded-[1.25rem] bg-primary text-primary-foreground text-lg font-black shadow-[0_8px_20px_-8px_rgba(var(--color-primary-rgb),0.5)] hover:shadow-[0_12px_25px_-8px_rgba(var(--color-primary-rgb),0.6)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-300"
                 @click="handleComplete"
             >
                 <CheckCircle class="w-6 h-6 mr-3" />
                 完成并记录
-            </Button>
-            
-            <Button 
-                variant="ghost" 
-                class="w-full h-12 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl font-bold tracking-wide uppercase text-[11px]"
-                @click="store.closeModal"
-            >
-                暂时最小化
             </Button>
         </div>
       </div>
@@ -79,13 +75,12 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle } from 'lucide-vue-next'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
-import { useTaskTimer } from '@/composables/useTaskTimer'
 import { useDayData } from '@/views/day/composables/useDayData'
 
 /**
@@ -95,14 +90,13 @@ import { useDayData } from '@/views/day/composables/useDayData'
 
 const store = usePomodoroStore()
 const { handleToggleComplete } = useDayData()
-const { elapsedSeconds, formattedTime, start, stop } = useTaskTimer()
 
 // 计算圆环进度
 const progressPercent = computed(() => {
     if (!store.activeTask) return 0
     const scheduledMins = store.activeTask.original?.duration || 30
     const totalSecs = scheduledMins * 60
-    return Math.min(100, (elapsedSeconds.value / totalSecs) * 100)
+    return Math.min(100, (store.elapsedSeconds / totalSecs) * 100)
 })
 
 const progressOffset = computed(() => {
@@ -114,17 +108,8 @@ const progressOffset = computed(() => {
 const isOvertime = computed(() => {
     if (!store.activeTask) return false
     const scheduledMins = store.activeTask.original?.duration || 30
-    return elapsedSeconds.value > scheduledMins * 60
+    return store.elapsedSeconds > scheduledMins * 60
 })
-
-// 监听 Store 中活跃任务的变化来启停计时器
-watch(() => store.activeTask, (newVal) => {
-    if (newVal?.actual_start_time && !newVal.actual_end_time && !newVal.completed) {
-        start(newVal.actual_start_time)
-    } else {
-        stop()
-    }
-}, { immediate: true })
 
 /**
  * 处理完成并保存真实耗时

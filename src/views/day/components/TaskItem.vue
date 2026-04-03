@@ -48,7 +48,7 @@
             <div v-if="isRunning" class="flex items-center gap-2">
                 <Timer class="w-3 h-3 text-primary animate-pulse" />
                 <span class="text-xs font-mono font-bold" :class="isOvertime ? 'text-destructive' : 'text-primary'">
-                    {{ formattedTime }}
+                    {{ displayTime }}
                     <span v-if="isOvertime" class="ml-1 text-[10px] animate-bounce">(超时)</span>
                 </span>
             </div>
@@ -67,9 +67,9 @@
                     size="sm" 
                     variant="ghost" 
                     class="h-7 px-2 text-xs gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-white"
-                    @click.stop="handleToggleComplete(task)"
+                    @click.stop="store.openModal()"
                 >
-                    <CheckCircle class="w-3 h-3" /> 完成并记录
+                    <Maximize2 class="w-3 h-3" /> 打开计时器
                 </Button>
             </div>
         </div>
@@ -89,12 +89,12 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted } from 'vue'
+import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Play, CheckCircle, Timer } from 'lucide-vue-next'
-import { useTaskTimer } from '@/composables/useTaskTimer'
+import { Play, CheckCircle, Timer, Maximize2 } from 'lucide-vue-next'
 import { useDayData } from '@/views/day/composables/useDayData'
+import { usePomodoroStore } from '@/stores/pomodoroStore'
 
 const props = defineProps({
   task: Object,
@@ -104,25 +104,18 @@ const props = defineProps({
 const emit = defineEmits(['select', 'edit'])
 
 const { handleStartTask, handleToggleComplete } = useDayData()
-const { elapsedSeconds, formattedTime, start, stop } = useTaskTimer()
+const store = usePomodoroStore()
 
 const isRunning = computed(() => !!props.task.actual_start_time && !props.task.actual_end_time && !props.task.completed)
+const isStoreActive = computed(() => store.activeTask?.id === props.task.id)
+
+const displayTime = computed(() => isStoreActive.value ? store.formattedTime : '00:00')
+
 const isOvertime = computed(() => {
     if (!isRunning.value) return false
-    const scheduledMins = props.task.original?.duration || 30
-    return elapsedSeconds.value > scheduledMins * 60
-})
-
-watch(() => props.task.actual_start_time, (newVal) => {
-    if (newVal && !props.task.actual_end_time && !props.task.completed) {
-        start(newVal)
-    } else {
-        stop()
-    }
-}, { immediate: true })
-
-watch(() => props.task.completed, (newVal) => {
-    if (newVal) stop()
+    const scheduledMins = props.task.original?.duration || props.task.duration || 30
+    const elapsed = isStoreActive.value ? store.elapsedSeconds : 0
+    return elapsed > scheduledMins * 60
 })
 </script>
 
