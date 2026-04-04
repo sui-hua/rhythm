@@ -1,6 +1,8 @@
 <template>
   <Dialog :open="show" @update:open="$emit('update:show', $event)">
     <DialogContent class="sm:max-w-[400px] p-6 rounded-xl border shadow-lg bg-background">
+      <DialogTitle class="sr-only">{{ initialData ? (isHabit ? '编辑习惯' : '编辑任务') : '新增任务' }}</DialogTitle>
+      <DialogDescription class="sr-only">{{ initialData ? (isHabit ? '更新您的习惯详情' : '更新您的任务详情') : '填写下方信息以创建新任务' }}</DialogDescription>
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-2 text-center">
           <h1 class="text-2xl font-semibold tracking-tight">
@@ -101,7 +103,7 @@
 </template>
 
 <script setup>
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import TimePicker from '@/components/ui/TimePicker.vue'

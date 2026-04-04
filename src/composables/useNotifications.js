@@ -1,17 +1,17 @@
-import { ref, watch } from 'vue'
-import { usePomodoroStore } from '@/stores/pomodoroStore'
+import { ref, onUnmounted } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
 
 /**
  * 任务通知 Composable
  * 负责管理 Web Notification API 和任务时间到达检测
+ * 使用独立的定时器检测，不依赖番茄钟
  */
 // 模块级状态 - 跨组件共享单例
 const notifiedTaskIds = ref(new Set())
 const notificationPermission = ref('default')
+let checkInterval = null
 
 export function useNotifications() {
-    const pomodoroStore = usePomodoroStore()
 
     /**
      * 请求通知权限
@@ -74,7 +74,7 @@ export function useNotifications() {
      * @param {Array} items - 日程项目列表 (dailySchedule)
      */
     const checkAndNotify = (items) => {
-        const now = new Date(pomodoroStore.now)
+        const now = new Date()
         const currentHour = now.getHours()
         const currentMinute = now.getMinutes()
         const currentDateStr = now.toISOString().split('T')[0]
@@ -118,23 +118,42 @@ export function useNotifications() {
     }
 
     /**
-     * 启动通知监听
+     * 启动通知监听（独立的定时器，不依赖番茄钟）
      * @param {Function} getScheduleItems - 返回当前日程项的函数
      */
     const startListening = (getScheduleItems) => {
-        watch(
-            () => pomodoroStore.now,
-            () => {
-                if (notificationPermission.value !== 'granted') {
-                    return
-                }
+        // 清除已有的定时器
+        stopListening()
 
-                const items = getScheduleItems()
-                if (items && items.length > 0) {
-                    checkAndNotify(items)
-                }
+        // 每分钟检测一次任务时间
+        checkInterval = setInterval(() => {
+            if (notificationPermission.value !== 'granted') {
+                return
             }
-        )
+
+            const items = getScheduleItems()
+            if (items && items.length > 0) {
+                checkAndNotify(items)
+            }
+        }, 30000) // 每30秒检查一次
+
+        // 立即执行一次检查
+        if (notificationPermission.value === 'granted') {
+            const items = getScheduleItems()
+            if (items && items.length > 0) {
+                checkAndNotify(items)
+            }
+        }
+    }
+
+    /**
+     * 停止通知监听
+     */
+    const stopListening = () => {
+        if (checkInterval) {
+            clearInterval(checkInterval)
+            checkInterval = null
+        }
     }
 
     /**
@@ -144,11 +163,16 @@ export function useNotifications() {
         notifiedTaskIds.value.clear()
     }
 
+    onUnmounted(() => {
+        stopListening()
+    })
+
     return {
         notificationPermission,
         requestPermission,
         showNotification,
         startListening,
+        stopListening,
         clearNotifiedHistory,
         getPermissionStatus
     }

@@ -90,14 +90,14 @@ const { isReady, isLoading, scrollToTask, currentHour } = useDayNavigation()
 const { showAddModal, editingTask, openAddModal, openEditModal } = useDayModal()
 const { isMobile } = useMobile()
 const uiStore = useUiStore()
+const dateStore = useDateStore()
 
 const { reportVisible, reportStats, closeReport } = useDailyReport()
 const { dailySchedule, carryOverUncompletedTasksTo, fetchTasks, setLoading } = useDayData()
+const { startListening, stopListening, clearNotifiedHistory, requestPermission } = useNotifications()
 
-const dateStore = useDateStore()
-const { startListening, clearNotifiedHistory } = useNotifications()
-
-onMounted(() => {
+onMounted(async () => {
+  await requestPermission()
   startListening(() => dailySchedule.value)
 })
 
@@ -112,6 +112,7 @@ watch([showSidebar, isMobile], ([open, mobile]) => {
 
 onBeforeUnmount(() => {
   uiStore.setNavbarHidden(false)
+  stopListening()
 })
 
 const handleDailyReportConfirm = async () => {
