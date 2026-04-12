@@ -28,10 +28,10 @@
       />
 
       <!-- Mobile Menu Button -->
-      <button 
+      <button
         v-if="isMobile"
         class="fixed bottom-6 right-6 z-30 w-11 h-11 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95"
-        @click="showSidebar = !showSidebar"
+        @click="openQuickAdd"
       >
         <Menu v-if="!showSidebar" class="w-5 h-5" />
         <X v-else class="w-5 h-5" />
@@ -50,6 +50,13 @@
         v-else
         v-model:show="showAddModal"
         :initial-data="editingTask"
+      />
+
+      <!-- Quick Add Drawer (移动端快速添加) -->
+      <QuickAddDrawer
+        v-if="isMobile"
+        v-model:show="showQuickAdd"
+        @switch-to-full="openFullAddModal"
       />
 
       <!-- Daily Report Modal -->
@@ -74,6 +81,7 @@ import Sidebar from '@/views/day/components/Sidebar.vue'
 import Timeline from '@/views/day/components/Timeline.vue'
 import DailyReportModal from '@/views/day/components/DailyReportModal.vue'
 import PomodoroTimerModal from '@/views/day/components/PomodoroTimerModal.vue'
+import QuickAddDrawer from '@/views/day/components/QuickAddDrawer.vue'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 import { useDayModal } from '@/views/day/composables/useDayModal'
 import { useMobile } from '@/composables/useMobile'
@@ -88,6 +96,18 @@ const MobileAddEventDrawer = defineAsyncComponent(() => import('@/views/day/comp
 
 const { isReady, isLoading, scrollToTask, currentHour } = useDayNavigation()
 const { showAddModal, editingTask, openAddModal, openEditModal } = useDayModal()
+
+const showQuickAdd = ref(false)
+
+// 移动端快速添加
+const openQuickAdd = () => {
+  showQuickAdd.value = true
+}
+
+const openFullAddModal = () => {
+  showQuickAdd.value = false
+  openAddModal()
+}
 const { isMobile } = useMobile()
 const uiStore = useUiStore()
 const dateStore = useDateStore()
