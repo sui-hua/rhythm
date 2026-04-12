@@ -2,13 +2,8 @@
   <ScrollArea ref="timelineContainerRef" class="flex-1 bg-linear-to-br from-zinc-50/50 to-zinc-100/30 relative">
     <div
       v-if="isLoading"
-      class="absolute inset-0 z-20 flex items-center justify-center bg-background/70 backdrop-blur-sm"
-    >
-      <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-background/80 border border-zinc-100 shadow-lg">
-        <div class="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin"></div>
-        <span class="text-xs font-semibold text-zinc-600 tracking-wide">加载中…</span>
-      </div>
-    </div>
+      class="absolute inset-0 z-20 bg-background/40 backdrop-blur-xs transition-all duration-700"
+    ></div>
     <div class="relative z-10 px-2 sm:px-4 md:px-10 lg:px-20 py-10 min-h-[600vh]" :style="{ '--hour-height': 'max(25vh, 180px)' }">
       <!-- 背景时间轴线 -->
       <div class="absolute inset-x-0 top-0 z-0 px-2 sm:px-4 md:px-10 lg:px-20">

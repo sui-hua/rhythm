@@ -14,10 +14,7 @@
     },
     "shadcn-ui": {
       "command": "npx",
-      "args": ["-y", "@jpisnice/shadcn-ui-mcp-server"],
-      "env": {
-        "FRAMEWORK": "vue"
-      }
+      "args": ["-y", "@jpisnice/shadcn-ui-mcp-server", "--framework", "vue"]
     }
   }
 }

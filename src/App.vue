@@ -77,23 +77,29 @@ onMounted(async () => {
 <style scoped>
 /* 视图转场动画 */
 .view-fade-enter-active, .view-fade-leave-active {
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.view-fade-enter-from, .view-fade-leave-to {
+.view-fade-enter-from {
   opacity: 0;
-  filter: blur(20px);
+  transform: scale(0.98);
+  filter: blur(10px);
+}
+.view-fade-leave-to {
+  opacity: 0;
+  transform: scale(1.02);
+  filter: blur(10px);
 }
 
 .view-slide-enter-active, .view-slide-leave-active {
-  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .view-slide-enter-from {
   opacity: 0;
-  transform: translateX(100px);
+  transform: translateX(30px) scale(0.98);
 }
 .view-slide-leave-to {
   opacity: 0;
-  transform: translateX(-100px);
+  transform: translateX(-30px) scale(1.02);
 }
 
 /* 通用样式 */

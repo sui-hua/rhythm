@@ -3,28 +3,28 @@
     <!-- 遮罩层 -->
     <div 
       v-if="show" 
-      class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px]"
+      class="fixed inset-0 z-100 bg-black/40 backdrop-blur-[2px]"
       @click="$emit('update:show', false)"
     ></div>
     
     <!-- 抽屉容器 -->
     <div 
-      class="fixed bottom-0 left-0 right-0 z-[101] bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-2xl flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      class="fixed bottom-0 left-0 right-0 z-101 bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-(--shadow-modal) flex flex-col transition-transform duration-700 ease-expo pb-safe"
       :class="show ? 'translate-y-0' : 'translate-y-full'"
       style="max-height: 92vh;"
     >
       <!-- 顶部拉手区域 -->
       <div class="py-4 flex justify-center shrink-0 cursor-pointer" @click="$emit('update:show', false)">
-        <div class="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+        <div class="w-12 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
       </div>
 
-      <div class="flex flex-col flex-1 overflow-hidden px-6 pb-8">
-        <header class="text-center mb-6 shrink-0">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-            {{ initialData ? (isHabit ? '编辑习惯' : '编辑任务') : '新增任务' }}
+      <div class="flex flex-col flex-1 overflow-hidden px-7 pb-10">
+        <header class="text-left mb-8 shrink-0">
+          <h2 class="text-4xl font-black italic uppercase tracking-tighter text-zinc-900 dark:text-zinc-100 mb-1">
+            {{ initialData ? (isHabit ? 'Edit Habit' : 'Edit Task') : 'New Task' }}
           </h2>
-          <p class="text-sm text-zinc-500">
-            {{ initialData ? '调整当前项目的详细信息' : '简单几步规划您的新任务' }}
+          <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">
+            {{ initialData ? 'Modify your plan' : 'Plan your next move' }}
           </p>
         </header>
 

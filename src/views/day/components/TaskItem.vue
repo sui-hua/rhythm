@@ -7,14 +7,20 @@
     @dblclick="$emit('edit', index)"
   >
     <div 
-      class="flex h-full border border-border border-l-4 border-l-primary pl-6 pr-4 overflow-hidden bg-background shadow-sm transition-all duration-300 rounded-r-xl group"
+      class="flex h-full border border-zinc-100/80 dark:border-white/5 pl-4 pr-1 overflow-hidden transition-all duration-500 rounded-2xl group shadow-(--shadow-whisper)"
       :class="[
-        (task.durationHours || 1) < 0.4 ? 'flex-col justify-center py-0.5 px-3 min-h-[28px]' : 
+        (task.durationHours || 1) < 0.4 ? 'flex-col justify-center py-0.5 min-h-[28px]' : 
         (task.durationHours || 1) < 0.8 ? 'flex-row items-center py-2' : 'flex-col py-4 gap-2',
-        task.completed ? 'opacity-40 grayscale scale-[0.98]' : 'hover:-translate-x-1 hover:shadow-md',
-        isRunning ? 'ring-2 ring-primary/20 bg-primary/5' : ''
+        task.completed ? 'opacity-30 grayscale scale-[0.97] shadow-none bg-zinc-50/50! dark:bg-zinc-900/50!' : 'bg-white dark:bg-zinc-900 hover:-translate-x-1 hover:scale-[1.01] hover:shadow-(--shadow-elevated)',
+        isRunning ? 'ring-2 ring-primary bg-primary/5' : ''
       ]"
     >
+      <div 
+        class="absolute left-0 top-0 bottom-0 w-1 transition-all duration-500"
+        :class="[
+          task.completed ? 'bg-zinc-300' : 'bg-primary'
+        ]"
+      ></div>
       <!-- Title for MEDIUM tasks - Simple mode -->
       <template v-if="(task.durationHours || 1) >= 0.4 && (task.durationHours || 1) < 0.8">
         <h3 

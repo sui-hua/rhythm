@@ -111,3 +111,45 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
+
+@layer base {
+  :root {
+    /* 动效曲线 - Expo 灵感 */
+    --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* 阴影层级 */
+    --shadow-whisper: 0 4px 12px -2px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+    --shadow-elevated: 0 20px 40px -12px rgba(0, 0, 0, 0.08), 0 10px 20px -6px rgba(0, 0, 0, 0.04);
+    --shadow-modal: 0 30px 60px -12px rgba(0, 0, 0, 0.15), 0 18px 36px -18px rgba(0, 0, 0, 0.1);
+  }
+
+  h1, h2, h3, h4, .display-tight {
+    letter-spacing: -0.05em;
+  }
+
+  .display-hero {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.06em;
+    line-height: 1.1;
+  }
+
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-[var(--shadow-whisper)];
+  }
+
+  .dark .glass-card {
+    @apply bg-black/40 backdrop-blur-xl border-white/10;
+  }
+}
+
+@layer utilities {
+  .transition-expo {
+    transition-timing-function: var(--ease-expo);
+  }
+  
+  .transition-spring {
+    transition-timing-function: var(--ease-spring);
+  }
+}

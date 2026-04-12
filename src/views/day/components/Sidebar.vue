@@ -43,29 +43,29 @@
 
     <!-- 侧边栏任务列表，可滚动 -->
     <ScrollArea class="flex-1 px-4 relative z-10">
-      <div v-if="dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
+      <!-- 移动端：支持左滑完成任务 -->
+      <div v-if="isMobile && dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
         <div v-for="(item, index) in dailySchedule" :key="index"
              @click="$emit('scrollToTask', index)"
              @dblclick="$emit('edit-task', index)"
-             v-if="isMobile"
-             @touchstart="itemSwipeStates[index]?.handleTouchStart($event)"
-             @touchmove="itemSwipeStates[index]?.handleTouchMove($event)"
-             @touchend="itemSwipeStates[index]?.handleTouchEnd($event)"
+             @touchstart="handleTouchStart($event, index)"
+             @touchmove="handleTouchMove($event, index)"
+             @touchend="handleTouchEnd($event, index, item)"
              class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
              :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
-             :style="{ transform: `translateX(-${itemSwipeStates[index]?.offsetX || 0}px)`, transition: itemSwipeStates[index]?.isSwiping ? 'none' : 'transform 0.3s ease' }">
+             :style="{ transform: `translateX(-${getSwipeOffset(index)}px)`, transition: swipeState.activeIndex === index ? 'none' : 'transform 0.3s ease' }">
 
           <!-- 左滑显示的完成按钮区域 -->
           <div
             class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
-            :style="{ width: `${itemSwipeStates[index]?.offsetX || 0}px` }"
+            :style="{ width: `${getSwipeOffset(index)}px` }"
           >
             <Check class="w-5 h-5 text-white" />
           </div>
 
           <div @click.stop @dblclick.stop>
-            <Checkbox 
-              :checked="item.completed" 
+            <Checkbox
+              :checked="item.completed"
               @update:checked="handleToggleComplete(item)"
               class="shrink-0 w-5 h-5 rounded-md"
             />
@@ -78,7 +78,41 @@
               >
                 {{ item.title }}
               </h4>
-              <div 
+              <div
+                class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
+                @click.stop="$emit('edit-task', index)"
+              >
+                <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 桌面端：普通列表 -->
+      <div v-else-if="!isMobile && dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
+        <div v-for="(item, index) in dailySchedule" :key="index"
+             @click="$emit('scrollToTask', index)"
+             @dblclick="$emit('edit-task', index)"
+             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
+             :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'">
+
+          <div @click.stop @dblclick.stop>
+            <Checkbox
+              :checked="item.completed"
+              @update:checked="handleToggleComplete(item)"
+              class="shrink-0 w-5 h-5 rounded-md"
+            />
+          </div>
+
+          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+            <div class="flex items-center justify-between gap-2 w-full">
+              <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
+                :class="item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+              >
+                {{ item.title }}
+              </h4>
+              <div
                 class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                 @click.stop="$emit('edit-task', index)"
               >
@@ -123,7 +157,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Plus, Settings2, X, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -135,7 +169,7 @@ import { useResizable } from '@/composables/useResizable'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '@/views/day/composables/useDayData'
-import { useSwipeToComplete } from '@/views/day/composables/useSwipeToComplete'
+import { playSuccessSound } from '@/utils/audio'
 
 const props = defineProps({
   isMobile: Boolean,
@@ -153,12 +187,50 @@ const { width, startResize, isResizing } = useResizable()
 const selectedDay = computed(() => dateStore.currentDate.getDate())
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
 
-// Create swipe states for each item (per-item swipe tracking)
-const itemSwipeStates = computed(() => {
-  return dailySchedule.value.map(item => {
-    return useSwipeToComplete(() => handleToggleComplete(item))
-  })
+// 左滑完成状态管理
+const SWIPE_THRESHOLD = 0.5
+const MAX_SWIPE = 80
+
+const swipeState = ref({
+  activeIndex: -1,
+  startX: 0,
+  currentX: 0
 })
+
+const getSwipeOffset = (index) => {
+  if (swipeState.value.activeIndex !== index) return 0
+  const delta = swipeState.value.startX - swipeState.value.currentX
+  return Math.max(0, Math.min(delta, MAX_SWIPE))
+}
+
+const handleTouchStart = (e, index) => {
+  swipeState.value.activeIndex = index
+  swipeState.value.startX = e.touches[0].clientX
+  swipeState.value.currentX = e.touches[0].clientX
+}
+
+const handleTouchMove = (e, index) => {
+  if (swipeState.value.activeIndex !== index) return
+  swipeState.value.currentX = e.touches[0].clientX
+}
+
+const handleTouchEnd = async (e, index, item) => {
+  if (swipeState.value.activeIndex !== index) return
+
+  const delta = swipeState.value.startX - swipeState.value.currentX
+  const ratio = delta / 280
+
+  swipeState.value.activeIndex = -1
+
+  if (ratio >= SWIPE_THRESHOLD) {
+    // 震动反馈
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+    playSuccessSound()
+    await handleToggleComplete(item)
+  }
+}
 
 defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 </script>
