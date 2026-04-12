@@ -9,11 +9,10 @@
   >
     <div
       v-if="isLoading"
-      class="absolute inset-0 z-40 flex items-center justify-center bg-background/70 backdrop-blur-sm"
+      class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm px-4 pt-24"
     >
-      <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-background/80 border border-zinc-100 shadow-lg">
-        <div class="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin"></div>
-        <span class="text-xs font-semibold text-zinc-600 tracking-wide">加载中…</span>
+      <div class="flex flex-col gap-4">
+        <SkeletonTask v-for="i in 5" :key="i" />
       </div>
     </div>
     <!-- 侧边栏宽度拖拽调整手柄 (仅桌面端) -->
@@ -24,10 +23,10 @@
       @mousedown="startResize">
     </div>
 
-    <header class="px-6 pt-10 pb-6 shrink-0 border-b border-border/10 mb-4 bg-transparent">
-      <div class="flex flex-col gap-2">
+    <header class="px-6 pt-12 pb-8 shrink-0 mb-2 bg-transparent">
+      <div class="flex flex-col gap-1">
         <div class="flex items-center justify-between">
-          <h2 class="text-2xl font-semibold tracking-tight">{{ selectedDay }}日</h2>
+          <h2 class="text-4xl font-black tracking-tighter italic uppercase transition-all duration-700 ease-expo">{{ selectedDay }}</h2>
           <Button 
             v-if="isMobile" 
             variant="ghost" 
@@ -38,19 +37,31 @@
             <X class="h-4 w-4" />
           </Button>
         </div>
-        <p class="text-xs text-muted-foreground">{{ selectedMonthName }} 任务清单</p>
+        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">{{ selectedMonthName }} / TASKS</p>
       </div>
     </header>
 
     <!-- 侧边栏任务列表，可滚动 -->
     <ScrollArea class="flex-1 px-4 relative z-10">
-      <div class="flex flex-col gap-2 pb-24 pt-2">
-        <div v-for="(item, index) in dailySchedule" :key="index" 
+      <div v-if="dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
+        <div v-for="(item, index) in dailySchedule" :key="index"
              @click="$emit('scrollToTask', index)"
              @dblclick="$emit('edit-task', index)"
-             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
-             :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'">
-          
+             @touchstart="itemSwipeStates[index]?.handleTouchStart($event)"
+             @touchmove="itemSwipeStates[index]?.handleTouchMove($event)"
+             @touchend="itemSwipeStates[index]?.handleTouchEnd($event)"
+             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
+             :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
+             :style="{ transform: `translateX(-${itemSwipeStates[index]?.offsetX || 0}px)`, transition: itemSwipeStates[index]?.isSwiping ? 'none' : 'transform 0.3s ease' }">
+
+          <!-- 左滑显示的完成按钮区域 -->
+          <div
+            class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
+            :style="{ width: `${itemSwipeStates[index]?.offsetX || 0}px` }"
+          >
+            <Check class="w-5 h-5 text-white" />
+          </div>
+
           <div @click.stop @dblclick.stop>
             <Checkbox 
               :checked="item.completed" 
@@ -76,6 +87,18 @@
           </div>
         </div>
       </div>
+      <div v-else-if="!isLoading" class="pb-24 pt-4">
+        <EmptyState 
+          title="No Tasks Today" 
+          description="Your schedule is clear. Take a deep breath or plan something new."
+        >
+          <template #action>
+            <Button variant="outline" size="sm" class="rounded-full px-6" @click="$emit('add-event')">
+              Create First Task
+            </Button>
+          </template>
+        </EmptyState>
+      </div>
     </ScrollArea>
 
     <!-- 侧边栏底部统计和添加按钮 -->
@@ -100,15 +123,18 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Plus, Settings2, X } from 'lucide-vue-next'
+import { Plus, Settings2, X, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import SkeletonTask from '@/components/ui/SkeletonTask.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import { useResizable } from '@/composables/useResizable'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '@/views/day/composables/useDayData'
+import { useSwipeToComplete } from '@/views/day/composables/useSwipeToComplete'
 
 const props = defineProps({
   isMobile: Boolean,
@@ -125,6 +151,13 @@ const { width, startResize, isResizing } = useResizable()
 
 const selectedDay = computed(() => dateStore.currentDate.getDate())
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
+
+// Create swipe states for each item (per-item swipe tracking)
+const itemSwipeStates = computed(() => {
+  return dailySchedule.value.map(item => {
+    return useSwipeToComplete(() => handleToggleComplete(item))
+  })
+})
 
 defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 </script>
