@@ -65,6 +65,7 @@ export function useQuickAddForm(props, emit) {
                 start_time: startTime.toISOString(),
                 end_time: endTime.toISOString(),
                 completed: false,
+                category: form.category,
             })
 
             // 保存本次使用的时间和时长
