@@ -75,9 +75,19 @@ function wrapTable(tableName) {
   const operations = ['list', 'create', 'update', 'delete']
   const wrapped = {}
 
+  // 包装标准 CRUD 方法
   for (const op of operations) {
     if (db[tableName] && typeof db[tableName][op] === 'function') {
       wrapped[op] = wrapMethod(tableName, op, op)
+    }
+  }
+
+  // 透传非标准方法（如 listByDate）
+  if (db[tableName]) {
+    for (const key of Object.keys(db[tableName])) {
+      if (!wrapped[key] && typeof db[tableName][key] === 'function') {
+        wrapped[key] = (...args) => db[tableName][key](...args)
+      }
     }
   }
 
