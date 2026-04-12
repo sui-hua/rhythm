@@ -47,6 +47,7 @@
         <div v-for="(item, index) in dailySchedule" :key="index"
              @click="$emit('scrollToTask', index)"
              @dblclick="$emit('edit-task', index)"
+             v-if="isMobile"
              @touchstart="itemSwipeStates[index]?.handleTouchStart($event)"
              @touchmove="itemSwipeStates[index]?.handleTouchMove($event)"
              @touchend="itemSwipeStates[index]?.handleTouchEnd($event)"
