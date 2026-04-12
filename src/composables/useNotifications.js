@@ -3,20 +3,51 @@ import { playSuccessSound } from '@/utils/audio'
 
 /**
  * 任务通知 Composable
- * 负责管理 Web Notification API 和任务时间到达检测
- * 使用独立的定时器检测，不依赖番茄钟
+ * 支持 Service Worker 后台通知，降级到页面内轮询
  */
-// 模块级状态 - 跨组件共享单例
 const notifiedTaskIds = ref(new Set())
 const notificationPermission = ref('default')
 let checkInterval = null
+let swRegistration = null
+
+// 尝试注册 Service Worker
+const registerServiceWorker = async () => {
+    if (!('serviceWorker' in navigator)) {
+        console.warn('Service Worker not supported')
+        return null
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.register('/sw.js')
+        console.log('Service Worker registered:', registration.scope)
+        return registration
+    } catch (e) {
+        console.error('Service Worker registration failed:', e)
+        return null
+    }
+}
+
+// 发送任务列表到 Service Worker
+const syncTasksToSw = (items) => {
+    if (swRegistration?.active) {
+        swRegistration.active.postMessage({
+            type: 'UPDATE_TASKS',
+            tasks: items
+        })
+    }
+}
+
+// 触发 Service Worker 检查通知
+const triggerSwCheck = () => {
+    if (swRegistration?.active) {
+        swRegistration.active.postMessage({
+            type: 'CHECK_NOTIFICATIONS'
+        })
+    }
+}
 
 export function useNotifications() {
 
-    /**
-     * 请求通知权限
-     * @returns {Promise<boolean>} 是否获得授权
-     */
     const requestPermission = async () => {
         if (!('Notification' in window)) {
             console.warn('浏览器不支持 Web Notification')
@@ -25,32 +56,28 @@ export function useNotifications() {
 
         if (Notification.permission === 'granted') {
             notificationPermission.value = 'granted'
+            // 注册 Service Worker
+            swRegistration = await registerServiceWorker()
             return true
         }
 
         if (Notification.permission !== 'denied') {
             const permission = await Notification.requestPermission()
             notificationPermission.value = permission
+            if (permission === 'granted') {
+                swRegistration = await registerServiceWorker()
+            }
             return permission === 'granted'
         }
 
         return false
     }
 
-    /**
-     * 获取当前权限状态
-     * @returns {string} 权限状态: 'granted' | 'denied' | 'default' | 'unsupported'
-     */
     const getPermissionStatus = () => {
         if (!('Notification' in window)) return 'unsupported'
         return Notification.permission
     }
 
-    /**
-     * 显示系统通知
-     * @param {string} title - 通知标题
-     * @param {object} options - 通知选项
-     */
     const showNotification = (title, options = {}) => {
         if (notificationPermission.value !== 'granted') {
             return
@@ -69,10 +96,6 @@ export function useNotifications() {
         }
     }
 
-    /**
-     * 检查任务时间并触发通知
-     * @param {Array} items - 日程项目列表 (dailySchedule)
-     */
     const checkAndNotify = (items) => {
         const now = new Date()
         const currentHour = now.getHours()
@@ -80,14 +103,12 @@ export function useNotifications() {
         const currentDateStr = now.toISOString().split('T')[0]
 
         items.forEach(item => {
-            // 没有开始时间或已通知过的项目跳过
             if (!item.startHour || notifiedTaskIds.value.has(item.id)) {
                 return
             }
 
             const [hours, minutes] = item.time.split(':').map(Number)
 
-            // 获取项目日期字符串
             let itemDateStr
             if (item.original?.day) {
                 itemDateStr = new Date(item.original.day).toISOString().split('T')[0]
@@ -97,7 +118,7 @@ export function useNotifications() {
                 return
             }
 
-            // 检查是否是同一天的同一分钟
+            // 精确到分钟的匹配
             if (itemDateStr === currentDateStr &&
                 hours === currentHour &&
                 minutes === currentMinute) {
@@ -117,15 +138,26 @@ export function useNotifications() {
         })
     }
 
-    /**
-     * 启动通知监听（独立的定时器，不依赖番茄钟）
-     * @param {Function} getScheduleItems - 返回当前日程项的函数
-     */
     const startListening = (getScheduleItems) => {
-        // 清除已有的定时器
         stopListening()
 
-        // 每分钟检测一次任务时间
+        // 如果有 Service Worker，发送任务列表并让它管理通知
+        if (swRegistration) {
+            // 立即同步一次任务列表
+            const items = getScheduleItems()
+            if (items && items.length > 0) {
+                syncTasksToSw(items)
+            }
+
+            // 尝试注册 periodicsync（如果支持）
+            if ('periodicSync' in swRegistration) {
+                swRegistration.periodicSync.register('check-tasks', {
+                    minInterval: 60000 // 1分钟
+                }).catch(console.warn)
+            }
+        }
+
+        // 降级方案：页面内每 30 秒检查一次
         checkInterval = setInterval(() => {
             if (notificationPermission.value !== 'granted') {
                 return
@@ -133,32 +165,34 @@ export function useNotifications() {
 
             const items = getScheduleItems()
             if (items && items.length > 0) {
+                // 同时更新 Service Worker 的任务列表
+                syncTasksToSw(items)
                 checkAndNotify(items)
             }
-        }, 30000) // 每30秒检查一次
+        }, 30000)
 
         // 立即执行一次检查
         if (notificationPermission.value === 'granted') {
             const items = getScheduleItems()
             if (items && items.length > 0) {
+                syncTasksToSw(items)
                 checkAndNotify(items)
             }
         }
     }
 
-    /**
-     * 停止通知监听
-     */
     const stopListening = () => {
         if (checkInterval) {
             clearInterval(checkInterval)
             checkInterval = null
         }
+
+        // 取消 periodicSync
+        if (swRegistration?.periodicSync) {
+            swRegistration.periodicSync.unregister('check-tasks').catch(console.warn)
+        }
     }
 
-    /**
-     * 清除已通知记录（日期切换时调用）
-     */
     const clearNotifiedHistory = () => {
         notifiedTaskIds.value.clear()
     }
