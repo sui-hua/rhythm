@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { db } from '@/services/database'
+import { safeDb as db } from '@/services/safeDb'
 import { useDateStore } from '@/stores/dateStore'
 
 /**
@@ -40,8 +40,41 @@ export function useHabitData() {
      * @returns {number} 连击天数
      */
     const calculateStreak = (logs) => {
-        return logs.length > 0 ? logs.length : 0
+  if (!logs || logs.length === 0) return 0
+
+  // 按日期排序（最新的在前）
+  const sortedDates = logs
+    .map(log => new Date(log.completed_at).toDateString())
+    .filter((date, index, self) => self.indexOf(date) === index) // 去重
+    .sort((a, b) => new Date(b) - new Date(a)) // 降序
+
+  if (sortedDates.length === 0) return 0
+
+  // 计算连续天数
+  let streak = 0
+  const today = new Date().toDateString()
+  const yesterday = new Date(Date.now() - 86400000).toDateString()
+
+  // 从今天或昨天开始计算
+  const startDate = sortedDates[0] === today ? today :
+                    sortedDates[0] === yesterday ? yesterday : null
+
+  if (!startDate) return 0
+
+  let currentDate = new Date(startDate)
+
+  for (const dateStr of sortedDates) {
+    const expected = currentDate.toDateString()
+    if (dateStr === expected) {
+      streak++
+      currentDate = new Date(currentDate.getTime() - 86400000)
+    } else if (new Date(dateStr) < currentDate) {
+      break // 连击中断
     }
+  }
+
+  return streak
+}
 
     /**
      * 核心异步逻辑：从数据库层拉取最新习惯数据并进行组合加工

@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic:
+      - navigation [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e29]:
+            - button [ref=e30]:
+              - img
+            - button "APRIL" [ref=e31]
+            - button [ref=e32]:
+              - img
+          - button "时序" [ref=e33]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e34]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e35]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e36]:
+            - img
+            - text: 总结
+      - button:
+        - img
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: Email
+          - textbox "Email" [ref=e8]:
+            - /placeholder: name@example.com
+            - text: 123456@163.com
+        - generic [ref=e9]:
+          - text: Password
+          - textbox "Password" [ref=e10]: "123456"
+        - button "登录" [ref=e11]
+      - paragraph [ref=e13]:
+        - text: 访客体验账号：123456@163.com
+        - text: 密码：123456
+  - generic [ref=e14]:
+    - generic "Toggle devtools panel" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+    - generic "Toggle Component Inspector" [ref=e21] [cursor=pointer]:
+      - img [ref=e22]

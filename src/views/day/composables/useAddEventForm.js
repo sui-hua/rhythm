@@ -1,5 +1,5 @@
 import { ref, reactive, watch, computed } from 'vue'
-import { db } from '@/services/database'
+import { safeDb as db } from '@/services/safeDb'
 import { useAuthStore } from '@/stores/authStore'
 import { useDateStore } from '@/stores/dateStore'
 import { useDayData } from './useDayData'

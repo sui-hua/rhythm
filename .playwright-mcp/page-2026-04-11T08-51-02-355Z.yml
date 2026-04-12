@@ -1,0 +1,245 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - button "2026" [ref=e7]
+          - button "时序" [ref=e8]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e9]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e10]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e11]:
+            - img
+            - text: 总结
+      - button:
+        - img
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: MON
+        - generic [ref=e18]: TUE
+        - generic [ref=e19]: WED
+        - generic [ref=e20]: THU
+        - generic [ref=e21]: FRI
+        - generic [ref=e22]: SAT
+        - generic [ref=e23]: SUN
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "30"
+        - generic [ref=e26]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "31"
+        - generic [ref=e27] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "1"
+        - generic [ref=e53] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "2"
+        - generic [ref=e79] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "3"
+        - generic [ref=e105] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "4"
+        - generic [ref=e131] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "5"
+        - generic [ref=e157] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "6"
+        - generic [ref=e183] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "7"
+        - generic [ref=e209] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "8"
+        - generic [ref=e235] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "9"
+        - generic [ref=e261] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "10"
+        - generic [ref=e287] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "11"
+        - generic [ref=e313] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "12"
+        - generic [ref=e339] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "13"
+        - generic [ref=e365] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "14"
+        - generic [ref=e391] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "15"
+        - generic [ref=e417] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "16"
+        - generic [ref=e443] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "17"
+        - generic [ref=e469] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "18"
+        - generic [ref=e495] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "19"
+        - generic [ref=e521] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "20"
+        - generic [ref=e547] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "21"
+        - generic [ref=e573] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "22"
+        - generic [ref=e599] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "23"
+        - generic [ref=e625] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "24"
+        - generic [ref=e651] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "25"
+        - generic [ref=e677] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "26"
+        - generic [ref=e703] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "27"
+        - generic [ref=e729] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "28"
+        - generic [ref=e755] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "29"
+        - generic [ref=e781] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "30"
+        - generic [ref=e807]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "1"
+        - generic [ref=e808]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "2"
+        - generic [ref=e809]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "3"
+        - generic [ref=e810]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "4"
+        - generic [ref=e811]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "5"
+        - generic [ref=e812]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "6"
+        - generic [ref=e813]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "7"
+        - generic [ref=e814]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "8"
+        - generic [ref=e815]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "9"
+        - generic [ref=e816]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: "10"
+  - generic [ref=e817]:
+    - generic "Toggle devtools panel" [ref=e818] [cursor=pointer]:
+      - img [ref=e819]
+    - generic "Toggle Component Inspector" [ref=e824] [cursor=pointer]:
+      - img [ref=e825]

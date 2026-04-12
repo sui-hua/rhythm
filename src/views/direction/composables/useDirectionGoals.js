@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { db } from '@/services/database'
+import { safeDb as db } from '@/services/safeDb'
 import {
   months,
   monthlyPlans,

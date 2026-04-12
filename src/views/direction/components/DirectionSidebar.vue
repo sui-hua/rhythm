@@ -42,9 +42,9 @@
       <div class="footer-content">
         <div class="footer-metric">
           <span class="footer-label">系统推进负载</span>
-          <span class="footer-value">65%</span>
+          <span class="footer-value">{{ systemLoad }}%</span>
         </div>
-        <Progress :model-value="65" class="progress-bar" />
+        <Progress :model-value="systemLoad" class="progress-bar" />
         <Button class="add-button" @click="handleAddClick">
           <Plus class="add-icon" />
           添加目标
@@ -58,6 +58,7 @@
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
+import { monthlyPlans, dailyTasks } from '@/views/direction/composables/useDirectionState'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -66,9 +67,38 @@ import { Progress } from '@/components/ui/progress'
 import { useResizable } from '@/composables/useResizable'
 
 const { categorizedGoals } = useDirectionFetch()
-const { selectedGoal, selectGoal } = useDirectionSelection()
+const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
 const { handleAddClick, handleEditGoal } = useDirectionGoals()
 const selectedGoalName = computed(() => selectedGoal.value?.name || '')
+
+// 计算系统推进负载：基于选中目标当前月份的日计划完成率
+const systemLoad = computed(() => {
+  if (!selectedGoal.value || !selectedMonth.value) return 0
+
+  const planId = selectedGoal.value.plan_id
+  const month = selectedMonth.value
+
+  // 找到该目标当前月份的月度计划
+  const monthPlan = monthlyPlans.value.find(
+    mp => mp.plan_id === planId && new Date(mp.month).getMonth() + 1 === month
+  )
+
+  if (!monthPlan) return 0
+
+  // 统计完成率
+  const monthStr = String(month).padStart(2, '0')
+  let total = 0
+  let completed = 0
+
+  Object.entries(dailyTasks).forEach(([key, task]) => {
+    if (key.startsWith(`plan-${planId}-${monthStr}-`)) {
+      total++
+      if (task.status === 'completed') completed++
+    }
+  })
+
+  return total === 0 ? 0 : Math.round((completed / total) * 100)
+})
 
 const { width, startResize, isResizing } = useResizable()
 </script>

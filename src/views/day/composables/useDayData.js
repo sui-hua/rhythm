@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { db } from '@/services/database'
+import { safeDb as db } from '@/services/safeDb'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'

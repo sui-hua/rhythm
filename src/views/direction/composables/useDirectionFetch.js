@@ -1,5 +1,5 @@
 import { computed, onMounted, watch } from 'vue'
-import { db } from '@/services/database'
+import { safeDb as db } from '@/services/safeDb'
 import {
   plans,
   monthlyPlans,

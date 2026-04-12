@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__*"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  }
+}
