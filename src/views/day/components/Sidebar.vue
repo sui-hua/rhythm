@@ -123,8 +123,8 @@
         </div>
       </div>
       <div v-else-if="!isLoading" class="pb-24 pt-4">
-        <EmptyState 
-          title="No Tasks Today" 
+        <EmptyState
+          title="No Tasks Today"
           description="Your schedule is clear. Take a deep breath or plan something new."
         >
           <template #action>
