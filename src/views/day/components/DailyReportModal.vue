@@ -8,7 +8,7 @@
             <h2 class="text-xl font-semibold">每日日报</h2>
             <p class="text-xs text-muted-foreground mt-1">昨天复盘 · 今天计划</p>
           </div>
-          <button class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-50" @click="$emit('close')">
+          <button class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-50" @click="$emit('close')" aria-label="关闭">
             ✕
           </button>
         </div>

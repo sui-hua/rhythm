@@ -79,12 +79,13 @@
               >
                 {{ item.title }}
               </h4>
-              <div
+              <button
                 class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                 @click.stop="$emit('edit-task', index)"
+                aria-label="编辑任务"
               >
                 <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -113,12 +114,13 @@
               >
                 {{ item.title }}
               </h4>
-              <div
+              <button
                 class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                 @click.stop="$emit('edit-task', index)"
+                aria-label="编辑任务"
               >
                 <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
+              </button>
             </div>
           </div>
         </div>
