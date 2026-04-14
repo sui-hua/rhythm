@@ -5,6 +5,7 @@ import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
+import { formatDuration } from '@/utils/formatDuration'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -101,7 +102,7 @@ export function useDayData() {
                 durationHours,
                 rawDuration: durationHours,
                 time: startTimeStr,
-                duration: durationHours.toFixed(1) + '小时',
+                duration: formatDuration(durationHours),
                 category: '个人任务',
                 title: task.title,
                 description: task.description,
@@ -124,7 +125,7 @@ export function useDayData() {
                 startHourVal = hours + minutes / 60
                 startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
                 durationHours = inheritedDuration / 60
-                durationStr = durationHours < 1 ? `${inheritedDuration}分钟` : `${parseFloat(durationHours.toFixed(1))}小时`
+                durationStr = formatDuration(durationHours)
             } else {
                 startHourVal = undefined
                 startTimeStr = '未安排'
@@ -160,7 +161,7 @@ export function useDayData() {
 
                 const durationMins = habit.duration || 30
                 durationHours = durationMins / 60
-                durationStr = durationHours < 1 ? `${durationMins}分钟` : `${durationHours.toFixed(1)}小时`
+                durationStr = formatDuration(durationHours)
             } else {
                 startHourVal = undefined
                 startTimeStr = '未安排'
