@@ -32,36 +32,35 @@
           <div class="flex flex-col gap-5">
             <!-- 任务名称 -->
             <div class="flex flex-col gap-2">
-              <label class="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">项目名称</label>
-              <input 
+              <label class="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
+                项目名称<span class="text-rose-500">*</span>
+              </label>
+              <input
                 v-model="form.title"
                 type="text"
                 class="w-full bg-zinc-50 dark:bg-zinc-800/50 border-none rounded-2xl px-4 py-3 text-base text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary/20 transition-all"
                 placeholder="例如：早起锻炼 / 部门周会"
               />
+              <p v-if="errors.title" class="text-xs text-rose-500 mt-1 px-1">{{ errors.title }}</p>
             </div>
 
             <!-- 时间选择 -->
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
-                <label class="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">开始时间</label>
-                <input 
+                <label class="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
+                  开始时间<span class="text-rose-500">*</span>
+                </label>
+                <TimePicker
                   v-model="form.time"
-                  type="time"
-                  class="w-full bg-zinc-50 dark:bg-zinc-800/50 border-none rounded-2xl px-4 py-3 text-base text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="08:00"
+                  @submit="submit"
                 />
+                <p v-if="errors.time" class="text-xs text-rose-500 mt-1 px-1">{{ errors.time }}</p>
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">预计时长</label>
-                <div class="relative flex items-center">
-                  <input 
-                    v-model="form.duration"
-                    type="number"
-                    step="0.5"
-                    class="w-full bg-zinc-50 dark:bg-zinc-800/50 border-none rounded-2xl px-4 py-3 text-base text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                  <span class="absolute right-4 text-sm text-zinc-400 font-medium pointer-events-none">小时</span>
-                </div>
+                <DurationPicker v-model="form.duration" @submit="submit" />
+                <p v-if="errors.duration" class="text-xs text-rose-500 mt-1 px-1">{{ errors.duration }}</p>
               </div>
             </div>
 
@@ -95,10 +94,10 @@
         </div>
 
         <footer class="flex flex-col gap-3 shrink-0">
-          <button 
+          <button
             @click="submit"
-            :disabled="!form.title || !form.time"
-            class="w-full h-14 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl font-bold text-lg shadow-xl shadow-zinc-900/10 active:scale-[0.97] transition-all"
+            :disabled="!isValid"
+            class="w-full h-14 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl font-bold text-lg shadow-xl shadow-zinc-900/10 transition-all disabled:bg-zinc-300 disabled:text-zinc-500 disabled:cursor-not-allowed active:scale-[0.97]"
           >
             {{ initialData ? '保存修改' : '确认创建' }}
           </button>
@@ -110,9 +109,10 @@
             >
               取消
             </button>
-            <button 
+            <button
               v-if="initialData && !isHabit"
               @click="handleDelete"
+              aria-label="删除项目"
               class="flex-1 h-12 rounded-xl text-sm font-semibold text-rose-500 active:bg-rose-50"
             >
               删除项目
@@ -126,6 +126,9 @@
 
 <script setup>
 import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
+import { formatDuration } from '@/utils/formatDuration'
+import TimePicker from '@/components/ui/TimePicker.vue'
+import DurationPicker from '@/components/ui/DurationPicker.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -141,7 +144,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show'])
 
-const { form, isHabit, submit, handleDelete } = useAddEventForm(props, emit)
+const { form, isHabit, errors, isValid, submit, handleDelete } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>
