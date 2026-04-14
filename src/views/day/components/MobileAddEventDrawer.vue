@@ -83,7 +83,7 @@
                   v-for="cat in categories" 
                   :key="cat"
                   @click="form.category = cat"
-                  class="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-100 dark:border-zinc-800 text-zinc-500 transition-all"
+                  class="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-100 dark:border-zinc-800 text-zinc-500 transition-all active:scale-[0.97]"
                   :class="form.category === cat ? 'bg-primary/10 border-primary/20 text-primary shadow-sm' : ''"
                 >
                   {{ cat }}
@@ -105,7 +105,7 @@
           <div class="flex gap-2">
             <button 
               @click="$emit('update:show', false)"
-              class="flex-1 h-12 rounded-xl text-sm font-semibold text-zinc-500 active:bg-zinc-50"
+              class="flex-1 h-12 rounded-xl text-sm font-semibold text-zinc-500 active:bg-zinc-50 active:scale-[0.97]"
             >
               取消
             </button>
@@ -113,7 +113,7 @@
               v-if="initialData && !isHabit"
               @click="handleDelete"
               aria-label="删除项目"
-              class="flex-1 h-12 rounded-xl text-sm font-semibold text-rose-500 active:bg-rose-50"
+              class="flex-1 h-12 rounded-xl text-sm font-semibold text-rose-500 active:bg-rose-50 active:scale-[0.97]"
             >
               删除项目
             </button>

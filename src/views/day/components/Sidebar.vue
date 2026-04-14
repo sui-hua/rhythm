@@ -31,7 +31,7 @@
             v-if="isMobile"
             variant="ghost"
             size="icon"
-            class="-mr-2 h-8 w-8"
+            class="-mr-2 h-8 w-8 active:scale-[0.97]"
             @click="$emit('close')"
             aria-label="关闭侧边栏"
           >
@@ -129,7 +129,7 @@
           description="Your schedule is clear. Take a deep breath or plan something new."
         >
           <template #action>
-            <Button variant="outline" size="sm" class="rounded-full px-6" @click="$emit('add-event')">
+            <Button variant="outline" size="sm" class="rounded-full px-6 active:scale-[0.97]" @click="$emit('add-event')">
               Create First Task
             </Button>
           </template>
@@ -146,8 +146,8 @@
         </div>
         <Progress :model-value="(dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)" class="h-1 shadow-none" />
       </div>
-      <Button 
-        class="w-full gap-2 h-9 text-xs font-semibold"
+      <Button
+        class="w-full gap-2 h-9 text-xs font-semibold active:scale-[0.97]"
         @click="$emit('add-event')"
       >
         <Plus class="w-4 h-4" />
