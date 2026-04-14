@@ -27,14 +27,24 @@
         @select-task="scrollToTask"
       />
 
-      <!-- Mobile Menu Button -->
+      <!-- Mobile Sidebar Toggle -->
+      <button
+        v-if="isMobile"
+        class="fixed top-4 left-4 z-30 w-10 h-10 bg-background/80 backdrop-blur-sm border border-border/50 text-foreground rounded-full shadow-sm flex items-center justify-center transition-transform active:scale-95"
+        @click="showSidebar = true"
+        aria-label="打开侧边栏"
+      >
+        <Menu class="w-5 h-5" />
+      </button>
+
+      <!-- Mobile Add Task Button -->
       <button
         v-if="isMobile"
         class="fixed bottom-6 right-6 z-30 w-11 h-11 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95"
         @click="openQuickAdd"
+        aria-label="新增任务"
       >
-        <Menu v-if="!showSidebar" class="w-5 h-5" />
-        <X v-else class="w-5 h-5" />
+        <Plus class="w-5 h-5" />
       </button>
 
 
@@ -76,7 +86,7 @@
 
 <script setup>
 import { ref, defineAsyncComponent, watch, onBeforeUnmount, onMounted } from 'vue'
-import { Menu, X } from 'lucide-vue-next'
+import { Menu, Plus } from 'lucide-vue-next'
 import Sidebar from '@/views/day/components/Sidebar.vue'
 import Timeline from '@/views/day/components/Timeline.vue'
 import DailyReportModal from '@/views/day/components/DailyReportModal.vue'

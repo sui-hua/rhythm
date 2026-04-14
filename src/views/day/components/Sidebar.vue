@@ -27,12 +27,13 @@
       <div class="flex flex-col gap-1">
         <div class="flex items-center justify-between">
           <h2 class="text-4xl font-black tracking-tighter italic uppercase transition-all duration-700 ease-expo">{{ selectedDay }}</h2>
-          <Button 
-            v-if="isMobile" 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            v-if="isMobile"
+            variant="ghost"
+            size="icon"
             class="-mr-2 h-8 w-8"
             @click="$emit('close')"
+            aria-label="关闭侧边栏"
           >
             <X class="h-4 w-4" />
           </Button>
