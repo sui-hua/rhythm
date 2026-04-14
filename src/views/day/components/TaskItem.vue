@@ -13,7 +13,7 @@
         (task.durationHours || 1) < 0.4 ? 'flex-row items-center py-1 px-3 min-h-[24px] rounded-lg' : 
         (task.durationHours || 1) < 0.8 ? 'flex-row items-center py-2 px-4 rounded-xl min-h-[40px]' : 'flex-col py-4 px-5 gap-3 rounded-2xl',
         task.completed 
-          ? 'opacity-50 grayscale bg-zinc-50/40 dark:bg-zinc-900/30' 
+          ? 'opacity-80 grayscale-[0.5] bg-zinc-50/80 dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 border-dashed' 
           : 'bg-white/50 backdrop-blur-xl dark:bg-zinc-900/40 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)] hover:bg-white dark:hover:bg-zinc-800 hover:border-zinc-100 dark:hover:border-white/10 ring-1 ring-black/5 dark:ring-white/10',
         isRunning ? 'ring-2 ring-primary bg-white! shadow-[0_8px_30px_rgb(0,0,0,0.08)]' : ''
       ]"
