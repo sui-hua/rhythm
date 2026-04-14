@@ -1,0 +1,79 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - navigation [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e29]:
+            - button [ref=e30]:
+              - img
+            - button "APRIL" [ref=e31]
+            - button [ref=e32]:
+              - img
+          - button "时序" [ref=e33]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e34]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e35]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e36]:
+            - img
+            - text: 总结
+      - button:
+        - img
+    - generic [ref=e39]:
+      - complementary [ref=e40]:
+        - generic [ref=e43]:
+          - heading "14" [level=2] [ref=e45]
+          - paragraph [ref=e46]: 四月 (April) / TASKS
+        - generic "No Tasks Today" [ref=e51]:
+          - img [ref=e53]
+          - heading [level=3]
+          - paragraph
+          - button "Create First Task" [ref=e56]
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: 任务完成度
+              - generic [ref=e61]: 0%
+            - progressbar "0%" [ref=e62]
+          - button "添加项目" [ref=e64]:
+            - img
+            - text: 添加项目
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e73]: 00:00
+          - generic [ref=e77]: 01:00
+          - generic [ref=e81]: 02:00
+          - generic [ref=e85]: 03:00
+          - generic [ref=e89]: 04:00
+          - generic [ref=e93]: 05:00
+          - generic [ref=e97]: 06:00
+          - generic [ref=e101]: 07:00
+          - generic [ref=e105]: 08:00
+          - generic [ref=e109]: 09:00
+          - generic [ref=e113]: 10:00
+          - generic [ref=e117]: 11:00
+          - generic [ref=e121]: 12:00
+          - generic [ref=e125]: 13:00
+          - generic [ref=e129]: 14:00
+          - generic [ref=e133]: 15:00
+          - generic [ref=e137]: 16:00
+          - generic [ref=e141]: 17:00
+          - generic [ref=e145]: 18:00
+          - generic [ref=e149]: 19:00
+          - generic [ref=e153]: 20:00
+          - generic [ref=e157]: 21:00
+          - generic [ref=e161]: 22:00
+          - generic [ref=e165]: 23:00
+        - generic:
+          - generic: 现在
+  - generic [ref=e14]:
+    - generic "Toggle devtools panel" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+    - generic "Toggle Component Inspector" [ref=e21] [cursor=pointer]:
+      - img [ref=e22]

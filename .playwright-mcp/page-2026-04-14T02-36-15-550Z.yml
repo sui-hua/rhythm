@@ -1,0 +1,280 @@
+- generic:
+  - generic:
+    - generic:
+      - region "Notifications alt+T":
+        - list
+      - generic:
+        - navigation [ref=e4]:
+          - generic [ref=e5]:
+            - generic [ref=e18]:
+              - button [ref=e19]:
+                - img
+              - button [ref=e386]: APRIL
+              - button [ref=e21]:
+                - img
+            - button [ref=e387]:
+              - img
+              - text: 时序
+            - button [ref=e388]:
+              - img
+              - text: 习惯
+            - button [ref=e389]:
+              - img
+              - text: 所向
+            - button [ref=e390]:
+              - img
+              - text: 总结
+        - button:
+          - img
+      - generic:
+        - generic:
+          - complementary:
+            - generic:
+              - generic:
+                - generic:
+                  - heading [level=2]: "14"
+                - paragraph: 四月 (April) / TASKS
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 早起
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 冥想
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 学习
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: Playwright测试任务-已修改
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 学习
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 运动
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 阅读
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 总结
+                          - generic:
+                            - img
+            - generic:
+              - generic:
+                - generic:
+                  - generic: 任务完成度
+                  - generic: 0%
+                - progressbar
+              - button:
+                - img
+                - text: 添加项目
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 00:00
+                    - generic:
+                      - generic:
+                        - generic: 01:00
+                    - generic:
+                      - generic:
+                        - generic: 02:00
+                    - generic:
+                      - generic:
+                        - generic: 03:00
+                    - generic:
+                      - generic:
+                        - generic: 04:00
+                    - generic:
+                      - generic:
+                        - generic: 05:00
+                    - generic:
+                      - generic:
+                        - generic: 06:00
+                    - generic:
+                      - generic:
+                        - generic: 07:00
+                    - generic:
+                      - generic:
+                        - generic: 08:00
+                    - generic:
+                      - generic:
+                        - generic: 09:00
+                    - generic:
+                      - generic:
+                        - generic: 10:00
+                    - generic:
+                      - generic:
+                        - generic: 11:00
+                    - generic:
+                      - generic:
+                        - generic: 12:00
+                    - generic:
+                      - generic:
+                        - generic: 13:00
+                    - generic:
+                      - generic:
+                        - generic: 14:00
+                    - generic:
+                      - generic:
+                        - generic: 15:00
+                    - generic:
+                      - generic:
+                        - generic: 16:00
+                    - generic:
+                      - generic:
+                        - generic: 17:00
+                    - generic:
+                      - generic:
+                        - generic: 18:00
+                    - generic:
+                      - generic:
+                        - generic: 19:00
+                    - generic:
+                      - generic:
+                        - generic: 20:00
+                    - generic:
+                      - generic:
+                        - generic: 21:00
+                    - generic:
+                      - generic:
+                        - generic: 22:00
+                    - generic:
+                      - generic:
+                        - generic: 23:00
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 早起
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 冥想
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 日常习惯
+                        - generic: 09:00 — 3.5小时
+                      - heading [level=3]: 学习
+                      - paragraph: "目标: 1"
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 个人任务
+                        - generic: 10:00 — 1.0小时
+                      - heading [level=3]: Playwright测试任务-已修改
+                      - generic:
+                        - generic:
+                          - button:
+                            - img
+                            - text: 开始执行
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 学习
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 运动
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 阅读
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 总结
+                  - generic:
+                    - generic: 现在
+  - generic:
+    - generic:
+      - img
+    - generic:
+      - img
+  - dialog "编辑任务" [ref=e392]:
+    - heading "编辑任务" [level=2] [ref=e393]
+    - paragraph [ref=e394]: 更新您的任务详情
+    - generic [ref=e395]:
+      - generic [ref=e396]:
+        - heading "编辑任务" [level=1] [ref=e397]
+        - paragraph [ref=e398]: 更新您的任务详情
+      - generic [ref=e399]:
+        - generic [ref=e400]:
+          - generic [ref=e401]: 任务名称
+          - textbox "任务名称" [ref=e402]:
+            - /placeholder: 例如：周会 / 健身
+            - text: Playwright测试任务-已修改
+        - generic [ref=e403]:
+          - generic [ref=e404]:
+            - generic [ref=e405]: 任务时间
+            - generic [ref=e406]:
+              - textbox "任务时间" [ref=e407]:
+                - /placeholder: 08:00
+                - text: 10:00
+              - img
+          - generic [ref=e408]:
+            - generic [ref=e409]: 任务时长
+            - generic [ref=e410]:
+              - spinbutton "任务时长" [ref=e411]: "60"
+              - combobox [ref=e412]:
+                - generic: 分钟
+                - img [ref=e413]
+        - generic [ref=e415]:
+          - generic [ref=e416]: 任务描述
+          - textbox "任务描述" [ref=e417]:
+            - /placeholder: 可选详情...
+        - generic [ref=e418]:
+          - generic [ref=e419]: 分类
+          - generic [ref=e420]:
+            - button "工作" [ref=e421]
+            - button "个人" [ref=e422]
+            - button "会议" [ref=e423]
+            - button "设计" [ref=e424]
+            - button "其他" [ref=e425]
+        - generic [ref=e426]:
+          - button "保存修改" [active] [ref=e427]
+          - button "取消" [ref=e428]
+          - button "删除此任务" [ref=e429]
+    - button "Close" [ref=e430]:
+      - img [ref=e431]
+      - generic [ref=e434]: Close

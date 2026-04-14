@@ -1,0 +1,259 @@
+- generic:
+  - generic:
+    - generic:
+      - region "Notifications alt+T":
+        - list
+      - generic:
+        - navigation [ref=e4]:
+          - generic [ref=e5]:
+            - generic [ref=e24]:
+              - button [ref=e25]:
+                - img
+              - button [ref=e252]: APRIL
+              - button [ref=e27]:
+                - img
+            - button [ref=e253]:
+              - img
+              - text: 时序
+            - button [ref=e254]:
+              - img
+              - text: 习惯
+            - button [ref=e255]:
+              - img
+              - text: 所向
+            - button [ref=e256]:
+              - img
+              - text: 总结
+        - button:
+          - img
+      - generic:
+        - generic:
+          - complementary:
+            - generic:
+              - generic:
+                - generic:
+                  - heading [level=2]: "14"
+                - paragraph: 四月 (April) / TASKS
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 早起
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 冥想
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 学习
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 学习
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 运动
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 阅读
+                          - generic:
+                            - img
+                    - generic:
+                      - generic:
+                        - checkbox
+                      - generic:
+                        - generic:
+                          - heading [level=4]: 总结
+                          - generic:
+                            - img
+            - generic:
+              - generic:
+                - generic:
+                  - generic: 任务完成度
+                  - generic: 0%
+                - progressbar
+              - button:
+                - img
+                - text: 添加项目
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 00:00
+                    - generic:
+                      - generic:
+                        - generic: 01:00
+                    - generic:
+                      - generic:
+                        - generic: 02:00
+                    - generic:
+                      - generic:
+                        - generic: 03:00
+                    - generic:
+                      - generic:
+                        - generic: 04:00
+                    - generic:
+                      - generic:
+                        - generic: 05:00
+                    - generic:
+                      - generic:
+                        - generic: 06:00
+                    - generic:
+                      - generic:
+                        - generic: 07:00
+                    - generic:
+                      - generic:
+                        - generic: 08:00
+                    - generic:
+                      - generic:
+                        - generic: 09:00
+                    - generic:
+                      - generic:
+                        - generic: 10:00
+                    - generic:
+                      - generic:
+                        - generic: 11:00
+                    - generic:
+                      - generic:
+                        - generic: 12:00
+                    - generic:
+                      - generic:
+                        - generic: 13:00
+                    - generic:
+                      - generic:
+                        - generic: 14:00
+                    - generic:
+                      - generic:
+                        - generic: 15:00
+                    - generic:
+                      - generic:
+                        - generic: 16:00
+                    - generic:
+                      - generic:
+                        - generic: 17:00
+                    - generic:
+                      - generic:
+                        - generic: 18:00
+                    - generic:
+                      - generic:
+                        - generic: 19:00
+                    - generic:
+                      - generic:
+                        - generic: 20:00
+                    - generic:
+                      - generic:
+                        - generic: 21:00
+                    - generic:
+                      - generic:
+                        - generic: 22:00
+                    - generic:
+                      - generic:
+                        - generic: 23:00
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 早起
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 冥想
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 日常习惯
+                        - generic: 09:00 — 3.5小时
+                      - heading [level=3]: 学习
+                      - paragraph: "目标: 1"
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 学习
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 运动
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 阅读
+                  - generic:
+                    - generic:
+                      - heading [level=3]: 总结
+                  - generic:
+                    - generic: 现在
+  - generic:
+    - generic:
+      - img
+    - generic:
+      - img
+  - dialog "新增任务" [ref=e258]:
+    - heading "新增任务" [level=2] [ref=e259]
+    - paragraph [ref=e260]: 填写下方信息以创建新任务
+    - generic [ref=e261]:
+      - generic [ref=e262]:
+        - heading "新增任务" [level=1] [ref=e263]
+        - paragraph [ref=e264]: 填写下方信息以创建新任务
+      - generic [ref=e265]:
+        - generic [ref=e266]:
+          - generic [ref=e267]: 任务名称
+          - textbox "任务名称" [active] [ref=e268]:
+            - /placeholder: 例如：周会 / 健身
+        - generic [ref=e269]:
+          - generic [ref=e270]:
+            - generic [ref=e271]: 任务时间
+            - generic [ref=e272]:
+              - textbox "任务时间" [ref=e273]:
+                - /placeholder: 08:00
+                - text: 08:00
+              - img
+          - generic [ref=e274]:
+            - generic [ref=e275]: 任务时长
+            - generic [ref=e276]:
+              - spinbutton "任务时长" [ref=e277]: "30"
+              - combobox [ref=e278]:
+                - generic: 分钟
+                - img [ref=e279]
+        - generic [ref=e281]:
+          - generic [ref=e282]: 任务描述
+          - textbox "任务描述" [ref=e283]:
+            - /placeholder: 可选详情...
+        - generic [ref=e284]:
+          - generic [ref=e285]: 分类
+          - generic [ref=e286]:
+            - button "工作" [ref=e287]
+            - button "个人" [ref=e288]
+            - button "会议" [ref=e289]
+            - button "设计" [ref=e290]
+            - button "其他" [ref=e291]
+        - generic [ref=e292]:
+          - button "确认创建" [disabled]
+          - button "取消" [ref=e293]
+    - button "Close" [ref=e294]:
+      - img [ref=e295]
+      - generic [ref=e298]: Close
