@@ -39,7 +39,7 @@ export const dailyPlans = {
                     )
                 )
             `)
-            .eq('date', dateStr)
+            .eq('day', dateStr)
         )
     }
 }

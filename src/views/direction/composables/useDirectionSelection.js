@@ -4,7 +4,11 @@ import {
   selectedMonth,
   selectedDates,
   dailyTasks,
-  isSelecting
+  isSelecting,
+  activePicker,
+  monthlyPlansCache,
+  dailyPlansCache,
+  archiveVersion
 } from '@/views/direction/composables/useDirectionState'
 
 export function useDirectionSelection() {
@@ -60,9 +64,18 @@ export function useDirectionSelection() {
  * @param {number} month - 月份（1-12）
  */
 const getMonthOffset = (month) => {
-  const year = new Date().getFullYear()
-  const date = new Date(year, month - 1, 1)
-  return date.getDay()
+  if (!selectedGoal.value) {
+    return new Date(new Date().getFullYear(), month - 1, 1).getDay()
+  }
+
+  const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
+  const mp = cached.find(item => new Date(item.month).getMonth() + 1 === month)
+  if (!mp) {
+    return new Date(new Date().getFullYear(), month - 1, 1).getDay()
+  }
+
+  const year = new Date(mp.month).getFullYear()
+  return new Date(year, month - 1, 1).getDay()
 }
 
 /**
@@ -111,21 +124,27 @@ const isAllSelectedDatesHaveTask = (month) => {
   }
 
   const datesWithTasks = computed(() => {
-    if (!selectedMonth.value) return []
-    const days = []
-    for (let d = 1; d <= 31; d++) {
-      const key = dayTaskKey(d)
-      if (dailyTasks[key] && dailyTasks[key].title) {
-        days.push(d)
-      }
-    }
-    return days.sort((a, b) => a - b)
-  })
+  archiveVersion.value
+  const planId = selectedGoal.value?.plan_id
+  if (!planId || selectedMonth.value == null) return []
+
+  const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
+  const mp = monthlyPlansOfGoal.find(
+    item => new Date(item.month).getMonth() + 1 === selectedMonth.value
+  )
+  if (!mp) return []
+
+  return (dailyPlansCache[mp.id] || [])
+    .filter(dp => dp.title)
+    .map(dp => new Date(dp.day).getDate())
+    .sort((a, b) => a - b)
+})
 
   const selectGoal = (g) => {
-    selectedGoal.value = g
-    selectedMonth.value = null
-  }
+  selectedGoal.value = g
+  selectedMonth.value = null
+  activePicker.value = 'start'
+}
 
   return {
     selectedGoal,
