@@ -1,8 +1,13 @@
+/**
+ * 方向模块数据获取 (useDirectionFetch.js)
+ * 负责从数据库加载 plans、monthlyPlans、dailyPlans 三层数据，
+ * 并通过 monthlyPlansCache / dailyPlansCache 缓存实现懒加载。
+ */
 import { computed, onMounted, watch } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
+import { getIsoDay, getIsoMonth } from '@/utils/dateParts'
 import {
   plans,
-  monthlyPlans,
   monthlyMainGoals,
   dailyTasks,
   selectedGoal,
@@ -17,6 +22,36 @@ import {
 let setupDone = false
 
 export function useDirectionFetch() {
+  const getGoalRangeFromCache = (planId) => {
+    const monthlyPlans = monthlyPlansCache[planId] || []
+    if (monthlyPlans.length === 0) return null
+
+    const months = monthlyPlans
+      .map(mp => getIsoMonth(mp.month))
+      .filter(month => month !== null)
+
+    if (months.length === 0) return null
+
+    return {
+      startMonth: Math.min(...months),
+      endMonth: Math.max(...months)
+    }
+  }
+
+  const enrichGoalWithRange = (goal) => {
+    if (!goal) return goal
+
+    const range = getGoalRangeFromCache(goal.plan_id)
+    if (!range) {
+      return goal
+    }
+
+    return {
+      ...goal,
+      ...range
+    }
+  }
+
   const categorizedGoals = computed(() => {
     const map = new Map()
     for (const plan of plans.value) {
@@ -24,7 +59,7 @@ export function useDirectionFetch() {
       if (!map.has(categoryName)) map.set(categoryName, [])
 
       map.get(categoryName).push({
-        ...plan,
+        ...enrichGoalWithRange(plan),
         name: plan.title,
         plan_id: plan.id,
         category_name: categoryName
@@ -37,10 +72,37 @@ export function useDirectionFetch() {
     plans.value = await db.plans.list()
   }
 
-  const loadMonthlyPlans = async (planId) => {
-    if (monthlyPlansCache[planId]) return
-    monthlyPlansCache[planId] = await db.monthlyPlans.list(planId)
+  const applyMonthlyPlansCache = (planId) => {
     syncMonthlyPlansToFlatList(planId)
+
+    const range = getGoalRangeFromCache(planId)
+    if (range) {
+      plans.value = plans.value.map(plan =>
+        plan.id === planId ? { ...plan, ...range } : plan
+      )
+
+      if (selectedGoal.value?.plan_id === planId) {
+        selectedGoal.value = {
+          ...selectedGoal.value,
+          ...range
+        }
+      }
+    }
+
+    for (const mp of monthlyPlansCache[planId] || []) {
+      if (!mp.month || !mp.plan_id) continue
+      const month = getIsoMonth(mp.month)
+      if (!month) continue
+      monthlyMainGoals[`plan-${mp.plan_id}-${month}`] = mp
+    }
+  }
+
+  const loadMonthlyPlans = async (planId) => {
+    if (!monthlyPlansCache[planId]) {
+      monthlyPlansCache[planId] = await db.monthlyPlans.list(planId)
+    }
+
+    applyMonthlyPlansCache(planId)
   }
 
   const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
@@ -54,53 +116,23 @@ export function useDirectionFetch() {
       .find(item => item.id === monthlyPlanId)
     if (!mp) return
 
-    const month = new Date(mp.month).getMonth() + 1
+    const month = getIsoMonth(mp.month)
+    if (!month) return
     const prefix = `plan-${mp.plan_id}-${month}-`
     for (const key of Object.keys(dailyTasks)) {
       if (key.startsWith(prefix)) delete dailyTasks[key]
     }
 
     for (const dp of dps) {
-      const day = new Date(dp.day).getDate()
+      const day = getIsoDay(dp.day)
+      if (!day) continue
       dailyTasks[`plan-${mp.plan_id}-${month}-${day}`] = dp
     }
   }
 
   const fetchData = async () => {
     try {
-      plans.value = await db.plans.list()
-
-      const allMonthlyPlans = []
-      for (const plan of plans.value) {
-        const mps = await db.monthlyPlans.list(plan.id)
-        allMonthlyPlans.push(...mps)
-      }
-      monthlyPlans.value = allMonthlyPlans
-
-      for (const mp of monthlyPlans.value) {
-        if (!mp.month || !mp.plan_id) continue
-        const m = new Date(mp.month).getMonth() + 1
-        const key = `plan-${mp.plan_id}-${m}`
-        monthlyMainGoals[key] = mp
-      }
-
-      const allDailyPlans = []
-      const mpMap = new Map()
-      for (const mp of monthlyPlans.value) {
-        mpMap.set(mp.id, mp)
-        const dps = await db.dailyPlans.list(mp.id)
-        allDailyPlans.push(...dps)
-      }
-
-      for (const dp of allDailyPlans) {
-        const mp = mpMap.get(dp.monthly_plan_id)
-        if (mp) {
-          const m = new Date(mp.month).getMonth() + 1
-          const d = new Date(dp.day).getDate()
-          const key = `plan-${mp.plan_id}-${m}-${d}`
-          dailyTasks[key] = dp
-        }
-      }
+      await loadPlans()
 
       if (selectedGoal.value) {
         const currentId = selectedGoal.value.plan_id
@@ -109,17 +141,14 @@ export function useDirectionFetch() {
           found = cat.items.find(item => item.plan_id === currentId)
           if (found) break
         }
-        if (found) {
-          selectedGoal.value = found
-        } else {
-          if (categorizedGoals.value.length > 0 && categorizedGoals.value[0].items.length > 0) {
-            selectedGoal.value = categorizedGoals.value[0].items[0]
-          } else {
-            selectedGoal.value = null
-          }
-        }
+        selectedGoal.value = found || categorizedGoals.value[0]?.items?.[0] || null
       } else if (categorizedGoals.value.length > 0 && categorizedGoals.value[0].items.length > 0) {
         selectedGoal.value = categorizedGoals.value[0].items[0]
+      }
+
+      if (selectedGoal.value) {
+        await loadMonthlyPlans(selectedGoal.value.plan_id)
+        selectedGoal.value = enrichGoalWithRange(selectedGoal.value)
       }
     } catch (e) {
       console.error('Failed to fetch direction data', e)

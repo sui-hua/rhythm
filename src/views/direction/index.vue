@@ -1,3 +1,7 @@
+<!--
+  所向目标页面 (index.vue)
+  三栏布局：左侧目标列表 → 中间月度计划板 → 右侧任务归档
+-->
 <template>
   <div class="direction-root">
     <!-- 左侧导航：目标列表 -->

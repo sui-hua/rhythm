@@ -1,4 +1,10 @@
+/**
+ * 方向模块选择逻辑 (useDirectionSelection.js)
+ * 处理目标选择、月份展开、日期范围选择（框选/星期选）以及星期快捷选择。
+ */
 import { computed } from 'vue'
+import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+import { getIsoDay, getIsoMonth, getIsoYear } from '@/utils/dateParts'
 import {
   selectedGoal,
   selectedMonth,
@@ -12,6 +18,36 @@ import {
 } from '@/views/direction/composables/useDirectionState'
 
 export function useDirectionSelection() {
+  const { loadDailyPlans } = useDirectionFetch()
+
+  const getMonthDateContext = (month) => {
+    if (!selectedGoal.value) {
+      return {
+        year: new Date().getFullYear(),
+        month
+      }
+    }
+
+    const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
+    const mp = cached.find(item => getIsoMonth(item.month) === month)
+    if (!mp) {
+      return {
+        year: new Date().getFullYear(),
+        month
+      }
+    }
+
+    return {
+      year: getIsoYear(mp.month) || new Date().getFullYear(),
+      month
+    }
+  }
+
+  const getDaysInMonth = (month) => {
+    const { year } = getMonthDateContext(month)
+    return new Date(year, month, 0).getDate()
+  }
+
   const goalKey = (m) => {
     if (!selectedGoal.value) return `undefined-${m}`
     return `plan-${selectedGoal.value.plan_id}-${m}`
@@ -64,17 +100,7 @@ export function useDirectionSelection() {
  * @param {number} month - 月份（1-12）
  */
 const getMonthOffset = (month) => {
-  if (!selectedGoal.value) {
-    return new Date(new Date().getFullYear(), month - 1, 1).getDay()
-  }
-
-  const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
-  const mp = cached.find(item => new Date(item.month).getMonth() + 1 === month)
-  if (!mp) {
-    return new Date(new Date().getFullYear(), month - 1, 1).getDay()
-  }
-
-  const year = new Date(mp.month).getFullYear()
+  const { year } = getMonthDateContext(month)
   return new Date(year, month - 1, 1).getDay()
 }
 
@@ -84,8 +110,8 @@ const getMonthOffset = (month) => {
  * @param {number} weekIndex - 星期索引（0=周日, 1=周一, ..., 6=周六）
  */
 const selectWeekDay = (month, weekIndex) => {
-  const year = new Date().getFullYear()
-  const daysInMonth = new Date(year, month, 0).getDate()
+  const { year } = getMonthDateContext(month)
+  const daysInMonth = getDaysInMonth(month)
 
   const targetDays = []
   for (let d = 1; d <= daysInMonth; d++) {
@@ -118,9 +144,23 @@ const isAllSelectedDatesHaveTask = (month) => {
   return dates.every(day => hasTask(month, day))
 }
 
-  const toggleMonth = (m) => {
+  const toggleMonth = async (m) => {
     selectedMonth.value = selectedMonth.value === m ? null : m
-    if (selectedMonth.value && !selectedDates[m]) selectedDates[m] = []
+    if (!selectedMonth.value) return
+
+    if (!selectedDates[m]) selectedDates[m] = []
+
+    const planId = selectedGoal.value?.plan_id
+    if (!planId) return
+
+    const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
+    const mp = monthlyPlansOfGoal.find(
+      item => getIsoMonth(item.month) === m
+    )
+
+    if (mp) {
+      await loadDailyPlans(mp.id)
+    }
   }
 
   const datesWithTasks = computed(() => {
@@ -130,13 +170,14 @@ const isAllSelectedDatesHaveTask = (month) => {
 
   const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
   const mp = monthlyPlansOfGoal.find(
-    item => new Date(item.month).getMonth() + 1 === selectedMonth.value
+    item => getIsoMonth(item.month) === selectedMonth.value
   )
   if (!mp) return []
 
   return (dailyPlansCache[mp.id] || [])
     .filter(dp => dp.title)
-    .map(dp => new Date(dp.day).getDate())
+    .map(dp => getIsoDay(dp.day))
+    .filter(day => day !== null)
     .sort((a, b) => a - b)
 })
 
@@ -164,6 +205,7 @@ const isAllSelectedDatesHaveTask = (month) => {
     toggleMonth,
     selectGoal,
     getMonthOffset,
+    getDaysInMonth,
     selectWeekDay,
     isAllSelectedDatesHaveTask
   }

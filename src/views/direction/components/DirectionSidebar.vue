@@ -1,3 +1,7 @@
+<!--
+  目标侧边栏 (DirectionSidebar.vue)
+  按分类展示目标列表，支持单击选中、双击编辑，底部显示本月完成率进度。
+-->
 <template>
   <aside class="sidebar" :style="{ width: width + 'px' }">
     <div class="resize-handle" :class="{ 'is-resizing': isResizing }" @mousedown="startResize"></div>

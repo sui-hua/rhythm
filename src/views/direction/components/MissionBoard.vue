@@ -1,3 +1,7 @@
+<!--
+  月度任务视板容器 (MissionBoard.vue)
+  渲染 activeMonthRange 范围内所有月份卡片，响应目标切换自动加载月度数据。
+-->
 <template>
   <div class="board-root" @mouseup="endSelection">
     <TransitionGroup name="list">
