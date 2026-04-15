@@ -1,6 +1,7 @@
 <template>
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
     <Toaster />
+    <GlobalLoadingBar />
     <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />
     <RouterView v-slot="{ Component }">
       <Transition :name="transitionName" mode="out-in">
@@ -14,6 +15,7 @@
 import {ref, computed, onMounted} from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import GlobalLoadingBar from '@/components/ui/GlobalLoadingBar.vue'
 import { Toaster } from '@/components/ui/sonner'
 import supabase from './config/supabase'
 import { useAuthStore } from '@/stores/authStore'

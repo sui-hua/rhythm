@@ -14,6 +14,9 @@ export function useAddEventForm(props, emit) {
     const dateStore = useDateStore()
     const { fetchTasks } = useDayData()
 
+    // 写操作按钮 loading 状态
+    const isSubmitting = ref(false)
+
     // 判断当前编辑的项目是否为习惯类型
     const isHabit = computed(() => props.initialData?.type === 'habit')
 
@@ -82,6 +85,7 @@ export function useAddEventForm(props, emit) {
     const submit = withLoadingLock(async () => {
         if (!isValid.value) return
 
+        isSubmitting.value = true
         const [hours, minutes] = form.time.split(':').map(Number)
         const durationValue = parseFloat(form.duration)
 
@@ -135,12 +139,15 @@ export function useAddEventForm(props, emit) {
             emit('update:show', false)
         } catch (e) {
             console.error('Failed to save', e)
+        } finally {
+            isSubmitting.value = false
         }
     })
 
     // 删除当前编辑的项目
     const handleDelete = withLoadingLock(async () => {
         if (props.initialData) {
+            isSubmitting.value = true
             try {
                 if (isHabit.value) {
                     await db.habits.delete(props.initialData.id)
@@ -151,6 +158,8 @@ export function useAddEventForm(props, emit) {
                 emit('update:show', false)
             } catch (e) {
                 console.error('Failed to delete', e)
+            } finally {
+                isSubmitting.value = false
             }
         }
     })
@@ -161,6 +170,7 @@ export function useAddEventForm(props, emit) {
         errors,
         isValid,
         submit,
-        handleDelete
+        handleDelete,
+        isSubmitting
     }
 }

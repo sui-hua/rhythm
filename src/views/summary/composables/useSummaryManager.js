@@ -5,6 +5,7 @@ export const useSummaryManager = () => {
   const activeTab = ref('day')
   const summaries = ref([])
   const loading = ref(false)
+  const isPageLoading = loading // alias for consistency
   const selectedSummary = ref(null)
   const isCreating = ref(false)
 
@@ -100,6 +101,7 @@ export const useSummaryManager = () => {
     activeTab,
     summaries,
     loading,
+    isPageLoading,
     selectedSummary,
     isCreating,
     currentView,

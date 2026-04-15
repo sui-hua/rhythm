@@ -8,16 +8,22 @@ export const useYearView = () => {
   const dateStore = useDateStore()
   const router = useRouter()
 
+  const isPageLoading = ref(false)
   const habits = ref([])
 
-  onMounted(async () => {
+  const fetchHabits = async () => {
+    isPageLoading.value = true
     try {
       const allHabits = await db.habits.list()
       habits.value = allHabits.filter((habit) => !habit.is_archived)
     } catch (e) {
       console.error(e)
+    } finally {
+      isPageLoading.value = false
     }
-  })
+  }
+
+  onMounted(fetchHabits)
 
   const yearData = computed(() => {
     const currentYear = dateStore.currentDate.getFullYear()
@@ -59,6 +65,7 @@ export const useYearView = () => {
 
   return {
     yearData,
-    enterMonth
+    enterMonth,
+    isPageLoading
   }
 }

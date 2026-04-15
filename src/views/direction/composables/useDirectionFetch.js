@@ -1,4 +1,4 @@
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, watch, ref } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
 import {
   plans,
@@ -14,6 +14,7 @@ import {
 let setupDone = false
 
 export function useDirectionFetch() {
+  const isPageLoading = ref(false)
   const categorizedGoals = computed(() => {
     const map = new Map()
     for (const plan of plans.value) {
@@ -48,6 +49,7 @@ export function useDirectionFetch() {
   })
 
   const fetchData = async () => {
+    isPageLoading.value = true
     try {
       plans.value = await db.plans.list()
 
@@ -104,6 +106,8 @@ export function useDirectionFetch() {
       }
     } catch (e) {
       console.error('Failed to fetch direction data', e)
+    } finally {
+      isPageLoading.value = false
     }
   }
 
@@ -126,6 +130,7 @@ export function useDirectionFetch() {
 
   return {
     categorizedGoals,
-    fetchData
+    fetchData,
+    isPageLoading
   }
 }

@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { safeDb as db } from '@/services/safeDb'
 import {
@@ -18,6 +18,9 @@ import { useDirectionFetch } from '@/views/direction/composables/useDirectionFet
 export function useDirectionGoals() {
   const authStore = useAuthStore()
   const { fetchData } = useDirectionFetch()
+
+  // 写操作按钮 loading 状态
+  const isSubmitting = ref(false)
 
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
@@ -126,8 +129,9 @@ export function useDirectionGoals() {
   }
 
   const handleUpdateGoal = async (updatedGoal) => {
-    if (!editingGoal.value) return
+    if (!editingGoal.value || isSubmitting.value) return
 
+    isSubmitting.value = true
     const success = await updateGoalData(
       editingGoal.value,
       updatedGoal.title,
@@ -135,6 +139,7 @@ export function useDirectionGoals() {
       updatedGoal.task_time,
       updatedGoal.duration
     )
+    isSubmitting.value = false
 
     if (success) {
       showAddModal.value = false
@@ -155,6 +160,9 @@ export function useDirectionGoals() {
   }
 
   const handleAddGoal = async (newGoal) => {
+    if (isSubmitting.value) return
+
+    isSubmitting.value = true
     try {
       if (!authStore.userId) {
         console.error('User ID not available')
@@ -200,12 +208,15 @@ export function useDirectionGoals() {
       showAddModal.value = false
     } catch (e) {
       console.error('Add goal failed:', e)
+    } finally {
+      isSubmitting.value = false
     }
   }
 
   const handleDeleteGoal = async () => {
-    if (!editingGoal.value) return
+    if (!editingGoal.value || isSubmitting.value) return
 
+    isSubmitting.value = true
     try {
       const planId = editingGoal.value.plan_id
       if (!planId) return
@@ -232,6 +243,8 @@ export function useDirectionGoals() {
       showAddModal.value = false
     } catch (e) {
       console.error('Delete goal failed:', e)
+    } finally {
+      isSubmitting.value = false
     }
   }
 
@@ -263,6 +276,7 @@ export function useDirectionGoals() {
     handleUpdateGoal,
     handleDeleteGoal,
     handleConfirmRange,
-    saveMonthlyPlan
+    saveMonthlyPlan,
+    isSubmitting
   }
 }
