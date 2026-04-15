@@ -1,3 +1,6 @@
+/**
+ * 应用入口 - 挂载 Vue 实例，配置 Pinia 状态管理和路由
+ */
 import './assets/main.css'
 
 import { createApp } from 'vue'

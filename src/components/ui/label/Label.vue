@@ -1,3 +1,7 @@
+<!--
+  Label 组件 - 表单标签
+  Props: for 关联输入框 ID
+-->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { Label, type LabelProps } from 'radix-vue'

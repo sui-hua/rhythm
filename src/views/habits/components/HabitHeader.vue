@@ -1,9 +1,12 @@
 <script setup>
 /**
  * 习惯页面头部组件 (HabitHeader.vue)
- * 显示当前选中习惯的标题。
+ * 展示当前选中习惯的标题，作为该习惯详情视图的页级标题。
  */
 defineProps({
+  /**
+   * 当前选中习惯的名称，用于页面标题展示
+   */
   title: {
     type: String,
     required: true

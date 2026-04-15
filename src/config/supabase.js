@@ -1,3 +1,7 @@
+/**
+ * Supabase 客户端配置 - 初始化数据库连接并扩展 CRUD 基础方法
+ * 从环境变量读取 VITE_SUPABASE_URL 和 VITE_SUPABASE_KEY
+ */
 import { createClient } from '@supabase/supabase-js'
 import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 
@@ -16,11 +20,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // 创建 Supabase 客户端实例
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-/**
- * 创建一个基础的数据库服务对象
- * @param {string} tableName - 目标表名
- * @returns {object} 包含标准 CRUD 操作的对象
- */
+// 扩展 createBase(tableName) 方法：生成标准 CRUD 对象（list/getById/create/update/delete/query）
 supabase.createBase = (tableName) => {
   return {
     async list(options = {}) {

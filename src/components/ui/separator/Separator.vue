@@ -1,3 +1,7 @@
+<!--
+  Separator 组件 - 分隔线
+  Props: orientation (horizontal/vertical), class
+-->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { Separator, type SeparatorProps } from 'radix-vue'

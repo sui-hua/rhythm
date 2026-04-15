@@ -1,3 +1,7 @@
+<!--
+  单个月份卡片 (MissionBoardMonth.vue)
+  包含折叠态月份头部（显示主要任务/时间/时长）和展开态日期网格。
+-->
 <template>
   <Card class="month-card" :class="{ 'is-active': selectedMonth === month }">
     <MissionBoardMonthHeader :month="month" />

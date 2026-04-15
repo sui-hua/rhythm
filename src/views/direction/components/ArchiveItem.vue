@@ -1,3 +1,7 @@
+<!--
+  单条归档记录 (ArchiveItem.vue)
+  展示日期圆点和任务卡片，支持内联编辑任务标题、时间和时长。
+-->
 <script setup>
 /**
  * 归档项组件 (ArchiveItem.vue)
@@ -29,8 +33,9 @@ defineProps({
 
 const emit = defineEmits(['update-task'])
 
-const handleUpdateTask = (taskData) => {
-  emit('update-task', taskData)
+// 二元签名：handleUpdateTask(task, payload)
+const handleUpdateTask = (task, payload) => {
+  emit('update-task', task, payload)
 }
 </script>
 
@@ -44,8 +49,7 @@ const handleUpdateTask = (taskData) => {
         <input
           class="archive-input"
           :value="task.title"
-          @blur="(e) => handleUpdateTask({ ...task, title: e.target.value })"
-          @keyup.enter="(e) => e.target.blur()"
+          @change="(e) => handleUpdateTask(task, { title: e.target.value })"
         />
 
         <div class="archive-meta">
@@ -55,8 +59,7 @@ const handleUpdateTask = (taskData) => {
               type="time"
               class="archive-time-input"
               :value="task.task_time ? task.task_time.slice(0, 5) : ''"
-              @blur="(e) => handleUpdateTask({ ...task, task_time: e.target.value || null })"
-              @keyup.enter="(e) => e.target.blur()"
+              @change="(e) => handleUpdateTask(task, { task_time: e.target.value || null })"
             />
           </div>
           <div class="archive-meta-item">
@@ -66,8 +69,7 @@ const handleUpdateTask = (taskData) => {
                 type="number"
                 class="archive-duration-input"
                 :value="task.duration"
-                @blur="(e) => handleUpdateTask({ ...task, duration: e.target.value ? parseInt(e.target.value) : null })"
-                @keyup.enter="(e) => e.target.blur()"
+                @change="(e) => handleUpdateTask(task, { duration: e.target.value ? parseInt(e.target.value) : null })"
               />
               <span class="archive-duration-unit">m</span>
             </div>

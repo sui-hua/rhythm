@@ -1,3 +1,7 @@
+<!--
+  PopoverContent 组件 - 弹出层内容
+  Props: align (center/start/end), sideOffset, class
+-->
 <script setup lang="ts">
 import type { PopoverContentEmits, PopoverContentProps } from "radix-vue"
 import type { HTMLAttributes } from "vue"

@@ -1,3 +1,4 @@
+import client from '@/config/supabase'
 import { plans } from './db/plans'
 import { monthlyPlans } from './db/monthlyPlans'
 import { dailyPlans } from './db/dailyPlans'
@@ -8,6 +9,9 @@ import { plansCategory } from './db/plansCategory'
 import { dailyReportViews } from './db/dailyReportViews'
 
 export const db = {
+  rpc(name, params) {
+    return client.rpc(name, params)
+  },
   // Plans (总计划/年度计划表操作)
   plans,
   // Plan Categories

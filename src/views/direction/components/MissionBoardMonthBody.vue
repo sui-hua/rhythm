@@ -1,3 +1,7 @@
+<!--
+  月份卡片主体 (MissionBoardMonthBody.vue)
+  渲染星期表头和日期网格，支持框选日期后批量输入任务内容。
+-->
 <template>
   <div class="month-content">
     <div class="week-header">
@@ -15,7 +19,7 @@
       <div v-for="offset in getMonthOffset(month)" :key="`spacer-${month}-${offset}`" class="day-spacer"></div>
 
       <div
-        v-for="day in 31"
+        v-for="day in getDaysInMonth(month)"
         :key="`grid-${day}`"
         class="day-cell"
         :class="{
@@ -84,6 +88,7 @@ const {
   handleMouseEnter,
   endSelection,
   getMonthOffset,
+  getDaysInMonth,
   selectWeekDay,
   isAllSelectedDatesHaveTask
 } = useDirectionSelection()

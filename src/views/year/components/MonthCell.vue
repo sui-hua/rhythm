@@ -1,3 +1,4 @@
+<!-- 月度格子组件，显示月名和完成天数指示点 -->
 <template>
   <div
     class="bg-card transition-all duration-700 cursor-pointer flex flex-col p-4 relative overflow-hidden text-foreground border-r border-b border-zinc-100 h-full group sm:p-6 lg:p-8 hover:bg-zinc-50"

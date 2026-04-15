@@ -1,3 +1,7 @@
+<!--
+  CardTitle 组件 - 卡片标题
+  Props: class
+-->
 <script setup lang="ts">
 import { type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'

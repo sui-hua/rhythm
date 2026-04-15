@@ -1,3 +1,7 @@
+<!--
+  Progress 组件 - 进度条
+  Props: modelValue (0-100), class
+-->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import {

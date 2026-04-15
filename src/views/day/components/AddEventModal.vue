@@ -118,6 +118,8 @@
 </template>
 
 <script setup>
+// 桌面端新增/编辑任务弹窗：支持设置标题、时间、时长、分类、描述
+// 区分任务和习惯类型，提供完整的 CRUD 操作
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'

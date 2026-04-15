@@ -1,3 +1,7 @@
+<!--
+  目标分类管理弹窗 (CategoryManagementModal.vue)
+  新增/删除目标分类，帮助用户组织目标结构。
+-->
 <template>
   <Dialog :open="showCategoryModal" @update:open="showCategoryModal = $event">
     <DialogContent class="modal-content">

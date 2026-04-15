@@ -1,3 +1,6 @@
+<!--
+  SelectSeparator 组件 - 选择器分隔线
+-->
 <script setup lang="ts">
 import type { SelectSeparatorProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

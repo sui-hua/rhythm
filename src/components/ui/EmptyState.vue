@@ -1,3 +1,7 @@
+<!--
+  EmptyState 组件 - 空状态占位组件
+  Props: title, description，提供图标插槽和操作按钮插槽
+-->
 <template>
   <div class="flex flex-col items-center justify-center py-12 px-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-expo">
     <div class="mb-6 p-6 rounded-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5">

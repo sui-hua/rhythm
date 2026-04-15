@@ -1,3 +1,7 @@
+<!--
+  Popover 组件 - 弹出层根组件
+  Props: open, onOpenChange
+-->
 <script setup lang="ts">
 import type { PopoverRootEmits, PopoverRootProps } from "radix-vue"
 import { PopoverRoot, useForwardPropsEmits } from "radix-vue"

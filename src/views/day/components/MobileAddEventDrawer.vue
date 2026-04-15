@@ -125,6 +125,8 @@
 </template>
 
 <script setup>
+// 移动端新增/编辑任务抽屉：底部弹窗，支持完整表单填写
+// 与 AddEventModal 功能一致，针对移动端交互优化
 import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
 import { formatDuration } from '@/utils/formatDuration'
 import TimePicker from '@/components/ui/TimePicker.vue'
