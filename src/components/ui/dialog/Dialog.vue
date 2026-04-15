@@ -1,7 +1,3 @@
-<!--
-  Dialog 组件 - 模态对话框根组件
-  使用 Radix Vue Dialog，提供 open, onOpenChange 等 props
--->
 <script setup lang="ts">
 import {
   DialogRoot,

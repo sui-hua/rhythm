@@ -1,7 +1,3 @@
-<!--
-  目标月份范围选择器 (GoalRangePicker.vue)
-  时间轴 UI，支持点击切换起始/结束月份，拖拽选择月份范围，确认后同步到数据库。
--->
 <template>
   <header class="picker-root">
     <div class="picker-title">

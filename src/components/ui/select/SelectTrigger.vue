@@ -1,4 +1,3 @@
-<!-- SelectTrigger.vue - 选择器触发按钮组件 -->
 <script setup lang="ts">
 import type { SelectTriggerProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

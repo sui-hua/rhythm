@@ -1,7 +1,3 @@
-<!--
-  DialogContent 组件 - 对话框内容区域
-  包含遮罩层、内容和关闭按钮，使用 DialogPortal 渲染
--->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import {

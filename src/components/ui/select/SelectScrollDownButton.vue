@@ -1,4 +1,3 @@
-<!-- SelectScrollDownButton.vue - 选择器向下滚动按钮组件 -->
 <script setup lang="ts">
 import type { SelectScrollDownButtonProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

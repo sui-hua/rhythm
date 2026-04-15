@@ -1,8 +1,4 @@
 import { computed, onMounted, ref, watch } from 'vue'
-/**
- * useMonthView - 月度视图逻辑
- * 管理月度任务数据获取、月历网格生成和导航
- */
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'

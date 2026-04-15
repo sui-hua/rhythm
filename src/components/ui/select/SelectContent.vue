@@ -1,7 +1,3 @@
-<!--
-  SelectContent 组件 - 选择器下拉内容
-  Props: position (popper/item), class
--->
 <script setup lang="ts">
 import type { SelectContentEmits, SelectContentProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

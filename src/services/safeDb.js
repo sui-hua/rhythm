@@ -105,14 +105,4 @@ export const safeDb = {
   tasks: wrapTable('tasks'),
   summaries: wrapTable('summaries'),
   dailyReportViews: wrapTable('dailyReportViews'),
-  async rpc(name, params) {
-    try {
-      return await db.rpc(name, params)
-    } catch (e) {
-      console.error(`[safeDb] rpc ${name} failed:`, e)
-      const { toast } = useToast()
-      toast.error('批量操作失败')
-      throw e  // 让调用方感知失败，避免继续执行 loadDailyPlans
-    }
-  }
 }

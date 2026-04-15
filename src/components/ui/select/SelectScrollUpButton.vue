@@ -1,4 +1,3 @@
-<!-- SelectScrollUpButton.vue - 选择器向上滚动按钮组件 -->
 <script setup lang="ts">
 import type { SelectScrollUpButtonProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

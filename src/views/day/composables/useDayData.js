@@ -15,9 +15,10 @@ const habits = ref([])
 const habitLogs = ref([])
 const isLoading = ref(false)
 
-// Day 视图核心数据管理层 (Composable)
-// 负责解析时间参数、获取并组装统一日程列表以及统计数据
-// 统一聚合 Task、DailyPlan、Habit 三种数据源到 dailySchedule
+/**
+ * Day 视图核心数据管理层 (Composable)
+ * 负责解析时间参数、获取并组装统一日程列表以及统计数据
+ */
 export function useDayData() {
     const route = useRoute()
     const dateStore = useDateStore()

@@ -1,7 +1,4 @@
-/**
- * useYearView - 年度视图逻辑
- * 从习惯数据统计年度完成情况，生成12个月的完成天数数据
- */
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'

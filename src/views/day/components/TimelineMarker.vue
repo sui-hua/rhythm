@@ -14,7 +14,6 @@
 </template>
 
 <script setup>
-// 当前时间指示器：红色脉冲线 + "现在"标签，随当前时间实时移动
 import { Badge } from '@/components/ui/badge'
 
 defineProps({

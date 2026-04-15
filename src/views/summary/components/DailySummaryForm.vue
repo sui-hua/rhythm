@@ -37,10 +37,6 @@
 </template>
 
 <script setup>
-/**
- * 日总结表单组件
- * 包含三个字段：今日成就、改进之处、明日计划
- */
 import { useDailySummaryForm } from '@/views/summary/composables/useDailySummaryForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'

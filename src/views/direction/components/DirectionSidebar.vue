@@ -1,7 +1,3 @@
-<!--
-  目标侧边栏 (DirectionSidebar.vue)
-  按分类展示目标列表，支持单击选中、双击编辑，底部显示本月完成率进度。
--->
 <template>
   <aside class="sidebar" :style="{ width: width + 'px' }">
     <div class="resize-handle" :class="{ 'is-resizing': isResizing }" @mousedown="startResize"></div>
@@ -45,7 +41,7 @@
     <footer class="sidebar-footer">
       <div class="footer-content">
         <div class="footer-metric">
-          <span class="footer-label">本月进度</span>
+          <span class="footer-label">系统推进负载</span>
           <span class="footer-value">{{ systemLoad }}%</span>
         </div>
         <Progress :model-value="systemLoad" class="progress-bar" />
@@ -62,7 +58,7 @@
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { monthlyPlans, dailyTasks, getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
+import { monthlyPlans, dailyTasks } from '@/views/direction/composables/useDirectionState'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -84,8 +80,8 @@ const systemLoad = computed(() => {
   const month = selectedMonth.value
 
   // 找到该目标当前月份的月度计划
-  const monthPlan = getMonthlyPlansByPlanId(planId).find(
-    mp => new Date(mp.month).getMonth() + 1 === month
+  const monthPlan = monthlyPlans.value.find(
+    mp => mp.plan_id === planId && new Date(mp.month).getMonth() + 1 === month
   )
 
   if (!monthPlan) return 0

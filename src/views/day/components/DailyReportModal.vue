@@ -42,7 +42,6 @@
 </template>
 
 <script setup>
-// 每日日报弹窗：展示昨日完成/未完成数量、今日任务数、顺延数量
 const props = defineProps({
   show: Boolean,
   stats: {

@@ -1,7 +1,3 @@
-/**
- * 路由配置 - 管理应用所有页面路由及权限守卫
- * 使用 createWebHistory(H5 history 模式)，通过 beforeEach 实现登录拦截
- */
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -68,7 +64,6 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫：检查 authStore.userId，未登录重定向 /login，已登录访问 /login 则跳转 /
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 

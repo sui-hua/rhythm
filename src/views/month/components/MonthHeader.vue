@@ -1,4 +1,3 @@
-<!-- 月度视图头部组件，显示返回按钮和年月标题 -->
 <template>
   <header class="h-24 px-12 flex items-center justify-between border-b border-zinc-100 shrink-0">
     <div class="flex items-center gap-8">

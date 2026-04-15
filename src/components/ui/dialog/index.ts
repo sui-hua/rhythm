@@ -1,7 +1,3 @@
-/**
- * Dialog 组件族 - 模态对话框组件，基于 Radix Vue Dialog
- * 包含 Dialog/Trigger/Header/Footer/Content/Title/Description
- */
 export { default as Dialog } from './Dialog.vue'
 export { default as DialogTrigger } from './DialogTrigger.vue'
 export { default as DialogHeader } from './DialogHeader.vue'

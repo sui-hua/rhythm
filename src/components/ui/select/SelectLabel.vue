@@ -1,7 +1,3 @@
-<!--
-  SelectLabel 组件 - 选择器组标签
-  Props: class
--->
 <script setup lang="ts">
 import type { SelectLabelProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

@@ -21,10 +21,6 @@
 </template>
 
 <script setup>
-/**
- * 通用总结表单组件（周/月/年）
- * 单字段富文本编辑，根据 type 显示不同标题
- */
 import { useGenericSummaryForm } from '@/views/summary/composables/useGenericSummaryForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'

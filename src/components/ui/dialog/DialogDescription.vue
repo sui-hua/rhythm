@@ -1,7 +1,3 @@
-<!--
-  DialogDescription 组件 - 对话框描述
-  Props: class
--->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { DialogDescription, type DialogDescriptionProps } from 'radix-vue'

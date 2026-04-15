@@ -1,7 +1,3 @@
-<!--
-  ScrollArea 组件 - 自定义滚动区域
-  基于 Radix Vue，提供自定义滚动条样式
--->
 <script setup lang="ts">
 import { type HTMLAttributes, computed, ref } from 'vue'
 import {

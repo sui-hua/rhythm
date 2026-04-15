@@ -61,10 +61,6 @@
 </template>
 
 <script setup>
-/**
- * Summary 模块主入口组件
- * 负责布局：侧边栏 + 主内容区，根据 activeTab 渲染不同的表单
- */
 import { useSummaryManager } from '@/views/summary/composables/useSummaryManager'
 import { ChevronRight } from 'lucide-vue-next'
 import SummarySidebar from '@/views/summary/components/SummarySidebar.vue'

@@ -80,8 +80,6 @@
 </template>
 
 <script setup>
-// 移动端快速添加抽屉：底部弹窗，仅需标题即可快速创建任务
-// 回车或点击按钮提交，使用默认时间和时长
 import { ref, watch, nextTick } from 'vue'
 import { Clock } from 'lucide-vue-next'
 import { useQuickAddForm } from '@/views/day/composables/useQuickAddForm'

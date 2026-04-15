@@ -73,11 +73,6 @@
 </template>
 
 <script setup>
-/**
- * 番茄钟计时模态框 (PomodoroTimerModal.vue)
- * 当任务开始计时时弹出，显示巨型计时器并提供完成操作。
- */
-
 import { computed } from 'vue'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'

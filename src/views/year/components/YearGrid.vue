@@ -1,4 +1,4 @@
-<!-- 年度网格组件，4列布局展示12个月 -->
+<template>
   <div class="h-full w-full bg-zinc-100 overflow-hidden">
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 w-full h-full gap-px">
       <MonthCell

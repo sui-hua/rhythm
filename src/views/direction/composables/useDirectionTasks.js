@@ -1,22 +1,17 @@
-/**
- * 方向模块任务更新 (useDirectionTasks.js)
- * 处理归档视图中单个日程任务的更新（标题、时间、时长）。
- */
 import { db } from '@/services/database'
 import { dailyTasks } from '@/views/direction/composables/useDirectionState'
 
 export function useDirectionTasks() {
-  // 二元签名：handleUpdateTask(task, payload)
-  const handleUpdateTask = async (task, payload) => {
+  const handleUpdateTask = async (task) => {
     if (!task || !task.id) return
     try {
-      await db.dailyPlans.update(task.id, {
-        title: payload.title ?? task.title,
-        task_time: payload.task_time ?? task.task_time,
-        duration: payload.duration ?? task.duration
-      })
+      const payload = {
+        title: task.title,
+        task_time: task.task_time,
+        duration: task.duration
+      }
+      await db.dailyPlans.update(task.id, payload)
 
-      // 同步兼容层：遍历找 id 匹配项并更新
       for (const [k, v] of Object.entries(dailyTasks)) {
         if (v.id === task.id) {
           dailyTasks[k] = { ...v, ...payload }

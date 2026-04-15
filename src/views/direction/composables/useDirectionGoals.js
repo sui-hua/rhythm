@@ -1,52 +1,31 @@
-/**
- * 方向模块目标管理 (useDirectionGoals.js)
- * 处理目标的增删改查、月度计划同步以及月份范围确认。
- */
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { safeDb as db } from '@/services/safeDb'
 import {
   months,
   monthlyPlans,
-  monthlyPlansCache,
   monthlyMainGoals,
   selectedGoal,
   editingGoal,
   selectedMonth,
   activePicker,
   showAddModal,
-  showCategoryModal,
-  getMonthlyPlansByPlanId
+  showCategoryModal
 } from '@/views/direction/composables/useDirectionState'
-import { getIsoMonth } from '@/utils/dateParts'
 
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionGoals() {
   const authStore = useAuthStore()
-  const { fetchData, loadMonthlyPlans } = useDirectionFetch()
+  const { fetchData } = useDirectionFetch()
 
   // 写操作按钮 loading 状态
   const isSubmitting = ref(false)
 
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
-
-    const cachedMonths = getMonthlyPlansByPlanId(selectedGoal.value.plan_id)
-      .map(mp => getIsoMonth(mp.month))
-      .filter(month => month !== null)
-
-    const startMonth = cachedMonths.length > 0
-      ? Math.min(...cachedMonths)
-      : selectedGoal.value.startMonth
-    const endMonth = cachedMonths.length > 0
-      ? Math.max(...cachedMonths)
-      : selectedGoal.value.endMonth
-
-    if (!startMonth || !endMonth) return []
-
     const range = []
-    for (let i = startMonth; i <= endMonth; i++) range.push(i)
+    for (let i = selectedGoal.value.startMonth; i <= selectedGoal.value.endMonth; i++) range.push(i)
     return range
   })
 
@@ -55,18 +34,15 @@ export function useDirectionGoals() {
     showAddModal.value = true
   }
 
-  const handleEditGoal = async (goal) => {
-    if (!monthlyPlansCache[goal.plan_id]) {
-      await loadMonthlyPlans(goal.plan_id)
-    }
-    const relatedMonthlyPlans = getMonthlyPlansByPlanId(goal.plan_id)
+  const handleEditGoal = (goal) => {
+    const relatedMonthlyPlans = monthlyPlans.value.filter(mp => mp.plan_id === goal.plan_id)
 
     let minMonth = 12
     let maxMonth = 1
 
     if (relatedMonthlyPlans.length > 0) {
       const months = relatedMonthlyPlans
-        .map(mp => getIsoMonth(mp.month))
+        .map(mp => (mp.month ? new Date(mp.month).getMonth() + 1 : null))
         .filter(m => m !== null)
 
       if (months.length > 0) {
@@ -106,8 +82,8 @@ export function useDirectionGoals() {
 
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
 
-      const existingMonthlyPlans = getMonthlyPlansByPlanId(planId)
-      const existingMonths = existingMonthlyPlans.map(mp => getIsoMonth(mp.month)).filter(m => m !== null)
+      const existingMonthlyPlans = monthlyPlans.value.filter(mp => mp.plan_id === planId)
+      const existingMonths = existingMonthlyPlans.map(mp => new Date(mp.month).getMonth() + 1)
 
       const startM = goalToUpdate.startMonth || 1
       const endM = goalToUpdate.endMonth || startM
@@ -137,7 +113,7 @@ export function useDirectionGoals() {
       }
 
       const toDelete = existingMonthlyPlans.filter(mp => {
-        const m = getIsoMonth(mp.month)
+        const m = new Date(mp.month).getMonth() + 1
         return !targetMonths.includes(m)
       })
 
@@ -171,8 +147,8 @@ export function useDirectionGoals() {
   }
 
   const saveMonthlyPlan = async (m, payload) => {
-    const currentMp = getMonthlyPlansByPlanId(selectedGoal.value.plan_id).find(
-      mp => getIsoMonth(mp.month) === m
+    const currentMp = monthlyPlans.value.find(
+      mp => mp.plan_id === selectedGoal.value.plan_id && new Date(mp.month).getMonth() + 1 === m
     )
     if (currentMp) {
       try {
@@ -229,7 +205,6 @@ export function useDirectionGoals() {
 
       await Promise.all(promises)
       await fetchData()
-      await loadMonthlyPlans(createdPlan.id)
       showAddModal.value = false
     } catch (e) {
       console.error('Add goal failed:', e)
@@ -246,10 +221,16 @@ export function useDirectionGoals() {
       const planId = editingGoal.value.plan_id
       if (!planId) return
 
-      const relatedMonthlyPlans = getMonthlyPlansByPlanId(planId)
+      const relatedMonthlyPlans = monthlyPlans.value.filter(mp => mp.plan_id === planId)
 
-      // 靠数据库级联删除，只需删 monthlyPlans
-      await Promise.all(relatedMonthlyPlans.map(mp => db.monthlyPlans.delete(mp.id)))
+      for (const mp of relatedMonthlyPlans) {
+        const dailyPlans = await db.dailyPlans.list(mp.id)
+        const dailyDeletePromises = dailyPlans.map(dp => db.dailyPlans.delete(dp.id))
+        await Promise.all(dailyDeletePromises)
+      }
+
+      const monthDeletePromises = relatedMonthlyPlans.map(mp => db.monthlyPlans.delete(mp.id))
+      await Promise.all(monthDeletePromises)
 
       await db.plans.delete(planId)
 
