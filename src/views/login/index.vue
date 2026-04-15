@@ -1,3 +1,7 @@
+<!--
+  登录页视图组件
+  渲染登录表单，包含邮箱/密码输入框、错误提示、访客体验账号说明
+-->
 <template>
   <div class="min-h-screen w-full bg-background flex items-center justify-center p-4">
     <div class="w-full max-w-sm">

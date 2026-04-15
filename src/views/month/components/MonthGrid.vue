@@ -1,4 +1,4 @@
-<template>
+<!-- 月份网格组件，7列布局展示当月所有日期（含上月末尾和下月开头） -->
   <div class="flex-1 flex flex-col">
     <div class="grid grid-cols-7 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
       <div v-for="w in weekdays" :key="w" class="py-3 text-center text-[10px] font-black text-zinc-300 tracking-[0.2em]">{{ w }}</div>

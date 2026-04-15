@@ -211,7 +211,7 @@ selectedGoal.value = {
 showAddModal.value = false
 ```
 
-- [ ] **Step 4: 如果新增后 `categorizedGoals` 依赖的字段不完整，则直接调用一次轻量 `fetchData()`**
+- [ ] **Step 4: 根据 `plans.create()` 的返回结构，决定是直接追加还是轻量刷新**
 
 ```js
 await Promise.all(promises)
@@ -219,9 +219,12 @@ await fetchData()
 await loadMonthlyPlans(createdPlan.id)
 ```
 
+**说明**：`categorizedGoals` 的确只依赖 `plans.value`，它本身不需要额外修改。  
+真正要保证的是“新增目标后 `plans.value` 被更新”。
+
 Expected: 二选一。  
-优先方案：只追加 `plans.value`。  
-保守方案：新增成功后调用一次新的轻量 `fetchData()`，但不能回到旧的全量 N+1。
+优先方案：如果 `plans.create()` 返回的数据已经足够给 `categorizedGoals` 使用，就直接追加到 `plans.value`。  
+保守方案：如果 `createdPlan` 不带 `plans_category` 等展示所需字段，就调用一次新的轻量 `fetchData()`，但不能回到旧的全量 N+1。
 
 - [ ] **Step 5: 手动验证新增/编辑行为**
 

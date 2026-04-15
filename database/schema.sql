@@ -246,20 +246,16 @@ CREATE OR REPLACE FUNCTION batch_upsert_daily_plans(
   p_items JSONB
 ) RETURNS VOID AS $$
 BEGIN
-  INSERT INTO daily_plans (monthly_plan_id, user_id, day, title, task_time, duration)
+  INSERT INTO daily_plans (monthly_plan_id, user_id, day, title)
   SELECT
     p_monthly_plan_id,
     p_user_id,
     (item->>'date')::DATE,
-    item->>'title',
-    NULLIF(item->>'task_time', ''),
-    NULLIF(item->>'duration', '')::INT
+    item->>'title'
   FROM jsonb_array_elements(p_items) AS item
   ON CONFLICT (monthly_plan_id, day)
   DO UPDATE SET
     title = EXCLUDED.title,
-    task_time = EXCLUDED.task_time,
-    duration = EXCLUDED.duration,
     updated_at = NOW();
 END;
 $$ LANGUAGE plpgsql;

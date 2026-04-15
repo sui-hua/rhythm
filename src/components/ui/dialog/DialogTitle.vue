@@ -1,3 +1,4 @@
+<!-- DialogTitle.vue - 对话框标题组件 -->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { DialogTitle, type DialogTitleProps } from 'radix-vue'

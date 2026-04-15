@@ -1,4 +1,4 @@
-<template>
+<!-- 单日格子组件，显示日期和任务小时指示器 -->
   <div
     class="bg-card p-2 sm:p-4 flex flex-col transition-all relative overflow-hidden flex-1 min-h-0"
     :class="day.isCurrent ? 'cursor-pointer group z-10' : 'bg-transparent cursor-default opacity-10'"

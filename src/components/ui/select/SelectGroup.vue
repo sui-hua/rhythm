@@ -1,3 +1,4 @@
+<!-- SelectGroup.vue - 选择器选项组组件 -->
 <script setup lang="ts">
 import type { SelectGroupProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"

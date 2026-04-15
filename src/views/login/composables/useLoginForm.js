@@ -1,3 +1,7 @@
+/**
+ * 登录表单 Composable
+ * 封装登录逻辑：表单状态、Supabase 认证、路由跳转
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -12,6 +16,9 @@ export const useLoginForm = () => {
   const loading = ref(false)
   const error = ref('')
 
+  /**
+   * 处理登录提交：调用 Supabase 认证，成功后更新 authStore 并跳转首页
+   */
   const handleLogin = async () => {
     try {
       loading.value = true

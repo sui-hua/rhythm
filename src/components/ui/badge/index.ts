@@ -1,5 +1,9 @@
 import { type VariantProps, cva } from 'class-variance-authority'
 
+/**
+ * Badge 组件 - 轻量级标签/徽章组件
+ * 支持变体: default/secondary/destructive/outline
+ */
 export { default as Badge } from './Badge.vue'
 
 export const badgeVariants = cva(

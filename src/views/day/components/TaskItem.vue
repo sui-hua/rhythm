@@ -114,6 +114,8 @@
 </template>
 
 <script setup>
+// 任务项组件：根据任务时长动态渲染不同布局（极短/中等/长任务）
+// 支持点击选中、双击编辑、计时操作、完成状态展示
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

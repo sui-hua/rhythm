@@ -1,4 +1,8 @@
-<template>
+<!--
+  App.vue - 应用根组件
+  职责：全局布局容器、认证初始化、路由过渡动画
+  结构：Toaster + Navbar + RouterView（含过渡效果）
+-->
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
     <Toaster />
     <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />
@@ -25,7 +29,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
-// 根据路由路径选择过渡效果
+// 路由过渡动画：日视图使用 slide，其他视图使用 fade
 const transitionName = computed(() => {
   const path = route.path
   if (path.includes('/day')) {
@@ -35,10 +39,7 @@ const transitionName = computed(() => {
   }
 })
 
-onMounted(async () => {
-  try {
-    // 检查是否有现有 session
-    const { data: { session }, error } = await supabase.auth.getSession()
+// 初始化认证状态、请求通知权限、监听多标签页登录状态变化
     
     if (error) {
       console.error('获取 session 失败:', error)

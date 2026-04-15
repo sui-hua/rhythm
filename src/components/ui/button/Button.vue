@@ -1,3 +1,7 @@
+<!--
+  Button 组件 - 按钮组件，支持多种变体和尺寸
+  Props: variant (default/destructive/outline/secondary/ghost/link), size (default/sm/lg/icon)
+-->
 <script setup lang="ts">
 import { type HTMLAttributes } from 'vue'
 import { Primitive, type PrimitiveProps } from 'radix-vue'

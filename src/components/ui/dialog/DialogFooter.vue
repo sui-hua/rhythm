@@ -1,3 +1,8 @@
+<!--
+  DialogFooter 组件 - 对话框底部区域
+  用于放置操作按钮，响应式布局 (列/行)
+  Props: class
+-->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { cn } from '@/lib/utils'

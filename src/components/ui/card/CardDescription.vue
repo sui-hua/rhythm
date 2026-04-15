@@ -1,3 +1,7 @@
+<!--
+  CardDescription 组件 - 卡片描述
+  Props: class
+-->
 <script setup lang="ts">
 import { type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'

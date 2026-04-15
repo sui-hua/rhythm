@@ -1,3 +1,7 @@
+<!--
+  Sonner (Toaster) 组件 - Toast 通知组件
+  基于 vue-sonner，提供成功/错误/警告/信息/加载等通知类型
+-->
 <script lang="ts" setup>
 import type { ToasterProps } from "vue-sonner"
 import { reactiveOmit } from "@vueuse/core"

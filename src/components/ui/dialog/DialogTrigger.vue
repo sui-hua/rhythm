@@ -1,3 +1,4 @@
+<!-- DialogTrigger.vue - 对话框触发器组件 -->
 <script setup lang="ts">
 import { DialogTrigger, type DialogTriggerProps } from 'radix-vue'
 

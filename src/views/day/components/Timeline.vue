@@ -47,6 +47,8 @@
 </template>
 
 <script setup>
+// 时间轴组件：渲染24小时时间线布局，集成 TaskItem 和 TimelineMarker
+// 实现日程项的智能排版（相互重叠的日程并排显示）
 import { ref, computed } from 'vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import TaskItem from '@/views/day/components/TaskItem.vue'

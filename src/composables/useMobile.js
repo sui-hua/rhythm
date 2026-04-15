@@ -1,3 +1,7 @@
+/**
+ * 响应式移动设备检测 Composable
+ * 通过 matchMedia 监听视口宽度变化，返回 isMobile ref
+ */
 import { ref, onMounted, onUnmounted } from 'vue'
 
 export function useMobile(breakpoint = 768) {
