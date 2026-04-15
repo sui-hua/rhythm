@@ -36,7 +36,7 @@ onMounted:
 ```js
 // 现有
 export const plans = ref([])
-// monthlyPlans 继续保留，作为当前选中目标的月计划视图数据
+// monthlyPlans 继续保留，作为“已加载 monthlyPlans 的扁平兼容视图”
 export const monthlyPlans = ref([])
 
 // 新增分层缓存
@@ -59,9 +59,11 @@ const loadMonthlyPlans = async (planId) => {
   monthlyPlansCache[planId] = await db.monthlyPlans.list(planId)
 }
 
-// 由缓存回填 monthlyPlans，兼容现有 handleAddGoal / handleEditGoal / updateGoalData
-const syncMonthlyPlansForSelectedGoal = (planId) => {
-  monthlyPlans.value = monthlyPlansCache[planId] || []
+// 将单个目标的缓存合并回 monthlyPlans，兼容仍依赖扁平列表的旧逻辑
+const syncMonthlyPlansToFlatList = (planId) => {
+  const cached = monthlyPlansCache[planId] || []
+  const others = monthlyPlans.value.filter(item => item.plan_id !== planId)
+  monthlyPlans.value = [...others, ...cached]
 }
 
 const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
@@ -96,12 +98,12 @@ const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
 ### 触发时机
 
 - `onMounted` → `loadPlans()`
-- `selectGoal(goal)` → `loadMonthlyPlans(goal.plan_id)` + `syncMonthlyPlansForSelectedGoal(goal.plan_id)`
+- `selectGoal(goal)` → `loadMonthlyPlans(goal.plan_id)` + `syncMonthlyPlansToFlatList(goal.plan_id)`
 - `toggleMonth(m)` 展开月份时 → 找到该月对应 `monthlyPlanId` → `loadDailyPlans(monthlyPlanId)`
 
 ### 向后兼容
 
-采用 **方案 A**：`monthlyPlans.value` 保留，但其数据源统一来自 `monthlyPlansCache[planId]`。
+采用 **方案 A（修正版）**：`monthlyPlans.value` 保留，但不再表示“当前选中目标”，而是表示“当前已加载缓存的扁平镜像”。
 
 `dailyTasks` 保持兼容层，不再作为主数据源。统一规则：
 - 主数据源：`dailyPlansCache[monthlyPlanId]`
@@ -109,9 +111,64 @@ const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
 - 同步策略：先按 `planId + month` 清空旧 key，再批量写入新值，避免 UI 读到过期日期
 - 新逻辑优先读取缓存，旧逻辑逐步迁移
 
+补充约束：
+- `categorizedGoals`
+- `handleEditGoal`
+- `updateGoalData`
+- `saveMonthlyPlan`
+- `systemLoad`
+
+以上逻辑如果需要“某个目标的完整 month 集合”，应优先通过 `monthlyPlansCache[planId]` 或封装 helper 获取，不能再假设 `monthlyPlans.value.filter(...)` 一定拿到完整数据。
+
+建议补一个统一 helper：
+
+```js
+const getMonthlyPlansByPlanId = (planId) => monthlyPlansCache[planId] || []
+```
+
+### 1.1 目标范围展示的收口方案
+
+这次不在 `plans` 表新增范围字段，目标范围继续由 `monthly_plans` 推导。
+
+统一约束：
+- Sidebar 不需要在未点击目标前预先展示精确范围
+- `handleEditGoal` 打开前，如当前目标未加载 `monthlyPlansCache[planId]`，先补一次 `loadMonthlyPlans(planId)`
+- `categorizedGoals` 不再依赖 `monthly_plans` 反推范围，只保留 `plan_id / title / category` 等轻量信息
+- 需要精确范围的地方，只在该目标已加载后，通过 `monthlyPlansCache[planId]` 计算 `startMonth/endMonth`
+
+这样可以保住懒加载，不为了范围展示重新引入首屏全量查询。
+
 ---
 
 ## 2. 批量操作 RPC（并发安全版）
+
+### 2.0 前置改造（服务层能力）
+
+当前 `src/services/database.js` 与 `src/services/safeDb.js` 没有 `rpc` 能力，落地前需要补一个统一入口，例如：
+
+```js
+// database.js
+import client from '@/config/supabase'
+
+export const db = {
+  ...tables,
+  rpc(name, params) {
+    return client.rpc(name, params)
+  }
+}
+```
+
+如果批量操作入口最终走 `safeDb`，则 `safeDb` 也需要透传 `rpc` 并补错误处理。
+
+### 2.05 字段命名统一（daily_plans）
+
+当前代码里 `daily_plans` 的日期字段存在 `day` / `date` 混用风险。实现本方案前需要统一成单一字段名。
+
+以当前 `database/schema.sql` 为准，推荐统一使用 `day`：
+
+- RPC 入参中的日期字符串最终写入 `daily_plans.day`
+- 前端读取统一使用 `dp.day`
+- `db.dailyPlans.create()` / `listByDate()` 中的 `date` 用法需要同步修正，避免新旧代码混用
 
 ### 2.1 数据一致性前置约束（database/schema.sql）
 
@@ -441,7 +498,7 @@ import { months } from '@/views/direction/composables/useDirectionState'
 | `composables/useDirectionFetch.js` | 分层懒加载 + `force` 刷新 |
 | `composables/useDirectionSelection.js` | `selectGoal` 增加状态重置 |
 | `composables/useDirectionBatch.js` | RPC 批量操作 + 过滤逻辑 + 显式刷新 |
-| `composables/useDirectionGoals.js` | 删除逻辑收敛为删除 monthlyPlan |
+| `composables/useDirectionGoals.js` | 编辑前按需加载 monthlyPlans + 删除逻辑收敛为删除 monthlyPlan |
 | `components/GoalRangePicker.vue` | `getMonthOffset` 按目标年份计算 |
 | `components/ArchiveItem.vue` | 去除 blur 双提交副作用 |
 | `components/MissionArchive.vue` | 改为依赖 `archiveVersion` |
