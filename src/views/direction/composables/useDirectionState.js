@@ -8,6 +8,19 @@ export const months = Array.from({ length: 12 }, (_, i) => ({
   full: getMonthName(i + 1, 'full')
 }))
 
+// 缓存主源（按 planId 索引的月度计划）
+export const monthlyPlansCache = reactive({}) // { [planId]: monthlyPlan[] }
+export const dailyPlansCache = reactive({})   // { [monthlyPlanId]: dailyPlan[] }
+export const archiveVersion = ref(0)
+export const getMonthlyPlansByPlanId = (planId) => monthlyPlansCache[planId] || []
+
+// 同步缓存到扁平兼容镜像
+export const syncMonthlyPlansToFlatList = (planId) => {
+  const cached = monthlyPlansCache[planId] || []
+  const others = monthlyPlans.value.filter(item => item.plan_id !== planId)
+  monthlyPlans.value = [...others, ...cached]
+}
+
 // 共享状态（单例）
 export const plans = ref([])
 export const monthlyPlans = ref([])

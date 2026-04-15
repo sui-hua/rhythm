@@ -3,7 +3,6 @@
     <ArchiveHeader
       :month-name="selectedMonth ? months[selectedMonth - 1].full : '无内容'"
       :task-count="datesWithTasks.length"
-      :months="months"
       :selected-month="selectedMonth"
     />
 
@@ -18,7 +17,7 @@
             :day="day"
             :task="dailyTasks[dayTaskKey(day)]"
             :task-key="dayTaskKey(day)"
-            @update-task="handleUpdateTask"
+            @update-task="(task, payload) => handleUpdateTask(task, payload)"
           />
         </TransitionGroup>
       </div>

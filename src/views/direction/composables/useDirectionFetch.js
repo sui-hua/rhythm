@@ -8,7 +8,10 @@ import {
   selectedGoal,
   editingGoal,
   showAddModal,
-  initialized
+  initialized,
+  monthlyPlansCache,
+  dailyPlansCache,
+  syncMonthlyPlansToFlatList
 } from '@/views/direction/composables/useDirectionState'
 
 let setupDone = false
@@ -21,32 +24,48 @@ export function useDirectionFetch() {
       const categoryName = plan.plans_category?.name || '未分类'
       if (!map.has(categoryName)) map.set(categoryName, [])
 
-      const mps = monthlyPlans.value.filter(mp => mp.plan_id === plan.id)
-
-      let minMonth = 1
-      let maxMonth = 12
-
-      if (mps.length > 0) {
-        const months = mps
-          .map(mp => (mp.month ? new Date(mp.month).getMonth() + 1 : null))
-          .filter(m => m !== null)
-        if (months.length > 0) {
-          minMonth = Math.min(...months)
-          maxMonth = Math.max(...months)
-        }
-      }
-
       map.get(categoryName).push({
         ...plan,
         name: plan.title,
-        startMonth: minMonth,
-        endMonth: maxMonth,
         plan_id: plan.id,
         category_name: categoryName
       })
     }
     return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
   })
+
+  const loadPlans = async () => {
+    plans.value = await db.plans.list()
+  }
+
+  const loadMonthlyPlans = async (planId) => {
+    if (monthlyPlansCache[planId]) return
+    monthlyPlansCache[planId] = await db.monthlyPlans.list(planId)
+    syncMonthlyPlansToFlatList(planId)
+  }
+
+  const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
+    if (!force && dailyPlansCache[monthlyPlanId]) return
+
+    const dps = await db.dailyPlans.list(monthlyPlanId)
+    dailyPlansCache[monthlyPlanId] = dps
+
+    const mp = Object.values(monthlyPlansCache)
+      .flat()
+      .find(item => item.id === monthlyPlanId)
+    if (!mp) return
+
+    const month = new Date(mp.month).getMonth() + 1
+    const prefix = `plan-${mp.plan_id}-${month}-`
+    for (const key of Object.keys(dailyTasks)) {
+      if (key.startsWith(prefix)) delete dailyTasks[key]
+    }
+
+    for (const dp of dps) {
+      const day = new Date(dp.day).getDate()
+      dailyTasks[`plan-${mp.plan_id}-${month}-${day}`] = dp
+    }
+  }
 
   const fetchData = async () => {
     isPageLoading.value = true
@@ -79,7 +98,7 @@ export function useDirectionFetch() {
         const mp = mpMap.get(dp.monthly_plan_id)
         if (mp) {
           const m = new Date(mp.month).getMonth() + 1
-          const d = new Date(dp.date).getDate()
+          const d = new Date(dp.day).getDate()
           const key = `plan-${mp.plan_id}-${m}-${d}`
           dailyTasks[key] = dp
         }
@@ -131,6 +150,9 @@ export function useDirectionFetch() {
   return {
     categorizedGoals,
     fetchData,
-    isPageLoading
+    isPageLoading,
+    loadPlans,
+    loadMonthlyPlans,
+    loadDailyPlans
   }
 }

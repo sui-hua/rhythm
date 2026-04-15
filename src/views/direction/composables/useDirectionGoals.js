@@ -4,13 +4,15 @@ import { safeDb as db } from '@/services/safeDb'
 import {
   months,
   monthlyPlans,
+  monthlyPlansCache,
   monthlyMainGoals,
   selectedGoal,
   editingGoal,
   selectedMonth,
   activePicker,
   showAddModal,
-  showCategoryModal
+  showCategoryModal,
+  getMonthlyPlansByPlanId
 } from '@/views/direction/composables/useDirectionState'
 
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
@@ -34,8 +36,11 @@ export function useDirectionGoals() {
     showAddModal.value = true
   }
 
-  const handleEditGoal = (goal) => {
-    const relatedMonthlyPlans = monthlyPlans.value.filter(mp => mp.plan_id === goal.plan_id)
+  const handleEditGoal = async (goal) => {
+    if (!monthlyPlansCache[goal.plan_id]) {
+      await loadMonthlyPlans(goal.plan_id)
+    }
+    const relatedMonthlyPlans = getMonthlyPlansByPlanId(goal.plan_id)
 
     let minMonth = 12
     let maxMonth = 1
@@ -82,7 +87,7 @@ export function useDirectionGoals() {
 
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
 
-      const existingMonthlyPlans = monthlyPlans.value.filter(mp => mp.plan_id === planId)
+      const existingMonthlyPlans = getMonthlyPlansByPlanId(planId)
       const existingMonths = existingMonthlyPlans.map(mp => new Date(mp.month).getMonth() + 1)
 
       const startM = goalToUpdate.startMonth || 1
@@ -147,8 +152,8 @@ export function useDirectionGoals() {
   }
 
   const saveMonthlyPlan = async (m, payload) => {
-    const currentMp = monthlyPlans.value.find(
-      mp => mp.plan_id === selectedGoal.value.plan_id && new Date(mp.month).getMonth() + 1 === m
+    const currentMp = getMonthlyPlansByPlanId(selectedGoal.value.plan_id).find(
+      mp => new Date(mp.month).getMonth() + 1 === m
     )
     if (currentMp) {
       try {
@@ -204,7 +209,7 @@ export function useDirectionGoals() {
       }
 
       await Promise.all(promises)
-      await fetchData()
+      await loadMonthlyPlans(createdPlan.id)
       showAddModal.value = false
     } catch (e) {
       console.error('Add goal failed:', e)
@@ -221,16 +226,10 @@ export function useDirectionGoals() {
       const planId = editingGoal.value.plan_id
       if (!planId) return
 
-      const relatedMonthlyPlans = monthlyPlans.value.filter(mp => mp.plan_id === planId)
+      const relatedMonthlyPlans = getMonthlyPlansByPlanId(planId)
 
-      for (const mp of relatedMonthlyPlans) {
-        const dailyPlans = await db.dailyPlans.list(mp.id)
-        const dailyDeletePromises = dailyPlans.map(dp => db.dailyPlans.delete(dp.id))
-        await Promise.all(dailyDeletePromises)
-      }
-
-      const monthDeletePromises = relatedMonthlyPlans.map(mp => db.monthlyPlans.delete(mp.id))
-      await Promise.all(monthDeletePromises)
+      // 靠数据库级联删除，只需删 monthlyPlans
+      await Promise.all(relatedMonthlyPlans.map(mp => db.monthlyPlans.delete(mp.id)))
 
       await db.plans.delete(planId)
 
