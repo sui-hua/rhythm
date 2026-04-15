@@ -5,7 +5,7 @@ const supabase = client.createBase('daily_plans')
 export const dailyPlans = {
     async list(monthlyPlanId) {
         return await supabase.query(q => {
-            let query = q.select('*').order('day', { ascending: true })
+            let query = q.select('*').order('date', { ascending: true })
             if (monthlyPlanId) query = query.eq('monthly_plan_id', monthlyPlanId)
             return query
         })

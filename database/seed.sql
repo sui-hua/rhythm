@@ -44,10 +44,10 @@ BEGIN
     -- 3. Daily Plans (日计划)
     -- ---------------------------------------------------------
     
-    INSERT INTO daily_plans (monthly_plan_id, user_id, title, description, status, priority, day)
+    INSERT INTO daily_plans (monthly_plan_id, user_id, title, description, status, priority, date, day)
     VALUES 
-    (v_mp_feb_id, target_user_id, '完成数据库 Schema 设计', '设计包含 Plans, Habits, Tasks 的核心表结构', 'completed', 3, '2026-02-09'),
-    (v_mp_feb_id, target_user_id, '集成 Supabase Client', '封装 database.js 服务层', 'active', 3, '2026-02-10');
+    (v_mp_feb_id, target_user_id, '完成数据库 Schema 设计', '设计包含 Plans, Habits, Tasks 的核心表结构', 1, 3, '2026-02-09', '2026-02-09'),
+    (v_mp_feb_id, target_user_id, '集成 Supabase Client', '封装 database.js 服务层', 0, 3, '2026-02-10', '2026-02-10');
 
     -- ---------------------------------------------------------
     -- 4. Habits (习惯)

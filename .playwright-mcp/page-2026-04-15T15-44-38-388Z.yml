@@ -1,0 +1,23 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - text: Email
+          - textbox "Email" [active] [ref=e27]:
+            - /placeholder: name@example.com
+            - text: sizh
+        - generic [ref=e28]:
+          - text: Password
+          - textbox "Password" [ref=e29]: "123456"
+        - button "登录" [ref=e30]
+      - paragraph [ref=e32]:
+        - text: 访客体验账号：123456@163.com
+        - text: 密码：123456
+  - generic [ref=e11]:
+    - generic "Toggle devtools panel" [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+    - generic "Toggle Component Inspector" [ref=e18] [cursor=pointer]:
+      - img [ref=e19]

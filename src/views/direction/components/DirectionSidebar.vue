@@ -65,6 +65,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 import { useResizable } from '@/composables/useResizable'
+import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
 
 const { categorizedGoals } = useDirectionFetch()
 const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
@@ -93,7 +94,7 @@ const systemLoad = computed(() => {
   Object.entries(dailyTasks).forEach(([key, task]) => {
     if (key.startsWith(`plan-${planId}-${monthStr}-`)) {
       total++
-      if (task.status === 'completed') completed++
+      if (isDailyPlanCompleted(task.status)) completed++
     }
   })
 

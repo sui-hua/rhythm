@@ -6,6 +6,7 @@ import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { formatDuration } from '@/utils/formatDuration'
+import { isDailyPlanCompleted, toDailyPlanStatus } from '@/utils/dailyPlanStatus'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -145,7 +146,7 @@ export function useDayData() {
                 category: '今日计划',
                 title: plan.title,
                 description: plan.description || '',
-                completed: plan.status === 'completed'
+                completed: isDailyPlanCompleted(plan.status)
             })
         })
 
@@ -268,8 +269,7 @@ export function useDayData() {
                     await db.habits.log(task.id, '')
                 }
             } else if (task.type === 'daily_plan') {
-                const isNumeric = typeof task.original.status === 'number'
-                const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
+                const newStatus = toDailyPlanStatus(!task.completed)
                 await db.dailyPlans.update(task.id, { status: newStatus })
             }
 

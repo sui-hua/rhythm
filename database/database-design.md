@@ -54,7 +54,7 @@
 | `user_id`         | UUID    | 用户ID                                 |
 | `title`           | Text    | 日计划标题（例如：“今天的吉他练习”）                  |
 | `description`     | Text    | 日计划描述                                |
-| `status`          | Varchar | 状态：'active', 'completed', 'archived' |
+| `status`          | SmallInt | 状态：`0`=pending，`1`=completed |
 | `priority`        | Int     | 优先级（使用数字，1-低，2-中，3-高）       |
 | `date`            | Date    | 日计划日期                                |
 | `task_time`       | Time    | 计划时间（用于在天视图显示）               |
