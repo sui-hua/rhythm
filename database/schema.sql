@@ -219,3 +219,58 @@ CREATE POLICY "Users can view their own daily summaries" ON daily_summaries FOR 
 CREATE POLICY "Users can insert their own daily summaries" ON daily_summaries FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own daily summaries" ON daily_summaries FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own daily summaries" ON daily_summaries FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================================
+-- Direction Data Constraints & RPC (added for N+1 optimization)
+-- ============================================================
+
+-- Step 1: Add unique constraint on daily_plans(monthly_plan_id, day)
+ALTER TABLE daily_plans
+ADD CONSTRAINT uq_daily_plans_monthly_day UNIQUE (monthly_plan_id, day);
+
+-- Step 2: Change FK to CASCADE delete (drop auto-named FK, recreate with CASCADE)
+-- The inline REFERENCES creates an auto-named FK: daily_plans_monthly_plan_id_fkey
+ALTER TABLE daily_plans
+DROP CONSTRAINT IF EXISTS daily_plans_monthly_plan_id_fkey;
+
+ALTER TABLE daily_plans
+ADD CONSTRAINT daily_plans_monthly_plan_id_fkey
+FOREIGN KEY (monthly_plan_id)
+REFERENCES monthly_plans(id)
+ON DELETE CASCADE;
+
+-- Step 3: Batch upsert / delete RPC functions
+CREATE OR REPLACE FUNCTION batch_upsert_daily_plans(
+  p_monthly_plan_id UUID,
+  p_user_id UUID,
+  p_items JSONB
+) RETURNS VOID AS $$
+BEGIN
+  INSERT INTO daily_plans (monthly_plan_id, user_id, day, title, task_time, duration)
+  SELECT
+    p_monthly_plan_id,
+    p_user_id,
+    (item->>'date')::DATE,
+    item->>'title',
+    NULLIF(item->>'task_time', ''),
+    NULLIF(item->>'duration', '')::INT
+  FROM jsonb_array_elements(p_items) AS item
+  ON CONFLICT (monthly_plan_id, day)
+  DO UPDATE SET
+    title = EXCLUDED.title,
+    task_time = EXCLUDED.task_time,
+    duration = EXCLUDED.duration,
+    updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION batch_delete_daily_plans(
+  p_monthly_plan_id UUID,
+  p_days INT[]
+) RETURNS VOID AS $$
+BEGIN
+  DELETE FROM daily_plans
+  WHERE monthly_plan_id = p_monthly_plan_id
+    AND EXTRACT(DAY FROM day)::INT = ANY(p_days);
+END;
+$$ LANGUAGE plpgsql;
