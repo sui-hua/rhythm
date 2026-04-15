@@ -27,12 +27,13 @@
       <div class="flex flex-col gap-1">
         <div class="flex items-center justify-between">
           <h2 class="text-4xl font-black tracking-tighter italic uppercase transition-all duration-700 ease-expo">{{ selectedDay }}</h2>
-          <Button 
-            v-if="isMobile" 
-            variant="ghost" 
-            size="icon" 
-            class="-mr-2 h-8 w-8"
+          <Button
+            v-if="isMobile"
+            variant="ghost"
+            size="icon"
+            class="-mr-2 h-8 w-8 active:scale-[0.97]"
             @click="$emit('close')"
+            aria-label="关闭侧边栏"
           >
             <X class="h-4 w-4" />
           </Button>
@@ -78,12 +79,13 @@
               >
                 {{ item.title }}
               </h4>
-              <div
+              <button
                 class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                 @click.stop="$emit('edit-task', index)"
+                aria-label="编辑任务"
               >
                 <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -112,12 +114,13 @@
               >
                 {{ item.title }}
               </h4>
-              <div
+              <button
                 class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                 @click.stop="$emit('edit-task', index)"
+                aria-label="编辑任务"
               >
                 <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -128,7 +131,7 @@
           description="Your schedule is clear. Take a deep breath or plan something new."
         >
           <template #action>
-            <Button variant="outline" size="sm" class="rounded-full px-6" @click="$emit('add-event')">
+            <Button variant="outline" size="sm" class="rounded-full px-6 active:scale-[0.97]" @click="$emit('add-event')">
               Create First Task
             </Button>
           </template>
@@ -145,8 +148,8 @@
         </div>
         <Progress :model-value="(dailySchedule.length ? (completedCount/dailySchedule.length * 100) : 0)" class="h-1 shadow-none" />
       </div>
-      <Button 
-        class="w-full gap-2 h-9 text-xs font-semibold"
+      <Button
+        class="w-full gap-2 h-9 text-xs font-semibold active:scale-[0.97]"
         @click="$emit('add-event')"
       >
         <Plus class="w-4 h-4" />

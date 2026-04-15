@@ -16,28 +16,43 @@
         <div class="grid gap-6">
           <!-- Title Group -->
           <div class="grid gap-2">
-            <label for="title" class="text-sm font-medium leading-none">任务名称</label>
-            <Input 
+            <label for="title" class="text-sm font-medium leading-none">
+              任务名称<span class="text-rose-500">*</span>
+            </label>
+            <Input
               id="title"
               v-model="form.title"
               placeholder="例如：周会 / 健身"
               class="h-9"
             />
+            <p v-if="errors.title" class="text-xs text-rose-500">{{ errors.title }}</p>
           </div>
 
           <!-- Time & Duration Group -->
           <div class="grid grid-cols-2 gap-4">
-            <TimePicker 
-              v-model="form.time" 
-              label="任务时间"
-              id="time"
-            />
-            <DurationPicker 
-              v-model="form.duration" 
-              label="任务时长"
-              id="duration"
-              @submit="submit"
-            />
+            <div class="grid gap-2">
+              <label for="time" class="text-sm font-medium leading-none">
+                任务时间<span class="text-rose-500">*</span>
+              </label>
+              <TimePicker
+                v-model="form.time"
+                label="任务时间"
+                id="time"
+              />
+              <p v-if="errors.time" class="text-xs text-rose-500">{{ errors.time }}</p>
+            </div>
+            <div class="grid gap-2">
+              <label for="duration" class="text-sm font-medium leading-none">
+                任务时长<span class="text-rose-500">*</span>
+              </label>
+              <DurationPicker
+                v-model="form.duration"
+                label="任务时长"
+                id="duration"
+                @submit="submit"
+              />
+              <p v-if="errors.duration" class="text-xs text-rose-500">{{ errors.duration }}</p>
+            </div>
           </div>
 
           <!-- Description Group (仅任务类型显示) -->
@@ -76,7 +91,7 @@
             <Button 
               class="w-full h-9 bg-primary text-primary-foreground font-semibold"
               @click="submit"
-              :disabled="!form.title || !form.time"
+              :disabled="!isValid"
             >
               {{ initialData ? '保存修改' : '确认创建' }}
             </Button>
@@ -124,7 +139,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'refresh', 'update:show'])
 
-const { form, isHabit, submit, handleDelete } = useAddEventForm(props, emit)
+const { form, isHabit, errors, isValid, submit, handleDelete } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>

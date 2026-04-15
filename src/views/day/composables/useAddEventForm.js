@@ -55,9 +55,32 @@ export function useAddEventForm(props, emit) {
         }
     }, { immediate: true })
 
+    // 验证规则
+    const validationRules = {
+        title: (v) => v.trim() ? '' : '任务名称不能为空',
+        time: (v) => v ? '' : '开始时间不能为空',
+        duration: (v) => {
+            const num = parseFloat(v)
+            if (isNaN(num) || num <= 0) return '时长必须大于0'
+            return ''
+        }
+    }
+
+    // 计算属性：实时验证错误信息
+    const errors = computed(() => ({
+        title: validationRules.title(form.title),
+        time: validationRules.time(form.time),
+        duration: validationRules.duration(form.duration)
+    }))
+
+    // 计算属性：表单是否有效
+    const isValid = computed(() => {
+        return !errors.value.title && !errors.value.time && !errors.value.duration
+    })
+
     // 提交表单（新建或编辑）
     const submit = withLoadingLock(async () => {
-        if (!form.title || !form.time) return
+        if (!isValid.value) return
 
         const [hours, minutes] = form.time.split(':').map(Number)
         const durationValue = parseFloat(form.duration)
@@ -135,6 +158,8 @@ export function useAddEventForm(props, emit) {
     return {
         form,
         isHabit,
+        errors,
+        isValid,
         submit,
         handleDelete
     }
