@@ -14,10 +14,6 @@
   </div>
 </template>
 
-<!--
-  SkeletonTask 组件 - 任务骨架屏
-  用于加载状态显示，带脉冲动画效果
--->
 <script setup>
 // 极简骨架屏组件
 </script>

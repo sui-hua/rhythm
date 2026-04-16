@@ -1,9 +1,5 @@
 import { type VariantProps, cva } from 'class-variance-authority'
 
-/**
- * Button 组件 - 基于 Radix Vue Primitive 的按钮组件
- * 支持 variant (default/destructive/outline/secondary/ghost/link) 和 size (default/sm/lg/icon)
- */
 export { default as Button } from './Button.vue'
 
 export const buttonVariants = cva(

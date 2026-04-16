@@ -74,10 +74,6 @@
 </template>
 
 <script setup>
-/**
- * Summary 侧边栏组件
- * 支持 Tab 切换、总结列表展示、新增按钮，宽度可拖拽调整
- */
 import { useSummarySidebar } from '@/views/summary/composables/useSummarySidebar'
 import { useResizable } from '@/composables/useResizable'
 import { useMobile } from '@/composables/useMobile'

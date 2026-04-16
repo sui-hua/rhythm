@@ -60,9 +60,8 @@
   </div>
 </template>
 
-<!--
-  TimePicker 组件 - 时间选择器
-  Props: modelValue (HH:mm), id, label, placeholder，支持
+<script setup>
+import { ref, watch, nextTick, computed } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Clock } from 'lucide-vue-next'

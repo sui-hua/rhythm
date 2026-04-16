@@ -1,4 +1,4 @@
-<!-- 年度总览主入口页面，展示12个月度格子 -->
+<template>
   <div class="h-screen w-full bg-background flex overflow-hidden font-sans text-foreground relative selection:bg-foreground selection:text-background">
     <YearGrid
       :year-data="yearData"

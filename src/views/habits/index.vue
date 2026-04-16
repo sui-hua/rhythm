@@ -12,7 +12,16 @@
     />
 
     <div class="flex-1 bg-zinc-50/50 relative overflow-hidden flex flex-col">
-      <div v-if="selectedHabit" class="w-full h-full flex flex-col p-6 md:p-10 overflow-auto relative z-10 no-scrollbar">
+      <!-- 页面级骨架 -->
+      <div v-if="isPageLoading" class="w-full h-full flex flex-col p-6 md:p-10 overflow-auto relative z-10 no-scrollbar">
+        <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
+          <div class="skeleton-block h-8 w-48 rounded-lg" />
+          <div class="skeleton-block h-24 w-full rounded-lg" />
+          <div class="skeleton-block h-64 w-full rounded-lg" />
+          <div class="skeleton-block h-32 w-full rounded-lg" />
+        </div>
+      </div>
+      <div v-else-if="selectedHabit" class="w-full h-full flex flex-col p-6 md:p-10 overflow-auto relative z-10 no-scrollbar">
 
         <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
           <HabitHeader :title="selectedHabit.title" />
@@ -78,7 +87,8 @@ const {
   viewYear,
   viewMonth,
   handleMonthChange,
-  fetchHabits
+  fetchHabits,
+  isPageLoading
 } = useHabitData()
 
 // 2. 统计计算层面能力支撑
@@ -128,5 +138,11 @@ const handleQuickLog = async (note) => {
 </script>
 
 <style scoped>
+@reference "@/assets/tw-theme.css";
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+.skeleton-block {
+  @apply bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded-lg;
+}
 </style>

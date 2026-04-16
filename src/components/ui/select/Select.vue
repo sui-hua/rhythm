@@ -1,7 +1,3 @@
-<!--
-  Select 组件 - 选择器根组件
-  Props: modelValue, onUpdate:modelValue
--->
 <script setup lang="ts">
 import type { SelectRootEmits, SelectRootProps } from "reka-ui"
 import { SelectRoot, useForwardPropsEmits } from "reka-ui"

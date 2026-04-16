@@ -9,6 +9,9 @@ import { useDateStore } from '@/stores/dateStore'
 export function useHabitData() {
     const dateStore = useDateStore()
 
+    // 页面级 loading 状态
+    const isPageLoading = ref(false)
+
     // 存储所有的习惯列表数据（包含已归档）
     const allHabits = ref([])
 
@@ -80,6 +83,7 @@ export function useHabitData() {
      * 核心异步逻辑：从数据库层拉取最新习惯数据并进行组合加工
      */
     const fetchHabits = async () => {
+        isPageLoading.value = true
         try {
             const rawHabits = await db.habits.list()
             allHabits.value = rawHabits.map((h) => {
@@ -118,6 +122,8 @@ export function useHabitData() {
             }
         } catch (e) {
             console.error('Fetch habits failed', e)
+        } finally {
+            isPageLoading.value = false
         }
     }
 
@@ -128,6 +134,7 @@ export function useHabitData() {
         viewYear,
         viewMonth,
         handleMonthChange,
-        fetchHabits
+        fetchHabits,
+        isPageLoading
     }
 }

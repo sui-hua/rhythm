@@ -52,3 +52,4 @@ __screenshots__/
 # Misc
 .temp
 *.bak
+.worktrees/

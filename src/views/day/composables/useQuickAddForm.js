@@ -15,6 +15,9 @@ export function useQuickAddForm(props, emit) {
     const dateStore = useDateStore()
     const { fetchTasks } = useDayData()
 
+    // 写操作按钮 loading 状态
+    const isSubmitting = ref(false)
+
     // 记录上次使用的时间（用于连续快速添加）
     const lastUsedTime = ref('08:00')
     const lastUsedDuration = ref(0.5)
@@ -42,6 +45,7 @@ export function useQuickAddForm(props, emit) {
     const quickSubmit = withLoadingLock(async () => {
         if (!form.title) return false
 
+        isSubmitting.value = true
         const [hours, minutes] = form.time.split(':').map(Number)
         const durationValue = parseFloat(form.duration)
 
@@ -77,11 +81,14 @@ export function useQuickAddForm(props, emit) {
         } catch (e) {
             console.error('Failed to quick add task', e)
             return false
+        } finally {
+            isSubmitting.value = false
         }
     })
 
     return {
         form,
-        quickSubmit
+        quickSubmit,
+        isSubmitting
     }
 }

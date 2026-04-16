@@ -1,10 +1,5 @@
-<!--
-  Navbar.vue - 全局导航栏组件
-  职责：桌面端悬停滑出导航、移动端底部固定导航、上下文面包屑、登出功能
-  特性：响应式设计、group-hover 交互、路由上下文感知
--->
 <template>
-  <!--
+  <!-- 
     导航栏最外层父容器
     - group: 定义一个 hover 组，当鼠标悬停在其内部有效区域时，触发整个组的 group-hover 状态
     - pointer-events-none: 作为全宽块级元素，使其不会阻挡页面下方原有内容的点击事件
@@ -190,7 +185,7 @@ const dateStore = useDateStore()
 const router = useRouter()
 const route = useRoute()
 
-// 导航栏菜单配置：时序、习惯、所向、总结
+// 动态获取当天的路由路径，用于进入“时序”时默认跳转
 const getTodayPath = () => {
   const now = new Date() // As per user metadata context
   return '/day'
@@ -204,7 +199,7 @@ const navItems = [
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
 ]
 
-// 判断导航项是否激活（时序特殊处理：年/月/日任一层都算激活）
+// 判断导航项是否激活
 // 特殊情况处理：因为时序拥有多层级(年、月、日)，如果处在其中任何一层，都算“时序”处于激活状态
 const isActive = (item) => {
   // 时序拥有多层级(年、月、日)，处在任何一层都算激活
@@ -212,7 +207,8 @@ const isActive = (item) => {
   return route.path === item.path || route.path.startsWith(item.base)
 }
 
-// contextInfo: 计算导航栏左侧面包屑，用于指示当前查看的时间范围并提供翻页
+/**
+ * contextInfo: 结合 current route 计算导航栏左侧的面包屑辅助控件状态
  * 用于指示目前正在查看的具体是哪一年、哪一月，并提供左右翻页及上层返回按钮
  */
 const contextInfo = computed(() => {

@@ -1,0 +1,232 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e7]:
+            - button [ref=e8]:
+              - img
+            - button "APRIL" [ref=e9]
+            - button [ref=e10]:
+              - img
+          - button "时序" [ref=e11]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e12]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e13]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e14]:
+            - img
+            - text: 总结
+      - button:
+        - img
+    - generic [ref=e17]:
+      - complementary [ref=e18]:
+        - generic [ref=e21]:
+          - heading "15" [level=2] [ref=e23]
+          - paragraph [ref=e24]: 四月 (April) / TASKS
+        - generic [ref=e156]:
+          - generic [ref=e157] [cursor=pointer]:
+            - checkbox [checked] [ref=e159]:
+              - generic:
+                - img
+            - generic [ref=e161]:
+              - heading "起床" [level=4] [ref=e162]
+              - button "编辑任务" [ref=e163]:
+                - img [ref=e164]
+          - generic [ref=e167] [cursor=pointer]:
+            - checkbox [checked] [ref=e169]:
+              - generic:
+                - img
+            - generic [ref=e171]:
+              - heading "洗漱" [level=4] [ref=e172]
+              - button "编辑任务" [ref=e173]:
+                - img [ref=e174]
+          - generic [ref=e177] [cursor=pointer]:
+            - checkbox [checked] [ref=e179]:
+              - generic:
+                - img
+            - generic [ref=e181]:
+              - heading "每天跟三个陌生人说话" [level=4] [ref=e182]
+              - button "编辑任务" [ref=e183]:
+                - img [ref=e184]
+          - generic [ref=e187] [cursor=pointer]:
+            - checkbox [ref=e189]
+            - generic [ref=e191]:
+              - heading "ralph loop" [level=4] [ref=e192]
+              - button "编辑任务" [ref=e193]:
+                - img [ref=e194]
+          - generic [ref=e197] [cursor=pointer]:
+            - checkbox [checked] [ref=e199]:
+              - generic:
+                - img
+            - generic [ref=e201]:
+              - heading "小程序推广" [level=4] [ref=e202]
+              - button "编辑任务" [ref=e203]:
+                - img [ref=e204]
+          - generic [ref=e207] [cursor=pointer]:
+            - checkbox [checked] [ref=e209]:
+              - generic:
+                - img
+            - generic [ref=e211]:
+              - heading "分享广告页 封装一个横屏弹窗组件" [level=4] [ref=e212]
+              - button "编辑任务" [ref=e213]:
+                - img [ref=e214]
+          - generic [ref=e217] [cursor=pointer]:
+            - checkbox [checked] [ref=e219]:
+              - generic:
+                - img
+            - generic [ref=e221]:
+              - heading "相机" [level=4] [ref=e222]
+              - button "编辑任务" [ref=e223]:
+                - img [ref=e224]
+          - generic [ref=e227] [cursor=pointer]:
+            - checkbox [ref=e229]
+            - generic [ref=e231]:
+              - heading "冥想" [level=4] [ref=e232]
+              - button "编辑任务" [ref=e233]:
+                - img [ref=e234]
+          - generic [ref=e237] [cursor=pointer]:
+            - checkbox [ref=e239]
+            - generic [ref=e241]:
+              - heading "匿名登录" [level=4] [ref=e242]
+              - button "编辑任务" [ref=e243]:
+                - img [ref=e244]
+          - generic [ref=e247] [cursor=pointer]:
+            - checkbox [ref=e249]
+            - generic [ref=e251]:
+              - heading "就业平台" [level=4] [ref=e252]
+              - button "编辑任务" [ref=e253]:
+                - img [ref=e254]
+          - generic [ref=e257] [cursor=pointer]:
+            - checkbox [checked] [ref=e259]:
+              - generic:
+                - img
+            - generic [ref=e261]:
+              - heading "运动" [level=4] [ref=e262]
+              - button "编辑任务" [ref=e263]:
+                - img [ref=e264]
+          - generic [ref=e267] [cursor=pointer]:
+            - checkbox [active] [ref=e269]
+            - generic [ref=e271]:
+              - heading "Docker" [level=4] [ref=e272]
+              - button "编辑任务" [ref=e273]:
+                - img [ref=e274]
+          - generic [ref=e277] [cursor=pointer]:
+            - checkbox [ref=e279]
+            - generic [ref=e281]:
+              - heading "阿里云 Hermes Agent" [level=4] [ref=e282]
+              - button "编辑任务" [ref=e283]:
+                - img [ref=e284]
+          - generic [ref=e287] [cursor=pointer]:
+            - checkbox [checked] [ref=e289]:
+              - generic:
+                - img
+            - generic [ref=e291]:
+              - heading "洗澡" [level=4] [ref=e292]
+              - button "编辑任务" [ref=e293]:
+                - img [ref=e294]
+          - generic [ref=e297] [cursor=pointer]:
+            - checkbox [ref=e299]
+            - generic [ref=e301]:
+              - heading "总结" [level=4] [ref=e302]
+              - button "编辑任务" [ref=e303]:
+                - img [ref=e304]
+          - generic [ref=e307] [cursor=pointer]:
+            - checkbox [ref=e309]
+            - generic [ref=e311]:
+              - heading "睡觉" [level=4] [ref=e312]
+              - button "编辑任务" [ref=e313]:
+                - img [ref=e314]
+          - generic [ref=e317] [cursor=pointer]:
+            - checkbox [ref=e319]
+            - generic [ref=e321]:
+              - heading "sony a6400" [level=4] [ref=e322]
+              - button "编辑任务" [ref=e323]:
+                - img [ref=e324]
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]:
+              - generic [ref=e38]: 任务完成度
+              - generic [ref=e39]: 47%
+            - progressbar "47%" [ref=e431]
+          - button "添加项目" [ref=e42]:
+            - img
+            - text: 添加项目
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e51]: 00:00
+          - generic [ref=e55]: 01:00
+          - generic [ref=e59]: 02:00
+          - generic [ref=e63]: 03:00
+          - generic [ref=e67]: 04:00
+          - generic [ref=e71]: 05:00
+          - generic [ref=e75]: 06:00
+          - generic [ref=e79]: 07:00
+          - generic [ref=e83]: 08:00
+          - generic [ref=e87]: 09:00
+          - generic [ref=e91]: 10:00
+          - generic [ref=e95]: 11:00
+          - generic [ref=e99]: 12:00
+          - generic [ref=e103]: 13:00
+          - generic [ref=e107]: 14:00
+          - generic [ref=e111]: 15:00
+          - generic [ref=e115]: 16:00
+          - generic [ref=e119]: 17:00
+          - generic [ref=e123]: 18:00
+          - generic [ref=e127]: 19:00
+          - generic [ref=e131]: 20:00
+          - generic [ref=e135]: 21:00
+          - generic [ref=e139]: 22:00
+          - generic [ref=e143]: 23:00
+        - heading "起床" [level=3] [ref=e332] [cursor=pointer]
+        - heading "洗漱" [level=3] [ref=e337] [cursor=pointer]
+        - heading "每天跟三个陌生人说话" [level=3] [ref=e342] [cursor=pointer]
+        - generic [ref=e344] [cursor=pointer]:
+          - generic [ref=e345]:
+            - generic [ref=e346]: 个人任务
+            - generic [ref=e347]: 09:00 — 1小时
+          - heading "ralph loop" [level=3] [ref=e350]
+          - button "执行" [ref=e353]:
+            - img
+            - text: 执行
+        - generic [ref=e355] [cursor=pointer]:
+          - generic [ref=e356]:
+            - generic [ref=e357]: 个人任务
+            - generic [ref=e358]: 10:00 — 1小时
+          - heading "小程序推广" [level=3] [ref=e361]
+        - generic [ref=e363] [cursor=pointer]:
+          - generic [ref=e364]:
+            - generic [ref=e365]: 个人任务
+            - generic [ref=e366]: 11:00 — 1小时
+          - heading "分享广告页 封装一个横屏弹窗组件" [level=3] [ref=e369]
+        - heading "相机" [level=3] [ref=e374] [cursor=pointer]
+        - heading "冥想" [level=3] [ref=e379] [cursor=pointer]
+        - generic [ref=e381] [cursor=pointer]:
+          - generic [ref=e382]:
+            - generic [ref=e383]: 个人任务
+            - generic [ref=e384]: 14:00 — 4小时
+          - heading "匿名登录" [level=3] [ref=e387]
+          - button "执行" [ref=e390]:
+            - img
+            - text: 执行
+        - heading "就业平台" [level=3] [ref=e395] [cursor=pointer]
+        - heading "运动" [level=3] [ref=e400] [cursor=pointer]
+        - heading "Docker" [level=3] [ref=e405] [cursor=pointer]
+        - heading "阿里云 Hermes Agent" [level=3] [ref=e410] [cursor=pointer]
+        - heading "洗澡" [level=3] [ref=e415] [cursor=pointer]
+        - heading "总结" [level=3] [ref=e420] [cursor=pointer]
+        - heading "睡觉" [level=3] [ref=e425] [cursor=pointer]
+        - heading "sony a6400" [level=3] [ref=e430] [cursor=pointer]
+        - generic:
+          - generic: 现在
+  - generic [ref=e144]:
+    - generic "Toggle devtools panel" [ref=e145] [cursor=pointer]:
+      - img [ref=e146]
+    - generic "Toggle Component Inspector" [ref=e151] [cursor=pointer]:
+      - img [ref=e152]

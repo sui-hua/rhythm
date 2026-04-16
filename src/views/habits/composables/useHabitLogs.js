@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
 import { useDateStore } from '@/stores/dateStore'
 
@@ -44,13 +44,16 @@ export function useHabitLogsFormatter(logs) {
 export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
     const dateStore = useDateStore()
 
+    // 写操作按钮 loading 状态
+    const isSubmitting = ref(false)
+
     /**
-     * 为某特定的日期天数切换它的已读和打卡状态：通过检索判断实现其“增、删”。
+     * 为某特定的日期天数切换它的已读和打卡状态：通过检索判断实现其”增、删”。
      * 若原本已被打卡则做删除(撤回)工作；原本是空白便进行生成新的记录日志工作。
      * @param {number} day - 点击发生时回传出的对应特定具体天日期的标号数字
      */
     const toggleComplete = async (day) => {
-        if (!selectedHabit.value) return
+        if (!selectedHabit.value || isSubmitting.value) return
 
         const habit = selectedHabit.value
         // 在内存已有数据中预先查询这天中是否带有相关的 log
@@ -58,6 +61,7 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
             return new Date(log.completed_at).getDate() === day
         })
 
+        isSubmitting.value = true
         try {
             if (existingLog) {
                 // 清理撤销打卡
@@ -73,6 +77,8 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
             await fetchHabits()
         } catch (e) {
             console.error('Toggle habit log failed', e)
+        } finally {
+            isSubmitting.value = false
         }
     }
 
@@ -82,14 +88,15 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
      * @returns {Promise<boolean>} 是否完成了提交以使前台对文本框等执行复位清理
      */
     const handleQuickLog = async (note) => {
-        if (!selectedHabit.value || !note.trim()) {
+        if (!selectedHabit.value || !note.trim() || isSubmitting.value) {
             console.warn('Habit not selected or note is empty')
             return false
         }
 
+        isSubmitting.value = true
         try {
             const now = new Date()
-            // 这里对齐目前主数据真实流时间的“今天”而规避上述由于翻页查看的 viewMonth 月份漂移现象
+            // 这里对齐目前主数据真实流时间的”今天”而规避上述由于翻页查看的 viewMonth 月份漂移现象
             const today = now.getDate()
 
             // 预先筛查以杜绝针对单个今天因频繁重送而导致多余脏数据存入
@@ -116,11 +123,14 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
         } catch (e) {
             console.error('Quick log failed', e)
             return false
+        } finally {
+            isSubmitting.value = false
         }
     }
     return {
         toggleComplete,
-        handleQuickLog
+        handleQuickLog,
+        isSubmitting
     }
 }
 

@@ -1,20 +1,20 @@
-- generic [ref=e1]:
+- generic [active] [ref=e1]:
   - generic [ref=e3]:
     - region "Notifications alt+T":
       - list
     - generic:
       - navigation [ref=e4]:
         - generic [ref=e5]:
-          - button "时序" [ref=e181]:
+          - button "时序" [ref=e6]:
             - img
             - text: 时序
-          - button "习惯" [ref=e182]:
+          - button "习惯" [ref=e7]:
             - img
             - text: 习惯
-          - button "所向" [ref=e183]:
+          - button "所向" [ref=e8]:
             - img
             - text: 所向
-          - button "总结" [ref=e184]:
+          - button "总结" [ref=e9]:
             - img
             - text: 总结
       - button:
@@ -22,15 +22,9 @@
     - generic [ref=e11]:
       - complementary [ref=e12]:
         - heading "所向目标" [level=2] [ref=e16]
-        - generic [ref=e185]:
-          - paragraph [ref=e187]: 未分类
-          - button "测试目标" [ref=e189]:
-            - generic [ref=e190]:
-              - heading "测试目标" [level=4] [ref=e191]
-              - img [ref=e193] [cursor=pointer]
         - generic [ref=e22]:
           - generic [ref=e23]:
-            - generic [ref=e24]: 本月进度
+            - generic [ref=e24]: 系统推进负载
             - generic [ref=e25]: 0%
           - progressbar "0%" [ref=e26]
           - button "添加目标" [ref=e28]:
@@ -40,7 +34,7 @@
         - banner [ref=e34]:
           - generic [ref=e35]:
             - generic [ref=e36]: 当前关注
-            - heading "测试目标" [level=2] [ref=e196]
+            - heading [level=2]
           - generic [ref=e38]:
             - generic [ref=e39]:
               - generic [ref=e40]:
@@ -52,23 +46,19 @@
               - generic [ref=e46]:
                 - button "开始月份" [ref=e47]
                 - button "结束月份" [ref=e48]
-            - generic [ref=e49]:
-              - generic [ref=e51]:
-                - generic [ref=e53] [cursor=pointer]: "01"
-                - generic [ref=e57] [cursor=pointer]: "02"
-                - generic [ref=e61] [cursor=pointer]: "03"
-                - generic [ref=e65] [cursor=pointer]: "04"
-                - generic [ref=e69] [cursor=pointer]: "05"
-                - generic [ref=e73] [cursor=pointer]: "06"
-                - generic [ref=e77] [cursor=pointer]: "07"
-                - generic [ref=e81] [cursor=pointer]: "08"
-                - generic [ref=e85] [cursor=pointer]: "09"
-                - generic [ref=e89] [cursor=pointer]: "10"
-                - generic [ref=e93] [cursor=pointer]: "11"
-                - generic [ref=e97] [cursor=pointer]: "12"
-              - button "确认修改" [ref=e198]:
-                - generic [ref=e199]: 确认修改
-                - img [ref=e200]
+            - generic [ref=e51]:
+              - generic [ref=e53] [cursor=pointer]: "01"
+              - generic [ref=e57] [cursor=pointer]: "02"
+              - generic [ref=e61] [cursor=pointer]: "03"
+              - generic [ref=e65] [cursor=pointer]: "04"
+              - generic [ref=e69] [cursor=pointer]: "05"
+              - generic [ref=e73] [cursor=pointer]: "06"
+              - generic [ref=e77] [cursor=pointer]: "07"
+              - generic [ref=e81] [cursor=pointer]: "08"
+              - generic [ref=e85] [cursor=pointer]: "09"
+              - generic [ref=e89] [cursor=pointer]: "10"
+              - generic [ref=e93] [cursor=pointer]: "11"
+              - generic [ref=e97] [cursor=pointer]: "12"
         - generic [ref=e101]:
           - banner [ref=e102]:
             - generic [ref=e103]:

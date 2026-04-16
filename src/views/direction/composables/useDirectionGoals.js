@@ -1,8 +1,4 @@
-/**
- * 方向模块目标管理 (useDirectionGoals.js)
- * 处理目标的增删改查、月度计划同步以及月份范围确认。
- */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { safeDb as db } from '@/services/safeDb'
 import {
@@ -18,32 +14,20 @@ import {
   showCategoryModal,
   getMonthlyPlansByPlanId
 } from '@/views/direction/composables/useDirectionState'
-import { getIsoMonth } from '@/utils/dateParts'
 
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionGoals() {
   const authStore = useAuthStore()
-  const { fetchData, loadMonthlyPlans } = useDirectionFetch()
+  const { fetchData } = useDirectionFetch()
+
+  // 写操作按钮 loading 状态
+  const isSubmitting = ref(false)
 
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
-
-    const cachedMonths = getMonthlyPlansByPlanId(selectedGoal.value.plan_id)
-      .map(mp => getIsoMonth(mp.month))
-      .filter(month => month !== null)
-
-    const startMonth = cachedMonths.length > 0
-      ? Math.min(...cachedMonths)
-      : selectedGoal.value.startMonth
-    const endMonth = cachedMonths.length > 0
-      ? Math.max(...cachedMonths)
-      : selectedGoal.value.endMonth
-
-    if (!startMonth || !endMonth) return []
-
     const range = []
-    for (let i = startMonth; i <= endMonth; i++) range.push(i)
+    for (let i = selectedGoal.value.startMonth; i <= selectedGoal.value.endMonth; i++) range.push(i)
     return range
   })
 
@@ -63,7 +47,7 @@ export function useDirectionGoals() {
 
     if (relatedMonthlyPlans.length > 0) {
       const months = relatedMonthlyPlans
-        .map(mp => getIsoMonth(mp.month))
+        .map(mp => (mp.month ? new Date(mp.month).getMonth() + 1 : null))
         .filter(m => m !== null)
 
       if (months.length > 0) {
@@ -104,7 +88,7 @@ export function useDirectionGoals() {
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
 
       const existingMonthlyPlans = getMonthlyPlansByPlanId(planId)
-      const existingMonths = existingMonthlyPlans.map(mp => getIsoMonth(mp.month)).filter(m => m !== null)
+      const existingMonths = existingMonthlyPlans.map(mp => new Date(mp.month).getMonth() + 1)
 
       const startM = goalToUpdate.startMonth || 1
       const endM = goalToUpdate.endMonth || startM
@@ -134,7 +118,7 @@ export function useDirectionGoals() {
       }
 
       const toDelete = existingMonthlyPlans.filter(mp => {
-        const m = getIsoMonth(mp.month)
+        const m = new Date(mp.month).getMonth() + 1
         return !targetMonths.includes(m)
       })
 
@@ -150,8 +134,9 @@ export function useDirectionGoals() {
   }
 
   const handleUpdateGoal = async (updatedGoal) => {
-    if (!editingGoal.value) return
+    if (!editingGoal.value || isSubmitting.value) return
 
+    isSubmitting.value = true
     const success = await updateGoalData(
       editingGoal.value,
       updatedGoal.title,
@@ -159,6 +144,7 @@ export function useDirectionGoals() {
       updatedGoal.task_time,
       updatedGoal.duration
     )
+    isSubmitting.value = false
 
     if (success) {
       showAddModal.value = false
@@ -167,7 +153,7 @@ export function useDirectionGoals() {
 
   const saveMonthlyPlan = async (m, payload) => {
     const currentMp = getMonthlyPlansByPlanId(selectedGoal.value.plan_id).find(
-      mp => getIsoMonth(mp.month) === m
+      mp => new Date(mp.month).getMonth() + 1 === m
     )
     if (currentMp) {
       try {
@@ -179,6 +165,9 @@ export function useDirectionGoals() {
   }
 
   const handleAddGoal = async (newGoal) => {
+    if (isSubmitting.value) return
+
+    isSubmitting.value = true
     try {
       if (!authStore.userId) {
         console.error('User ID not available')
@@ -220,17 +209,19 @@ export function useDirectionGoals() {
       }
 
       await Promise.all(promises)
-      await fetchData()
       await loadMonthlyPlans(createdPlan.id)
       showAddModal.value = false
     } catch (e) {
       console.error('Add goal failed:', e)
+    } finally {
+      isSubmitting.value = false
     }
   }
 
   const handleDeleteGoal = async () => {
-    if (!editingGoal.value) return
+    if (!editingGoal.value || isSubmitting.value) return
 
+    isSubmitting.value = true
     try {
       const planId = editingGoal.value.plan_id
       if (!planId) return
@@ -251,6 +242,8 @@ export function useDirectionGoals() {
       showAddModal.value = false
     } catch (e) {
       console.error('Delete goal failed:', e)
+    } finally {
+      isSubmitting.value = false
     }
   }
 
@@ -282,6 +275,7 @@ export function useDirectionGoals() {
     handleUpdateGoal,
     handleDeleteGoal,
     handleConfirmRange,
-    saveMonthlyPlan
+    saveMonthlyPlan,
+    isSubmitting
   }
 }

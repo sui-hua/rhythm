@@ -1,7 +1,3 @@
-/**
- * 方向模块共享状态 (useDirectionState.js)
- * 所有 composables 之间共享的响应式状态和缓存，是方向模块的数据中心。
- */
 import { ref, reactive } from 'vue'
 import { getMonthName } from '@/utils/dateFormatter'
 

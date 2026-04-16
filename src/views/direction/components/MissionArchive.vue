@@ -1,7 +1,3 @@
-<!--
-  任务归档面板 (MissionArchive.vue)
-  展示当前选中月份有任务的日期列表，支持内联编辑任务标题、时间和时长。
--->
 <template>
   <div class="archive-root">
     <ArchiveHeader

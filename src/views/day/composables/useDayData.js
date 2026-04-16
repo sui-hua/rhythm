@@ -6,6 +6,7 @@ import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { formatDuration } from '@/utils/formatDuration'
+import { isDailyPlanCompleted, toDailyPlanStatus } from '@/utils/dailyPlanStatus'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -14,9 +15,10 @@ const habits = ref([])
 const habitLogs = ref([])
 const isLoading = ref(false)
 
-// Day 视图核心数据管理层 (Composable)
-// 负责解析时间参数、获取并组装统一日程列表以及统计数据
-// 统一聚合 Task、DailyPlan、Habit 三种数据源到 dailySchedule
+/**
+ * Day 视图核心数据管理层 (Composable)
+ * 负责解析时间参数、获取并组装统一日程列表以及统计数据
+ */
 export function useDayData() {
     const route = useRoute()
     const dateStore = useDateStore()
@@ -144,7 +146,7 @@ export function useDayData() {
                 category: '今日计划',
                 title: plan.title,
                 description: plan.description || '',
-                completed: plan.status === 'completed'
+                completed: isDailyPlanCompleted(plan.status)
             })
         })
 
@@ -267,8 +269,7 @@ export function useDayData() {
                     await db.habits.log(task.id, '')
                 }
             } else if (task.type === 'daily_plan') {
-                const isNumeric = typeof task.original.status === 'number'
-                const newStatus = isNumeric ? (task.completed ? 0 : 1) : (task.completed ? 'pending' : 'completed')
+                const newStatus = toDailyPlanStatus(!task.completed)
                 await db.dailyPlans.update(task.id, { status: newStatus })
             }
 

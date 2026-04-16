@@ -1,7 +1,3 @@
-<!--
-  DialogHeader 组件 - 对话框头部
-  Props: class
--->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { cn } from '@/lib/utils'

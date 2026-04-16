@@ -1,7 +1,3 @@
-<!--
-  月份卡片头部 (MissionBoardMonthHeader.vue)
-  显示月份标签、主要任务标题/时间/时长，支持点击展开/折叠和内联编辑。
--->
 <template>
   <div class="month-header" @click="toggleMonth(month)">
     <div class="month-header-left">

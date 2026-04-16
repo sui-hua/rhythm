@@ -1,0 +1,248 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - button "时序" [ref=e6]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e7]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e8]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e9]:
+            - img
+            - text: 总结
+      - button:
+        - img
+    - generic [ref=e11]:
+      - complementary [ref=e12]:
+        - heading "所向目标" [level=2] [ref=e16]
+        - generic [ref=e20]:
+          - generic [ref=e126]:
+            - paragraph [ref=e128]: 学习
+            - generic [ref=e129]:
+              - button "AI" [ref=e130]:
+                - generic [ref=e131]:
+                  - heading "AI" [level=4] [ref=e132]
+                  - img [ref=e134] [cursor=pointer]
+              - button "全栈" [ref=e137]:
+                - generic [ref=e138]:
+                  - heading "全栈" [level=4] [ref=e139]
+                  - img [ref=e141] [cursor=pointer]
+              - button "后端" [ref=e144]:
+                - generic [ref=e145]:
+                  - heading "后端" [level=4] [ref=e146]
+                  - img [ref=e148] [cursor=pointer]
+              - button "前端" [ref=e151]:
+                - generic [ref=e152]:
+                  - heading "前端" [level=4] [ref=e153]
+                  - img [ref=e155] [cursor=pointer]
+          - generic [ref=e158]:
+            - paragraph [ref=e160]: 生活
+            - generic [ref=e161]:
+              - button "摆脱内向" [ref=e162]:
+                - generic [ref=e163]:
+                  - heading "摆脱内向" [level=4] [ref=e164]
+                  - img [ref=e166] [cursor=pointer]
+              - button "购物清单" [ref=e169]:
+                - generic [ref=e170]:
+                  - heading "购物清单" [level=4] [ref=e171]
+                  - img [ref=e173] [cursor=pointer]
+              - button "扩大交集" [ref=e176]:
+                - generic [ref=e177]:
+                  - heading "扩大交集" [level=4] [ref=e178]
+                  - img [ref=e180] [cursor=pointer]
+          - generic [ref=e183]:
+            - paragraph [ref=e185]: 未分类
+            - generic [ref=e186]:
+              - button "足球" [ref=e187]:
+                - generic [ref=e188]:
+                  - heading "足球" [level=4] [ref=e189]
+                  - img [ref=e191] [cursor=pointer]
+              - button "羽毛球" [ref=e194]:
+                - generic [ref=e195]:
+                  - heading "羽毛球" [level=4] [ref=e196]
+                  - img [ref=e198] [cursor=pointer]
+              - button "太极" [ref=e201]:
+                - generic [ref=e202]:
+                  - heading "太极" [level=4] [ref=e203]
+                  - img [ref=e205] [cursor=pointer]
+              - button "体验" [ref=e208]:
+                - generic [ref=e209]:
+                  - heading "体验" [level=4] [ref=e210]
+                  - img [ref=e212] [cursor=pointer]
+          - generic [ref=e215]:
+            - paragraph [ref=e217]: 工作
+            - button "赚钱" [active] [ref=e219]:
+              - generic [ref=e220]:
+                - heading "赚钱" [level=4] [ref=e221]
+                - img [ref=e223] [cursor=pointer]
+          - generic [ref=e226]:
+            - paragraph [ref=e228]: 形象
+            - generic [ref=e229]:
+              - button "护肤" [ref=e230]:
+                - generic [ref=e231]:
+                  - heading "护肤" [level=4] [ref=e232]
+                  - img [ref=e234] [cursor=pointer]
+              - button "发型" [ref=e237]:
+                - generic [ref=e238]:
+                  - heading "发型" [level=4] [ref=e239]
+                  - img [ref=e241] [cursor=pointer]
+              - button "衣品" [ref=e244]:
+                - generic [ref=e245]:
+                  - heading "衣品" [level=4] [ref=e246]
+                  - img [ref=e248] [cursor=pointer]
+          - generic [ref=e251]:
+            - paragraph [ref=e253]: 语言
+            - button "英语" [ref=e255]:
+              - generic [ref=e256]:
+                - heading "英语" [level=4] [ref=e257]
+                - img [ref=e259] [cursor=pointer]
+          - generic [ref=e262]:
+            - paragraph [ref=e264]: 学历
+            - button "自考" [ref=e266]:
+              - generic [ref=e267]:
+                - heading "自考" [level=4] [ref=e268]
+                - img [ref=e270] [cursor=pointer]
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]: 系统推进负载
+            - generic [ref=e25]: 0%
+          - progressbar "0%" [ref=e26]
+          - button "添加目标" [ref=e28]:
+            - img
+            - text: 添加目标
+      - generic [ref=e30]:
+        - generic [ref=e33]:
+          - banner [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e36]: 当前关注
+              - heading "赚钱" [level=2] [ref=e273]
+            - generic [ref=e38]:
+              - generic [ref=e39]:
+                - generic [ref=e40]:
+                  - generic [ref=e41]: 执行时轴
+                  - generic [ref=e42]:
+                    - generic [ref=e43]: 一月
+                    - generic [ref=e44]: 到
+                    - generic [ref=e45]: 十二月
+                - generic [ref=e46]:
+                  - button "开始月份" [ref=e47]
+                  - button "结束月份" [ref=e48]
+              - generic [ref=e51]:
+                - generic [ref=e53] [cursor=pointer]: "01"
+                - generic [ref=e57] [cursor=pointer]: "02"
+                - generic [ref=e61] [cursor=pointer]: "03"
+                - generic [ref=e65] [cursor=pointer]: "04"
+                - generic [ref=e69] [cursor=pointer]: "05"
+                - generic [ref=e73] [cursor=pointer]: "06"
+                - generic [ref=e77] [cursor=pointer]: "07"
+                - generic [ref=e81] [cursor=pointer]: "08"
+                - generic [ref=e85] [cursor=pointer]: "09"
+                - generic [ref=e89] [cursor=pointer]: "10"
+                - generic [ref=e93] [cursor=pointer]: "11"
+                - generic [ref=e97] [cursor=pointer]: "12"
+          - generic [ref=e100]:
+            - generic [ref=e276] [cursor=pointer]:
+              - generic [ref=e277]:
+                - generic [ref=e278]: 01月
+                - heading "暂无计划" [level=3] [ref=e281]
+              - generic [ref=e282]:
+                - button "展开规划" [ref=e283]
+                - img [ref=e284]
+            - generic [ref=e287] [cursor=pointer]:
+              - generic [ref=e288]:
+                - generic [ref=e289]: 02月
+                - heading "暂无计划" [level=3] [ref=e292]
+              - generic [ref=e293]:
+                - button "展开规划" [ref=e294]
+                - img [ref=e295]
+            - generic [ref=e298] [cursor=pointer]:
+              - generic [ref=e299]:
+                - generic [ref=e300]: 03月
+                - heading "靠工作是不可能实现财富自由的 还是要做自己喜欢的时候 赚钱目前就是独立开发者" [level=3] [ref=e303]
+              - generic [ref=e304]:
+                - button "展开规划" [ref=e305]
+                - img [ref=e306]
+            - generic [ref=e309] [cursor=pointer]:
+              - generic [ref=e310]:
+                - generic [ref=e311]: 04月
+                - heading "暂无计划" [level=3] [ref=e314]
+              - generic [ref=e315]:
+                - button "展开规划" [ref=e316]
+                - img [ref=e317]
+            - generic [ref=e320] [cursor=pointer]:
+              - generic [ref=e321]:
+                - generic [ref=e322]: 05月
+                - heading "暂无计划" [level=3] [ref=e325]
+              - generic [ref=e326]:
+                - button "展开规划" [ref=e327]
+                - img [ref=e328]
+            - generic [ref=e331] [cursor=pointer]:
+              - generic [ref=e332]:
+                - generic [ref=e333]: 06月
+                - heading "暂无计划" [level=3] [ref=e336]
+              - generic [ref=e337]:
+                - button "展开规划" [ref=e338]
+                - img [ref=e339]
+            - generic [ref=e342] [cursor=pointer]:
+              - generic [ref=e343]:
+                - generic [ref=e344]: 07月
+                - heading "暂无计划" [level=3] [ref=e347]
+              - generic [ref=e348]:
+                - button "展开规划" [ref=e349]
+                - img [ref=e350]
+            - generic [ref=e353] [cursor=pointer]:
+              - generic [ref=e354]:
+                - generic [ref=e355]: 08月
+                - heading "暂无计划" [level=3] [ref=e358]
+              - generic [ref=e359]:
+                - button "展开规划" [ref=e360]
+                - img [ref=e361]
+            - generic [ref=e364] [cursor=pointer]:
+              - generic [ref=e365]:
+                - generic [ref=e366]: 09月
+                - heading "暂无计划" [level=3] [ref=e369]
+              - generic [ref=e370]:
+                - button "展开规划" [ref=e371]
+                - img [ref=e372]
+            - generic [ref=e375] [cursor=pointer]:
+              - generic [ref=e376]:
+                - generic [ref=e377]: 010月
+                - heading "暂无计划" [level=3] [ref=e380]
+              - generic [ref=e381]:
+                - button "展开规划" [ref=e382]
+                - img [ref=e383]
+            - generic [ref=e386] [cursor=pointer]:
+              - generic [ref=e387]:
+                - generic [ref=e388]: 011月
+                - heading "暂无计划" [level=3] [ref=e391]
+              - generic [ref=e392]:
+                - button "展开规划" [ref=e393]
+                - img [ref=e394]
+            - generic [ref=e397] [cursor=pointer]:
+              - generic [ref=e398]:
+                - generic [ref=e399]: 012月
+                - heading "暂无计划" [level=3] [ref=e402]
+              - generic [ref=e403]:
+                - button "展开规划" [ref=e404]
+                - img [ref=e405]
+        - generic [ref=e101]:
+          - banner [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e104]: 任务归档
+              - heading "无内容" [level=3] [ref=e105]
+            - generic [ref=e106]:
+              - paragraph [ref=e107]: 周期密度
+              - generic [ref=e108]: 0 / 31
+          - paragraph [ref=e113]: 暂无归档内容，请先在下方日期面板中规划任务。
+  - generic [ref=e114]:
+    - generic "Toggle devtools panel" [ref=e115] [cursor=pointer]:
+      - img [ref=e116]
+    - generic "Toggle Component Inspector" [ref=e121] [cursor=pointer]:
+      - img [ref=e122]

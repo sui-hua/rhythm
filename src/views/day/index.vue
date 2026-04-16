@@ -85,8 +85,6 @@
 </template>
 
 <script setup>
-// Day 视图主页面：整合时间轴、侧边栏、各类弹窗和移动端抽屉
-// 统一聚合 Task、DailyPlan、Habit 三种数据源
 import { ref, defineAsyncComponent, watch, onBeforeUnmount, onMounted } from 'vue'
 import { Menu, Plus } from 'lucide-vue-next'
 import Sidebar from '@/views/day/components/Sidebar.vue'

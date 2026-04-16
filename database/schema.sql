@@ -50,9 +50,10 @@ CREATE TABLE daily_plans (
     user_id UUID NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
-    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'archived')),
+    status SMALLINT NOT NULL DEFAULT 0 CHECK (status IN (0, 1)),
     priority INTEGER DEFAULT 2 CHECK (priority BETWEEN 1 AND 3),
-    day DATE NOT NULL,
+    date DATE NOT NULL,
+    day DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -246,16 +247,20 @@ CREATE OR REPLACE FUNCTION batch_upsert_daily_plans(
   p_items JSONB
 ) RETURNS VOID AS $$
 BEGIN
-  INSERT INTO daily_plans (monthly_plan_id, user_id, day, title)
+  INSERT INTO daily_plans (monthly_plan_id, user_id, day, title, task_time, duration)
   SELECT
     p_monthly_plan_id,
     p_user_id,
     (item->>'date')::DATE,
-    item->>'title'
+    item->>'title',
+    NULLIF(item->>'task_time', ''),
+    NULLIF(item->>'duration', '')::INT
   FROM jsonb_array_elements(p_items) AS item
   ON CONFLICT (monthly_plan_id, day)
   DO UPDATE SET
     title = EXCLUDED.title,
+    task_time = EXCLUDED.task_time,
+    duration = EXCLUDED.duration,
     updated_at = NOW();
 END;
 $$ LANGUAGE plpgsql;

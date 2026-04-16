@@ -1,14 +1,23 @@
-<!--
-  所向目标页面 (index.vue)
-  三栏布局：左侧目标列表 → 中间月度计划板 → 右侧任务归档
--->
 <template>
   <div class="direction-root">
     <!-- 左侧导航：目标列表 -->
     <DirectionSidebar />
 
     <div class="direction-main">
-      <div class="direction-content">
+      <!-- 页面级骨架 -->
+      <div v-if="isPageLoading" class="direction-skeleton">
+        <div class="skeleton-sidebar">
+          <div class="skeleton-line w-3/4 h-4 rounded-md" />
+          <div class="skeleton-line w-1/2 h-3 rounded-md mt-2" />
+          <div class="skeleton-line w-2/3 h-4 rounded-md mt-4" />
+          <div class="skeleton-line w-1/2 h-3 rounded-md mt-2" />
+        </div>
+        <div class="skeleton-content">
+          <div class="skeleton-block h-12 rounded-lg mb-4" />
+          <div class="skeleton-block h-48 rounded-lg" />
+        </div>
+      </div>
+      <div v-else class="direction-content">
         <ScrollArea class="direction-scroll">
           <!-- 目标月份范围选择器 -->
           <GoalRangePicker />
@@ -34,8 +43,11 @@ import DirectionSidebar from '@/views/direction/components/DirectionSidebar.vue'
 import GoalRangePicker from '@/views/direction/components/GoalRangePicker.vue'
 import MissionBoard from '@/views/direction/components/MissionBoard.vue'
 import MissionArchive from '@/views/direction/components/MissionArchive.vue'
+import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 const AddGoalModal = defineAsyncComponent(() => import('@/views/direction/components/AddGoalModal.vue'))
+
+const { isPageLoading } = useDirectionFetch()
 </script>
 
 <style scoped>
@@ -62,5 +74,22 @@ const AddGoalModal = defineAsyncComponent(() => import('@/views/direction/compon
 
 .direction-archive {
   @apply flex-1 relative z-10;
+}
+
+/* Skeleton styles */
+.direction-skeleton {
+  @apply w-full h-full flex p-0 overflow-auto relative z-10;
+}
+
+.skeleton-sidebar {
+  @apply w-[280px] border-r border-border bg-background p-6 flex flex-col;
+}
+
+.skeleton-content {
+  @apply flex-1 p-6;
+}
+
+.skeleton-line, .skeleton-block {
+  @apply bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded-md;
 }
 </style>

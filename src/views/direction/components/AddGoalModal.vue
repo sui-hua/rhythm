@@ -1,7 +1,3 @@
-<!--
-  添加/编辑目标弹窗 (AddGoalModal.vue)
-  表单包含目标名称、月份范围、分类、任务时间、预计时长；编辑模式下支持删除目标。
--->
 <template>
   <Dialog :open="showAddModal" @update:open="showAddModal = $event">
     <DialogContent class="modal-content">

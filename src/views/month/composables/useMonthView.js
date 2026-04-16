@@ -1,8 +1,4 @@
 import { computed, onMounted, ref, watch } from 'vue'
-/**
- * useMonthView - 月度视图逻辑
- * 管理月度任务数据获取、月历网格生成和导航
- */
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
@@ -13,6 +9,7 @@ export const useMonthView = () => {
   const router = useRouter()
   const route = useRoute()
 
+  const isPageLoading = ref(false)
   const tasks = ref([])
 
   const monthIndexFromRoute = computed(() => parseInt(route.params.monthIndex))
@@ -43,6 +40,7 @@ export const useMonthView = () => {
   const fetchMonthTasks = async () => {
     if (!ensureValidMonth()) return
 
+    isPageLoading.value = true
     const monthIndex = monthIndexFromRoute.value - 1
     const currentYear = dateStore.currentDate.getFullYear()
     const start = new Date(currentYear, monthIndex, 1)
@@ -52,6 +50,8 @@ export const useMonthView = () => {
       tasks.value = await db.tasks.list(start, end)
     } catch (e) {
       console.error(e)
+    } finally {
+      isPageLoading.value = false
     }
   }
 
@@ -117,6 +117,7 @@ export const useMonthView = () => {
     selectedMonth,
     monthGridData,
     goBackToYear,
-    enterDay
+    enterDay,
+    isPageLoading
   }
 }

@@ -160,8 +160,6 @@
 </template>
 
 <script setup>
-// 侧边栏组件：显示任务列表、进度条、添加按钮
-// 移动端支持左滑完成任务，桌面端支持宽度拖拽调整
 import { computed, ref } from 'vue'
 import { Plus, Settings2, X, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'

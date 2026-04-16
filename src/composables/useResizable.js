@@ -1,7 +1,3 @@
-/**
- * 可拖拽调整宽度 Composable
- * 支持鼠标拖拽、范围限制、自动持久化到 localStorage
- */
 import { ref, onUnmounted } from 'vue'
 
 const STORAGE_KEY = 'sidebar-width'

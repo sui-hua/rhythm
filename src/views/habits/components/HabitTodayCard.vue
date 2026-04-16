@@ -2,7 +2,6 @@
 /**
  * 今日打卡卡片组件 (HabitTodayCard.vue)
  * 包含日期显示、快速打卡输入框和提交按钮。
- * 用户可在此输入习惯心得并快速打卡。
  */
 import { ref } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
@@ -12,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 
 defineProps({
   /**
-   * 当前日期字符串，用于展示今日日期
+   * 当前日期字符串，用于展示
    */
   currentDate: {
     type: String,
@@ -25,7 +24,7 @@ const emit = defineEmits(['quick-log'])
 const habitNote = ref('')
 
 /**
- * 处理快速打卡：验证输入后提交日志并清空输入框
+ * 将绑定的文本传递给底层的日志创建 hook，执行打卡后清空文字框本身。
  */
 const handleQuickLog = async () => {
   if (!habitNote.value.trim()) return

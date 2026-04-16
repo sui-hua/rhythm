@@ -24,10 +24,6 @@
   </div>
 </template>
 
-<!--
-  DurationPicker 组件 - 时长选择器
-  Props: modelValue (小时), id, label，支持 hour/minute 单位切换
--->
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { Input } from '@/components/ui/input'

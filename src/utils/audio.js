@@ -1,7 +1,3 @@
-/**
- * 音效播放工具
- * 提供任务完成等场景的成功音效播放
- */
 import successSound from '@/assets/success.mp3';
 
 /**

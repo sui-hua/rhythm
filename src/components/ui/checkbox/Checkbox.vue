@@ -1,9 +1,5 @@
-<!--
-  Checkbox 组件 - 圆形复选框
-  Props: defaultChecked, modelValue, disabled 等，支持 v-model 双向绑定
--->
 <script setup lang="ts">
-import type { HTMLAttributes, computed } from 'vue'
+import { type HTMLAttributes, computed } from 'vue'
 import type { CheckboxRootEmits, CheckboxRootProps } from 'radix-vue'
 import { CheckboxIndicator, CheckboxRoot, useForwardPropsEmits } from 'radix-vue'
 import { Check } from 'lucide-vue-next'

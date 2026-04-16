@@ -79,16 +79,3 @@ pnpm preview  # 预览生产构建
 
 `src/router/index.js` 中的 `beforeEach` 守卫会检查 `authStore.userId`，未登录重定向到 `/login`。
 
-## 计划与任务
-
-所有的计划位于 `plans/` 目录下：
-- 每天一个独立的文件夹，格式为 `YYYY-MM-DD`（如 `/plans/2026-04-04/`）
-- 计划文件的命名格式为 `编号-计划名`（如 `01-添加任务计划.md`）
-
-```
-plans/
-└── 2026-04-04/
-    ├── 01-composables重构.md
-    └── 02-任务通知功能.md
-```
-

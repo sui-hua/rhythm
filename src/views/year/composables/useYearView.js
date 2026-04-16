@@ -1,7 +1,4 @@
-/**
- * useYearView - 年度视图逻辑
- * 从习惯数据统计年度完成情况，生成12个月的完成天数数据
- */
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
@@ -11,16 +8,22 @@ export const useYearView = () => {
   const dateStore = useDateStore()
   const router = useRouter()
 
+  const isPageLoading = ref(false)
   const habits = ref([])
 
-  onMounted(async () => {
+  const fetchHabits = async () => {
+    isPageLoading.value = true
     try {
       const allHabits = await db.habits.list()
       habits.value = allHabits.filter((habit) => !habit.is_archived)
     } catch (e) {
       console.error(e)
+    } finally {
+      isPageLoading.value = false
     }
-  })
+  }
+
+  onMounted(fetchHabits)
 
   const yearData = computed(() => {
     const currentYear = dateStore.currentDate.getFullYear()
@@ -62,6 +65,7 @@ export const useYearView = () => {
 
   return {
     yearData,
-    enterMonth
+    enterMonth,
+    isPageLoading
   }
 }

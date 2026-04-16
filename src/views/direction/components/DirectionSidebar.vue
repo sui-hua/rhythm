@@ -1,7 +1,3 @@
-<!--
-  目标侧边栏 (DirectionSidebar.vue)
-  按分类展示目标列表，支持单击选中、双击编辑，底部显示本月完成率进度。
--->
 <template>
   <aside class="sidebar" :style="{ width: width + 'px' }">
     <div class="resize-handle" :class="{ 'is-resizing': isResizing }" @mousedown="startResize"></div>
@@ -69,6 +65,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 import { useResizable } from '@/composables/useResizable'
+import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
 
 const { categorizedGoals } = useDirectionFetch()
 const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
@@ -97,7 +94,7 @@ const systemLoad = computed(() => {
   Object.entries(dailyTasks).forEach(([key, task]) => {
     if (key.startsWith(`plan-${planId}-${monthStr}-`)) {
       total++
-      if (task.status === 'completed') completed++
+      if (isDailyPlanCompleted(task.status)) completed++
     }
   })
 

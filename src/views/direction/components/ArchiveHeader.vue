@@ -1,7 +1,3 @@
-<!--
-  归档面板头部 (ArchiveHeader.vue)
-  显示月份标题和周期密度统计（当日有任务天数 / 31）。
--->
 <script setup>
 /**
  * 归档头部组件 (ArchiveHeader.vue)

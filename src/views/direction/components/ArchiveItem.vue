@@ -1,7 +1,3 @@
-<!--
-  单条归档记录 (ArchiveItem.vue)
-  展示日期圆点和任务卡片，支持内联编辑任务标题、时间和时长。
--->
 <script setup>
 /**
  * 归档项组件 (ArchiveItem.vue)

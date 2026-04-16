@@ -1,7 +1,3 @@
-<!--
-  Input 组件 - 文本输入框
-  Props: defaultValue, modelValue (v-model)
--->
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { useVModel } from '@vueuse/core'
