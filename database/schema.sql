@@ -52,8 +52,7 @@ CREATE TABLE daily_plans (
     description TEXT,
     status SMALLINT NOT NULL DEFAULT 0 CHECK (status IN (0, 1)),
     priority INTEGER DEFAULT 2 CHECK (priority BETWEEN 1 AND 3),
-    date DATE NOT NULL,
-    day DATE,
+    day DATE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
