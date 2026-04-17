@@ -1,0 +1,135 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - generic [ref=e5]:
+        - button [ref=e6]:
+          - img
+        - button "APRIL" [ref=e7]
+        - button [ref=e8]:
+          - img
+      - navigation [ref=e9]:
+        - button [ref=e10]:
+          - img
+        - button [ref=e11]:
+          - img
+        - button [ref=e12]:
+          - img
+        - button [ref=e13]:
+          - img
+      - button [ref=e14]:
+        - img [ref=e15]
+    - generic [ref=e19]:
+      - complementary [ref=e20]:
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - heading "17" [level=2] [ref=e24]
+            - button "关闭侧边栏" [ref=e25]:
+              - img
+          - paragraph [ref=e26]: 四月 (April) / TASKS
+        - generic "No Tasks Today" [ref=e31]:
+          - img [ref=e33]
+          - heading [level=3]
+          - paragraph
+          - button "Create First Task" [ref=e36]
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - generic [ref=e40]: 任务完成度
+              - generic [ref=e41]: 0%
+            - progressbar "0%" [ref=e42]
+          - button "添加项目" [ref=e44]:
+            - img
+            - text: 添加项目
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e53]: 00:00
+          - generic [ref=e57]: 01:00
+          - generic [ref=e61]: 02:00
+          - generic [ref=e65]: 03:00
+          - generic [ref=e69]: 04:00
+          - generic [ref=e73]: 05:00
+          - generic [ref=e77]: 06:00
+          - generic [ref=e81]: 07:00
+          - generic [ref=e85]: 08:00
+          - generic [ref=e89]: 09:00
+          - generic [ref=e93]: 10:00
+          - generic [ref=e97]: 11:00
+          - generic [ref=e101]: 12:00
+          - generic [ref=e105]: 13:00
+          - generic [ref=e109]: 14:00
+          - generic [ref=e113]: 15:00
+          - generic [ref=e117]: 16:00
+          - generic [ref=e121]: 17:00
+          - generic [ref=e125]: 18:00
+          - generic [ref=e129]: 19:00
+          - generic [ref=e133]: 20:00
+          - generic [ref=e137]: 21:00
+          - generic [ref=e141]: 22:00
+          - generic [ref=e145]: 23:00
+        - generic:
+          - generic: 现在
+      - button "打开侧边栏" [ref=e146]:
+        - img [ref=e147]
+      - button "新增任务" [ref=e148]:
+        - img [ref=e149]
+  - generic [ref=e150]:
+    - generic "Toggle devtools panel" [ref=e151] [cursor=pointer]:
+      - img [ref=e152]
+    - generic "Toggle Component Inspector" [ref=e157] [cursor=pointer]:
+      - img [ref=e158]
+  - generic [ref=e165]:
+    - banner [ref=e166]:
+      - heading "Quick Add" [level=2] [ref=e167]
+      - paragraph [ref=e168]: 快速添加任务
+    - generic [ref=e170]:
+      - generic [ref=e171]:
+        - generic [ref=e172]: 项目名称
+        - textbox "输入任务名称，回车快速创建" [ref=e173]
+      - generic [ref=e174]:
+        - img [ref=e176]
+        - generic [ref=e179]: ·
+        - generic [ref=e180]: 0.5小时
+        - generic [ref=e181]: ·
+        - generic [ref=e182]: 工作
+      - button "+ 更多选项（完整模式）" [ref=e183]
+    - contentinfo [ref=e184]:
+      - button "快速创建" [disabled] [ref=e185]
+  - generic [ref=e189]:
+    - banner [ref=e190]:
+      - heading "New Task" [level=2] [ref=e191]
+      - paragraph [ref=e192]: Plan your next move
+    - generic [ref=e194]:
+      - generic [ref=e195]:
+        - generic [ref=e196]: 项目名称*
+        - textbox "例如：早起锻炼 / 部门周会" [ref=e197]
+        - paragraph [ref=e198]: 任务名称不能为空
+      - generic [ref=e199]:
+        - generic [ref=e200]:
+          - generic [ref=e201]: 开始时间*
+          - generic [ref=e203]:
+            - textbox "08:00" [ref=e204]
+            - img
+          - paragraph [ref=e205]: 开始时间不能为空
+        - generic [ref=e206]:
+          - generic [ref=e207]: 预计时长
+          - generic [ref=e209]:
+            - spinbutton [ref=e210]: "60"
+            - combobox [ref=e211]:
+              - generic: 分钟
+              - img [ref=e212]
+      - generic [ref=e214]:
+        - generic [ref=e215]: 补充描述
+        - textbox "可选详情..." [ref=e216]
+      - generic [ref=e217]:
+        - generic [ref=e218]: 项目分类
+        - generic [ref=e219]:
+          - button "工作" [ref=e220]
+          - button "个人" [ref=e221]
+          - button "会议" [ref=e222]
+          - button "设计" [ref=e223]
+          - button "其他" [ref=e224]
+    - contentinfo [ref=e225]:
+      - button "确认创建" [disabled] [ref=e226]
+      - button "取消" [ref=e228]

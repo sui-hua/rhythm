@@ -1,11 +1,7 @@
 <template>
   <aside 
-    class="border-r border-zinc-100 flex flex-col z-20 overflow-hidden transition-all duration-300 group"
-    :class="[
-      !isMobile ? 'relative bg-background' : 'fixed left-0 top-0 bottom-0 z-50 bg-background/60 dark:bg-zinc-900/60 backdrop-blur-2xl shadow-xl',
-      isMobile && show ? 'shadow-2xl' : ''
-    ]"
-    :style="{ width: isMobile ? '280px' : width + 'px' }"
+    :class="getSidebarPanelClass({ isMobile, show })"
+    :style="{ width: isMobile ? '100%' : width + 'px' }"
   >
     <div
       v-if="isLoading"
@@ -58,6 +54,7 @@
 
           <!-- 左滑显示的完成按钮区域 -->
           <div
+            v-if="getSwipeOffset(index) > 0"
             class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
             :style="{ width: `${getSwipeOffset(index)}px` }"
           >
@@ -172,6 +169,7 @@ import { useResizable } from '@/composables/useResizable'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '@/views/day/composables/useDayData'
+import { getSidebarPanelClass } from '@/views/day/composables/mobileLayers'
 import { playSuccessSound } from '@/utils/audio'
 
 const props = defineProps({

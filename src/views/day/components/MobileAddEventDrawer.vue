@@ -3,13 +3,13 @@
     <!-- 遮罩层 -->
     <div 
       v-if="show" 
-      class="fixed inset-0 z-100 bg-black/40 backdrop-blur-[2px]"
+      class="fixed inset-0 z-[240] bg-black/40 backdrop-blur-[2px]"
       @click="$emit('update:show', false)"
     ></div>
     
     <!-- 抽屉容器 -->
     <div 
-      class="fixed bottom-0 left-0 right-0 z-101 bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-(--shadow-modal) flex flex-col transition-transform duration-700 ease-expo pb-safe"
+      class="fixed bottom-0 left-0 right-0 z-[250] bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-(--shadow-modal) flex flex-col transition-transform duration-700 ease-expo pb-safe"
       :class="show ? 'translate-y-0' : 'translate-y-full'"
       style="max-height: 92vh;"
     >

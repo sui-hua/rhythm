@@ -1,0 +1,21 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - navigation [ref=e4]:
+        - button [ref=e5]:
+          - img
+        - button [ref=e6]:
+          - img
+        - button [ref=e7]:
+          - img
+        - button [ref=e8]:
+          - img
+      - button [ref=e9]:
+        - img [ref=e10]
+  - generic [ref=e13]:
+    - generic "Toggle devtools panel" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic "Toggle Component Inspector" [ref=e20] [cursor=pointer]:
+      - img [ref=e21]

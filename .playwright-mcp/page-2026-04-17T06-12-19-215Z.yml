@@ -1,0 +1,217 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic [ref=e19]:
+      - complementary [ref=e20]:
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - heading "17" [level=2] [ref=e24]
+            - button "关闭侧边栏" [ref=e25]:
+              - img
+          - paragraph [ref=e26]: 四月 (April) / TASKS
+        - generic [ref=e229]:
+          - generic [ref=e230] [cursor=pointer]:
+            - checkbox [ref=e232]
+            - generic [ref=e234]:
+              - heading "养花" [level=4] [ref=e235]
+              - button "编辑任务" [ref=e236]:
+                - img [ref=e237]
+          - generic [ref=e240] [cursor=pointer]:
+            - checkbox [checked] [ref=e242]:
+              - generic:
+                - img
+            - generic [ref=e244]:
+              - heading "起床" [level=4] [ref=e245]
+              - button "编辑任务" [ref=e246]:
+                - img [ref=e247]
+          - generic [ref=e250] [cursor=pointer]:
+            - checkbox [checked] [ref=e252]:
+              - generic:
+                - img
+            - generic [ref=e254]:
+              - heading "洗漱" [level=4] [ref=e255]
+              - button "编辑任务" [ref=e256]:
+                - img [ref=e257]
+          - generic [ref=e260] [cursor=pointer]:
+            - checkbox [ref=e262]
+            - generic [ref=e264]:
+              - heading "每天跟三个陌生人说话" [level=4] [ref=e265]
+              - button "编辑任务" [ref=e266]:
+                - img [ref=e267]
+          - generic [ref=e270] [cursor=pointer]:
+            - checkbox [ref=e272]
+            - generic [ref=e274]:
+              - heading "hermes指挥claude" [level=4] [ref=e275]
+              - button "编辑任务" [ref=e276]:
+                - img [ref=e277]
+          - generic [ref=e280] [cursor=pointer]:
+            - checkbox [ref=e282]
+            - generic [ref=e284]:
+              - heading "ralph loop" [level=4] [ref=e285]
+              - button "编辑任务" [ref=e286]:
+                - img [ref=e287]
+          - generic [ref=e290] [cursor=pointer]:
+            - checkbox [ref=e292]
+            - generic [ref=e294]:
+              - heading "实习报告" [level=4] [ref=e295]
+              - button "编辑任务" [ref=e296]:
+                - img [ref=e297]
+          - generic [ref=e300] [cursor=pointer]:
+            - checkbox [ref=e302]
+            - generic [ref=e304]:
+              - heading "冥想" [level=4] [ref=e305]
+              - button "编辑任务" [ref=e306]:
+                - img [ref=e307]
+          - generic [ref=e310] [cursor=pointer]:
+            - checkbox [ref=e312]
+            - generic [ref=e314]:
+              - heading "就业平台" [level=4] [ref=e315]
+              - button "编辑任务" [ref=e316]:
+                - img [ref=e317]
+          - generic [ref=e320] [cursor=pointer]:
+            - checkbox [ref=e322]
+            - generic [ref=e324]:
+              - heading "运动" [level=4] [ref=e325]
+              - button "编辑任务" [ref=e326]:
+                - img [ref=e327]
+          - generic [ref=e330] [cursor=pointer]:
+            - checkbox [ref=e332]
+            - generic [ref=e334]:
+              - heading "Docker" [level=4] [ref=e335]
+              - button "编辑任务" [ref=e336]:
+                - img [ref=e337]
+          - generic [ref=e340] [cursor=pointer]:
+            - checkbox [checked] [ref=e342]:
+              - generic:
+                - img
+            - generic [ref=e344]:
+              - heading "阿里云 Hermes Agent" [level=4] [ref=e345]
+              - button "编辑任务" [ref=e346]:
+                - img [ref=e347]
+          - generic [ref=e350] [cursor=pointer]:
+            - checkbox [ref=e352]
+            - generic [ref=e354]:
+              - heading "总结" [level=4] [ref=e355]
+              - button "编辑任务" [ref=e356]:
+                - img [ref=e357]
+          - generic [ref=e360] [cursor=pointer]:
+            - checkbox [ref=e362]
+            - generic [ref=e364]:
+              - heading "睡觉" [level=4] [ref=e365]
+              - button "编辑任务" [ref=e366]:
+                - img [ref=e367]
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - generic [ref=e40]: 任务完成度
+              - generic [ref=e41]: 21%
+            - progressbar "21%" [ref=e370]
+          - button "添加项目" [ref=e44]:
+            - img
+            - text: 添加项目
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e53]: 00:00
+          - generic [ref=e57]: 01:00
+          - generic [ref=e61]: 02:00
+          - generic [ref=e65]: 03:00
+          - generic [ref=e69]: 04:00
+          - generic [ref=e73]: 05:00
+          - generic [ref=e77]: 06:00
+          - generic [ref=e81]: 07:00
+          - generic [ref=e85]: 08:00
+          - generic [ref=e89]: 09:00
+          - generic [ref=e93]: 10:00
+          - generic [ref=e97]: 11:00
+          - generic [ref=e101]: 12:00
+          - generic [ref=e105]: 13:00
+          - generic [ref=e109]: 14:00
+          - generic [ref=e113]: 15:00
+          - generic [ref=e117]: 16:00
+          - generic [ref=e121]: 17:00
+          - generic [ref=e125]: 18:00
+          - generic [ref=e129]: 19:00
+          - generic [ref=e133]: 20:00
+          - generic [ref=e137]: 21:00
+          - generic [ref=e141]: 22:00
+          - generic [ref=e145]: 23:00
+        - heading "养花" [level=3] [ref=e375] [cursor=pointer]
+        - heading "起床" [level=3] [ref=e380] [cursor=pointer]
+        - heading "洗漱" [level=3] [ref=e385] [cursor=pointer]
+        - heading "每天跟三个陌生人说话" [level=3] [ref=e390] [cursor=pointer]
+        - heading "hermes指挥claude" [level=3] [ref=e395] [cursor=pointer]
+        - heading "ralph loop" [level=3] [ref=e400] [cursor=pointer]
+        - heading "实习报告" [level=3] [ref=e405] [cursor=pointer]
+        - heading "冥想" [level=3] [ref=e410] [cursor=pointer]
+        - heading "就业平台" [level=3] [ref=e415] [cursor=pointer]
+        - heading "运动" [level=3] [ref=e420] [cursor=pointer]
+        - heading "Docker" [level=3] [ref=e425] [cursor=pointer]
+        - heading "阿里云 Hermes Agent" [level=3] [ref=e430] [cursor=pointer]
+        - heading "总结" [level=3] [ref=e435] [cursor=pointer]
+        - heading "睡觉" [level=3] [ref=e440] [cursor=pointer]
+        - generic:
+          - generic: 现在
+      - button "打开侧边栏" [active] [ref=e146]:
+        - img [ref=e147]
+      - button "新增任务" [ref=e148]:
+        - img [ref=e149]
+  - generic [ref=e150]:
+    - generic "Toggle devtools panel" [ref=e151] [cursor=pointer]:
+      - img [ref=e152]
+    - generic "Toggle Component Inspector" [ref=e157] [cursor=pointer]:
+      - img [ref=e158]
+  - generic [ref=e165]:
+    - banner [ref=e166]:
+      - heading "Quick Add" [level=2] [ref=e167]
+      - paragraph [ref=e168]: 快速添加任务
+    - generic [ref=e170]:
+      - generic [ref=e171]:
+        - generic [ref=e172]: 项目名称
+        - textbox "输入任务名称，回车快速创建" [ref=e173]
+      - generic [ref=e174]:
+        - img [ref=e176]
+        - generic [ref=e179]: ·
+        - generic [ref=e180]: 0.5小时
+        - generic [ref=e181]: ·
+        - generic [ref=e182]: 工作
+      - button "+ 更多选项（完整模式）" [ref=e183]
+    - contentinfo [ref=e184]:
+      - button "快速创建" [disabled] [ref=e185]
+  - generic [ref=e189]:
+    - banner [ref=e190]:
+      - heading "New Task" [level=2] [ref=e191]
+      - paragraph [ref=e192]: Plan your next move
+    - generic [ref=e194]:
+      - generic [ref=e195]:
+        - generic [ref=e196]: 项目名称*
+        - textbox "例如：早起锻炼 / 部门周会" [ref=e197]
+        - paragraph [ref=e198]: 任务名称不能为空
+      - generic [ref=e199]:
+        - generic [ref=e200]:
+          - generic [ref=e201]: 开始时间*
+          - generic [ref=e203]:
+            - textbox "08:00" [ref=e204]
+            - img
+          - paragraph [ref=e205]: 开始时间不能为空
+        - generic [ref=e206]:
+          - generic [ref=e207]: 预计时长
+          - generic [ref=e209]:
+            - spinbutton [ref=e210]: "60"
+            - combobox [ref=e211]:
+              - generic: 分钟
+              - img [ref=e212]
+      - generic [ref=e214]:
+        - generic [ref=e215]: 补充描述
+        - textbox "可选详情..." [ref=e216]
+      - generic [ref=e217]:
+        - generic [ref=e218]: 项目分类
+        - generic [ref=e219]:
+          - button "工作" [ref=e220]
+          - button "个人" [ref=e221]
+          - button "会议" [ref=e222]
+          - button "设计" [ref=e223]
+          - button "其他" [ref=e224]
+    - contentinfo [ref=e225]:
+      - button "确认创建" [disabled] [ref=e226]
+      - button "取消" [ref=e228]

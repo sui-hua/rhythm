@@ -79,3 +79,7 @@ Direction 模块通过 RPC 实现高性能批量操作：
 ## 模块文档
 
 详细模块说明见 `docs/modules/` 目录：direction、day、habits、summary、month-year、login、app、framework、common、ui-components。
+
+## 用户偏好
+
+- **Git 提交**：实现计划执行完成后，不要执行 git commit，最后由用户自己提交

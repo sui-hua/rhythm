@@ -1,14 +1,38 @@
 <template>
   <div class="h-screen w-full bg-background flex overflow-hidden font-sans text-foreground relative selection:bg-primary selection:text-primary-foreground">
     <div class="flex flex-1 h-full relative overflow-hidden bg-zinc-50/50">
+      <!-- 侧边栏遮罩层 - 点击关闭侧边栏 -->
+      <div
+        v-if="isMobile && showSidebar"
+        :class="getMobileOverlayClass()"
+        :style="getMobileOverlayStyle()"
+        @click="showSidebar = false"
+      ></div>
+
       <!-- Sidebar Panel -->
+      <div
+        v-if="isMobile"
+        :class="getMobileSidebarShellClass({ show: showSidebar })"
+        :style="{ width: `${MOBILE_SIDEBAR_WIDTH}px` }"
+      >
+        <Sidebar
+          :is-mobile="true"
+          :show="showSidebar"
+          :is-loading="isLoading"
+          @scroll-to-task="scrollToTask"
+          @add-event="openAddModal"
+          @edit-task="openEditModal"
+          @close="showSidebar = false"
+        />
+      </div>
+
       <Sidebar
+        v-else
         :class="[
-          'transition-all duration-300 ease-in-out',
-          isReady ? 'opacity-100' : 'opacity-0',
-          isMobile && !showSidebar ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+          'transition-opacity duration-300 ease-in-out',
+          ...getSidebarMotionClass({ isMobile, show: showSidebar, isReady })
         ]"
-        :is-mobile="isMobile"
+        :is-mobile="false"
         :show="showSidebar"
         :is-loading="isLoading"
         @scroll-to-task="scrollToTask"
@@ -16,7 +40,7 @@
         @edit-task="openEditModal"
         @close="showSidebar = false"
       />
-      
+
       <!-- Main Timeline Area -->
       <Timeline
         ref="timeline"
@@ -99,6 +123,13 @@ import { useUiStore } from '@/stores/uiStore'
 import { useDateStore } from '@/stores/dateStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { useDayData } from '@/views/day/composables/useDayData'
+import {
+  getMobileOverlayClass,
+  getMobileOverlayStyle,
+  getMobileSidebarShellClass,
+  getSidebarMotionClass,
+  MOBILE_SIDEBAR_WIDTH
+} from '@/views/day/composables/mobileLayers'
 import { useNotifications } from '@/composables/useNotifications'
 
 const AddEventModal = defineAsyncComponent(() => import('@/views/day/components/AddEventModal.vue'))
