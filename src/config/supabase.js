@@ -1,3 +1,16 @@
+/**
+ * ============================================
+ * Supabase 客户端配置 (config/supabase.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 创建并导出 Supabase 客户端实例
+ * - 提供通用 CRUD 工厂函数 createBase()
+ *
+ * 【环境变量】
+ * - VITE_SUPABASE_URL    → Supabase 项目 URL
+ * - VITE_SUPABASE_KEY    → Supabase Anon Key
+ */
 import { createClient } from '@supabase/supabase-js'
 import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 
@@ -17,9 +30,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 /**
- * 创建一个基础的数据库服务对象
+ * 创建一个基础的数据库服务对象（CRUD 工厂函数）
  * @param {string} tableName - 目标表名
  * @returns {object} 包含标准 CRUD 操作的对象
+ *
+ * 【生成的 CRUD 方法】
+ * - list(options)       → 查询列表
+ * - getById(id)        → 按 ID 查询单条
+ * - create(payload)     → 插入单条
+ * - createMany(array)  → 批量插入
+ * - update(id, updates) → 更新
+ * - delete(id)         → 删除
+ * - query(queryFn)     → 自定义复杂查询
  */
 supabase.createBase = (tableName) => {
   return {

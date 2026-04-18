@@ -1,4 +1,14 @@
 <template>
+  <!--
+    ============================================
+    根组件 (App.vue)
+    ============================================
+    【模块职责】
+    - 全局布局容器
+    - 导航栏渲染控制
+    - 路由视图 + 转场动画
+    - 认证状态初始化
+  -->
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
     <Toaster />
     <GlobalLoadingBar />
@@ -12,6 +22,13 @@
 </template>
 
 <script setup>
+/**
+ * 认证初始化流程：
+ * 1. 检查现有 session
+ * 2. 有登录用户 → 存入 authStore，请求通知权限
+ * 3. 无登录用户 → 清除状态，重定向到登录页
+ * 4. 监听多标签页/登出状态变化
+ */
 import {ref, computed, onMounted} from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
@@ -27,7 +44,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
-// 根据路由路径选择过渡效果
+// 根据路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
 const transitionName = computed(() => {
   const path = route.path
   if (path.includes('/day')) {
@@ -41,7 +58,7 @@ onMounted(async () => {
   try {
     // 检查是否有现有 session
     const { data: { session }, error } = await supabase.auth.getSession()
-    
+
     if (error) {
       console.error('获取 session 失败:', error)
       return

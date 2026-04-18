@@ -1,3 +1,20 @@
+/**
+ * ============================================
+ * Direction 批量操作层 (views/direction/composables/useDirectionBatch.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 处理日计划的批量创建、批量删除
+ * - 通过 RPC 实现高性能批量操作
+ *
+ * 【RPC 调用】
+ * - batch_upsert_daily_plans → 批量新增/更新每日任务
+ * - batch_delete_daily_plans → 批量删除指定日期的任务
+ *
+ * 【批量操作流程】
+ * 1. applyBatchTask() → 批量添加/更新日计划
+ * 2. handleBatchDelete() → 批量删除日计划
+ */
 import { useAuthStore } from '@/stores/authStore'
 import { safeDb as db } from '@/services/safeDb'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'

@@ -1,8 +1,27 @@
+/**
+ * ============================================
+ * 路由配置 (router/index.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 定义应用所有路由规则
+ * - 页面组件按需加载（路由懒加载）
+ * - 路由守卫：登录状态校验
+ *
+ * 【路由结构】
+ * - /login         → 登录页
+ * - /day/:y/:m/:d  → 日视图（时间轴）
+ * - /month/:y/:m   → 月视图
+ * - /year/:y       → 年视图
+ * - /habits        → 习惯追踪
+ * - /direction     → 目标管理（plans → monthly_plans → daily_plans 三级）
+ * - /summary       → 日/周/月/年总结
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { buildDayPath, buildMonthPath, buildYearPath } from '@/views/day/utils/routeDateContext'
 
-// 页面组件按需加载 - 仅在访问对应路由时才加载
+// 页面组件按需加载 - 仅在访问对应路由时才加载（路由懒加载）
 const LoginView = () => import('@/views/login/index.vue')
 const YearView = () => import('@/views/year/index.vue')
 const MonthView = () => import('@/views/month/index.vue')

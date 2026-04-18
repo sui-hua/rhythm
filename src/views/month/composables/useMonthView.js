@@ -1,3 +1,21 @@
+/**
+ * ============================================
+ * Month 视图逻辑层 (views/month/composables/useMonthView.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 月度视图的数据获取和状态管理
+ * - 月份天数和日历网格计算
+ * - 路由校验与自动跳转
+ *
+ * 【数据结构 - monthGridData】
+ * - 42 格的日历网格（6 周）
+ * - 每个格子包含：date（日期）、isCurrent（是否当月）、tasks（任务 ID 数组）
+ *
+ * 【路由参数】
+ * - /month/:year/:month
+ * - 自动补全和合法性校验
+ */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/services/database'

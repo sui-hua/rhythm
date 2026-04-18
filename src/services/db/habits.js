@@ -1,3 +1,22 @@
+/**
+ * ============================================
+ * 习惯数据表操作 (services/db/habits.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 封装 habits 表的 CRUD 操作
+ * - 支持习惯打卡记录管理
+ *
+ * 【方法说明】
+ * - list()           → 查询所有习惯（包含关联的 habit_logs）
+ * - listLite()      → 查询所有习惯（不含打卡记录，用于下拉选择）
+ * - listLogsByDate()→ 查询指定日期范围内的打卡记录
+ * - create()         → 创建新习惯
+ * - update()        → 更新习惯信息
+ * - delete()        → 删除习惯
+ * - log()           → 习惯打卡
+ * - deleteLog()     → 取消打卡记录
+ */
 import client from '@/config/supabase'
 import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 

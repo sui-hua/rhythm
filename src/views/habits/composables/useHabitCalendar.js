@@ -1,3 +1,24 @@
+/**
+ * ============================================
+ * 习惯日历视图 (views/habits/composables/useHabitCalendar.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 管理习惯日历视图的状态
+ * - 计算日历网格（42 格，6 行）
+ * - 处理月份切换逻辑
+ * - 判断"今天"高亮
+ *
+ * 【日历网格计算】
+ * - offset = (周一到当月第一天的天数) - 1
+ * - 前半部分填充 null（上月的日子）
+ * - 后半部分填充当月日期
+ * - 总共 42 格（6 周 × 7 天）
+ *
+ * 【月份导航】
+ * - handlePrevMonth() → 上一个月（跨年处理）
+ * - handleNextMonth() → 下一个月（跨年处理）
+ */
 import { ref, computed } from 'vue'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName as formatMonth } from '@/utils/dateFormatter'

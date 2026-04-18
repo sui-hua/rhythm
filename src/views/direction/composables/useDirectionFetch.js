@@ -1,3 +1,23 @@
+/**
+ * ============================================
+ * Direction 数据获取层 (views/direction/composables/useDirectionFetch.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 从数据库获取 plans、monthlyPlans、dailyPlans 数据
+ * - 按分类整理目标列表
+ * - 管理数据缓存，减少重复请求
+ * - 支持按需加载（lazy load）
+ *
+ * 【数据流】
+ * 1. fetchData() → 加载所有目标及月度计划
+ * 2. loadMonthlyPlans(planId) → 按需加载某个目标的月计划
+ * 3. loadDailyPlans(monthlyPlanId) → 按需加载某个月的日计划
+ *
+ * 【缓存机制】
+ * - monthlyPlansCache → 按 planId 索引的月计划缓存
+ * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
+ */
 import { computed, onMounted, watch, ref } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
 import { parseDateOnly } from '@/views/direction/utils/dateOnly'

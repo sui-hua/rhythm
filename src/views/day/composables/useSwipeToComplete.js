@@ -1,4 +1,22 @@
-// src/views/day/composables/useSwipeToComplete.js
+/**
+ * ============================================
+ * 左滑完成任务 (views/day/composables/useSwipeToComplete.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 实现移动端左滑任务卡片完成操作
+ * - 支持触摸事件处理
+ * - 完成后触发震动反馈和音效
+ *
+ * 【滑动逻辑】
+ * - 只响应左滑操作（deltaX > 0）
+ * - 最大滑动距离 80px
+ * - 超过 50% 宽度阈值触发完成
+ *
+ * 【完成反馈】
+ * - 震动反馈 navigator.vibrate(50)
+ * - 成功音效 playSuccessSound()
+ */
 import { ref } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
 

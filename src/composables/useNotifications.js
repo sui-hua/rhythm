@@ -1,3 +1,18 @@
+/**
+ * ============================================
+ * 任务通知Composable (composables/useNotifications.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 任务/习惯打卡时间到了发送通知
+ * - 支持 Service Worker 后台通知
+ * - 降级到页面内每 30 秒轮询检查
+ *
+ * 【通知触发条件】
+ * - 浏览器已授权通知权限
+ * - 任务/习惯设定了具体时间
+ * - 当前时间精确到分钟匹配任务时间
+ */
 import { ref, onUnmounted } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
 

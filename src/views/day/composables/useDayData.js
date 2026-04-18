@@ -1,3 +1,27 @@
+/**
+ * ============================================
+ * Day 视图核心数据层 (views/day/composables/useDayData.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 解析日视图路由参数
+ * - 获取并聚合 Task、DailyPlan、Habit 三种数据源
+ * - 提供统一的时间线日程列表
+ * - 处理任务完成状态切换
+ * - 管理番茄钟计时
+ *
+ * 【数据结构 - dailySchedule】
+ * - type: 'task' | 'daily_plan' | 'habit'
+ * - original: 原始数据对象
+ * - startHour: 开始小时（浮点数）
+ * - time: 格式化时间字符串
+ * - duration/durationHours: 时长
+ * - completed: 是否完成
+ *
+ * 【单例数据】
+ * - tasks, dailyPlans, habits, habitLogs 提升到模块顶层
+ * - 实现跨组件共享，减少重复请求
+ */
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { safeDb as db } from '@/services/safeDb'

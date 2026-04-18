@@ -1,3 +1,23 @@
+/**
+ * ============================================
+ * 数据库服务主入口 (services/database.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 整合所有数据表操作模块
+ * - 提供统一的数据库访问接口
+ * - 支持 RPC 调用
+ *
+ * 【数据表模块】
+ * - plans              → 总计划/年度计划
+ * - plansCategory      → 计划分类
+ * - monthlyPlans       → 月计划
+ * - dailyPlans         → 日计划
+ * - habits            → 习惯及打卡记录
+ * - tasks             → 每日具体任务
+ * - summaries          → 各种类型总结记录
+ * - dailyReportViews   → 日报弹窗查看记录
+ */
 import client from '@/config/supabase'
 import { plans } from './db/plans'
 import { monthlyPlans } from './db/monthlyPlans'
@@ -9,6 +29,7 @@ import { plansCategory } from './db/plansCategory'
 import { dailyReportViews } from './db/dailyReportViews'
 
 export const db = {
+  // RPC 调用（用于批量操作等高性能场景）
   rpc(name, params) {
     return client.rpc(name, params)
   },

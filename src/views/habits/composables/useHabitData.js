@@ -1,3 +1,26 @@
+/**
+ * ============================================
+ * Habits 模块数据层 (views/habits/composables/useHabitData.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 获取并管理习惯列表数据
+ * - 计算习惯统计数据（连击天数、完成率、总打卡次数）
+ * - 管理日历视图的年份和月份
+ *
+ * 【数据结构 - Habit】
+ * - id: 习惯唯一标识
+ * - title: 习惯名称
+ * - completedDays: 本月已打卡的天数数组
+ * - logs: 所有历史打卡记录
+ * - monthlyLogs: 本月打卡记录
+ * - total: 累计打卡次数
+ * - completionRate: 完成率（基于 30 天计算）
+ * - streak: 连击天数
+ *
+ * 【统计数据计算】
+ * - calculateStreak() → 从今天或昨天开始计算连续打卡天数
+ */
 import { ref, computed } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
 import { useDateStore } from '@/stores/dateStore'

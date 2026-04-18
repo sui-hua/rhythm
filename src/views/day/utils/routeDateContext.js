@@ -1,8 +1,34 @@
+/**
+ * ============================================
+ * 路由日期上下文解析 (views/day/utils/routeDateContext.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 解析路由参数中的年/月/日
+ * - 提供日期合法性校验
+ * - 生成各视图的路由路径
+ *
+ * 【工具函数】
+ * - getRouteDateContext()   → 解析日视图路由参数
+ * - getRouteYearContext()   → 解析年视图路由参数
+ * - getRouteMonthContext()  → 解析月视图路由参数
+ * - buildDayPath()          → 构建日视图路径
+ * - buildMonthPath()        → 构建月视图路径
+ * - buildYearPath()         → 构建年视图路径
+ */
+
+// 解析路由参数中的数字，无效返回 null
 const toIntegerOrNull = (value) => {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) ? parsed : null
 }
 
+/**
+ * 解析日视图路由参数
+ * @param {object} params           → 路由参数对象 { year, month, day }
+ * @param {Date} fallbackDate        → 兜底日期（默认今天）
+ * @returns {object} { year, month, day, date, hasParsedParams, isCanonical }
+ */
 export const getRouteDateContext = (params = {}, fallbackDate = new Date()) => {
   const fallbackYear = fallbackDate.getFullYear()
   const fallbackMonth = fallbackDate.getMonth() + 1

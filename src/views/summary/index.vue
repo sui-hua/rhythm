@@ -1,3 +1,23 @@
+<!--
+  ============================================
+  Summary 视图 - 总结模块主页面 (views/summary/index.vue)
+  ============================================
+
+  【模块职责】
+  - 日/周/月/年总结管理
+  - 支持创建、编辑、删除总结
+  - 左侧列表 + 右侧表单布局
+
+  【布局结构】
+  - SummarySidebar → 左侧总结列表（按日/周/月/年分类）
+  - DailySummaryForm → 日总结表单
+  - GenericSummaryForm → 周/月/年总结表单（通用）
+
+  【视图状态】
+  - currentView === 'empty' → 空状态提示
+  - currentView === 'form' → 新增/编辑表单
+  - currentView === 'detail-or-edit' → 查看或编辑
+-->
 <template>
   <div class="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden font-sans text-foreground relative selection:bg-foreground selection:text-background">
     <!-- Sidebar -->

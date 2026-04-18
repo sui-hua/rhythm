@@ -1,3 +1,26 @@
+<!--
+  ============================================
+  Day 视图 - 日时间轴主页面 (views/day/index.vue)
+  ============================================
+
+  【模块职责】
+  - 日视图主页面容器
+  - 整合 Sidebar（侧边栏）+ Timeline（时间轴）
+  - 管理移动端侧边栏显示/隐藏
+  - 处理日报弹窗、任务编辑弹窗、番茄钟模态框
+
+  【布局结构】
+  - Sidebar → 左侧任务列表面板
+  - Timeline → 右侧时间轴主区域
+  - 移动端：侧边栏通过遮罩层实现抽屉效果
+
+  【模态框/抽屉】
+  - AddEventModal → PC 端添加/编辑任务
+  - MobileAddEventDrawer → 移动端添加/编辑任务
+  - QuickAddDrawer → 移动端快速添加
+  - DailyReportModal → 日报弹窗
+  - PomodoroTimerModal → 番茄钟计时器
+-->
 <template>
   <div class="h-screen w-full bg-background flex overflow-hidden font-sans text-foreground relative selection:bg-primary selection:text-primary-foreground">
     <div class="flex flex-1 h-full relative overflow-hidden bg-zinc-50/50">

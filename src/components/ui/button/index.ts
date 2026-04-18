@@ -1,3 +1,26 @@
+/**
+ * ============================================
+ * 按钮组件样式定义 (components/ui/button/index.ts)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 使用 class-variance-authority 定义按钮样式变体
+ * - 导出 Button 组件和 buttonVariants
+ *
+ * 【样式变体 - variant】
+ * - default    → 主要按钮（primary）
+ * - destructive → 危险操作按钮
+ * - outline    → 带边框按钮
+ * - secondary  → 次要按钮
+ * - ghost      → 幽灵按钮（透明背景）
+ * - link       → 链接样式按钮
+ *
+ * 【样式变体 - size】
+ * - default → 高度 36px
+ * - sm      → 高度 32px
+ * - lg      → 高度 40px
+ * - icon    → 方形图标按钮
+ */
 import { type VariantProps, cva } from 'class-variance-authority'
 
 export { default as Button } from './Button.vue'

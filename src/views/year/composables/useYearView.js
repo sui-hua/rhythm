@@ -1,3 +1,22 @@
+/**
+ * ============================================
+ * Year 视图逻辑层 (views/year/composables/useYearView.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 年度总览视图的数据获取和状态管理
+ * - 聚合所有习惯的年度打卡数据
+ * - 计算每个月的打卡天数
+ *
+ * 【数据结构 - yearData】
+ * - 12 个月的数据数组
+ * - 每个月份包含：name（英文月份）、days（天数）、firstDayOffset（周一偏移）
+ * - completedDays（本月已打卡的天数数组）
+ *
+ * 【路由参数】
+ * - /year/:year
+ * - 自动补全和合法性校验
+ */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/services/database'

@@ -1,7 +1,21 @@
+/**
+ * ============================================
+ * 安全数据库封装 (services/safeDb.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 封装 database.js 提供错误处理
+ * - 操作失败时自动 toast 提示
+ * - Direction 模块统一使用 safeDb
+ *
+ * 【与 database.js 的区别】
+ * - database.js: 底层直连，RPC 调用
+ * - safeDb.js: 封装版，失败时自动 toast 错误提示
+ */
 import { db } from './database'
 import { useToast } from '@/composables/useToast'
 
-// 错误消息配置
+// 错误消息配置（按表名和操作类型分类）
 const ERROR_MESSAGES = {
   plans: {
     list: '获取目标列表失败',

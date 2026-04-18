@@ -1,3 +1,22 @@
+<!--
+  ============================================
+  Direction 视图 - 目标管理主页面 (views/direction/index.vue)
+  ============================================
+
+  【模块职责】
+  - 长期目标管理模块主页面
+  - 三级级联结构：Plans（长期目标）→ MonthlyPlans（月度计划）→ DailyPlans（每日任务）
+  - 支持批量添加/删除日计划
+
+  【布局结构】
+  - DirectionSidebar → 左侧目标列表导航
+  - GoalRangePicker → 月份范围选择器
+  - MissionBoard → 中间月度任务面板
+  - MissionArchive → 右侧任务归档/编辑面板
+
+  【弹窗】
+  - AddGoalModal → 添加/编辑目标
+-->
 <template>
   <div class="direction-root">
     <!-- 左侧导航：目标列表 -->

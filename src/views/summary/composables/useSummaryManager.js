@@ -1,3 +1,27 @@
+/**
+ * ============================================
+ * Summary 模块状态管理 (views/summary/composables/useSummaryManager.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 管理总结模块的全局状态
+ * - 处理总结的创建、编辑、删除、查询
+ * - 支持日/周/月/年四种总结类型
+ *
+ * 【状态管理】
+ * - activeTab       → 当前标签页（day/week/month/year）
+ * - summaries       → 当前类型下的总结列表
+ * - selectedSummary  → 当前选中的总结
+ * - isCreating       → 是否处于创建模式
+ * - currentView      → 计算属性：form/detail-or-edit/empty
+ *
+ * 【操作处理】
+ * - handleTabChange() → 切换标签页
+ * - handleSelect()    → 选中某个总结
+ * - handleCreate()    → 进入创建模式
+ * - handleSave()      → 保存总结
+ * - handleDelete()    → 删除总结
+ */
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'

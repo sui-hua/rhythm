@@ -1,3 +1,23 @@
+/**
+ * ============================================
+ * 习惯统计指标计算 (views/habits/composables/useHabitStats.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 计算今日所有习惯的总完成率
+ * - 计算单个习惯的详细统计数据
+ *
+ * 【统计指标 - habitStats】
+ * - 本月打卡天数
+ * - 年度总计天数
+ * - 周期完成率
+ * - 当前连击天数
+ *
+ * 【今日完成率计算 - todayCompletionRate】
+ * - 遍历所有习惯
+ * - 检查每项在系统"今天"是否有打卡记录
+ * - 返回 0-100 的百分比
+ */
 import { computed } from 'vue'
 import { useDateStore } from '@/stores/dateStore'
 

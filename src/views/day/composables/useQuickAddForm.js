@@ -1,4 +1,23 @@
-// src/views/day/composables/useQuickAddForm.js
+/**
+ * ============================================
+ * 快速添加任务表单 (views/day/composables/useQuickAddForm.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 提供快速添加任务的表单逻辑
+ * - 只需输入标题，时间和时长使用默认值/上次使用值
+ * - 表单重置和防抖处理
+ *
+ * 【表单字段】
+ * - title: 任务标题
+ * - time: 开始时间（默认上次使用时间）
+ * - duration: 时长（默认 0.5 小时）
+ * - category: 分类（默认"工作"）
+ * - description: 描述
+ *
+ * 【防抖处理】
+ * - 使用 withLoadingLock 防止重复提交
+ */
 import { ref, reactive, watch } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
 import { useAuthStore } from '@/stores/authStore'

@@ -1,3 +1,25 @@
+/**
+ * ============================================
+ * 番茄钟状态管理 (stores/pomodoroStore.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 管理番茄钟/任务计时器状态
+ * - 记录当前正在计时的任务
+ * - 提供计时模态框的显示/隐藏控制
+ *
+ * 【数据结构】
+ * - activeTask: 当前计时任务
+ * - showModal: 计时模态框是否显示
+ * - elapsedSeconds: 已用时间（秒）
+ * - formattedTime: 格式化后的时间显示
+ *
+ * 【计时流程】
+ * - setActiveTask() → 开始计时，弹出模态框
+ * - reset()         → 关闭模态框，重置状态
+ * - closeModal()    → 仅关闭模态框，继续后台计时
+ * - openModal()     → 重新打开模态框
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 

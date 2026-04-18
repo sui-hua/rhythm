@@ -1,3 +1,23 @@
+/**
+ * ============================================
+ * 日报弹窗管理 (views/day/composables/useDailyReport.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 管理日报弹窗的显示/隐藏
+ * - 构建昨日/今日统计数据
+ * - 记录用户是否已查看日报（避免重复弹窗）
+ *
+ * 【统计数据 - reportStats】
+ * - yesterdayCompleted → 昨日已完成任务数
+ * - yesterdayUncompleted → 昨日未完成任务数
+ * - todayTotal → 今日总任务数
+ * - carryoverToToday → 顺延到今天的未完成任务数
+ *
+ * 【防重复机制】
+ * - 通过 dailyReportViews 表记录用户已查看的日期
+ * - 同一用户同一天只弹一次
+ */
 import { ref } from 'vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'

@@ -1,3 +1,28 @@
+/**
+ * ============================================
+ * Direction 模块共享状态 (views/direction/composables/useDirectionState.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 管理 Direction 模块的全局共享状态
+ * - Direction 模块三级级联结构：
+ *   Plans（长期目标）→ MonthlyPlans（月度计划）→ DailyPlans（每日任务）
+ * - 提供缓存机制提高性能
+ *
+ * 【数据结构】
+ * - plans           → 长期目标列表
+ * - monthlyPlans    → 月度计划列表（扁平兼容格式）
+ * - monthlyPlansCache → 按 planId 索引的月度计划缓存
+ * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
+ * - selectedGoal    → 当前选中的目标
+ * - editingGoal     → 当前编辑的目标
+ * - selectedMonth   → 当前选中的月份
+ * - selectedDates   → 当前选中的日期集合
+ *
+ * 【缓存机制】
+ * - getMonthlyPlansByPlanId() → 按 planId 获取月度计划
+ * - syncMonthlyPlansToFlatList() → 同步缓存到扁平列表
+ */
 import { ref, reactive } from 'vue'
 import { getMonthName } from '@/utils/dateFormatter'
 

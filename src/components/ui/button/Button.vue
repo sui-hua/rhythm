@@ -1,3 +1,18 @@
+<!--
+  ============================================
+  按钮组件 (components/ui/button/Button.vue)
+  ============================================
+
+  【模块职责】
+  - 基于 Radix Vue Primitive 的无状态按钮封装
+  - 支持多种变体和尺寸
+
+  【使用方式】
+  <Button variant="default" size="default">按钮</Button>
+
+  【Variant 类型】
+  - default / destructive / outline / secondary / ghost / link
+-->
 <script setup lang="ts">
 import { type HTMLAttributes } from 'vue'
 import { Primitive, type PrimitiveProps } from 'radix-vue'

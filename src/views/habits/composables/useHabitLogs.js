@@ -1,3 +1,23 @@
+/**
+ * ============================================
+ * 习惯打卡与日志管理 (views/habits/composables/useHabitLogs.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - useHabitLogsFormatter → 格式化打卡日志展示
+ * - useHabitLogs → 处理打卡/取消打卡操作
+ *
+ * 【打卡日志格式化 - useHabitLogsFormatter】
+ * - 转换为 MM/DD 格式日期
+ * - 按时间降序排列（最近优先）
+ *
+ * 【打卡操作 - useHabitLogs】
+ * - toggleComplete(day) → 点击日期切换打卡状态
+ * - handleQuickLog(note) → 快速添加今日打卡（带备注）
+ *
+ * 【防抖处理】
+ * - isSubmitting 状态锁防止重复提交
+ */
 import { computed, ref } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
 import { useDateStore } from '@/stores/dateStore'

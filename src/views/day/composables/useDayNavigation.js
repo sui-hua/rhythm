@@ -1,3 +1,26 @@
+/**
+ * ============================================
+ * Day 视图导航管理 (views/day/composables/useDayNavigation.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - Day 视图的导航和交互管理
+ * - 路由校验与自动跳转
+ * - 当前时间线指示器
+ * - 滚动定位到当前/首个未完成任务
+ * - 首次访问日的日报弹窗逻辑
+ *
+ * 【初始化流程】
+ * 1. validateDayRoute() → 校验路由参数合法性
+ * 2. handleFirstEntryForDay() → 首次访问显示日报弹窗
+ * 3. syncDateWithRoute() → 同步日期到 dateStore
+ * 4. fetchTasks() → 加载日程数据
+ * 5. 滚动定位 → 定位到首个未完成任务或默认位置
+ *
+ * 【时间线逻辑】
+ * - updateCurrentHour() → 每秒更新当前小时指示器
+ * - 定时器 setInterval(updateCurrentHour, 1000)
+ */
 import { ref, nextTick, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useDayData } from './useDayData'

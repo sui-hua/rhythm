@@ -1,3 +1,24 @@
+<!--
+  ============================================
+  Habits 视图 - 习惯追踪主页面 (views/habits/index.vue)
+  ============================================
+
+  【模块职责】
+  - 习惯追踪模块主页面
+  - 整合习惯列表、统计面板、日历、打卡记录
+
+  【布局结构】
+  - HabitSidebar → 左侧习惯列表侧边栏
+  - HabitHeader → 习惯标题
+  - HabitStats → 统计数据卡片
+  - HabitCalendar → 打卡日历
+  - HabitTodayCard → 今日打卡卡片
+  - HabitLogs → 打卡历史记录
+
+  【模态框】
+  - AddHabitModal → 添加新习惯
+  - EditHabitModal → 编辑习惯
+-->
 <template>
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
 

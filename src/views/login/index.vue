@@ -1,3 +1,20 @@
+<!--
+  ============================================
+  Login 视图 - 登录页面 (views/login/index.vue)
+  ============================================
+
+  【模块职责】
+  - 用户登录页面
+  - 邮箱密码登录
+  - 显示访客体验账号信息
+
+  【登录方式】
+  - Supabase Auth 邮箱密码登录
+
+  【访客体验账号】
+  - 邮箱：123456@163.com
+  - 密码：123456
+-->
 <template>
   <div class="min-h-screen w-full bg-background flex items-center justify-center p-4">
     <div class="w-full max-w-sm">

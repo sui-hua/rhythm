@@ -1,8 +1,20 @@
 /**
+ * ============================================
+ * 日期格式化工具 (utils/dateFormatter.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 提供日期相关的格式化函数
+ *
+ * 【函数说明】
+ * - getMonthName() → 将月份数字转换为中英文本
+ */
+
+/**
  * 将月份数字转换为对应的中英文本
  * @param {number|string} monthNumber 1-12 的月份数字（注意不是 0-indexed）
  * @param {'zh'|'en'|'full'} format 'zh': 一月, 'en': JANUARY, 'full': 一月 (January)
- * @returns {string} 
+ * @returns {string}
  */
 export const getMonthName = (monthNumber, format = 'zh') => {
     const num = parseInt(monthNumber, 10);

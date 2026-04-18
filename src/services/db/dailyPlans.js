@@ -1,3 +1,19 @@
+/**
+ * ============================================
+ * 日计划数据表操作 (services/db/dailyPlans.js)
+ * ============================================
+ *
+ * 【模块职责】
+ * - 封装 daily_plans 表的 CRUD 操作
+ * - 日计划属于月度计划的下级（三级级联第三级）
+ *
+ * 【方法说明】
+ * - list(monthlyPlanId)    → 按月度计划查询日计划列表
+ * - create()               → 创建日计划
+ * - update()               → 更新日计划信息
+ * - delete()               → 删除日计划
+ * - listByDate()           → 按日期查询日计划（包含关联的月度计划和上级目标信息）
+ */
 import client from '@/config/supabase'
 
 const supabase = client.createBase('daily_plans')
