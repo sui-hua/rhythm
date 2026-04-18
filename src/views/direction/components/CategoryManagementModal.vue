@@ -50,9 +50,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
-import { showCategoryModal } from '@/views/direction/composables/useDirectionState'
-
-const categories = ref([])
+import { showCategoryModal, categories } from '@/views/direction/composables/useDirectionState'
 const newCategoryName = ref('')
 const loading = ref(false)
 
@@ -91,8 +89,6 @@ const handleDeleteCategory = async (id) => {
     console.error('Failed to delete category:', e)
   }
 }
-
-onMounted(fetchCategories)
 </script>
 
 <style scoped>

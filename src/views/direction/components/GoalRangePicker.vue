@@ -70,15 +70,30 @@
 
 <script setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
+import { monthlyPlansCache } from '@/views/direction/composables/useDirectionState'
+import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { computed, ref, watch } from 'vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Check } from 'lucide-vue-next'
 
 const { selectedGoal, months, activePicker, handleConfirmRange } = useDirectionGoals()
 
-// 计算属性：安全获取开始/结束月份及目标名称
-const startMonth = computed(() => selectedGoal.value?.startMonth ?? 1)
-const endMonth = computed(() => selectedGoal.value?.endMonth ?? 1)
+// 计算属性：从 monthlyPlansCache 获取开始/结束月份
+const monthRange = computed(() => {
+  if (!selectedGoal.value) return { start: 1, end: 1 }
+  const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
+  if (cached.length === 0) return { start: 1, end: 1 }
+
+  const monthNums = cached
+    .map(mp => getDateOnlyMonth(mp.month))
+    .filter(m => m !== null)
+
+  if (monthNums.length === 0) return { start: 1, end: 1 }
+  return { start: Math.min(...monthNums), end: Math.max(...monthNums) }
+})
+
+const startMonth = computed(() => monthRange.value.start)
+const endMonth = computed(() => monthRange.value.end)
 const selectedGoalName = computed(() => selectedGoal.value?.name ?? '')
 
 const localStart = ref(1)
@@ -88,16 +103,22 @@ watch(
   () => selectedGoal.value,
   (val) => {
     if (val) {
-      localStart.value = val.startMonth
-      localEnd.value = val.endMonth
+      const range = monthRange.value
+      localStart.value = range.start
+      localEnd.value = range.end
     }
   },
   { immediate: true, deep: true }
 )
 
+watch(monthRange, (range) => {
+  localStart.value = range.start
+  localEnd.value = range.end
+})
+
 const hasChanges = computed(() => {
   if (!selectedGoal.value) return false
-  return localStart.value !== selectedGoal.value.startMonth || localEnd.value !== selectedGoal.value.endMonth
+  return localStart.value !== monthRange.value.start || localEnd.value !== monthRange.value.end
 })
 
 const isMonthActive = (m) => localStart.value === m || localEnd.value === m

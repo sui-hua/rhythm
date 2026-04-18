@@ -85,7 +85,7 @@
  * 编排并整合习惯列表侧边栏、中心动态看板、各项统计以及编辑/新建弹窗模块。
  * 数据源由底部抽离出的多个 hooks 提供支持。
  */
-import { ref, onMounted, defineAsyncComponent } from 'vue'
+import { ref, watch, onMounted, defineAsyncComponent } from 'vue'
 import HabitSidebar from './components/HabitSidebar.vue'
 import HabitHeader from './components/HabitHeader.vue'
 import HabitStats from './components/HabitStats.vue'
@@ -109,6 +109,7 @@ const {
   viewMonth,
   handleMonthChange,
   fetchHabits,
+  fetchLogsForHabit,
   isPageLoading
 } = useHabitData()
 
@@ -126,6 +127,13 @@ const {
 
 // 控制首屏立刻请求初始化拉取数据列表
 onMounted(fetchHabits)
+
+// 监听选中习惯的变化，加载对应日志
+watch(selectedHabit, (newHabit) => {
+  if (newHabit) {
+    fetchLogsForHabit(newHabit.id)
+  }
+}, { immediate: true })
 
 // --- 页面 UI 自身专有的局部状态和操控方法 ---
 

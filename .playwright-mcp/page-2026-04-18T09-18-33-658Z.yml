@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - button "时序" [ref=e6]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e7]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e8]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e9]:
+            - img
+            - text: 总结
+      - button:
+        - img
+    - complementary [ref=e12]:
+      - heading "日常习惯" [level=2] [ref=e16]
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]: 今日习惯完成度
+            - generic [ref=e25]: 0%
+          - progressbar "0%" [ref=e26]
+        - button "添加项目" [ref=e28]:
+          - img
+          - text: 添加项目
+  - generic [ref=e36]:
+    - generic "Toggle devtools panel" [ref=e37] [cursor=pointer]:
+      - img [ref=e38]
+    - generic "Toggle Component Inspector" [ref=e43] [cursor=pointer]:
+      - img [ref=e44]

@@ -39,6 +39,21 @@ export const dailyPlansCache = reactive({})   // { [monthlyPlanId]: dailyPlan[] 
 export const archiveVersion = ref(0)
 export const getMonthlyPlansByPlanId = (planId) => monthlyPlansCache[planId] || []
 
+// 清空日计划缓存（保留指定的 monthlyPlanId）
+export const clearDailyPlansCache = (keepMonthlyPlanId = null) => {
+  if (keepMonthlyPlanId && dailyPlansCache[keepMonthlyPlanId]) {
+    const keepData = dailyPlansCache[keepMonthlyPlanId]
+    Object.keys(dailyPlansCache).forEach(key => {
+      delete dailyPlansCache[key]
+    })
+    dailyPlansCache[keepMonthlyPlanId] = keepData
+  } else {
+    Object.keys(dailyPlansCache).forEach(key => {
+      delete dailyPlansCache[key]
+    })
+  }
+}
+
 // 同步缓存到扁平兼容镜像
 export const syncMonthlyPlansToFlatList = (planId) => {
   const cached = monthlyPlansCache[planId] || []
@@ -66,3 +81,6 @@ export const selectedDates = reactive({})
 export const batchInput = ref('')
 
 export const initialized = ref(false)
+
+// 共享的分类数据（用于去重请求）
+export const categories = ref([])

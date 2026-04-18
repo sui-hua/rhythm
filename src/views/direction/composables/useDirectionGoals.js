@@ -27,8 +27,19 @@ export function useDirectionGoals() {
 
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
+    const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
+    if (cached.length === 0) return []
+
+    const months = cached
+      .map(mp => getDateOnlyMonth(mp.month))
+      .filter(m => m !== null)
+
+    if (months.length === 0) return []
+
+    const minMonth = Math.min(...months)
+    const maxMonth = Math.max(...months)
     const range = []
-    for (let i = selectedGoal.value.startMonth; i <= selectedGoal.value.endMonth; i++) range.push(i)
+    for (let i = minMonth; i <= maxMonth; i++) range.push(i)
     return range
   })
 

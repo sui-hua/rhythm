@@ -19,7 +19,7 @@
  * - handlePrevMonth() → 上一个月（跨年处理）
  * - handleNextMonth() → 下一个月（跨年处理）
  */
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName as formatMonth } from '@/utils/dateFormatter'
 
@@ -86,6 +86,15 @@ export function useHabitCalendar(emit) {
   const emitMonthChange = () => {
     emit('month-changed', { year: viewYear.value, month: viewMonth.value })
   }
+
+  let isInitialized = false
+
+  onMounted(() => {
+    if (!isInitialized) {
+      isInitialized = true
+      emitMonthChange()
+    }
+  })
 
   /**
    * 判断日历格子中遍历的日是否等同于真实的"今天"，提供高亮光圈样式

@@ -46,6 +46,9 @@ export function useHabitData() {
     // 存储当前用户在左侧列表选中的某项具体习惯对象
     const selectedHabit = ref(null)
 
+    // 存储当前选中习惯的日志
+    const currentHabitLogs = ref([])
+
     // 用于独立于全局真实时间，在日历上专门控制显示当前“查看的”年份和月份
     const viewYear = ref(dateStore.currentDate.getFullYear())
     const viewMonth = ref(dateStore.currentDate.getMonth())
@@ -57,7 +60,25 @@ export function useHabitData() {
     const handleMonthChange = ({ year, month }) => {
         viewYear.value = year
         viewMonth.value = month
-        fetchHabits()
+        // 不再调用 fetchHabits，直接在内存中过滤
+        // 但需要重新计算 completedDays 和 monthlyLogs
+        if (selectedHabit.value && currentHabitLogs.value.length > 0) {
+            const viewYearVal = year
+            const viewMonthVal = month
+
+            const monthlyLogs = currentHabitLogs.value.filter((log) => {
+                const d = new Date(log.completed_at)
+                return d.getFullYear() === viewYearVal && d.getMonth() === viewMonthVal
+            })
+
+            const completedDays = monthlyLogs.map((log) => new Date(log.completed_at).getDate())
+
+            selectedHabit.value = {
+                ...selectedHabit.value,
+                monthlyLogs,
+                completedDays
+            }
+        }
     }
 
     /**
@@ -110,35 +131,23 @@ export function useHabitData() {
         try {
             const rawHabits = await db.habits.list()
             allHabits.value = rawHabits.map((h) => {
-                const logs = h.habit_logs || []
-
-                // 基于当前展示月(viewYear, viewMonth)过滤对应时间内的打卡记录打卡数据
-                const monthlyLogs = logs.filter((log) => {
-                    const d = new Date(log.completed_at)
-                    return d.getFullYear() === viewYear.value && d.getMonth() === viewMonth.value
-                })
-
-                // 将本月日志数据转化提取出具体的打卡「天数组」，用于直观给日历组件标注高亮
-                const completedDays = monthlyLogs.map((log) => new Date(log.completed_at).getDate())
-
                 return {
                     ...h,
-                    completedDays, // 视图本月专属数据属性：已打卡具体天的集合 (如 [12, 13, 14])
-                    logs,          // 完整存储包含该习惯以往所有时期的历史打卡记录
-                    monthlyLogs,   // 视图本月专属数据属性：过滤好的打卡记录详细数据
-                    total: logs.length,                               // （统计使用）总累计打卡次数
-                    completionRate: Math.round((logs.length / 30) * 100), // （统计使用）通过30基数计算的预估完成百分率
-                    streak: calculateStreak(logs)                     // （统计使用）连击天数
+                    completedDays: [],   // 等待日志加载后由 selectedHabit 计算
+                    logs: [],
+                    monthlyLogs: [],
+                    total: 0,
+                    completionRate: 0,
+                    streak: 0
                 }
             })
 
-            // 拉取刷新数据时，保证视图之前的“选中状态”得以继续维持不至于在列表重新渲染时丢失聚焦
+            // 维持选中状态
             if (selectedHabit.value) {
                 const updated = allHabits.value.find((h) => h.id === selectedHabit.value.id)
                 if (updated) selectedHabit.value = updated
                 else selectedHabit.value = null
             } else if (habits.value.length > 0) {
-                // 或者首次加载默认先展示未归档的第一项内容
                 selectedHabit.value = habits.value[0]
             } else if (archivedHabits.value.length > 0) {
                 selectedHabit.value = archivedHabits.value[0]
@@ -150,6 +159,54 @@ export function useHabitData() {
         }
     }
 
+    /**
+     * 获取指定习惯的所有打卡记录
+     * @param {string} habitId - 习惯 ID
+     */
+    const fetchLogsForHabit = async (habitId) => {
+        if (!habitId) {
+            currentHabitLogs.value = []
+            return
+        }
+
+        try {
+            const logs = await db.habits.listLogsByHabit(habitId)
+            currentHabitLogs.value = logs
+
+            // 找到对应的习惯，更新其 logs 相关字段
+            const habit = allHabits.value.find(h => h.id === habitId)
+            if (habit) {
+                const viewYearVal = viewYear.value
+                const viewMonthVal = viewMonth.value
+
+                const monthlyLogs = logs.filter((log) => {
+                    const d = new Date(log.completed_at)
+                    return d.getFullYear() === viewYearVal && d.getMonth() === viewMonthVal
+                })
+
+                const completedDays = monthlyLogs.map((log) => new Date(log.completed_at).getDate())
+
+                const updatedHabit = {
+                    ...habit,
+                    logs,
+                    monthlyLogs,
+                    completedDays,
+                    total: logs.length,
+                    completionRate: Math.round((logs.length / 30) * 100),
+                    streak: calculateStreak(logs)
+                }
+
+                // 更新 allHabits 中的数据，selectedHabit 会自动通过 computed 关联到 allHabits
+                const index = allHabits.value.findIndex(h => h.id === habitId)
+                if (index !== -1) {
+                    allHabits.value[index] = updatedHabit
+                }
+            }
+        } catch (e) {
+            console.error('Fetch logs for habit failed', e)
+        }
+    }
+
     return {
         habits,
         archivedHabits,
@@ -158,6 +215,7 @@ export function useHabitData() {
         viewMonth,
         handleMonthChange,
         fetchHabits,
+        fetchLogsForHabit,
         isPageLoading
     }
 }
