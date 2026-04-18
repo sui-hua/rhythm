@@ -1,8 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "mcp__supabase__apply_migration",
-      "Bash(pnpm build *)"
+      "mcp__supabase__apply_migration"
     ]
   }
 }
