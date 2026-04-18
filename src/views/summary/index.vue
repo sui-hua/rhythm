@@ -43,6 +43,7 @@
               :initial-data="selectedSummary"
               @save="handleSave"
               @cancel="handleCancel"
+              @delete="selectedSummary?.id && handleDelete(selectedSummary.id)"
             />
 
             <!-- Generic Form -->
@@ -52,6 +53,7 @@
               :initial-data="selectedSummary"
               @save="handleSave"
               @cancel="handleCancel"
+              @delete="selectedSummary?.id && handleDelete(selectedSummary.id)"
             />
           </CardContent>
         </Card>
@@ -79,7 +81,8 @@ const {
   handleSelect,
   handleCreate,
   handleSave,
-  handleCancel
+  handleCancel,
+  handleDelete
 } = useSummaryManager()
 </script>
 

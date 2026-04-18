@@ -1,4 +1,5 @@
 import { computed } from 'vue'
+import { getDateOnlyDay, getDateOnlyMonth, getDateOnlyYear } from '@/views/direction/utils/dateOnly'
 import {
   selectedGoal,
   selectedMonth,
@@ -69,12 +70,12 @@ const getMonthOffset = (month) => {
   }
 
   const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
-  const mp = cached.find(item => new Date(item.month).getMonth() + 1 === month)
+  const mp = cached.find(item => getDateOnlyMonth(item.month) === month)
   if (!mp) {
     return new Date(new Date().getFullYear(), month - 1, 1).getDay()
   }
 
-  const year = new Date(mp.month).getFullYear()
+  const year = getDateOnlyYear(mp.month) || new Date().getFullYear()
   return new Date(year, month - 1, 1).getDay()
 }
 
@@ -130,13 +131,14 @@ const isAllSelectedDatesHaveTask = (month) => {
 
   const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
   const mp = monthlyPlansOfGoal.find(
-    item => new Date(item.month).getMonth() + 1 === selectedMonth.value
+    item => getDateOnlyMonth(item.month) === selectedMonth.value
   )
   if (!mp) return []
 
   return (dailyPlansCache[mp.id] || [])
     .filter(dp => dp.title)
-    .map(dp => new Date(dp.day).getDate())
+    .map(dp => getDateOnlyDay(dp.day))
+    .filter(day => day !== null)
     .sort((a, b) => a - b)
 })
 

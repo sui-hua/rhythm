@@ -180,6 +180,7 @@ import { cn } from '@/lib/utils'
 import supabase from '@/config/supabase'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
+import { buildDayPath, buildMonthPath, buildYearPath, getRouteDateContext } from '@/views/day/utils/routeDateContext'
 
 const dateStore = useDateStore()
 const router = useRouter()
@@ -187,8 +188,7 @@ const route = useRoute()
 
 // 动态获取当天的路由路径，用于进入“时序”时默认跳转
 const getTodayPath = () => {
-  const now = new Date() // As per user metadata context
-  return '/day'
+  return buildDayPath(new Date())
 }
 
 // 导航栏菜单配置
@@ -203,7 +203,7 @@ const navItems = [
 // 特殊情况处理：因为时序拥有多层级(年、月、日)，如果处在其中任何一层，都算“时序”处于激活状态
 const isActive = (item) => {
   // 时序拥有多层级(年、月、日)，处在任何一层都算激活
-  if (item.base === '/day' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path === '/year')) return true
+  if (item.base === '/day' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path.startsWith('/year'))) return true
   return route.path === item.path || route.path.startsWith(item.base)
 }
 
@@ -213,35 +213,28 @@ const isActive = (item) => {
  */
 const contextInfo = computed(() => {
   const path = route.path
-  const currentYear = dateStore.currentDate.getFullYear()
+  const { year: currentYear, month, date: currentDate } = getRouteDateContext(route.params, dateStore.currentDate)
   
   if (path.startsWith('/month/')) {
     return {
-      title: `${currentYear}`,
-      backPath: '/year',
+      title: `${currentYear}年`,
+      backPath: buildYearPath(currentYear),
       show: true,
       mode: 'month'
     }
   }
-  if (path.startsWith('/day')) {
-    const now = new Date()
-    const monthIndex = route.params.monthIndex ? parseInt(route.params.monthIndex) - 1 : now.getMonth()
-    const day = route.params.day ? parseInt(route.params.day) : now.getDate()
-    
-    // 计算前一天与后一天的跳转路由路径
-    const currentDate = new Date(currentYear, monthIndex, day)
-    
+  if (path.startsWith('/day/')) {
     const prevDate = new Date(currentDate)
-    prevDate.setDate(day - 1)
-    const prevDayPath = `/day/${prevDate.getMonth() + 1}/${prevDate.getDate()}`
+    prevDate.setDate(currentDate.getDate() - 1)
+    const prevDayPath = buildDayPath(prevDate)
     
     const nextDate = new Date(currentDate)
-    nextDate.setDate(day + 1)
-    const nextDayPath = `/day/${nextDate.getMonth() + 1}/${nextDate.getDate()}`
+    nextDate.setDate(currentDate.getDate() + 1)
+    const nextDayPath = buildDayPath(nextDate)
 
     return {
-      title: getMonthName(monthIndex + 1, 'en'),
-      monthPath: `/month/${monthIndex + 1}`,
+      title: getMonthName(month, 'en'),
+      monthPath: buildMonthPath(currentYear, month),
       prevDayPath,
       nextDayPath,
       show: true,

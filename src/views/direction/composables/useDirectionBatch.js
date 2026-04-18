@@ -1,12 +1,13 @@
 import { useAuthStore } from '@/stores/authStore'
 import { safeDb as db } from '@/services/safeDb'
+import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
 import {
   monthlyPlansCache,
+  dailyPlansCache,
   selectedGoal,
   selectedMonth,
   selectedDates,
   batchInput,
-  dailyTasks,
   archiveVersion
 } from '@/views/direction/composables/useDirectionState'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
@@ -14,35 +15,73 @@ import { useDirectionFetch } from '@/views/direction/composables/useDirectionFet
 
 export function useDirectionBatch() {
   const authStore = useAuthStore()
-  const { hasTask, dayTaskKey } = useDirectionSelection()
+  const { hasTask } = useDirectionSelection()
   const { loadDailyPlans } = useDirectionFetch()
+
+  const getCurrentMonthlyPlan = (planId, month) => {
+    const cachedPlans = monthlyPlansCache[planId] || []
+    return cachedPlans.find(mp => getDateOnlyMonth(mp.month) === month) || null
+  }
+
+  const getExistingDailyPlanMap = async (monthlyPlanId) => {
+    if (!dailyPlansCache[monthlyPlanId]) {
+      await loadDailyPlans(monthlyPlanId, { force: true })
+    }
+
+    const existingDailyPlans = dailyPlansCache[monthlyPlanId] || []
+    const planMap = new Map()
+
+    for (const plan of existingDailyPlans) {
+      const dayDate = parseDateOnly(plan.day)
+      if (!dayDate) continue
+
+      planMap.set(dayDate.getDate(), plan)
+    }
+
+    return planMap
+  }
 
   const applyBatchTask = async () => {
     const m = selectedMonth.value
     if (!m || !batchInput.value.trim()) return
 
-    const cachedPlans = monthlyPlansCache[selectedGoal.value.plan_id] || []
-    const currentMp = cachedPlans.find(mp => new Date(mp.month).getMonth() + 1 === m)
+    const currentMp = getCurrentMonthlyPlan(selectedGoal.value.plan_id, m)
     if (!currentMp) return
 
-    const year = new Date(currentMp.month).getFullYear()
-    let daysToUpdate = selectedDates[m].filter(day => hasTask(m, day))
+    const monthDate = parseDateOnly(currentMp.month)
+    if (!monthDate) return
+
+    const year = monthDate.getFullYear()
+
+    const currentSelectedDates = selectedDates[m] || []
+    let daysToUpdate = currentSelectedDates.filter(day => hasTask(m, day))
     if (daysToUpdate.length === 0) {
-      daysToUpdate = [...selectedDates[m]]
+      daysToUpdate = [...currentSelectedDates]
     }
 
-    const items = daysToUpdate.map(day => ({
-      date: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-      title: batchInput.value,
-      task_time: null,
-      duration: null
-    }))
+    const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
 
-    await db.rpc('batch_upsert_daily_plans', {
-      p_monthly_plan_id: currentMp.id,
-      p_user_id: authStore.userId,
-      p_items: items
-    })
+    for (const day of daysToUpdate) {
+      const existingDailyPlan = existingDailyPlanMap.get(day)
+      const payload = {
+        monthly_plan_id: currentMp.id,
+        user_id: authStore.userId,
+        day: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        title: batchInput.value,
+        task_time: null,
+        duration: null
+      }
+
+      if (existingDailyPlan) {
+        await db.dailyPlans.update(existingDailyPlan.id, {
+          title: payload.title,
+          task_time: payload.task_time,
+          duration: payload.duration
+        })
+      } else {
+        await db.dailyPlans.create(payload)
+      }
+    }
 
     await loadDailyPlans(currentMp.id, { force: true })
     archiveVersion.value++
@@ -52,16 +91,20 @@ export function useDirectionBatch() {
 
   const handleBatchDelete = async () => {
     const m = selectedMonth.value
-    if (!m || !selectedDates[m] || selectedDates[m].length === 0) return
+    const currentSelectedDates = selectedDates[m] || []
+    if (!m || currentSelectedDates.length === 0) return
 
-    const cachedPlans = monthlyPlansCache[selectedGoal.value.plan_id] || []
-    const currentMp = cachedPlans.find(mp => new Date(mp.month).getMonth() + 1 === m)
+    const currentMp = getCurrentMonthlyPlan(selectedGoal.value.plan_id, m)
     if (!currentMp) return
 
-    await db.rpc('batch_delete_daily_plans', {
-      p_monthly_plan_id: currentMp.id,
-      p_days: selectedDates[m]
-    })
+    const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
+
+    for (const day of currentSelectedDates) {
+      const existingDailyPlan = existingDailyPlanMap.get(day)
+      if (existingDailyPlan) {
+        await db.dailyPlans.delete(existingDailyPlan.id)
+      }
+    }
 
     await loadDailyPlans(currentMp.id, { force: true })
     archiveVersion.value++

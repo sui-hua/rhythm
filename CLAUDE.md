@@ -28,9 +28,9 @@ pnpm vue-tsc   # TypeScript 类型检查
 |------|------|------|
 | `/direction` | Direction | 长期目标管理，三级级联：plans → monthly_plans → daily_plans |
 | `/habits` | Habits | 周期行为追踪，热力图日历 + 数据统计 |
-| `/day` | Timeline | 每日时间轴，统一聚合 Task、DailyPlan、Habit 三种数据源 |
-| `/month/:monthIndex` | Month | 月度视图 |
-| `/year` | Year | 年度总览 |
+| `/day/:year/:month/:day` | Timeline | 每日时间轴，统一聚合 Task、DailyPlan、Habit 三种数据源 |
+| `/month/:year/:month` | Month | 月度视图 |
+| `/year/:year` | Year | 年度总览 |
 | `/summary` | Summary | 日/周/月/年总结 |
 
 ## 数据层
@@ -41,7 +41,7 @@ pnpm vue-tsc   # TypeScript 类型检查
 
 **Supabase 扩展**：`supabase.createBase(tableName)` 生成标准 CRUD 对象（list/getById/create/update/delete/query）。
 
-**数据库 Schema**：`database/schema.sql`，所有表配置了 RLS 策略保证用户数据隔离。
+**数据库真相源**：以 Supabase MCP 查询到的线上真实结构为准，仓库内当前结构说明见 `database/current-structure.md`。
 
 ### RPC 批量操作
 

@@ -48,7 +48,7 @@
           :class="selectedSummaryId === summary.id ? 'bg-secondary ring-1 ring-border' : 'hover:bg-zinc-50'"
         >
           <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            {{ formatDate(summary.date, activeTab) }}
+            {{ formatDate(summary) }}
           </span>
           <h4
             class="text-sm font-semibold tracking-tight line-clamp-1"

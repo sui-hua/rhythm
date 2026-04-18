@@ -2,7 +2,7 @@
 
 - 日期：2026-04-15
 - 状态：已完成设计评审（待实现）
-- 适用范围：全站页面（含 `/day`、`/direction`、`/habits`、`/year`、`/month/:monthIndex`、`/summary`、`/login`）
+- 适用范围：全站页面（含 `/day/:year/:month/:day`、`/direction`、`/habits`、`/year/:year`、`/month/:year/:month`、`/summary`、`/login`）
 
 ## 1. 目标与决策
 
@@ -99,15 +99,15 @@
 2. 数据层统一接入
 - `src/config/supabase.js`
 - `src/services/db/habits.js`（`habit_logs` 直连）
-- `src/services/db/summaries.js`（`daily_summaries` 直连）
+- `src/services/db/summaries.js`（`summaries` 直连）
 
 3. 全局进度条组件与挂载
 - `src/components/ui/GlobalLoadingBar.vue`
 - `src/App.vue`
 
 4. 页面骨架与交互态接入（全站批次推进）
-- 第一批：`/day`、`/direction`、`/habits`
-- 第二批：`/year`、`/month/:monthIndex`、`/summary`、`/login`
+- 第一批：`/day/:year/:month/:day`、`/direction`、`/habits`
+- 第二批：`/year/:year`、`/month/:year/:month`、`/summary`、`/login`
 
 ## 6. 测试与验收标准（强制包含 Playwright-MCP）
 
@@ -117,7 +117,7 @@
 
 1. 慢请求（`>200ms`）出现顶部进度条并正确消失
 2. 快请求（`<200ms`）不出现顶部进度条
-3. `/day`、`/direction`、`/habits` 首屏骨架出现并正确切换
+3. `/day/:year/:month/:day`、`/direction`、`/habits` 首屏骨架出现并正确切换
 4. 写操作按钮进入 loading 后禁用，结束后恢复
 5. 并发请求下进度条不会提前消失
 6. 失败请求后 loading 正常收敛，不发生界面卡死

@@ -1,15 +1,19 @@
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
+import { buildMonthPath, buildYearPath, getRouteYearContext } from '@/views/day/utils/routeDateContext'
 
 export const useYearView = () => {
   const dateStore = useDateStore()
   const router = useRouter()
+  const route = useRoute()
 
   const isPageLoading = ref(false)
   const habits = ref([])
+  const routeYear = computed(() => getRouteYearContext(route.params.year, dateStore.currentDate.getFullYear()).year)
+  const hasFetchedHabits = ref(false)
 
   const fetchHabits = async () => {
     isPageLoading.value = true
@@ -23,10 +27,32 @@ export const useYearView = () => {
     }
   }
 
-  onMounted(fetchHabits)
+  const syncYearRoute = async () => {
+    const context = getRouteYearContext(route.params.year, dateStore.currentDate.getFullYear())
+
+    if (!context.isCanonical) {
+      const targetYear = context.hasParsedYear
+        ? new Date(context.year, 0, 1).getFullYear()
+        : dateStore.currentDate.getFullYear()
+      router.replace(buildYearPath(targetYear))
+      return false
+    }
+
+    dateStore.setYearMonthDay(context.year, 0, 1)
+
+    if (!hasFetchedHabits.value) {
+      await fetchHabits()
+      hasFetchedHabits.value = true
+    }
+
+    return true
+  }
+
+  onMounted(syncYearRoute)
+  watch(() => route.params.year, syncYearRoute)
 
   const yearData = computed(() => {
-    const currentYear = dateStore.currentDate.getFullYear()
+    const currentYear = routeYear.value
     const completedByMonth = new Map()
 
     habits.value.forEach((habit) => {
@@ -60,7 +86,7 @@ export const useYearView = () => {
   })
 
   const enterMonth = (month) => {
-    router.push(`/month/${month.index + 1}`)
+    router.push(buildMonthPath(routeYear.value, month.index + 1))
   }
 
   return {

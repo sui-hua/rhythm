@@ -27,11 +27,34 @@
       />
     </div>
 
-    <div class="flex justify-end gap-3 pt-4">
-      <Button variant="outline" class="whitespace-nowrap" @click="$emit('cancel')">取消</Button>
-      <Button class="bg-foreground text-background font-semibold px-8 whitespace-nowrap" @click="handleSubmit">
-        保存今日总结
+    <div class="grid gap-2">
+      <label class="text-sm font-medium leading-none">今日心情</label>
+      <Input
+        v-model.number="formData.mood"
+        type="number"
+        min="1"
+        max="5"
+        placeholder="1 到 5"
+        class="h-10"
+      />
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-4">
+      <Button
+        v-if="initialData?.id"
+        variant="destructive"
+        class="whitespace-nowrap"
+        @click="$emit('delete')"
+      >
+        删除总结
       </Button>
+
+      <div class="flex flex-wrap items-center gap-3 sm:ml-auto">
+        <Button variant="outline" class="whitespace-nowrap" @click="$emit('cancel')">取消</Button>
+        <Button class="bg-foreground text-background font-semibold px-8 whitespace-nowrap" @click="handleSubmit">
+          保存今日总结
+        </Button>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +62,7 @@
 <script setup>
 import { useDailySummaryForm } from '@/views/summary/composables/useDailySummaryForm'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toRef } from 'vue'
 
@@ -49,7 +73,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['save', 'cancel'])
+const emit = defineEmits(['save', 'cancel', 'delete'])
 
 const { formData, buildPayload } = useDailySummaryForm(toRef(props, 'initialData'))
 

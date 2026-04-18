@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { safeDb as db } from '@/services/safeDb'
+import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import {
   months,
   monthlyPlans,
@@ -19,7 +20,7 @@ import { useDirectionFetch } from '@/views/direction/composables/useDirectionFet
 
 export function useDirectionGoals() {
   const authStore = useAuthStore()
-  const { fetchData } = useDirectionFetch()
+  const { fetchData, loadMonthlyPlans } = useDirectionFetch()
 
   // 写操作按钮 loading 状态
   const isSubmitting = ref(false)
@@ -47,7 +48,7 @@ export function useDirectionGoals() {
 
     if (relatedMonthlyPlans.length > 0) {
       const months = relatedMonthlyPlans
-        .map(mp => (mp.month ? new Date(mp.month).getMonth() + 1 : null))
+        .map(mp => (mp.month ? getDateOnlyMonth(mp.month) : null))
         .filter(m => m !== null)
 
       if (months.length > 0) {
@@ -88,7 +89,9 @@ export function useDirectionGoals() {
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
 
       const existingMonthlyPlans = getMonthlyPlansByPlanId(planId)
-      const existingMonths = existingMonthlyPlans.map(mp => new Date(mp.month).getMonth() + 1)
+      const existingMonths = existingMonthlyPlans
+        .map(mp => getDateOnlyMonth(mp.month))
+        .filter(m => m !== null)
 
       const startM = goalToUpdate.startMonth || 1
       const endM = goalToUpdate.endMonth || startM
@@ -118,7 +121,7 @@ export function useDirectionGoals() {
       }
 
       const toDelete = existingMonthlyPlans.filter(mp => {
-        const m = new Date(mp.month).getMonth() + 1
+        const m = getDateOnlyMonth(mp.month)
         return !targetMonths.includes(m)
       })
 
@@ -153,7 +156,7 @@ export function useDirectionGoals() {
 
   const saveMonthlyPlan = async (m, payload) => {
     const currentMp = getMonthlyPlansByPlanId(selectedGoal.value.plan_id).find(
-      mp => new Date(mp.month).getMonth() + 1 === m
+      mp => getDateOnlyMonth(mp.month) === m
     )
     if (currentMp) {
       try {

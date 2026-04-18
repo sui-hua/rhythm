@@ -7,6 +7,7 @@ import { playSuccessSound } from '@/utils/audio'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { formatDuration } from '@/utils/formatDuration'
 import { isDailyPlanCompleted, toDailyPlanStatus } from '@/utils/dailyPlanStatus'
+import { getRouteDateContext } from '@/views/day/utils/routeDateContext'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -22,11 +23,11 @@ const isLoading = ref(false)
 export function useDayData() {
     const route = useRoute()
     const dateStore = useDateStore()
+    const routeDateContext = computed(() => getRouteDateContext(route.params, dateStore.currentDate))
 
     // 当前选中的月份
     const selectedMonth = computed(() => {
-        const now = new Date()
-        const monthNum = route.params.monthIndex ? parseInt(route.params.monthIndex) : (now.getMonth() + 1)
+        const monthNum = routeDateContext.value.month
         return {
             name: getMonthName(monthNum, 'zh'),
             full: getMonthName(monthNum, 'full'),
@@ -36,8 +37,7 @@ export function useDayData() {
 
     // 当前选中的天
     const selectedDay = computed(() => {
-        const now = new Date()
-        return route.params.day ? parseInt(route.params.day) : now.getDate()
+        return routeDateContext.value.day
     })
 
     // 获取数据
@@ -45,12 +45,11 @@ export function useDayData() {
         const { showLoading = true } = options
         try {
             if (showLoading) isLoading.value = true
-            const year = dateStore.currentDate.getFullYear()
-            const month = selectedMonth.value.index
-            const day = selectedDay.value
+            const { year, month, day } = routeDateContext.value
+            const monthZeroBased = month - 1
 
-            const startOfDay = new Date(year, month, day, 0, 0, 0)
-            const endOfDay = new Date(year, month, day, 23, 59, 59)
+            const startOfDay = new Date(year, monthZeroBased, day, 0, 0, 0)
+            const endOfDay = new Date(year, monthZeroBased, day, 23, 59, 59)
 
             const [fetchedTasks, fetchedPlans, allHabits, dayHabitLogs] = await Promise.all([
                 db.tasks.list(startOfDay, endOfDay),

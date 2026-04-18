@@ -59,6 +59,7 @@ import { useDirectionFetch } from '@/views/direction/composables/useDirectionFet
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { monthlyPlans, dailyTasks, getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
+import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -66,6 +67,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 import { useResizable } from '@/composables/useResizable'
 import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
+import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
 const { categorizedGoals } = useDirectionFetch()
 const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
@@ -81,24 +83,17 @@ const systemLoad = computed(() => {
 
   // 找到该目标当前月份的月度计划
   const monthPlan = getMonthlyPlansByPlanId(planId).find(
-    mp => new Date(mp.month).getMonth() + 1 === month
+    mp => getDateOnlyMonth(mp.month) === month
   )
 
   if (!monthPlan) return 0
 
-  // 统计完成率
-  const monthStr = String(month).padStart(2, '0')
-  let total = 0
-  let completed = 0
-
-  Object.entries(dailyTasks).forEach(([key, task]) => {
-    if (key.startsWith(`plan-${planId}-${monthStr}-`)) {
-      total++
-      if (isDailyPlanCompleted(task.status)) completed++
-    }
+  return getDirectionMonthlyProgress({
+    dailyTasks,
+    planId,
+    month,
+    isDailyPlanCompleted
   })
-
-  return total === 0 ? 0 : Math.round((completed / total) * 100)
 })
 
 const { width, startResize, isResizing } = useResizable()

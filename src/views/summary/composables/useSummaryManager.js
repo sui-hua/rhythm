@@ -1,7 +1,12 @@
 import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
+import { buildDefaultPeriod } from '@/views/summary/utils/summaryPeriods'
+import { buildSummaryPayload } from '@/views/summary/utils/summaryAdapters'
+import { summaryTabToKind } from '@/views/summary/utils/summaryRouteHelpers'
 
 export const useSummaryManager = () => {
+  const authStore = useAuthStore()
   const activeTab = ref('day')
   const summaries = ref([])
   const loading = ref(false)
@@ -12,15 +17,13 @@ export const useSummaryManager = () => {
   const loadSummaries = async () => {
     loading.value = true
     try {
-      if (activeTab.value === 'day') {
-        summaries.value = await db.summaries.listDaily()
-      } else {
-        summaries.value = await db.summaries.list(activeTab.value)
-      }
+      summaries.value = await db.summaries.listByKind(summaryTabToKind(activeTab.value))
     } catch (error) {
       console.error('Failed to load summaries', error)
+      summaries.value = []
+    } finally {
+      loading.value = false
     }
-    loading.value = false
   }
 
   const handleTabChange = (tabId) => {
@@ -42,24 +45,30 @@ export const useSummaryManager = () => {
 
   const handleSave = async (data) => {
     try {
-      if (activeTab.value === 'day') {
-        const summaryData = { ...data }
-        if (selectedSummary.value) {
-          summaryData.id = selectedSummary.value.id
-        }
-        await db.summaries.saveDaily(summaryData)
-      } else {
-        const summaryData = {
-          ...data,
-          scope: activeTab.value
-        }
-        if (selectedSummary.value) {
-          await db.summaries.update(selectedSummary.value.id, summaryData)
-        } else {
-          await db.summaries.create(summaryData)
-        }
+      const userId = authStore.userId
+      if (!userId) {
+        throw new Error('当前用户未登录，无法保存总结')
       }
 
+      const kind = summaryTabToKind(activeTab.value)
+      const existingSummary = selectedSummary.value
+      const period = existingSummary?.period_start && existingSummary?.period_end
+        ? {
+            periodStart: existingSummary.period_start,
+            periodEnd: existingSummary.period_end
+          }
+        : buildDefaultPeriod(kind, existingSummary?.created_at ? new Date(existingSummary.created_at) : new Date())
+
+      const payload = buildSummaryPayload({
+        kind,
+        userId,
+        period,
+        formData: data,
+        existingRecord: existingSummary
+      })
+
+      const savedSummary = await db.summaries.save(payload)
+      selectedSummary.value = savedSummary
       await loadSummaries()
       isCreating.value = false
     } catch (error) {
@@ -75,13 +84,9 @@ export const useSummaryManager = () => {
     if (!confirm('确定要删除这条总结吗？')) return
 
     try {
-      if (activeTab.value === 'day') {
-        await db.summaries.deleteDaily(id)
-      } else {
-        await db.summaries.delete(id)
-      }
+      await db.summaries.remove(id)
       selectedSummary.value = null
-      loadSummaries()
+      await loadSummaries()
     } catch (error) {
       console.error('Failed to delete summary', error)
     }

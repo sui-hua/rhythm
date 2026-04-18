@@ -1,5 +1,6 @@
 import { computed, onMounted, watch, ref } from 'vue'
 import { safeDb as db } from '@/services/safeDb'
+import { parseDateOnly } from '@/views/direction/utils/dateOnly'
 import {
   plans,
   monthlyPlans,
@@ -15,6 +16,8 @@ import {
 } from '@/views/direction/composables/useDirectionState'
 
 let setupDone = false
+
+export { parseDateOnly } from '@/views/direction/utils/dateOnly'
 
 export function useDirectionFetch() {
   const isPageLoading = ref(false)
@@ -55,14 +58,20 @@ export function useDirectionFetch() {
       .find(item => item.id === monthlyPlanId)
     if (!mp) return
 
-    const month = new Date(mp.month).getMonth() + 1
+    const monthDate = parseDateOnly(mp.month)
+    if (!monthDate) return
+
+    const month = monthDate.getMonth() + 1
     const prefix = `plan-${mp.plan_id}-${month}-`
     for (const key of Object.keys(dailyTasks)) {
       if (key.startsWith(prefix)) delete dailyTasks[key]
     }
 
     for (const dp of dps) {
-      const day = new Date(dp.day).getDate()
+      const dayDate = parseDateOnly(dp.day)
+      if (!dayDate) continue
+
+      const day = dayDate.getDate()
       dailyTasks[`plan-${mp.plan_id}-${month}-${day}`] = dp
     }
   }
@@ -72,33 +81,40 @@ export function useDirectionFetch() {
     try {
       plans.value = await db.plans.list()
 
-      const allMonthlyPlans = []
-      for (const plan of plans.value) {
-        const mps = await db.monthlyPlans.list(plan.id)
-        allMonthlyPlans.push(...mps)
-      }
-      monthlyPlans.value = allMonthlyPlans
+      const monthlyPlanGroups = await Promise.all(
+        plans.value.map(plan => db.monthlyPlans.list(plan.id))
+      )
+      monthlyPlans.value = monthlyPlanGroups.flat()
 
       for (const mp of monthlyPlans.value) {
         if (!mp.month || !mp.plan_id) continue
-        const m = new Date(mp.month).getMonth() + 1
+        const monthDate = parseDateOnly(mp.month)
+        if (!monthDate) continue
+
+        const m = monthDate.getMonth() + 1
         const key = `plan-${mp.plan_id}-${m}`
         monthlyMainGoals[key] = mp
       }
 
-      const allDailyPlans = []
       const mpMap = new Map()
       for (const mp of monthlyPlans.value) {
         mpMap.set(mp.id, mp)
-        const dps = await db.dailyPlans.list(mp.id)
-        allDailyPlans.push(...dps)
       }
+
+      const dailyPlanGroups = await Promise.all(
+        monthlyPlans.value.map(mp => db.dailyPlans.list(mp.id))
+      )
+      const allDailyPlans = dailyPlanGroups.flat()
 
       for (const dp of allDailyPlans) {
         const mp = mpMap.get(dp.monthly_plan_id)
         if (mp) {
-          const m = new Date(mp.month).getMonth() + 1
-          const d = new Date(dp.day).getDate()
+          const monthDate = parseDateOnly(mp.month)
+          const dayDate = parseDateOnly(dp.day)
+          if (!monthDate || !dayDate) continue
+
+          const m = monthDate.getMonth() + 1
+          const d = dayDate.getDate()
           const key = `plan-${mp.plan_id}-${m}-${d}`
           dailyTasks[key] = dp
         }

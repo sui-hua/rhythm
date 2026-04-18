@@ -3,13 +3,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { useDayData } from './useDayData'
 import { useDateStore } from '@/stores/dateStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
+import { buildDayPath, getRouteDateContext } from '@/views/day/utils/routeDateContext'
 
 /**
  * Day 视图导航与交互管理 (Composable)
  * 包含路由校验跳转、当前时间指针、滚动定位以及页面初始化
  */
 export function useDayNavigation() {
-    const { selectedMonth, dailySchedule, fetchTasks, isLoading } = useDayData()
+    const { dailySchedule, fetchTasks, isLoading } = useDayData()
     const router = useRouter()
     const route = useRoute()
     const dateStore = useDateStore()
@@ -29,13 +30,19 @@ export function useDayNavigation() {
     }
 
     const validateDayRoute = () => {
-        if (route.params.monthIndex && route.params.day) {
-            const monthIndex = parseInt(route.params.monthIndex)
-            const day = parseInt(route.params.day)
-            if (isNaN(monthIndex) || monthIndex < 1 || monthIndex > 12 || isNaN(day) || day < 1 || day > 31) {
-                router.push('/year')
-            }
+        const context = getRouteDateContext(route.params, dateStore.currentDate)
+
+        if (!context.hasParsedParams) {
+            router.replace(buildDayPath(context.date))
+            return false
         }
+
+        if (!context.isCanonical) {
+            router.replace(buildDayPath(context.date))
+            return false
+        }
+
+        return true
     }
 
     const isSameDay = (a, b) => {
@@ -52,39 +59,29 @@ export function useDayNavigation() {
     }
 
     const getTargetDateFromRoute = () => {
-        const now = new Date()
-        if (route.params.monthIndex && route.params.day) {
-            const monthIndex = parseInt(route.params.monthIndex)
-            const day = parseInt(route.params.day)
-            const year = dateStore.currentDate.getFullYear()
-            if (!isNaN(monthIndex) && !isNaN(day)) {
-                return new Date(year, monthIndex - 1, day)
-            }
-        }
-        return now
+        return getRouteDateContext(route.params, dateStore.currentDate).date
     }
 
     const syncDateWithRoute = () => {
-        const now = new Date()
-        if (route.params.monthIndex && route.params.day) {
-            const monthIndex = parseInt(route.params.monthIndex)
-            const day = parseInt(route.params.day)
-            if (!isNaN(monthIndex) && !isNaN(day)) {
-                const year = dateStore.currentDate.getFullYear()
-                dateStore.setYearMonthDay(year, monthIndex - 1, day)
-            }
-        } else {
-            dateStore.setDate(now)
-        }
+        const { year, month, day } = getRouteDateContext(route.params, dateStore.currentDate)
+        dateStore.setYearMonthDay(year, month - 1, day)
+    }
+
+    const handleRouteSync = async () => {
+        if (!validateDayRoute()) return false
+
+        const targetDate = getTargetDateFromRoute()
+        await handleFirstEntryForDay(targetDate)
+        syncDateWithRoute()
+        await fetchTasks({ showLoading: true })
+        return true
     }
 
     // 页面挂载初始化：校验路由、加载数据、滚动定位、淡入显示、启动时间线刷新
     onMounted(async () => {
-        validateDayRoute()
-        await handleFirstEntryForDay(getTargetDateFromRoute())
-        syncDateWithRoute()
+        const isValid = await handleRouteSync()
+        if (!isValid) return
 
-        await fetchTasks({ showLoading: true })
         await nextTick()
 
         const schedule = dailySchedule.value
@@ -109,12 +106,9 @@ export function useDayNavigation() {
     })
 
     watch(
-        () => [route.params.monthIndex, route.params.day],
+        () => [route.params.year, route.params.month, route.params.day],
         async () => {
-            validateDayRoute()
-            await handleFirstEntryForDay(getTargetDateFromRoute())
-            syncDateWithRoute()
-            await fetchTasks({ showLoading: true })
+            await handleRouteSync()
         }
     )
 

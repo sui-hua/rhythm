@@ -29,15 +29,15 @@ pnpm preview  # 预览生产构建
 
 - **Direction (所向)** `/direction` - 长期目标管理，三级级联：`plans → monthly_plans → daily_plans`
 - **Habits (习惯)** `/habits` - 周期行为追踪，带热力图日历和数据统计
-- **Timeline (时序)** `/day` - 每日时间轴视图，统一聚合 Task、DailyPlan、Habit 三种数据源
+- **Timeline (时序)** `/day/:year/:month/:day` - 每日时间轴视图，统一聚合 Task、DailyPlan、Habit 三种数据源
 
-其他视图：`/year`（年度总览）、`/month/:monthIndex`（月度视图）、`/summary`（总结）
+其他视图：`/year/:year`（年度总览）、`/month/:year/:month`（月度视图）、`/day/:year/:month/:day`（每日时序）、`/summary`（总结）
 
 ### 数据层
 
 - **数据库服务**：`src/services/database.js` 统一导出各表的 CRUD 操作
 - **Supabase 客户端**：`src/config/supabase.js`，已扩展 `createBase(tableName)` 方法生成标准 CRUD
-- **数据库 Schema**：`database/schema.sql`，所有表都配置了 RLS 策略保证用户数据隔离
+- **数据库真相源**：以 Supabase MCP 查询到的线上真实结构为准，仓库内当前结构说明见 `database/current-structure.md`
 
 ### 状态管理
 

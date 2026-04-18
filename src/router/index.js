@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { buildDayPath, buildMonthPath, buildYearPath } from '@/views/day/utils/routeDateContext'
 
 // 页面组件按需加载 - 仅在访问对应路由时才加载
 const LoginView = () => import('@/views/login/index.vue')
@@ -18,29 +19,40 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/day'
+    redirect: () => buildDayPath(new Date())
   },
   {
     path: '/year',
-    name: 'YearView',
-    component: YearView
+    redirect: () => buildYearPath(new Date().getFullYear())
   },
   {
-    path: '/month/:monthIndex',
+    path: '/year/:year',
+    name: 'YearView',
+    component: YearView,
+    props: true
+  },
+  {
+    path: '/month',
+    redirect: () => {
+      const now = new Date()
+      return buildMonthPath(now.getFullYear(), now.getMonth() + 1)
+    }
+  },
+  {
+    path: '/month/:year/:month',
     name: 'MonthView',
     component: MonthView,
     props: true
   },
   {
-    path: '/day/:monthIndex/:day',
+    path: '/day',
+    redirect: () => buildDayPath(new Date())
+  },
+  {
+    path: '/day/:year/:month/:day',
     name: 'DayView',
     component: DayView,
     props: true
-  },
-  {
-    path: '/day',
-    name: 'DayViewToday',
-    component: DayView
   },
   {
     path: '/habits',

@@ -4,30 +4,33 @@ export const useDailySummaryForm = (initialDataRef) => {
   const formData = ref({
     done: '',
     improve: '',
-    tomorrow: ''
+    tomorrow: '',
+    mood: null
   })
 
   watch(
     initialDataRef,
     (newVal) => {
-      if (newVal && newVal.content) {
-        try {
-          formData.value = typeof newVal.content === 'string'
-            ? JSON.parse(newVal.content)
-            : { ...newVal.content }
-        } catch (e) {
-          console.error('Failed to parse summary content:', e)
-          formData.value = { done: '', improve: '', tomorrow: '' }
+      if (newVal) {
+        const content = newVal.content && typeof newVal.content === 'object' && !Array.isArray(newVal.content)
+          ? newVal.content
+          : {}
+
+        formData.value = {
+          done: content.done ?? '',
+          improve: content.improve ?? '',
+          tomorrow: content.tomorrow ?? '',
+          mood: newVal.mood ?? content.mood ?? null
         }
       } else {
-        formData.value = { done: '', improve: '', tomorrow: '' }
+        formData.value = { done: '', improve: '', tomorrow: '', mood: null }
       }
     },
     { immediate: true }
   )
 
   const buildPayload = () => ({
-    content: { ...formData.value }
+    ...formData.value
   })
 
   return {
