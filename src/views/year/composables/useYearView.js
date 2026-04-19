@@ -31,6 +31,7 @@ export const useYearView = () => {
 
   const isPageLoading = ref(false)
   const habits = ref([])
+  const yearLogs = ref([])
   const routeYear = computed(() => getRouteYearContext(route.params.year, dateStore.currentDate.getFullYear()).year)
   const hasFetchedHabits = ref(false)
 
@@ -43,6 +44,15 @@ export const useYearView = () => {
       console.error(e)
     } finally {
       isPageLoading.value = false
+    }
+  }
+
+  const fetchYearLogs = async (year) => {
+    try {
+      yearLogs.value = await db.habits.listLogsByYear(year)
+    } catch (e) {
+      console.error('Failed to fetch year logs', e)
+      yearLogs.value = []
     }
   }
 
@@ -64,6 +74,8 @@ export const useYearView = () => {
       hasFetchedHabits.value = true
     }
 
+    await fetchYearLogs(context.year)
+
     return true
   }
 
@@ -74,17 +86,14 @@ export const useYearView = () => {
     const currentYear = routeYear.value
     const completedByMonth = new Map()
 
-    habits.value.forEach((habit) => {
-      const logs = habit.habit_logs || []
-      logs.forEach((log) => {
-        const d = new Date(log.completed_at)
-        if (d.getFullYear() === currentYear) {
-          const m = d.getMonth()
-          const day = d.getDate()
-          if (!completedByMonth.has(m)) completedByMonth.set(m, new Set())
-          completedByMonth.get(m).add(day)
-        }
-      })
+    yearLogs.value.forEach((log) => {
+      const d = new Date(log.completed_at)
+      if (d.getFullYear() === currentYear) {
+        const m = d.getMonth()
+        const day = d.getDate()
+        if (!completedByMonth.has(m)) completedByMonth.set(m, new Set())
+        completedByMonth.get(m).add(day)
+      }
     })
 
     const result = []

@@ -1,86 +1,68 @@
 /**
  * ============================================
- * Direction 模块共享状态 (views/direction/composables/useDirectionState.js)
+ * Direction 模块共享状态 Composable (views/direction/composables/useDirectionState.js)
  * ============================================
  *
  * 【模块职责】
- * - 管理 Direction 模块的全局共享状态
- * - Direction 模块三级级联结构：
- *   Plans（长期目标）→ MonthlyPlans（月度计划）→ DailyPlans（每日任务）
- * - 提供缓存机制提高性能
+ * - 提供 Direction 模块全局共享状态的访问接口
+ * - 内部使用 directionStore (Pinia)
+ * - 保持与旧版 module-level export 的向后兼容
  *
- * 【数据结构】
- * - plans           → 长期目标列表
- * - monthlyPlans    → 月度计划列表（扁平兼容格式）
- * - monthlyPlansCache → 按 planId 索引的月度计划缓存
- * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
- * - selectedGoal    → 当前选中的目标
- * - editingGoal     → 当前编辑的目标
- * - selectedMonth   → 当前选中的月份
- * - selectedDates   → 当前选中的日期集合
- *
- * 【缓存机制】
- * - getMonthlyPlansByPlanId() → 按 planId 获取月度计划
- * - syncMonthlyPlansToFlatList() → 同步缓存到扁平列表
+ * 【使用方式】
+ * import { plans, selectedGoal } from '@/views/direction/composables/useDirectionState'
+ * // 或者
+ * const { plans, selectedGoal } = useDirectionState()
  */
-import { ref, reactive } from 'vue'
-import { getMonthName } from '@/utils/dateFormatter'
+import { useDirectionStore, months } from '@/stores/directionStore'
 
-// 月份常量定义（动态生成）
-export const months = Array.from({ length: 12 }, (_, i) => ({
-  label: getMonthName(i + 1, 'zh'),
-  value: i + 1,
-  full: getMonthName(i + 1, 'full')
-}))
+// ============ 向后兼容的模块级导出 ============
+// 这些导出保持与原有代码的兼容性，但实际从 store 读取
 
-// 缓存主源（按 planId 索引的月度计划）
-export const monthlyPlansCache = reactive({}) // { [planId]: monthlyPlan[] }
-export const dailyPlansCache = reactive({})   // { [monthlyPlanId]: dailyPlan[] }
-export const archiveVersion = ref(0)
-export const getMonthlyPlansByPlanId = (planId) => monthlyPlansCache[planId] || []
+export { months }
 
-// 清空日计划缓存（保留指定的 monthlyPlanId）
-export const clearDailyPlansCache = (keepMonthlyPlanId = null) => {
-  if (keepMonthlyPlanId && dailyPlansCache[keepMonthlyPlanId]) {
-    const keepData = dailyPlansCache[keepMonthlyPlanId]
-    Object.keys(dailyPlansCache).forEach(key => {
-      delete dailyPlansCache[key]
-    })
-    dailyPlansCache[keepMonthlyPlanId] = keepData
-  } else {
-    Object.keys(dailyPlansCache).forEach(key => {
-      delete dailyPlansCache[key]
-    })
+export const getMonthlyPlansByPlanId = (planId) => useDirectionStore().getMonthlyPlansByPlanId(planId)
+export const clearDailyPlansCache = (keepMonthlyPlanId) => useDirectionStore().clearDailyPlansCache(keepMonthlyPlanId)
+export const syncMonthlyPlansToFlatList = (planId) => useDirectionStore().syncMonthlyPlansToFlatList(planId)
+
+// Composable 函数
+export function useDirectionState() {
+  const store = useDirectionStore()
+
+  return {
+    // 缓存（只读引用）
+    monthlyPlansCache: store.monthlyPlansCache,
+    dailyPlansCache: store.dailyPlansCache,
+    archiveVersion: store.archiveVersion,
+
+    // 状态
+    plans: store.plans,
+    monthlyPlans: store.monthlyPlans,
+    selectedGoal: store.selectedGoal,
+    editingGoal: store.editingGoal,
+    selectedMonth: store.selectedMonth,
+    activePicker: store.activePicker,
+    isSelecting: store.isSelecting,
+    showAddModal: store.showAddModal,
+    showCategoryModal: store.showCategoryModal,
+
+    // UI 数据
+    monthlyMainGoals: store.monthlyMainGoals,
+    dailyTasks: store.dailyTasks,
+    selectedDates: store.selectedDates,
+    batchInput: store.batchInput,
+
+    // 初始化状态
+    initialized: store.initialized,
+
+    // 共享分类
+    categories: store.categories,
+
+    // 方法
+    getMonthlyPlansByPlanId: store.getMonthlyPlansByPlanId,
+    clearDailyPlansCache: store.clearDailyPlansCache,
+    syncMonthlyPlansToFlatList: store.syncMonthlyPlansToFlatList,
+
+    // reset 方法
+    reset: store.reset
   }
 }
-
-// 同步缓存到扁平兼容镜像
-export const syncMonthlyPlansToFlatList = (planId) => {
-  const cached = monthlyPlansCache[planId] || []
-  const others = monthlyPlans.value.filter(item => item.plan_id !== planId)
-  monthlyPlans.value = [...others, ...cached]
-}
-
-// 共享状态（单例）
-export const plans = ref([])
-export const monthlyPlans = ref([])
-
-export const selectedGoal = ref(null)
-export const editingGoal = ref(null)
-
-export const selectedMonth = ref(null)
-export const activePicker = ref('start')
-export const isSelecting = ref(false)
-export const showAddModal = ref(false)
-export const showCategoryModal = ref(false)
-
-
-export const monthlyMainGoals = reactive({})
-export const dailyTasks = reactive({})
-export const selectedDates = reactive({})
-export const batchInput = ref('')
-
-export const initialized = ref(false)
-
-// 共享的分类数据（用于去重请求）
-export const categories = ref([])

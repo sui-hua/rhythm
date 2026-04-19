@@ -9,7 +9,7 @@
     
     <!-- 抽屉容器 -->
     <div 
-      class="fixed bottom-0 left-0 right-0 z-[250] bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-(--shadow-modal) flex flex-col transition-transform duration-700 ease-expo pb-safe"
+      class="fixed bottom-0 left-0 right-0 z-[250] bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-(--shadow-modal) flex flex-col transition-transform duration-700 ease-expo pb-safe relative"
       :class="show ? 'translate-y-0' : 'translate-y-full'"
       style="max-height: 92vh;"
     >
@@ -19,6 +19,14 @@
       </div>
 
       <div class="flex flex-col flex-1 overflow-hidden px-7 pb-10">
+        <!-- Loading overlay -->
+        <div
+          v-if="isSubmitting"
+          class="absolute inset-0 z-10 bg-white/60 dark:bg-zinc-900/60 flex items-center justify-center rounded-t-[2.5rem]"
+        >
+          <div class="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        </div>
+
         <header class="text-left mb-8 shrink-0">
           <h2 class="text-4xl font-black italic uppercase tracking-tighter text-zinc-900 dark:text-zinc-100 mb-1">
             {{ initialData ? (isHabit ? 'Edit Habit' : 'Edit Task') : 'New Task' }}
@@ -144,7 +152,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show'])
 
-const { form, isHabit, errors, isValid, submit, handleDelete } = useAddEventForm(props, emit)
+const { form, isHabit, errors, isValid, submit, handleDelete, isSubmitting } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>

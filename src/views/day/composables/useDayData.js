@@ -29,9 +29,8 @@ import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
-import { formatDuration } from '@/utils/formatDuration'
-import { isDailyPlanCompleted, toDailyPlanStatus } from '@/utils/dailyPlanStatus'
 import { getRouteDateContext } from '@/views/day/utils/routeDateContext'
+import { buildDayExecutionItems } from './useDayExecutionItems'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -105,118 +104,13 @@ export function useDayData() {
         }
     }
 
-    // 将所有模块整合成完整的打卡日程时间线
+    // 将所有模块整合成完整的打卡日程时间线（使用统一执行项模型）
     const dailySchedule = computed(() => {
-        const schedule = []
-
-        // 1. 处理任务
-        tasks.value.forEach(task => {
-            const startDate = new Date(task.start_time)
-            const endDate = new Date(task.end_time)
-            const startHourVal = startDate.getHours() + startDate.getMinutes() / 60
-            const endHourVal = endDate.getHours() + endDate.getMinutes() / 60
-            const durationHours = endHourVal - startHourVal
-            const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
-
-            schedule.push({
-                id: task.id,
-                type: 'task',
-                original: task,
-                startHour: startHourVal,
-                durationHours,
-                rawDuration: durationHours,
-                time: startTimeStr,
-                duration: formatDuration(durationHours),
-                category: '个人任务',
-                title: task.title,
-                description: task.description,
-                completed: task.completed,
-                actual_start_time: task.actual_start_time,
-                actual_end_time: task.actual_end_time
-            })
-        })
-
-        // 2. 处理日计划
-        dailyPlans.value.forEach(plan => {
-            let startHourVal, startTimeStr, durationHours, durationStr
-            
-            // 计算继承的时间和时长
-            const inheritedTime = plan.task_time || plan.monthly_plans?.task_time || plan.monthly_plans?.plans?.task_time
-            const inheritedDuration = plan.duration || plan.monthly_plans?.duration || plan.monthly_plans?.plans?.duration || 30
-
-            if (inheritedTime) {
-                const [hours, minutes] = inheritedTime.split(':').map(Number)
-                startHourVal = hours + minutes / 60
-                startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-                durationHours = inheritedDuration / 60
-                durationStr = formatDuration(durationHours)
-            } else {
-                startHourVal = undefined
-                startTimeStr = '未安排'
-                durationHours = 0
-                durationStr = '-'
-            }
-
-            schedule.push({
-                id: plan.id,
-                type: 'daily_plan',
-                original: plan,
-                startHour: startHourVal,
-                durationHours,
-                rawDuration: durationHours,
-                time: startTimeStr,
-                duration: durationStr,
-                category: '今日计划',
-                title: plan.title,
-                description: plan.description || '',
-                completed: isDailyPlanCompleted(plan.status)
-            })
-        })
-
-        // 3. 处理习惯
-        const habitLogIds = new Set(habitLogs.value.map(log => log.habit_id))
-
-        habits.value.forEach(habit => {
-            let startHourVal, startTimeStr, durationHours, durationStr
-            if (habit.task_time) {
-                const [hours, minutes] = habit.task_time.split(':').map(Number)
-                startHourVal = hours + minutes / 60
-                startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-
-                const durationMins = habit.duration || 30
-                durationHours = durationMins / 60
-                durationStr = formatDuration(durationHours)
-            } else {
-                startHourVal = undefined
-                startTimeStr = '未安排'
-                durationHours = 0
-                durationStr = '-'
-            }
-
-            const isCompleted = habitLogIds.has(habit.id)
-
-            schedule.push({
-                id: habit.id,
-                type: 'habit',
-                original: habit,
-                startHour: startHourVal,
-                durationHours,
-                rawDuration: durationHours,
-                time: startTimeStr,
-                duration: durationStr,
-                category: '日常习惯',
-                title: habit.title,
-                description: habit.target_value ? `目标: ${habit.target_value}` : '',
-                completed: isCompleted
-            })
-        })
-
-        // 排序
-        return schedule.sort((a, b) => {
-            if (a.startHour !== undefined && b.startHour !== undefined) return a.startHour - b.startHour
-            if (a.startHour !== undefined) return -1
-            if (b.startHour !== undefined) return 1
-            return 0
+        return buildDayExecutionItems({
+            tasks: tasks.value,
+            dailyPlans: dailyPlans.value,
+            habits: habits.value,
+            habitLogs: habitLogs.value
         })
     })
 

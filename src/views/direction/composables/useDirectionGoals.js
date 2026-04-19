@@ -2,25 +2,26 @@ import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
-import {
-  months,
-  monthlyPlans,
-  monthlyPlansCache,
-  monthlyMainGoals,
-  selectedGoal,
-  editingGoal,
-  selectedMonth,
-  activePicker,
-  showAddModal,
-  showCategoryModal,
-  getMonthlyPlansByPlanId
-} from '@/views/direction/composables/useDirectionState'
-
+import { useDirectionState } from '@/views/direction/composables/useDirectionState'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionGoals() {
   const authStore = useAuthStore()
   const { fetchData, loadMonthlyPlans } = useDirectionFetch()
+
+  const {
+    months,
+    monthlyPlans,
+    monthlyPlansCache,
+    monthlyMainGoals,
+    selectedGoal,
+    editingGoal,
+    selectedMonth,
+    activePicker,
+    showAddModal,
+    showCategoryModal,
+    getMonthlyPlansByPlanId
+  } = useDirectionState()
 
   // 写操作按钮 loading 状态
   const isSubmitting = ref(false)

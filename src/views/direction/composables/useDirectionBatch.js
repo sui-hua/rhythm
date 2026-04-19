@@ -18,15 +18,7 @@
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
-import {
-  monthlyPlansCache,
-  dailyPlansCache,
-  selectedGoal,
-  selectedMonth,
-  selectedDates,
-  batchInput,
-  archiveVersion
-} from '@/views/direction/composables/useDirectionState'
+import { useDirectionState } from '@/views/direction/composables/useDirectionState'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
@@ -34,6 +26,16 @@ export function useDirectionBatch() {
   const authStore = useAuthStore()
   const { hasTask } = useDirectionSelection()
   const { loadDailyPlans } = useDirectionFetch()
+
+  const {
+    monthlyPlansCache,
+    dailyPlansCache,
+    selectedGoal,
+    selectedMonth,
+    selectedDates,
+    batchInput,
+    archiveVersion
+  } = useDirectionState()
 
   const getCurrentMonthlyPlan = (planId, month) => {
     const cachedPlans = monthlyPlansCache[planId] || []

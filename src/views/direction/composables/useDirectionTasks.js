@@ -1,7 +1,8 @@
 import { db } from '@/services/database'
-import { dailyTasks } from '@/views/direction/composables/useDirectionState'
+import { useDirectionState } from '@/views/direction/composables/useDirectionState'
 
 export function useDirectionTasks() {
+  const { dailyTasks } = useDirectionState()
   // 二元签名：handleUpdateTask(task, payload)
   const handleUpdateTask = async (task, payload) => {
     if (!task || !task.id) return

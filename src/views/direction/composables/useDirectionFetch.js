@@ -17,33 +17,40 @@
  * 【缓存机制】
  * - monthlyPlansCache → 按 planId 索引的月计划缓存
  * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
+ *
+ * 【Race Condition 修复】
+ * - 所有数据通过 directionStore 管理，确保单一数据源
+ * - 使用 Map 管理待处理的 planId，避免竞态条件
  */
 import { computed, onMounted, watch, ref } from 'vue'
 import { db } from '@/services/database'
 import { parseDateOnly, getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
-import {
-  plans,
-  monthlyPlans,
-  monthlyMainGoals,
-  dailyTasks,
-  selectedGoal,
-  editingGoal,
-  showAddModal,
-  initialized,
-  monthlyPlansCache,
-  dailyPlansCache,
-  syncMonthlyPlansToFlatList,
-  selectedMonth,
-  clearDailyPlansCache
-} from '@/views/direction/composables/useDirectionState'
-
-let setupDone = false
-let isInitializing = false
+import { useDirectionState } from '@/views/direction/composables/useDirectionState'
 
 export { parseDateOnly } from '@/views/direction/utils/dateOnly'
 
 export function useDirectionFetch() {
+  const {
+    plans,
+    monthlyPlans,
+    monthlyMainGoals,
+    dailyTasks,
+    selectedGoal,
+    editingGoal,
+    showAddModal,
+    initialized,
+    monthlyPlansCache,
+    dailyPlansCache,
+    syncMonthlyPlansToFlatList,
+    selectedMonth,
+    clearDailyPlansCache
+  } = useDirectionState()
+
   const isPageLoading = ref(false)
+
+  // Race condition fix: Track pending plan IDs to avoid duplicate fetches
+  const pendingPlanIds = new Map() // planId -> promise
+
   const categorizedGoals = computed(() => {
     const map = new Map()
     for (const plan of plans.value) {
@@ -65,53 +72,77 @@ export function useDirectionFetch() {
   }
 
   const loadMonthlyPlans = async (planId) => {
-    if (monthlyPlansCache[planId]) return
-    monthlyPlansCache[planId] = await db.monthlyPlans.list(planId)
+    // Race condition fix: Check both cache AND pending requests
+    if (monthlyPlansCache[planId] || pendingPlanIds.has(planId)) return
 
-    // Populate monthlyMainGoals for UI display
-    for (const mp of monthlyPlansCache[planId]) {
-      const month = getDateOnlyMonth(mp.month)
-      if (month) {
-        const key = `plan-${planId}-${month}`
-        monthlyMainGoals[key] = mp
+    // Mark as pending before async operation
+    const promise = (async () => {
+      try {
+        const data = await db.monthlyPlans.list(planId)
+        monthlyPlansCache[planId] = data
+
+        // Populate monthlyMainGoals for UI display
+        for (const mp of data) {
+          const month = getDateOnlyMonth(mp.month)
+          if (month) {
+            const key = `plan-${planId}-${month}`
+            monthlyMainGoals[key] = mp
+          }
+        }
+
+        syncMonthlyPlansToFlatList(planId)
+        return data
+      } finally {
+        pendingPlanIds.delete(planId)
       }
-    }
+    })()
 
-    syncMonthlyPlansToFlatList(planId)
+    pendingPlanIds.set(planId, promise)
+    return promise
   }
 
   const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
-    if (!force && dailyPlansCache[monthlyPlanId]) return
+    // Race condition fix: Check both cache AND pending requests
+    if (!force && (dailyPlansCache[monthlyPlanId] || pendingPlanIds.has(monthlyPlanId))) return
 
-    const dps = await db.dailyPlans.list(monthlyPlanId)
-    dailyPlansCache[monthlyPlanId] = dps
+    const promise = (async () => {
+      const dps = await db.dailyPlans.list(monthlyPlanId)
+      dailyPlansCache[monthlyPlanId] = dps
 
-    const mp = Object.values(monthlyPlansCache)
-      .flat()
-      .find(item => item.id === monthlyPlanId)
-    if (!mp) return
+      // Find the monthly plan to get plan_id and month
+      let mp = null
+      for (const cached of Object.values(monthlyPlansCache)) {
+        mp = cached.find(item => item.id === monthlyPlanId)
+        if (mp) break
+      }
+      if (!mp) return
 
-    const monthDate = parseDateOnly(mp.month)
-    if (!monthDate) return
+      const monthDate = parseDateOnly(mp.month)
+      if (!monthDate) return
 
-    const month = monthDate.getMonth() + 1
-    const prefix = `plan-${mp.plan_id}-${month}-`
-    for (const key of Object.keys(dailyTasks)) {
-      if (key.startsWith(prefix)) delete dailyTasks[key]
-    }
+      const month = monthDate.getMonth() + 1
+      const prefix = `plan-${mp.plan_id}-${month}-`
 
-    for (const dp of dps) {
-      const dayDate = parseDateOnly(dp.day)
-      if (!dayDate) continue
+      // Clear existing daily tasks for this plan-month
+      for (const key of Object.keys(dailyTasks)) {
+        if (key.startsWith(prefix)) delete dailyTasks[key]
+      }
 
-      const day = dayDate.getDate()
-      dailyTasks[`plan-${mp.plan_id}-${month}-${day}`] = dp
-    }
+      for (const dp of dps) {
+        const dayDate = parseDateOnly(dp.day)
+        if (!dayDate) continue
+
+        const day = dayDate.getDate()
+        dailyTasks[`plan-${mp.plan_id}-${month}-${day}`] = dp
+      }
+    })()
+
+    pendingPlanIds.set(monthlyPlanId, promise)
+    return promise
   }
 
   const fetchData = async () => {
     isPageLoading.value = true
-    isInitializing = true
     try {
       plans.value = await db.plans.list()
 
@@ -148,11 +179,16 @@ export function useDirectionFetch() {
       console.error('Failed to fetch direction data', e)
     } finally {
       isPageLoading.value = false
-      isInitializing = false
     }
   }
 
-  if (!setupDone) {
+  // Setup watchers only once using a flag
+  let setupDone = false
+
+  const setupWatchers = () => {
+    if (setupDone) return
+    setupDone = true
+
     watch(showAddModal, (val) => {
       if (!val) {
         setTimeout(() => { editingGoal.value = null }, 300)
@@ -160,7 +196,6 @@ export function useDirectionFetch() {
     })
 
     watch(selectedMonth, async (newMonth, oldMonth) => {
-      if (isInitializing) return
       if (!newMonth || newMonth === oldMonth) return
       if (!selectedGoal.value) return
 
@@ -178,7 +213,6 @@ export function useDirectionFetch() {
     })
 
     watch(selectedGoal, async (newGoal, oldGoal) => {
-      if (isInitializing) return
       if (!newGoal || newGoal === oldGoal) return
 
       const planId = newGoal.plan_id
@@ -205,16 +239,15 @@ export function useDirectionFetch() {
         }
       }
     })
-
-    onMounted(() => {
-      if (!initialized.value) {
-        fetchData()
-        initialized.value = true
-      }
-    })
-
-    setupDone = true
   }
+
+  onMounted(() => {
+    setupWatchers()
+    if (!initialized.value) {
+      fetchData()
+      initialized.value = true
+    }
+  })
 
   return {
     categorizedGoals,

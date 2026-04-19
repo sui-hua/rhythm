@@ -128,7 +128,7 @@ import { withLoadingLock } from '@/utils/throttle'
 
 const { showAddModal, showCategoryModal, editingGoal, handleAddGoal, handleUpdateGoal, handleDeleteGoal } = useDirectionGoals()
 
-import { categories } from '@/views/direction/composables/useDirectionState'
+const { categories } = useDirectionState()
 
 const fetchCategories = async () => {
   if (categories.value?.length > 0) return  // 已有数据则跳过，避免重复请求

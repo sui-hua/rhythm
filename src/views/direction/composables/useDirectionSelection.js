@@ -1,18 +1,20 @@
 import { computed } from 'vue'
 import { getDateOnlyDay, getDateOnlyMonth, getDateOnlyYear } from '@/views/direction/utils/dateOnly'
-import {
-  selectedGoal,
-  selectedMonth,
-  selectedDates,
-  dailyTasks,
-  isSelecting,
-  activePicker,
-  monthlyPlansCache,
-  dailyPlansCache,
-  archiveVersion
-} from '@/views/direction/composables/useDirectionState'
+import { useDirectionState } from '@/views/direction/composables/useDirectionState'
 
 export function useDirectionSelection() {
+  const {
+    selectedGoal,
+    selectedMonth,
+    selectedDates,
+    dailyTasks,
+    isSelecting,
+    activePicker,
+    monthlyPlansCache,
+    dailyPlansCache,
+    archiveVersion
+  } = useDirectionState()
+
   const goalKey = (m) => {
     if (!selectedGoal.value) return `undefined-${m}`
     return `plan-${selectedGoal.value.plan_id}-${m}`
@@ -125,28 +127,28 @@ const isAllSelectedDatesHaveTask = (month) => {
   }
 
   const datesWithTasks = computed(() => {
-  archiveVersion.value
-  const planId = selectedGoal.value?.plan_id
-  if (!planId || selectedMonth.value == null) return []
+    archiveVersion.value
+    const planId = selectedGoal.value?.plan_id
+    if (!planId || selectedMonth.value == null) return []
 
-  const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
-  const mp = monthlyPlansOfGoal.find(
-    item => getDateOnlyMonth(item.month) === selectedMonth.value
-  )
-  if (!mp) return []
+    const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
+    const mp = monthlyPlansOfGoal.find(
+      item => getDateOnlyMonth(item.month) === selectedMonth.value
+    )
+    if (!mp) return []
 
-  return (dailyPlansCache[mp.id] || [])
-    .filter(dp => dp.title)
-    .map(dp => getDateOnlyDay(dp.day))
-    .filter(day => day !== null)
-    .sort((a, b) => a - b)
-})
+    return (dailyPlansCache[mp.id] || [])
+      .filter(dp => dp.title)
+      .map(dp => getDateOnlyDay(dp.day))
+      .filter(day => day !== null)
+      .sort((a, b) => a - b)
+  })
 
   const selectGoal = (g) => {
-  selectedGoal.value = g
-  selectedMonth.value = null
-  activePicker.value = 'start'
-}
+    selectedGoal.value = g
+    selectedMonth.value = null
+    activePicker.value = 'start'
+  }
 
   return {
     selectedGoal,

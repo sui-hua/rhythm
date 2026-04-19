@@ -22,7 +22,8 @@ vi.mock('@/stores/dateStore', () => ({
 vi.mock('@/services/database', () => ({
   db: {
     habits: {
-      list: vi.fn()
+      list: vi.fn(),
+      listLogsByYear: vi.fn()
     }
   }
 }))
@@ -57,6 +58,7 @@ describe('useYearView', () => {
     useRouter.mockReturnValue(router)
     useDateStore.mockReturnValue(dateStore)
     db.habits.list.mockResolvedValue([])
+    db.habits.listLogsByYear.mockResolvedValue([])
   })
 
   it('0-99 的 year 路由会先规范化到 1900 年代，再继续年视图同步', async () => {

@@ -3,6 +3,7 @@ import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { useDateStore } from '@/stores/dateStore'
 import { useDayData } from './useDayData'
+import { useActionFeedback } from './useActionFeedback'
 import { withLoadingLock } from '@/utils/throttle'
 
 /**
@@ -13,6 +14,7 @@ export function useAddEventForm(props, emit) {
     const authStore = useAuthStore()
     const dateStore = useDateStore()
     const { fetchTasks } = useDayData()
+    const { success, error } = useActionFeedback()
 
     // 写操作按钮 loading 状态
     const isSubmitting = ref(false)
@@ -137,8 +139,9 @@ export function useAddEventForm(props, emit) {
             }
             await fetchTasks({ showLoading: false })
             emit('update:show', false)
+            success(props.initialData ? '更新成功' : '创建成功')
         } catch (e) {
-            console.error('Failed to save', e)
+            error('保存失败', e)
         } finally {
             isSubmitting.value = false
         }
@@ -156,8 +159,9 @@ export function useAddEventForm(props, emit) {
                 }
                 await fetchTasks({ showLoading: false })
                 emit('update:show', false)
+                success('删除成功')
             } catch (e) {
-                console.error('Failed to delete', e)
+                error('删除失败', e)
             } finally {
                 isSubmitting.value = false
             }

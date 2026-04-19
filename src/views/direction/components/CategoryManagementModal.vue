@@ -50,9 +50,10 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
-import { showCategoryModal, categories } from '@/views/direction/composables/useDirectionState'
+import { useDirectionState } from '@/views/direction/composables/useDirectionState'
 const newCategoryName = ref('')
 const loading = ref(false)
+const { showCategoryModal, categories } = useDirectionState()
 
 const emit = defineEmits(['updated'])
 

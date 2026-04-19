@@ -58,7 +58,7 @@
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { monthlyPlans, dailyTasks, getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
+import { getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
@@ -70,7 +70,7 @@ import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
 import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
 const { categorizedGoals } = useDirectionFetch()
-const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
+const { selectedGoal, selectGoal, selectedMonth, dailyTasks } = useDirectionSelection()
 const { handleAddClick, handleEditGoal } = useDirectionGoals()
 const selectedGoalName = computed(() => selectedGoal.value?.name || '')
 

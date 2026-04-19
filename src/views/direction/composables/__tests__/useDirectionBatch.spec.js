@@ -1,13 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
+import { useDirectionStore } from '@/stores/directionStore'
 import { useDirectionBatch } from '@/views/direction/composables/useDirectionBatch'
-import {
-  batchInput,
-  dailyPlansCache,
-  monthlyPlansCache,
-  selectedDates,
-  selectedGoal,
-  selectedMonth
-} from '@/views/direction/composables/useDirectionState'
 import { db } from '@/services/database'
 
 let hasTaskDays = new Set([1])
@@ -41,41 +35,34 @@ vi.mock('@/services/database', () => ({
 }))
 
 beforeEach(() => {
+  setActivePinia(createPinia())
   vi.clearAllMocks()
 
-  batchInput.value = ''
-  selectedGoal.value = null
-  selectedMonth.value = null
-
-  for (const key of Object.keys(monthlyPlansCache)) {
-    delete monthlyPlansCache[key]
-  }
-
-  for (const key of Object.keys(dailyPlansCache)) {
-    delete dailyPlansCache[key]
-  }
-
-  for (const key of Object.keys(selectedDates)) {
-    delete selectedDates[key]
-  }
+  const store = useDirectionStore()
+  store.reset()
 
   hasTaskDays = new Set([1])
 })
 
 describe('useDirectionBatch', () => {
   it('upserts daily plans through CRUD instead of RPC', async () => {
+    const store = useDirectionStore()
     db.dailyPlans.update.mockResolvedValue({ id: 'dp-1' })
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
-    ]
-    dailyPlansCache['mp-1'] = [
-      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
-    ]
-    selectedGoal.value = { plan_id: 'p1' }
-    selectedMonth.value = 4
-    selectedDates[4] = [1]
-    batchInput.value = '新标题'
+    Object.assign(store.monthlyPlansCache, {
+      p1: [
+        { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+      ]
+    })
+    Object.assign(store.dailyPlansCache, {
+      'mp-1': [
+        { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
+      ]
+    })
+    store.selectedGoal = { plan_id: 'p1' }
+    store.selectedMonth = 4
+    store.selectedDates[4] = [1]
+    store.batchInput = '新标题'
 
     const { applyBatchTask } = useDirectionBatch()
     await applyBatchTask()
@@ -87,21 +74,24 @@ describe('useDirectionBatch', () => {
       duration: null
     })
     expect(db.dailyPlans.create).not.toHaveBeenCalled()
-    expect(selectedDates[4]).toEqual([])
-    expect(batchInput.value).toBe('')
+    expect(store.selectedDates[4]).toEqual([])
+    expect(store.batchInput).toBe('')
   })
 
   it('creates missing daily plans through CRUD instead of RPC', async () => {
+    const store = useDirectionStore()
     db.dailyPlans.create.mockResolvedValue({ id: 'dp-new' })
     hasTaskDays = new Set()
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
-    ]
-      selectedGoal.value = { plan_id: 'p1' }
-      selectedMonth.value = 4
-    selectedDates[4] = [1, 2]
-    batchInput.value = '批量新增'
+    Object.assign(store.monthlyPlansCache, {
+      p1: [
+        { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+      ]
+    })
+    store.selectedGoal = { plan_id: 'p1' }
+    store.selectedMonth = 4
+    store.selectedDates[4] = [1, 2]
+    store.batchInput = '批量新增'
 
     const { applyBatchTask } = useDirectionBatch()
     await applyBatchTask()
@@ -126,18 +116,23 @@ describe('useDirectionBatch', () => {
   })
 
   it('deletes selected daily plans through CRUD instead of RPC', async () => {
+    const store = useDirectionStore()
     db.dailyPlans.delete.mockResolvedValue({ id: 'dp-1' })
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
-    ]
-    dailyPlansCache['mp-1'] = [
-      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' },
-      { id: 'dp-2', monthly_plan_id: 'mp-1', day: '2026-04-02' }
-    ]
-    selectedGoal.value = { plan_id: 'p1' }
-    selectedMonth.value = 4
-    selectedDates[4] = [1, 2]
+    Object.assign(store.monthlyPlansCache, {
+      p1: [
+        { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+      ]
+    })
+    Object.assign(store.dailyPlansCache, {
+      'mp-1': [
+        { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' },
+        { id: 'dp-2', monthly_plan_id: 'mp-1', day: '2026-04-02' }
+      ]
+    })
+    store.selectedGoal = { plan_id: 'p1' }
+    store.selectedMonth = 4
+    store.selectedDates[4] = [1, 2]
 
     const { handleBatchDelete } = useDirectionBatch()
     await handleBatchDelete()

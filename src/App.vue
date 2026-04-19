@@ -37,12 +37,14 @@ import { Toaster } from '@/components/ui/sonner'
 import supabase from './config/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import { useDirectionStore } from '@/stores/directionStore'
 import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+const directionStore = useDirectionStore()
 
 // 根据路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
 const transitionName = computed(() => {
@@ -83,6 +85,7 @@ onMounted(async () => {
         authStore.setUser(session.user)
       } else {
         authStore.clearAuth()
+        directionStore.reset()
         router.push('/login')
       }
     })

@@ -60,6 +60,21 @@ export const habits = {
             return data
         })
     },
+    async listLogsByYear(year) {
+        return await trackGlobalLoading(async () => {
+            const startDate = new Date(year, 0, 1).toISOString()
+            const endDate = new Date(year, 11, 31, 23, 59, 59).toISOString()
+            const { data, error } = await client
+                .from('habit_logs')
+                .select('*')
+                .gte('completed_at', startDate)
+                .lte('completed_at', endDate)
+                .order('completed_at', { ascending: true })
+
+            if (error) throw error
+            return data
+        })
+    },
     async create(habit) {
         return await supabase.create(habit)
     },
