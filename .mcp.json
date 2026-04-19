@@ -1,12 +1,13 @@
 {
   "mcpServers": {
-    "supabase": {
-      "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=jkqriqqiedrhhlzgzjww"
-    },
     "shadcn-ui": {
       "command": "npx",
-      "args": ["-y", "@jpisnice/shadcn-ui-mcp-server", "--framework", "vue"]
+      "args": [
+        "-y",
+        "@jpisnice/shadcn-ui-mcp-server",
+        "--framework",
+        "vue"
+      ]
     },
     "pencil": {
       "command": "/Applications/Pencil.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64",
@@ -15,6 +16,13 @@
         "desktop"
       ],
       "env": {}
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=jkqriqqiedrhhlzgzjww",
+      "headers": {
+        "Authorization": "Bearer sbp_837dd45fcf90177a89d34ec6d5e3d16868ca2fa9"
+      }
     }
   }
 }

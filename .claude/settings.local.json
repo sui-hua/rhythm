@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "mcp__supabase__apply_migration",
-      "Bash(pnpm build *)"
+      "Bash(pnpm build *)",
+      "Skill(ralph-loop:ralph-loop)"
     ]
   }
 }
