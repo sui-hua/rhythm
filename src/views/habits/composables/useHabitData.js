@@ -219,3 +219,29 @@ export function useHabitData() {
         isPageLoading
     }
 }
+
+/**
+ * Patches a habit object with a new log entry without refetching.
+ * Used for optimistic updates after toggle complete.
+ * @param {Object} habit - Original habit object
+ * @param {Object|null} newLog - New log entry to prepend
+ * @param {Object} viewContext - { year, month } for filtering monthlyLogs
+ * @returns {Object} Patched habit
+ */
+export function buildPatchedHabit(habit, newLog, viewContext) {
+  if (!newLog) return habit
+
+  const logs = [newLog, ...(habit.logs || [])]
+  const monthlyLogs = logs.filter((log) => {
+    const date = new Date(log.completed_at)
+    return date.getFullYear() === viewContext.year && date.getMonth() === viewContext.month
+  })
+
+  return {
+    ...habit,
+    logs,
+    monthlyLogs,
+    completedDays: monthlyLogs.map((log) => new Date(log.completed_at).getDate()),
+    total: logs.length
+  }
+}

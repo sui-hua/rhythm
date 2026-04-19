@@ -21,7 +21,6 @@ import { playSuccessSound } from '@/utils/audio'
  * 支持 Service Worker 后台通知，降级到页面内轮询
  */
 const notifiedTaskIds = ref(new Set())
-const notificationPermission = ref('default')
 let checkInterval = null
 let swRegistration = null
 
@@ -62,8 +61,13 @@ const triggerSwCheck = () => {
 }
 
 export function useNotifications() {
+    const hasAskedPermission = ref(false)
+    const notificationPermission = ref(
+        typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+    )
 
     const requestPermission = async () => {
+        hasAskedPermission.value = true
         if (!('Notification' in window)) {
             console.warn('浏览器不支持 Web Notification')
             return false
@@ -71,7 +75,6 @@ export function useNotifications() {
 
         if (Notification.permission === 'granted') {
             notificationPermission.value = 'granted'
-            // 注册 Service Worker
             swRegistration = await registerServiceWorker()
             return true
         }
@@ -156,23 +159,19 @@ export function useNotifications() {
     const startListening = (getScheduleItems) => {
         stopListening()
 
-        // 如果有 Service Worker，发送任务列表并让它管理通知
         if (swRegistration) {
-            // 立即同步一次任务列表
             const items = getScheduleItems()
             if (items && items.length > 0) {
                 syncTasksToSw(items)
             }
 
-            // 尝试注册 periodicsync（如果支持）
             if ('periodicSync' in swRegistration) {
                 swRegistration.periodicSync.register('check-tasks', {
-                    minInterval: 60000 // 1分钟
+                    minInterval: 60000
                 }).catch(console.warn)
             }
         }
 
-        // 降级方案：页面内每 30 秒检查一次
         checkInterval = setInterval(() => {
             if (notificationPermission.value !== 'granted') {
                 return
@@ -180,13 +179,11 @@ export function useNotifications() {
 
             const items = getScheduleItems()
             if (items && items.length > 0) {
-                // 同时更新 Service Worker 的任务列表
                 syncTasksToSw(items)
                 checkAndNotify(items)
             }
         }, 30000)
 
-        // 立即执行一次检查
         if (notificationPermission.value === 'granted') {
             const items = getScheduleItems()
             if (items && items.length > 0) {
@@ -202,7 +199,6 @@ export function useNotifications() {
             checkInterval = null
         }
 
-        // 取消 periodicSync
         if (swRegistration?.periodicSync) {
             swRegistration.periodicSync.unregister('check-tasks').catch(console.warn)
         }
@@ -218,6 +214,7 @@ export function useNotifications() {
 
     return {
         notificationPermission,
+        hasAskedPermission,
         requestPermission,
         showNotification,
         startListening,

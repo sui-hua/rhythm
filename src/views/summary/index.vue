@@ -41,8 +41,8 @@
           <ChevronRight class="w-6 h-6" />
         </div>
         <div class="space-y-1">
-          <h3 class="text-lg font-semibold tracking-tight">请选择一条总结</h3>
-          <p class="text-sm text-muted-foreground">从左侧列表中选择一个日期或周期来查看和编辑您的回顾。</p>
+          <h3 class="text-lg font-semibold tracking-tight">{{ narrative.emptyTitle }}</h3>
+          <p class="text-sm text-muted-foreground">{{ narrative.emptyDescription }}</p>
         </div>
       </div>
 
@@ -89,6 +89,10 @@ import SummarySidebar from '@/views/summary/components/SummarySidebar.vue'
 import DailySummaryForm from '@/views/summary/components/DailySummaryForm.vue'
 import GenericSummaryForm from '@/views/summary/components/GenericSummaryForm.vue'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import PageIntroBanner from '@/components/PageIntroBanner.vue'
+import { getPageNarrative } from '@/config/pageNarratives'
+
+const narrative = getPageNarrative('summary')
 
 const {
   activeTab,

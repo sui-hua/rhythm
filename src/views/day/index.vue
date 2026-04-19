@@ -65,14 +65,23 @@
       />
 
       <!-- Main Timeline Area -->
-      <Timeline
-        ref="timeline"
-        :class="['transition-all duration-300 ease-in-out', isReady ? 'opacity-100' : 'opacity-0']"
-        :current-hour="currentHour"
-        :is-loading="isLoading"
-        @edit-task="openEditModal"
-        @select-task="scrollToTask"
-      />
+      <div class="relative flex-1 flex flex-col overflow-hidden">
+        <div class="shrink-0 px-6 pt-6">
+          <PageIntroBanner
+            eyebrow="今日执行"
+            :title="narrative.title"
+            :subtitle="narrative.subtitle"
+          />
+        </div>
+        <Timeline
+          ref="timeline"
+          :class="['transition-all duration-300 ease-in-out flex-1', isReady ? 'opacity-100' : 'opacity-0']"
+          :current-hour="currentHour"
+          :is-loading="isLoading"
+          @edit-task="openEditModal"
+          @select-task="scrollToTask"
+        />
+      </div>
 
       <!-- Mobile Sidebar Toggle -->
       <button
@@ -153,6 +162,10 @@ import {
   MOBILE_SIDEBAR_WIDTH
 } from '@/views/day/composables/mobileLayers'
 import { useNotifications } from '@/composables/useNotifications'
+import PageIntroBanner from '@/components/PageIntroBanner.vue'
+import { getPageNarrative } from '@/config/pageNarratives'
+
+const narrative = getPageNarrative('day')
 
 const AddEventModal = defineAsyncComponent(() => import('@/views/day/components/AddEventModal.vue'))
 const MobileAddEventDrawer = defineAsyncComponent(() => import('@/views/day/components/MobileAddEventDrawer.vue'))

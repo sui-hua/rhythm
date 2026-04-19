@@ -32,6 +32,12 @@
         </div>
       </div>
       <div v-else class="direction-content">
+        <PageIntroBanner
+          eyebrow="目标与承诺"
+          :title="narrative.title"
+          :subtitle="narrative.subtitle"
+        />
+
         <ScrollArea class="direction-scroll">
           <!-- 目标月份范围选择器 -->
           <GoalRangePicker />
@@ -58,6 +64,10 @@ import GoalRangePicker from '@/views/direction/components/GoalRangePicker.vue'
 import MissionBoard from '@/views/direction/components/MissionBoard.vue'
 import MissionArchive from '@/views/direction/components/MissionArchive.vue'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+import PageIntroBanner from '@/components/PageIntroBanner.vue'
+import { getPageNarrative } from '@/config/pageNarratives'
+
+const narrative = getPageNarrative('direction')
 
 const AddGoalModal = defineAsyncComponent(() => import('@/views/direction/components/AddGoalModal.vue'))
 

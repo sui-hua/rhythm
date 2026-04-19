@@ -44,6 +44,12 @@
       <div v-else-if="selectedHabit" class="habits-desktop-content">
         <ScrollArea class="habits-scroll">
           <div class="max-w-4xl mx-auto w-full flex flex-col gap-6 p-6 md:p-10">
+            <PageIntroBanner
+              eyebrow="周期节律"
+              :title="narrative.title"
+              :subtitle="narrative.subtitle"
+            />
+
             <HabitHeader :title="selectedHabit.title" />
 
             <HabitStats :stats="habitStats" />
@@ -114,6 +120,10 @@ const EditHabitModal = defineAsyncComponent(() => import('./components/EditHabit
 import { useHabitData } from './composables/useHabitData'
 import { useHabitStats } from './composables/useHabitStats'
 import { useHabitLogs } from './composables/useHabitLogs'
+import PageIntroBanner from '@/components/PageIntroBanner.vue'
+import { getPageNarrative } from '@/config/pageNarratives'
+
+const narrative = getPageNarrative('habits')
 
 // 1. 获取核心数据层面能力支撑
 const {

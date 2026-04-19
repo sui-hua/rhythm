@@ -34,5 +34,10 @@ export const tasks = {
     },
     async delete(id) {
         return await supabase.delete(id)
+    },
+    async listInbox() {
+        return await supabase.query(q =>
+            q.select('*').eq('status', 'inbox').order('created_at', { ascending: false })
+        )
     }
 }

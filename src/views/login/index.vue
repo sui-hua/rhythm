@@ -58,6 +58,8 @@
         </button>
       </form>
 
+      <WelcomeChecklist />
+
       <div class="mt-8 text-center sm:mx-auto sm:w-full sm:max-w-sm">
         <p class="text-sm text-zinc-500">
           访客体验账号：<span class="font-medium text-foreground">123456@163.com</span><br>
@@ -70,6 +72,7 @@
 
 <script setup>
 import { useLoginForm } from '@/views/login/composables/useLoginForm'
+import WelcomeChecklist from '@/views/login/components/WelcomeChecklist.vue'
 
 const { email, password, loading, error, handleLogin } = useLoginForm()
 </script>
