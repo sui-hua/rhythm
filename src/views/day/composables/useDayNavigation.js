@@ -27,6 +27,7 @@ import { useDayData } from './useDayData'
 import { useDateStore } from '@/stores/dateStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { buildDayPath, getRouteDateContext } from '@/views/day/utils/routeDateContext'
+import { getInitialScrollTarget } from '@/views/day/composables/getInitialScrollTarget'
 
 /**
  * Day 视图导航与交互管理 (Composable)
@@ -90,6 +91,28 @@ export function useDayNavigation() {
         dateStore.setYearMonthDay(year, month - 1, day)
     }
 
+    const scrollToInitialTarget = (targetDate) => {
+        const initialTarget = getInitialScrollTarget({
+            schedule: dailySchedule.value,
+            targetDate,
+            now: new Date()
+        })
+
+        if (initialTarget.type === 'task') {
+            scrollToTask(initialTarget.index, 'instant')
+            return
+        }
+
+        const hour = initialTarget.type === 'current-time'
+            ? initialTarget.hour
+            : 8
+        const targetEl = document.getElementById(`hour-${hour}`)
+
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'instant', block: 'start' })
+        }
+    }
+
     const handleRouteSync = async () => {
         if (!validateDayRoute()) return false
 
@@ -106,18 +129,7 @@ export function useDayNavigation() {
         if (!isValid) return
 
         await nextTick()
-
-        const schedule = dailySchedule.value
-        if (schedule.length > 0) {
-            const firstUncompletedIndex = schedule.findIndex(task => !task.completed)
-            const targetIndex = firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0
-            scrollToTask(targetIndex, 'instant')
-        } else {
-            const defaultEl = document.getElementById('hour-8')
-            if (defaultEl) {
-                defaultEl.scrollIntoView({ behavior: 'instant', block: 'start' })
-            }
-        }
+        scrollToInitialTarget(getTargetDateFromRoute())
 
         requestAnimationFrame(() => {
             setTimeout(() => {
