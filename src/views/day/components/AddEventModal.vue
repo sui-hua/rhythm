@@ -30,29 +30,17 @@
 
           <!-- Time & Duration Group -->
           <div class="grid grid-cols-2 gap-4">
-            <div class="grid gap-2">
-              <label for="time" class="text-sm font-medium leading-none">
-                任务时间<span class="text-rose-500">*</span>
-              </label>
-              <TimePicker
-                v-model="form.time"
-                label="任务时间"
-                id="time"
-              />
-              <p v-if="errors.time" class="text-xs text-rose-500">{{ errors.time }}</p>
-            </div>
-            <div class="grid gap-2">
-              <label for="duration" class="text-sm font-medium leading-none">
-                任务时长<span class="text-rose-500">*</span>
-              </label>
-              <DurationPicker
-                v-model="form.duration"
-                label="任务时长"
-                id="duration"
-                @submit="submit"
-              />
-              <p v-if="errors.duration" class="text-xs text-rose-500">{{ errors.duration }}</p>
-            </div>
+            <TimePicker
+              v-model="form.time"
+              label="任务时间"
+              id="time"
+            />
+            <DurationPicker
+              v-model="form.duration"
+              label="任务时长"
+              id="duration"
+              @submit="submit"
+            />
           </div>
 
           <!-- Description Group (仅任务类型显示) -->
