@@ -58,7 +58,7 @@ Direction 模块通过 RPC 实现高性能批量操作：
 
 ## Composables 模式
 
-视图级逻辑抽到 `src/views/[module]/composables/` 下。**业务逻辑必须通过 Composables 引入**，不在组件内部直接处理核心逻辑。共享状态通过 `useDirectionState.js` 等状态定义文件在 composables 之间传递。
+视图级逻辑抽到 `src/views/[module]/composables/` 下。**业务逻辑必须通过 Composables 引入**，不在组件内部直接处理核心逻辑。
 
 ## Vue 3 组件规范
 

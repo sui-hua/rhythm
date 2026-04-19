@@ -1,9 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "mcp__supabase__execute_sql",
       "mcp__playwright__*",
-      "mcp__chrome-devtools__*"
+      "mcp__chrome-devtools__*",
+      "Bash(pnpm build *)",
+      "Bash(pnpm vue-tsc:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm install:*)",
+      "mcp__MiniMax__web_search"
     ]
   },
   "enableAllProjectMcpServers": true,
