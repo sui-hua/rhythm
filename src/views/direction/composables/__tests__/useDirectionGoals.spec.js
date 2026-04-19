@@ -4,15 +4,18 @@ import { useDirectionStore } from '@/stores/directionStore'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { db } from '@/services/database'
 
+vi.mock('vue', async () => {
+  const actual = await vi.importActual('vue')
+
+  return {
+    ...actual,
+    onMounted: vi.fn(),
+    watch: vi.fn()
+  }
+})
+
 vi.mock('@/stores/authStore', () => ({
   useAuthStore: () => ({ userId: 'user-1' })
-}))
-
-vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
-  useDirectionFetch: () => ({
-    fetchData: vi.fn().mockResolvedValue(undefined),
-    loadMonthlyPlans: vi.fn().mockResolvedValue(undefined)
-  })
 }))
 
 vi.mock('@/services/database', () => ({
@@ -30,23 +33,29 @@ vi.mock('@/services/database', () => ({
   }
 }))
 
+vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
+  useDirectionFetch: () => ({
+    fetchData: vi.fn(),
+    loadMonthlyPlans: vi.fn()
+  })
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
   const pinia = createPinia()
   setActivePinia(pinia)
-  // Ensure store is fresh for each test
-  useDirectionStore().reset()
+  const store = useDirectionStore()
+  store.reset()
 })
 
 describe('useDirectionGoals', () => {
   it('handles add click correctly', async () => {
-    const store = useDirectionStore()
-    const { handleAddClick } = useDirectionGoals()
+    const { handleAddClick, editingGoal, showAddModal } = useDirectionGoals()
     
     handleAddClick()
     
-    expect(store.editingGoal.value).toBe(null)
-    expect(store.showAddModal.value).toBe(true)
+    expect(editingGoal.value).toBe(null)
+    expect(showAddModal.value).toBe(true)
   })
 
   it('derives editable month bounds from date-only monthly plan strings', async () => {
@@ -58,8 +67,9 @@ describe('useDirectionGoals', () => {
         { id: 'mp-2', plan_id: 'p1', month: '2026-07-01' }
       ]
     })
+    store.selectedGoal = { plan_id: 'p1' }
 
-    const { handleEditGoal } = useDirectionGoals()
+    const { handleEditGoal, editingGoal } = useDirectionGoals()
 
     await handleEditGoal({
       plan_id: 'p1',
@@ -68,8 +78,8 @@ describe('useDirectionGoals', () => {
       endMonth: 12
     })
 
-    expect(store.editingGoal.value.startMonth).toBe(4)
-    expect(store.editingGoal.value.endMonth).toBe(7)
+    expect(editingGoal.value.startMonth).toBe(4)
+    expect(editingGoal.value.endMonth).toBe(7)
   })
 
   it('uses date-only month values when saving monthly plans', async () => {

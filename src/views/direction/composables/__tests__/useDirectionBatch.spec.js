@@ -27,9 +27,9 @@ vi.mock('@/services/database', () => ({
   db: {
     rpc: vi.fn(),
     dailyPlans: {
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn()
+      create: vi.fn().mockResolvedValue({}),
+      update: vi.fn().mockResolvedValue({}),
+      delete: vi.fn().mockResolvedValue({})
     }
   }
 }))
@@ -40,6 +40,8 @@ beforeEach(() => {
 
   const store = useDirectionStore()
   store.reset()
+  // Initialize plans so fetchData works properly
+  store.plans = [{ id: 'p1', title: '目标 1' }]
 
   hasTaskDays = new Set([1])
 })

@@ -45,6 +45,8 @@ beforeEach(() => {
 
   const store = useDirectionStore()
   store.reset()
+  // Initialize plans so fetchData works properly
+  store.plans = [{ id: 'p1', title: '目标 1' }]
 })
 
 describe('useDirectionFetch', () => {
