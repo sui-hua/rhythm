@@ -12,7 +12,7 @@ import {
   selectedGoal,
   showAddModal
 } from '@/views/direction/composables/useDirectionState'
-import { safeDb } from '@/services/safeDb'
+import { db } from '@/services/database'
 
 const flushMicrotasks = () => new Promise(resolve => setImmediate(resolve))
 
@@ -35,8 +35,8 @@ vi.mock('vue', async () => {
   }
 })
 
-vi.mock('@/services/safeDb', () => ({
-  safeDb: {
+vi.mock('@/services/database', () => ({
+  db: {
     plans: {
       list: vi.fn()
     },
@@ -87,13 +87,13 @@ describe('useDirectionFetch', () => {
   })
 
   it('builds monthly and daily keys from date-only database fields', async () => {
-    safeDb.plans.list.mockResolvedValue([
+    db.plans.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
-    safeDb.monthlyPlans.list.mockResolvedValue([
+    db.monthlyPlans.list.mockResolvedValue([
       { id: 'mp1', plan_id: 'p1', month: '2026-04-01' }
     ])
-    safeDb.dailyPlans.list.mockResolvedValue([
+    db.dailyPlans.list.mockResolvedValue([
       { id: 'dp1', monthly_plan_id: 'mp1', day: '2026-04-30' }
     ])
 
@@ -117,23 +117,23 @@ describe('useDirectionFetch', () => {
     const firstMonthly = createDeferred()
     const secondMonthly = createDeferred()
 
-    safeDb.plans.list.mockResolvedValue([
+    db.plans.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' },
       { id: 'p2', title: '目标 2' }
     ])
-    safeDb.monthlyPlans.list
+    db.monthlyPlans.list
       .mockImplementationOnce(() => firstMonthly.promise)
       .mockImplementationOnce(() => secondMonthly.promise)
-    safeDb.dailyPlans.list.mockResolvedValue([])
+    db.dailyPlans.list.mockResolvedValue([])
 
     const { fetchData } = useDirectionFetch()
     const fetchPromise = fetchData()
 
     await flushMicrotasks()
 
-    expect(safeDb.monthlyPlans.list).toHaveBeenCalledTimes(2)
-    expect(safeDb.monthlyPlans.list).toHaveBeenNthCalledWith(1, 'p1')
-    expect(safeDb.monthlyPlans.list).toHaveBeenNthCalledWith(2, 'p2')
+    expect(db.monthlyPlans.list).toHaveBeenCalledTimes(2)
+    expect(db.monthlyPlans.list).toHaveBeenNthCalledWith(1, 'p1')
+    expect(db.monthlyPlans.list).toHaveBeenNthCalledWith(2, 'p2')
 
     firstMonthly.resolve([])
     secondMonthly.resolve([])
@@ -144,14 +144,14 @@ describe('useDirectionFetch', () => {
     const firstDaily = createDeferred()
     const secondDaily = createDeferred()
 
-    safeDb.plans.list.mockResolvedValue([
+    db.plans.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
-    safeDb.monthlyPlans.list.mockResolvedValue([
+    db.monthlyPlans.list.mockResolvedValue([
       { id: 'mp1', plan_id: 'p1', month: '2026-04-01' },
       { id: 'mp2', plan_id: 'p1', month: '2026-04-01' }
     ])
-    safeDb.dailyPlans.list
+    db.dailyPlans.list
       .mockImplementationOnce(() => firstDaily.promise)
       .mockImplementationOnce(() => secondDaily.promise)
 
@@ -161,9 +161,9 @@ describe('useDirectionFetch', () => {
     await flushMicrotasks()
     await flushMicrotasks()
 
-    expect(safeDb.dailyPlans.list).toHaveBeenCalledTimes(2)
-    expect(safeDb.dailyPlans.list).toHaveBeenNthCalledWith(1, 'mp1')
-    expect(safeDb.dailyPlans.list).toHaveBeenNthCalledWith(2, 'mp2')
+    expect(db.dailyPlans.list).toHaveBeenCalledTimes(2)
+    expect(db.dailyPlans.list).toHaveBeenNthCalledWith(1, 'mp1')
+    expect(db.dailyPlans.list).toHaveBeenNthCalledWith(2, 'mp2')
 
     firstDaily.resolve([])
     secondDaily.resolve([])

@@ -22,7 +22,7 @@
  * - calculateStreak() → 从今天或昨天开始计算连续打卡天数
  */
 import { ref, computed } from 'vue'
-import { safeDb as db } from '@/services/safeDb'
+import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 
 /**

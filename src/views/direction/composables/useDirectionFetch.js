@@ -19,7 +19,7 @@
  * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
  */
 import { computed, onMounted, watch, ref } from 'vue'
-import { safeDb as db } from '@/services/safeDb'
+import { db } from '@/services/database'
 import { parseDateOnly, getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import {
   plans,

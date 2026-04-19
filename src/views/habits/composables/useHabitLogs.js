@@ -19,7 +19,7 @@
  * - isSubmitting 状态锁防止重复提交
  */
 import { computed, ref } from 'vue'
-import { safeDb as db } from '@/services/safeDb'
+import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 
 /**

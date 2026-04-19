@@ -6,7 +6,7 @@ import {
   selectedGoal,
   selectedMonth
 } from '@/views/direction/composables/useDirectionState'
-import { safeDb } from '@/services/safeDb'
+import { db } from '@/services/database'
 
 const loadMonthlyPlansMock = vi.fn()
 
@@ -21,8 +21,8 @@ vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
   })
 }))
 
-vi.mock('@/services/safeDb', () => ({
-  safeDb: {
+vi.mock('@/services/database', () => ({
+  db: {
     plans: {
       update: vi.fn(),
       create: vi.fn(),
@@ -81,7 +81,7 @@ describe('useDirectionGoals', () => {
   })
 
   it('uses date-only month values when saving monthly plans', async () => {
-    safeDb.monthlyPlans.update.mockResolvedValue({})
+    db.monthlyPlans.update.mockResolvedValue({})
 
     monthlyPlansCache.p1 = [
       { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
@@ -92,7 +92,7 @@ describe('useDirectionGoals', () => {
     const { saveMonthlyPlan } = useDirectionGoals()
     await saveMonthlyPlan(4, { title: '更新标题' })
 
-    expect(safeDb.monthlyPlans.update).toHaveBeenCalledWith('mp-1', {
+    expect(db.monthlyPlans.update).toHaveBeenCalledWith('mp-1', {
       title: '更新标题'
     })
   })

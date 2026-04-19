@@ -16,7 +16,7 @@
  * 2. handleBatchDelete() → 批量删除日计划
  */
 import { useAuthStore } from '@/stores/authStore'
-import { safeDb as db } from '@/services/safeDb'
+import { db } from '@/services/database'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
 import {
   monthlyPlansCache,

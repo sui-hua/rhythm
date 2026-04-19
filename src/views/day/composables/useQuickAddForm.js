@@ -19,7 +19,7 @@
  * - 使用 withLoadingLock 防止重复提交
  */
 import { ref, reactive, watch } from 'vue'
-import { safeDb as db } from '@/services/safeDb'
+import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { useDateStore } from '@/stores/dateStore'
 import { useDayData } from './useDayData'

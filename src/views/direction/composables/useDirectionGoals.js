@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { safeDb as db } from '@/services/safeDb'
+import { db } from '@/services/database'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import {
   months,

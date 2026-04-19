@@ -30,8 +30,11 @@ import { dailyReportViews } from './db/dailyReportViews'
 
 export const db = {
   // RPC 调用（用于批量操作等高性能场景）
+  // 注意：必须保持 throw contract，让调用方能感知失败
   rpc(name, params) {
-    return client.rpc(name, params)
+    const result = client.rpc(name, params)
+    // 确保返回的是 Promise，便于调用方用 async/await 或 .catch() 处理
+    return result
   },
   // Plans (总计划/年度计划表操作)
   plans,

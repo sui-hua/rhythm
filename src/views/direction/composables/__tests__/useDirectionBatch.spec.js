@@ -8,7 +8,7 @@ import {
   selectedGoal,
   selectedMonth
 } from '@/views/direction/composables/useDirectionState'
-import { safeDb } from '@/services/safeDb'
+import { db } from '@/services/database'
 
 let hasTaskDays = new Set([1])
 
@@ -29,8 +29,8 @@ vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
   })
 }))
 
-vi.mock('@/services/safeDb', () => ({
-  safeDb: {
+vi.mock('@/services/database', () => ({
+  db: {
     rpc: vi.fn(),
     dailyPlans: {
       create: vi.fn(),
@@ -64,7 +64,7 @@ beforeEach(() => {
 
 describe('useDirectionBatch', () => {
   it('upserts daily plans through CRUD instead of RPC', async () => {
-    safeDb.dailyPlans.update.mockResolvedValue({ id: 'dp-1' })
+    db.dailyPlans.update.mockResolvedValue({ id: 'dp-1' })
 
     monthlyPlansCache.p1 = [
       { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
@@ -80,19 +80,19 @@ describe('useDirectionBatch', () => {
     const { applyBatchTask } = useDirectionBatch()
     await applyBatchTask()
 
-    expect(safeDb.rpc).not.toHaveBeenCalled()
-    expect(safeDb.dailyPlans.update).toHaveBeenCalledWith('dp-1', {
+    expect(db.rpc).not.toHaveBeenCalled()
+    expect(db.dailyPlans.update).toHaveBeenCalledWith('dp-1', {
       title: '新标题',
       task_time: null,
       duration: null
     })
-    expect(safeDb.dailyPlans.create).not.toHaveBeenCalled()
+    expect(db.dailyPlans.create).not.toHaveBeenCalled()
     expect(selectedDates[4]).toEqual([])
     expect(batchInput.value).toBe('')
   })
 
   it('creates missing daily plans through CRUD instead of RPC', async () => {
-    safeDb.dailyPlans.create.mockResolvedValue({ id: 'dp-new' })
+    db.dailyPlans.create.mockResolvedValue({ id: 'dp-new' })
     hasTaskDays = new Set()
 
     monthlyPlansCache.p1 = [
@@ -106,8 +106,8 @@ describe('useDirectionBatch', () => {
     const { applyBatchTask } = useDirectionBatch()
     await applyBatchTask()
 
-    expect(safeDb.rpc).not.toHaveBeenCalled()
-    expect(safeDb.dailyPlans.create).toHaveBeenNthCalledWith(1, {
+    expect(db.rpc).not.toHaveBeenCalled()
+    expect(db.dailyPlans.create).toHaveBeenNthCalledWith(1, {
       monthly_plan_id: 'mp-1',
       user_id: 'user-1',
       day: '2026-04-01',
@@ -115,7 +115,7 @@ describe('useDirectionBatch', () => {
       task_time: null,
       duration: null
     })
-    expect(safeDb.dailyPlans.create).toHaveBeenNthCalledWith(2, {
+    expect(db.dailyPlans.create).toHaveBeenNthCalledWith(2, {
       monthly_plan_id: 'mp-1',
       user_id: 'user-1',
       day: '2026-04-02',
@@ -126,7 +126,7 @@ describe('useDirectionBatch', () => {
   })
 
   it('deletes selected daily plans through CRUD instead of RPC', async () => {
-    safeDb.dailyPlans.delete.mockResolvedValue({ id: 'dp-1' })
+    db.dailyPlans.delete.mockResolvedValue({ id: 'dp-1' })
 
     monthlyPlansCache.p1 = [
       { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
@@ -142,8 +142,8 @@ describe('useDirectionBatch', () => {
     const { handleBatchDelete } = useDirectionBatch()
     await handleBatchDelete()
 
-    expect(safeDb.rpc).not.toHaveBeenCalled()
-    expect(safeDb.dailyPlans.delete).toHaveBeenNthCalledWith(1, 'dp-1')
-    expect(safeDb.dailyPlans.delete).toHaveBeenNthCalledWith(2, 'dp-2')
+    expect(db.rpc).not.toHaveBeenCalled()
+    expect(db.dailyPlans.delete).toHaveBeenNthCalledWith(1, 'dp-1')
+    expect(db.dailyPlans.delete).toHaveBeenNthCalledWith(2, 'dp-2')
   })
 })
