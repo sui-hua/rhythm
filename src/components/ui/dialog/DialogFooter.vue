@@ -1,3 +1,22 @@
+/**
+ * DialogFooter 组件
+ *
+ * 用于对话框底部的操作按钮区域，提供统一的布局和样式。
+ * 采用响应式设计：小屏幕时按钮垂直排列（flex-col-reverse），
+ * 大屏幕（sm）及以上水平排列（flex-row）。
+ *
+ * @property {string} [class] - 自定义 CSS 类名，用于覆盖默认样式
+ *
+ * @example
+ * ```vue
+ * <DialogFooter>
+ *   <Button variant="outline" @click="onCancel">取消</Button>
+ *   <Button @click="onConfirm">确认</Button>
+ * </DialogFooter>
+ * ```
+ *
+ * @see https://ui.rhythm.cn/dialog
+ */
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { cn } from '@/lib/utils'

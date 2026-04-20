@@ -13,6 +13,35 @@
   </div>
 </template>
 
+/**
+ * EmptyState - 空状态展示组件
+ *
+ * @description
+ * 当列表、数据或内容为空时展示的空状态组件，提供统一的视觉和交互体验。
+ * 包含图标、标题、描述文字以及可选的操作按钮区域。
+ *
+ * @props
+ * - title: string - 空状态的标题文字
+ * - description: string - 空状态的描述文字，通常说明当前状态或引导用户操作
+ *
+ * @slots
+ * - icon: 图标插槽，默认显示指南针图标 (Compass)
+ * - action: 操作按钮插槽，用于放置"创建"、"刷新"等操作按钮
+ *
+ * @example
+ * <EmptyState title="暂无任务" description="今天还没有任务安排，添加一个吧">
+ *   <template #action>
+ *     <Button>创建任务</Button>
+ *   </template>
+ * </EmptyState>
+ *
+ * @example
+ * <EmptyState title="暂无数据" description="没有找到匹配的结果">
+ *   <template #icon>
+ *     <Search class="w-10 h-10 text-zinc-300" />
+ *   </template>
+ * </EmptyState>
+ */
 <script setup>
 import { Compass } from 'lucide-vue-next'
 </script>

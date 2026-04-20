@@ -172,6 +172,44 @@
 </template>
 
 <script setup>
+/**
+ * Navbar.vue - 全局导航栏组件
+ * 
+ * 功能概述:
+ * - 桌面端: 顶部悬停触发的隐藏式导航栏，鼠标悬停时从顶部滑出显示
+ * - 移动端: 固定在底部的导航栏，始终可见
+ * - 支持上下文导航: 在月视图和日视图页面显示面包屑和翻页控件
+ * - 退出登录功能
+ * 
+ * 导航结构:
+ * - 时序 (/day): 每日时间轴，支持年/月/日三级路由
+ * - 习惯 (/habits): 周期行为追踪
+ * - 所向 (/direction): 长期目标管理
+ * - 总结 (/summary): 日/周/月/年总结
+ * 
+ * 桌面端交互逻辑:
+ * - 顶部 10px 透明热区 (h-10) 作为触发区域，pointer-events-auto 捕获鼠标事件
+ * - 外层 div 使用 group 包裹，悬停热区时触发 group-hover 状态
+ * - nav 面板默认 -translate-y-[150%] + opacity-0，悬停时 translate-y-0 + opacity-100
+ * - 登出按钮默认 opacity-0 scale-95，悬停时显示
+ * 
+ * 移动端交互逻辑:
+ * - 底部固定导航栏，始终显示
+ * - 上下文导航 pill 固定在顶部居中
+ * - 登出按钮固定在右上角
+ * 
+ * 上下文导航 (contextInfo):
+ * - 月视图 (/month/:year/:month): 显示年份 + 返回年视图按钮
+ * - 日视图 (/day/:year/:month/:day): 显示月份名 + 左右翻日按钮 + 返回月视图按钮
+ * 
+ * 依赖:
+ * - vue-router: 路由导航
+ * - pinia (dateStore): 日期状态管理
+ * - lucide-vue-next: 图标组件
+ * - @/components/ui/button: 按钮组件
+ * - @/lib/utils: 工具函数 (cn)
+ * - @/config/supabase: Supabase 认证
+ */
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'

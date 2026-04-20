@@ -6,8 +6,28 @@
   </header>
 </template>
 
-<script setup>
-import { uiGrammar } from '@/config/uiGrammar'
+/**
+ * SectionHeader - 页面/区块-section 标题组件
+ *
+ * 用于渲染标准化的区块标题结构，包含眉题（eyebrow）、主标题（title）和可选描述（description）。
+ * 常见于页面顶部或卡片内的区块标题展示。
+ *
+ * @example
+ * // 基础用法
+ * <SectionHeader eyebrow="Getting Started" title="Welcome" />
+ *
+ * // 带描述
+ * <SectionHeader eyebrow="Overview" title="Project Status" description="Current progress and metrics" />
+ *
+ * @props
+ * @param {string} eyebrow - 眉题文字，通常为大写小号字母间距文字，如分类标签
+ * @param {string} title - 主标题，主层级标题文字
+ * @param {string} [description] - 可选描述，副层级说明文字
+ *
+ * @designTokens
+ * - eyebrow letterSpacing: 取自 uiGrammar.section.eyebrowTracking
+ * - 暗色模式下 text-muted-foreground 颜色自动适配
+ */
 
 defineProps({
   eyebrow: String,

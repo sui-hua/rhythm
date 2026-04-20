@@ -15,7 +15,23 @@
 </template>
 
 <script setup>
-// 极简骨架屏组件
+/**
+ * SkeletonTask - 任务项骨架屏组件
+ *
+ * @description
+ * 用于在任务数据加载过程中显示占位骨架，提升用户感知体验。
+ * 采用脉冲动画（animate-pulse）模拟内容加载状态，避免页面跳动。
+ *
+ * @feature
+ * - 响应式设计：支持亮色/暗色主题自动切换（通过 dark: 类前缀）
+ * - 层级结构：模拟任务卡片布局，包含复选框区、标题描述区、标签区
+ * - 极简实现：纯 CSS/Tailwind，无 JavaScript 依赖
+ *
+ * @usage
+ * <SkeletonTask />
+ *
+ * @see {@link https://tailwindcss.com/docs/animation} Tailwind 动画文档
+ */
 </script>
 
 <style scoped>

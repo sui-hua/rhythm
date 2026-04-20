@@ -1,3 +1,37 @@
+<!--
+PopoverContent.vue - 弹出层内容组件
+
+功能说明：
+  - 基于 Radix Vue 的 PopoverContent 封装组件
+  - 使用 PopoverPortal 端口传输实现，将弹出层内容渲染到 body 末尾
+  - 支持通过 props 和 emits 与父组件进行双向数据传递
+  - 支持通过 $attrs 传递额外 HTML 属性
+  - 支持自定义 class 覆盖默认样式
+
+使用方式：
+  <PopoverContent v-bind="{ ...forwarded, ...$attrs }" :class="cn(..., props.class)">
+    <!-- 弹出层内容插槽 -->
+  </PopoverContent>
+
+样式说明：
+  - 默认样式：z-50、圆角边框、阴影、背景色等
+  - 动画支持：data-[state=open/closed] 控制淡入淡出和缩放动画
+  - 位置动画：data-[side=bottom/left/right/top] 控制各方向的滑入动画
+
+依赖组件：
+  - PopoverPortal：Radix Vue 端口传输组件
+  - PopoverContent：Radix Vue 弹出层内容组件
+  - reactiveOmit：VueUse 响应式对象工具
+  - useForwardPropsEmits：Radix Vue  props 转发 Hook
+
+Props：
+  - align：弹出层对齐方式，默认 "center"
+  - sideOffset：弹出层偏移量，默认 4
+  - class：自定义 CSS 类名
+
+Emits：
+  - 继承自 PopoverContentEmits，由 Radix Vue 定义
+-->
 <script setup lang="ts">
 import type { PopoverContentEmits, PopoverContentProps } from "radix-vue"
 import type { HTMLAttributes } from "vue"

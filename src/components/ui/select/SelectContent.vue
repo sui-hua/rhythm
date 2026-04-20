@@ -1,3 +1,20 @@
+/**
+ * SelectContent.vue - 下拉选择框内容区域组件
+ * 
+ * 功能说明：
+ * - 渲染下拉选择框的弹出内容区域
+ * - 使用 SelectPortal 将内容渲染到 body 层级，避免层级冲突
+ * - 支持 popper（浮动定位）和 inline（内联定位）两种定位模式
+ * - 内置滚动按钮，适用于选项较多时的滚动导航
+ * 
+ * 样式特点：
+ * - 使用 Tailwind 原子化类名定义基础样式
+ * - 支持暗色主题（bg-popover, text-popover-foreground）
+ * - 定义了丰富的动画过渡效果（fade, zoom, slide）
+ * - popper 定位模式下自动计算偏移量
+ * 
+ * @see https://reka-ui.com/docs/select
+ */
 <script setup lang="ts">
 import type { SelectContentEmits, SelectContentProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"
