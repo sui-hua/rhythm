@@ -61,13 +61,9 @@
  * - "知道了"按钮仅关闭弹窗，不执行任何数据操作
  * 
  * @example
- * <DailyReportModal
- *   :show="showDailyReport"
- *   :stats="dailyStats"
- *   @close="showDailyReport = false"
- *   @confirm="handleConfirm"
- *   @confirm-carryover="handleCarryover"
- * />
+ * // &lt;DailyReportModal :show="showDailyReport" :stats="dailyStats"
+ * //   @close="showDailyReport = false" @confirm="handleConfirm"
+ * //   @confirm-carryover="handleCarryover" /&gt;
  */
 <script setup>
 /**

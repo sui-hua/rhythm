@@ -13,6 +13,7 @@
   </div>
 </template>
 
+<script setup>
 /**
  * EmptyState - 空状态展示组件
  *
@@ -29,20 +30,12 @@
  * - action: 操作按钮插槽，用于放置"创建"、"刷新"等操作按钮
  *
  * @example
- * <EmptyState title="暂无任务" description="今天还没有任务安排，添加一个吧">
- *   <template #action>
- *     <Button>创建任务</Button>
- *   </template>
- * </EmptyState>
- *
- * @example
- * <EmptyState title="暂无数据" description="没有找到匹配的结果">
- *   <template #icon>
- *     <Search class="w-10 h-10 text-zinc-300" />
- *   </template>
- * </EmptyState>
+ * // &lt;EmptyState title="暂无任务" description="今天还没有任务安排"&gt;
+ * //   &lt;template #action&gt;
+ * //     &lt;Button&gt;创建任务&lt;/Button&gt;
+ * //   &lt;/template&gt;
+ * // &lt;/EmptyState&gt;
  */
-<script setup>
 import { Compass } from 'lucide-vue-next'
 </script>
 

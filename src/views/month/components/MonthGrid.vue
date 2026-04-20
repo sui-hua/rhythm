@@ -14,6 +14,7 @@
   </div>
 </template>
 
+<script setup>
 /**
  * MonthGrid.vue - 月度日历网格组件
  * 
@@ -27,16 +28,11 @@
  * - 主体：DayCell 组成的 7 列网格，每行代表一周
  * 
  * 使用方式：
- * <MonthGrid 
- *   :month-grid-data="monthGridData" 
- *   @enter-day="handleEnterDay" 
- * />
+ * // &lt;MonthGrid :month-grid-data="monthGridData" @enter-day="handleEnterDay" /&gt;
  * 
- * @prop {Array} monthGridData - 月度网格数据，每项包含日期和日程信息
- * @emit {Date} enterDay - 用户点击进入某日详情，payload 为该日 Date 对象
+ * @prop {Array} monthGridData - 月度网格数据
+ * @emit {Date} enterDay - 用户点击进入某日详情
  */
-
-<script setup>
 import DayCell from '@/views/month/components/DayCell.vue'
 
 // 星期标题，一周七天从周一到周日

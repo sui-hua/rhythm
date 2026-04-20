@@ -156,6 +156,7 @@
   </aside>
 </template>
 
+<script setup>
 /**
  * Sidebar.vue - 日视图侧边栏组件
  * 
@@ -177,17 +178,10 @@
  * 
  * @component
  * @example
- * <Sidebar 
- *   :is-mobile="isMobile" 
- *   :show="showSidebar" 
- *   :is-loading="isLoading"
- *   @scroll-to-task="handleScroll"
- *   @add-event="openAddDialog"
- *   @edit-task="openEditDialog"
- *   @close="closeSidebar"
- * />
+ * // &lt;Sidebar :is-mobile="isMobile" :show="showSidebar" :is-loading="isLoading"
+ * //   @scroll-to-task="handleScroll" @add-event="openAddDialog"
+ * //   @edit-task="openEditDialog" @close="closeSidebar" /&gt;
  */
-<script setup>
 import { computed, ref } from 'vue'
 import { Plus, Settings2, X, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
