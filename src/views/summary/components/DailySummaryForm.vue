@@ -59,6 +59,36 @@
   </div>
 </template>
 
+/**
+ * DailySummaryForm.vue - 每日总结表单组件
+ * 
+ * 功能说明：
+ *   提供每日工作/生活总结的录入表单，包含四个核心字段：
+ *   - 今日成就（done）：记录当天完成的重要事项
+ *   - 改进之处（improve）：反思可以优化的地方
+ *   - 明日计划（tomorrow）：规划次日优先任务
+ *   - 今日心情（mood）：1-5 分的情绪评分
+ * 
+ * 组件特性：
+ *   - 支持新建和编辑两种模式，通过 initialData 判断
+ *   - 编辑模式显示删除按钮，可删除已存在的总结记录
+ *   - 表单数据通过 useDailySummaryForm composable 统一管理
+ *   - 提交时自动构建 payload 并通过 'save' 事件传递给父组件
+ * 
+ * Props：
+ *   - initialData: Object|null - 可选，传入已有数据时为编辑模式
+ * 
+ * Emits：
+ *   - save: 提交表单时触发，传递构建好的总结数据对象
+ *   - cancel: 点击取消按钮时触发
+ *   - delete: 点击删除按钮时触发（仅编辑模式）
+ * 
+ * 依赖组件：
+ *   - Textarea: 多行文本输入（成就/改进/计划）
+ *   - Input: 单行数字输入（心情评分）
+ *   - Button: 操作按钮
+ */
+
 <script setup>
 import { useDailySummaryForm } from '@/views/summary/composables/useDailySummaryForm'
 import { Button } from '@/components/ui/button'

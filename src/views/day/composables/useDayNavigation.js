@@ -20,6 +20,9 @@
  * 【时间线逻辑】
  * - updateCurrentHour() → 每秒更新当前小时指示器
  * - 定时器 setInterval(updateCurrentHour, 1000)
+ *
+ * @module useDayNavigation
+ * @see {@link https://github.com/example/rhythm} for more details
  */
 import { ref, nextTick, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -32,6 +35,15 @@ import { getInitialScrollTarget } from '@/views/day/composables/getInitialScroll
 /**
  * Day 视图导航与交互管理 (Composable)
  * 包含路由校验跳转、当前时间指针、滚动定位以及页面初始化
+ *
+ * @function useDayNavigation
+ * @returns {Object} Day 视图导航相关状态和方法
+ * @returns {Ref<number>} returns.currentHour - 当前小时数（浮点数，例：14.5 表示 14:30）
+ * @returns {Ref<boolean>} returns.isReady - 页面是否已完成初始化（用于淡入动画）
+ * @returns {Ref<boolean>} returns.isLoading - 任务数据加载状态
+ * @returns {Function} returns.scrollToTask - 滚动到指定任务
+ * @returns {Function} returns.updateCurrentHour - 手动更新当前小时指示器
+ * @returns {Function} returns.validateDayRoute - 校验路由参数合法性
  */
 export function useDayNavigation() {
     const { dailySchedule, fetchTasks, isLoading } = useDayData()
@@ -43,16 +55,32 @@ export function useDayNavigation() {
     const currentHour = ref(new Date().getHours() + new Date().getMinutes() / 60)
     const isReady = ref(false)
 
+    /**
+     * 滚动到指定任务项
+     * @param {number} index - 任务在日程列表中的索引
+     * @param {ScrollBehavior} [behavior='smooth'] - 滚动行为：'smooth' | 'instant'
+     */
     const scrollToTask = (index, behavior = 'smooth') => {
         const el = document.getElementById(`task-${index}`)
         if (el) el.scrollIntoView({ behavior, block: 'center' })
     }
 
+    /**
+     * 更新当前小时指示器
+     * 每秒调用一次，将 currentHour 更新为当前时间的浮点数小时值
+     * @example 14:30 → 14.5
+     */
     const updateCurrentHour = () => {
         const now = new Date()
         currentHour.value = now.getHours() + now.getMinutes() / 60
     }
 
+    /**
+     * 校验路由参数合法性
+     * 检查 URL 中的 year/month/day 参数是否为有效日期格式
+     * 若参数缺失或非规范格式，自动重定向到规范路径
+     * @returns {boolean} 路由是否合法有效
+     */
     const validateDayRoute = () => {
         const context = getRouteDateContext(route.params, dateStore.currentDate)
 
@@ -69,12 +97,24 @@ export function useDayNavigation() {
         return true
     }
 
+    /**
+     * 判断两个日期是否为同一天
+     * @param {Date} a - 第一个日期
+     * @param {Date} b - 第二个日期
+     * @returns {boolean} 是否为同一天
+     */
     const isSameDay = (a, b) => {
         return a.getFullYear() === b.getFullYear()
             && a.getMonth() === b.getMonth()
             && a.getDate() === b.getDate()
     }
 
+    /**
+     * 处理当日首次访问逻辑
+     * 当用户首次访问当天时，检查是否需要显示日报弹窗
+     * @param {Date} targetDate - 目标日期
+     * @returns {Promise<void>}
+     */
     const handleFirstEntryForDay = async (targetDate) => {
         if (!targetDate) return
         const today = new Date()
@@ -82,15 +122,30 @@ export function useDayNavigation() {
         if (isSameDay(targetDate, today)) await openIfNeeded()
     }
 
+    /**
+     * 从路由参数获取目标日期
+     * @returns {Date} 目标日期
+     */
     const getTargetDateFromRoute = () => {
         return getRouteDateContext(route.params, dateStore.currentDate).date
     }
 
+    /**
+     * 将路由参数同步到 dateStore
+     * 从 URL 提取 year/month/day 并更新全局日期状态
+     */
     const syncDateWithRoute = () => {
         const { year, month, day } = getRouteDateContext(route.params, dateStore.currentDate)
         dateStore.setYearMonthDay(year, month - 1, day)
     }
 
+    /**
+     * 滚动到初始目标位置
+     * 根据目标日期和日程情况决定滚动位置：
+     * - 若有未完成任务：滚动到该任务
+     * - 否则滚动到当前时间点或默认 8:00
+     * @param {Date} targetDate - 目标日期
+     */
     const scrollToInitialTarget = (targetDate) => {
         const initialTarget = getInitialScrollTarget({
             schedule: dailySchedule.value,
@@ -113,6 +168,11 @@ export function useDayNavigation() {
         }
     }
 
+    /**
+     * 处理路由同步
+     * 完整初始化流程：校验路由 → 处理首次访问 → 同步日期 → 加载数据
+     * @returns {Promise<boolean>} 是否初始化成功
+     */
     const handleRouteSync = async () => {
         if (!validateDayRoute()) return false
 

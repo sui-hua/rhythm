@@ -125,55 +125,280 @@
   </Teleport>
 </template>
 
+/**
+ * ============================================================================
+ * DirectionMobileGoalSheet.vue - 移动端目标抽屉组件
+ * ============================================================================
+ * 
+ * 【文件职责】
+ * 移动端底部抽屉组件，作为 Direction 模块在移动设备上的入口。
+ * 采用底部抽屉（Bottom Sheet）设计模式，支持触摸手势操作。
+ * 
+ * 【核心功能】
+ * 1. 目标列表展示 - 展示所有目标，按分类分组，支持选中、编辑
+ * 2. 月度进度展示 - 显示选中目标当月的完成进度百分比
+ * 3. 月度归档查看 - 按日期展示已完成的任务归档列表
+ * 4. Tab 切换 - 通过 Tab 切换目标列表与月度归档两个视图
+ * 
+ * 【数据流】
+ * - useDirectionFetch       → 获取分类后的目标列表 (categorizedGoals)
+ * - useDirectionSelection   → 管理选中目标、选中月份、任务数据
+ * - useDirectionGoals       → 处理目标编辑操作
+ * - useDirectionTasks       → 处理任务更新操作
+ * 
+ * 【组件状态】
+ * - show        → 控制抽屉显示/隐藏，通过 v-model:show 双向绑定
+ * - isLoading   → 加载状态（当前未使用，预留）
+ * - activeTab   → 当前激活的 Tab: 'goals' | 'archive'
+ * 
+ * 【事件】
+ * - update:show → 通知父组件抽屉显示状态变更
+ * 
+ * 【样式说明】
+ * - 使用 Tailwind CSS 4 的 @apply 语法
+ * - 抽屉最大高度 85vh，避免遮挡顶部内容
+ * - 底部安全区域适配 (pb-safe)
+ * - 圆角顶部 2.5rem，符合移动端抽屉设计规范
+ * 
+ * @see {@link https://github.com/lucide/lucide Lucide Icons}
+ * @see {@link https://vuejs.org/guide/built-in-components.html#teleport Teleport 组件}
+ */
+
 <script setup>
+/**
+ * ============================================================================
+ * 依赖导入
+ * ============================================================================
+ */
+
+// Vue 核心响应式 API
 import { ref, computed } from 'vue'
+
+// Lucide 图标库 - 提供可定制的 SVG 图标
 import { Settings2 } from 'lucide-vue-next'
+
+// ---------------------------------------------------------------------------
+// Direction 模块 Composables - 遵循项目"逻辑外置"规范
+// ---------------------------------------------------------------------------
+
+/**
+ * useDirectionFetch
+ * 职责：获取并处理目标数据，返回按分类分组的目标列表
+ * 返回：categorizedGoals - 包含分类信息和每个分类下的目标项
+ */
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+
+/**
+ * useDirectionSelection
+ * 职责：管理当前选中状态，包括：
+ * - selectedGoal     → 当前选中的目标对象
+ * - selectGoal()     → 选中目标的方法
+ * - selectedMonth    → 当前查看的月份（1-12）
+ * - datesWithTasks   → 当月有任务的日期数组
+ * - dailyTasks       → 每日任务映射表 { date: task[] }
+ * - dayTaskKey()     → 生成日期任务唯一 key 的方法
+ */
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
+
+/**
+ * useDirectionGoals
+ * 职责：目标相关的业务操作
+ * - handleEditGoal() → 打开目标编辑弹窗
+ * - months           → 月份名称数组（用于归档标题显示）
+ */
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
+
+/**
+ * useDirectionTasks
+ * 职责：任务相关的业务操作
+ * - handleUpdateTask() → 更新任务数据
+ */
 import { useDirectionTasks } from '@/views/direction/composables/useDirectionTasks'
+
+// ---------------------------------------------------------------------------
+// 状态与工具函数
+// ---------------------------------------------------------------------------
+
+/**
+ * getMonthlyPlansByPlanId
+ * 来源：useDirectionState
+ * 职责：根据 plan_id 查询该目标下所有月度计划
+ * 用途：在计算月度进度时查找对应月份的计划
+ */
 import { getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
+
+/**
+ * getDateOnlyMonth
+ * 来源：dateOnly 工具
+ * 职责：提取 date 对象中的月份数字 (1-12)
+ */
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
-import { Progress } from '@/components/ui/progress'
-import ArchiveHeader from '@/views/direction/components/ArchiveHeader.vue'
-import ArchiveItem from '@/views/direction/components/ArchiveItem.vue'
+
+/**
+ * isDailyPlanCompleted
+ * 来源：dailyPlanStatus 工具
+ * 职责：判断单日计划是否已完成（用于进度计算）
+ */
 import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
+
+/**
+ * getDirectionMonthlyProgress
+ * 来源：progress 工具
+ * 职责：计算指定目标、指定月份的完成进度百分比
+ */
 import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
+// ---------------------------------------------------------------------------
+// UI 组件
+// ---------------------------------------------------------------------------
+
+/**
+ * Progress - shadcn-vue 进度条组件
+ * 用于展示月度完成进度
+ */
+import { Progress } from '@/components/ui/progress'
+
+/**
+ * ArchiveHeader - 月度归档头部组件
+ * 显示月份名称和任务数量
+ */
+import ArchiveHeader from '@/views/direction/components/ArchiveHeader.vue'
+
+/**
+ * ArchiveItem - 月度归档项组件
+ * 显示单日任务列表，支持任务更新
+ */
+import ArchiveItem from '@/views/direction/components/ArchiveItem.vue'
+
+/* ============================================================================
+ * 组件 Props & Emits 定义
+ * ============================================================================ */
+
+/**
+ * props.show - 控制抽屉显示/隐藏
+ * 类型：Boolean
+ * 父组件通过 v-model:show 绑定
+ */
 const props = defineProps({
   show: Boolean,
-  isLoading: Boolean
+  isLoading: Boolean  // 预留：加载状态（当前未使用）
 })
 
+/**
+ * emit - 定义组件向上传递的事件
+ * update:show - 抽屉显示状态变更事件
+ */
 const emit = defineEmits(['update:show'])
 
+/* ============================================================================
+ * Composables 实例化 - 从状态管理层获取数据和方法
+ * ============================================================================ */
+
+/**
+ * 获取分类后的目标列表
+ * 结构：[{ category: '工作', items: [...] }, { category: '生活', items: [...] }]
+ */
 const { categorizedGoals } = useDirectionFetch()
-const { selectedGoal, selectGoal, selectedMonth, datesWithTasks, dailyTasks, dayTaskKey } = useDirectionSelection()
+
+/**
+ * 获取选中状态和选择方法
+ * selectedGoal: 当前选中的目标
+ * selectedMonth: 当前查看的月份 (1-12)
+ * datesWithTasks: 当月有任务的日期列表
+ * dailyTasks: 每日任务映射 { 'YYYY-MM-DD': task[] }
+ * dayTaskKey: 生成日期字符串用于索引 dailyTasks
+ */
+const { 
+  selectedGoal, 
+  selectGoal, 
+  selectedMonth, 
+  datesWithTasks, 
+  dailyTasks, 
+  dayTaskKey 
+} = useDirectionSelection()
+
+/**
+ * 获取目标编辑方法
+ * handleEditGoal: 打开目标编辑弹窗
+ */
 const { handleEditGoal } = useDirectionGoals()
+
+/**
+ * 获取任务更新方法
+ * handleUpdateTask: 处理任务更新操作
+ */
 const { handleUpdateTask } = useDirectionTasks()
+
+/**
+ * 获取月份名称数组
+ * 结构：['一月', '二月', ..., '十二月']
+ * 用于归档页面显示月份名称
+ */
 const { months } = useDirectionGoals()
 
+/* ============================================================================
+ * 组件内部状态
+ * ============================================================================ */
+
+/**
+ * tabs - Tab 切换配置
+ * id: Tab 唯一标识（用于 activeTab 判断）
+ * label: Tab 显示文本
+ */
 const tabs = [
   { id: 'goals', label: '目标' },
   { id: 'archive', label: '归档' }
 ]
 
+/**
+ * activeTab - 当前激活的 Tab
+ * 默认值：'goals'（目标列表）
+ * 可选值：'goals' | 'archive'
+ */
 const activeTab = ref('goals')
 
+/* ============================================================================
+ * 计算属性 - Computed
+ * ============================================================================ */
+
+/**
+ * selectedGoalName
+ * 功能：获取当前选中目标的名称
+ * 用途：与目标列表项的选中状态对比，控制高亮样式
+ * 来源：从 selectedGoal 响应式对象中提取 name
+ */
 const selectedGoalName = computed(() => selectedGoal.value?.name || '')
 
+/**
+ * systemLoad
+ * 功能：计算选中目标在当前月份的完成进度
+ * 
+ * 计算逻辑：
+ * 1. 前提条件：必须同时选中目标和月份
+ * 2. 根据 selectedGoal.plan_id 查找对应的月度计划
+ * 3. 在月度计划中找到 selectedMonth 对应的那个月计划
+ * 4. 调用 getDirectionMonthlyProgress 计算完成百分比
+ * 
+ * 返回值：0-100 的数字，表示完成进度百分比
+ */
 const systemLoad = computed(() => {
+  // 前置检查：必须同时有选中目标和选中月份
   if (!selectedGoal.value || !selectedMonth.value) return 0
 
+  // 获取选中目标的 plan_id 和当前月份
   const planId = selectedGoal.value.plan_id
   const month = selectedMonth.value
 
+  // 查找该目标下指定月份的月度计划
   const monthPlan = getMonthlyPlansByPlanId(planId).find(
     mp => getDateOnlyMonth(mp.month) === month
   )
 
+  // 如果该月份没有计划，返回 0% 进度
   if (!monthPlan) return 0
 
+  // 计算并返回月度完成进度
+  // 传入：dailyTasks（每日任务）、planId、month、完成判断函数
   return getDirectionMonthlyProgress({
     dailyTasks,
     planId,

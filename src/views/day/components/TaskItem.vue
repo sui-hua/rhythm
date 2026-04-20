@@ -113,6 +113,27 @@
   </div>
 </template>
 
+/**
+ * TaskItem.vue - 日程任务卡片组件
+ * 
+ * 功能说明：
+ * - 在日视图时间轴上渲染单个任务条目
+ * - 根据任务时长（durationHours）动态选择三种布局：
+ *   1. 极短布局 (< 0.4h)：迷你横向卡片，仅显示标题和呼吸点
+ *   2. 中等布局 (0.4 ~ 0.8h)：紧凑横向卡片，显示标题和状态点
+ *   3. 详细布局 (>= 0.8h)：竖向卡片，显示分类标签、时间、描述和操作按钮
+ * - 支持点击选中、双击编辑、运行中计时显示
+ * - 根据完成状态和运行状态应用不同的视觉样式
+ * 
+ * 通信接口：
+ * - Props: task (任务对象), index (在列表中的索引)
+ * - Emits: select (点击选中), edit (双击编辑)
+ * - 依赖 store: pomodoroStore (获取计时状态)
+ * - 依赖 composable: useDayData (handleStartTask)
+ * 
+ * @see {@link https://github.com/your-repo/rhythm} 项目地址
+ */
+
 <script setup>
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
@@ -121,28 +142,47 @@ import { Play, CheckCircle, Timer, Maximize2 } from 'lucide-vue-next'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 
+// ============ Props & Emits ============
+// props.task: 任务对象，包含 title、durationHours、startHour、completed 等字段
+// props.index: 任务在当日任务列表中的索引，用于唯一标识和 emit 事件传参
 const props = defineProps({
   task: Object,
   index: Number
 })
 
+// emit('select', index): 单击卡片时触发，用于选中该任务
+// emit('edit', index): 双击卡片时触发，用于打开编辑弹窗
 const emit = defineEmits(['select', 'edit'])
 
+// ============ 计算样式 ============
+// computedStyle: 计算任务卡片在时间轴上的定位样式
+// - top: 根据任务开始时间(startHour)计算距顶部的偏移
+// - height: 根据任务时长(durationHours)计算卡片高度
+// - left/width: 当多列并行任务时，计算每列的宽度和左侧偏移
+// - zIndex: 确保同一时间段的多个任务正确层叠显示
 const computedStyle = computed(() => {
+  // _col: 任务所在的列索引（用于多任务并行显示）
+  // _numCols: 当前时间段的总列数
   const col = props.task._col || 0
   const numCols = props.task._numCols || 1
   
   const style = {
+    // 使用 CSS 变量 --hour-height 计算实际像素位置
     top: `calc(${props.task.startHour} * var(--hour-height))`,
+    // 使用 CSS 变量 --hour-height 计算实际像素高度
     height: `calc(${props.task.durationHours || 1} * var(--hour-height))`,
     minHeight: '28px',
     zIndex: col + 10
   }
   
+  // 多列布局：并行任务需要分割宽度
   if (numCols > 1) {
+    // 宽度 = (总宽度 - 时间轴左侧宽度) / 列数 - 间距
     style.width = `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`
+    // 左侧 = 时间轴宽度 + (每列宽度 * 列索引)
     style.left = `calc(var(--timeline-left) + ((100% - var(--timeline-left)) / ${numCols}) * ${col})`
   } else {
+    // 单列布局：左对齐到时间轴
     style.left = `var(--timeline-left)`
     style.right = `0`
   }
@@ -150,16 +190,27 @@ const computedStyle = computed(() => {
   return style
 })
 
+// ============ Store & Composables ============
 const { handleStartTask, handleToggleComplete } = useDayData()
 const store = usePomodoroStore()
 
+// ============ 运行状态计算属性 ============
+// isRunning: 判断任务是否处于运行中状态
+// 条件：有实际开始时间 && 没有结束时间 && 未完成
 const isRunning = computed(() => !!props.task.actual_start_time && !props.task.actual_end_time && !props.task.completed)
+
+// isStoreActive: 判断当前任务是否为 pomodoroStore 中正在计时的任务
 const isStoreActive = computed(() => store.activeTask?.id === props.task.id)
 
+// displayTime: 显示计时时间
+// 如果任务正在 store 中计时，显示 store 的格式化时间，否则显示 00:00
 const displayTime = computed(() => isStoreActive.value ? store.formattedTime : '00:00')
 
+// isOvertime: 判断任务是否超时
+// 比较已过时间(elapsedSeconds)与计划时长(scheduledMins)
 const isOvertime = computed(() => {
     if (!isRunning.value) return false
+    // original.duration 或 duration 或默认 30 分钟
     const scheduledMins = props.task.original?.duration || props.task.duration || 30
     const elapsed = isStoreActive.value ? store.elapsedSeconds : 0
     return elapsed > scheduledMins * 60

@@ -80,8 +80,31 @@
 
 <script setup>
 /**
- * 修改习惯弹窗组件 (EditHabitModal.vue)
- * 提供一个弹窗用于编辑已有习惯各项属性或者直接执行删除习惯。
+ * EditHabitModal.vue - 修改习惯弹窗组件
+ *
+ * 功能说明：
+ * - 提供一个弹窗界面用于编辑已有习惯的名称、时间和时长
+ * - 支持归档/取消归档习惯
+ * - 支持删除习惯（危险操作，无法恢复）
+ * - 表单数据与 habitData prop 双向同步，弹窗打开时自动填充现有数据
+ *
+ * 使用方式：
+ * - 通过 v-model:show 控制弹窗显示/隐藏
+ * - 通过 habitData prop 传入要编辑的习惯对象
+ * - 监听 refresh 事件刷新习惯列表
+ * - 监听 deleted 事件在删除后重置父组件选中状态
+ *
+ * 依赖组件：
+ * - Dialog/DialogContent/DialogTitle (ui/dialog)
+ * - Input (ui/input)
+ * - Button (ui/button)
+ * - TimePicker (ui/TimePicker.vue) - 时间选择器
+ * - DurationPicker (ui/DurationPicker.vue) - 时长选择器
+ *
+ * 数据库操作：
+ * - db.habits.update() 更新习惯信息
+ * - db.habits.delete() 删除习惯
+ * - 均通过 withLoadingLock 包装防止重复提交
  */
 import { reactive, watch } from 'vue'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'

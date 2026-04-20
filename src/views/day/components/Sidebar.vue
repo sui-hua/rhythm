@@ -156,6 +156,37 @@
   </aside>
 </template>
 
+/**
+ * Sidebar.vue - 日视图侧边栏组件
+ * 
+ * 功能说明：
+ * - 显示选中日期的任务列表（dailySchedule）
+ * - 支持移动端左滑快速完成任务的交互
+ * - 支持桌面端拖拽调整侧边栏宽度
+ * - 显示任务完成度进度条
+ * - 提供添加、编辑任务的操作入口
+ * 
+ * 响应式设计：
+ * - 移动端：全屏显示，支持左滑手势完成任务的触控交互
+ * - 桌面端：固定宽度显示，支持拖拽调整宽度
+ * 
+ * 状态管理：
+ * - 通过 useDayData composable 获取任务数据和完成状态
+ * - 通过 useResizable composable 管理宽度拖拽
+ * - 通过 dateStore 获取当前选中日期
+ * 
+ * @component
+ * @example
+ * <Sidebar 
+ *   :is-mobile="isMobile" 
+ *   :show="showSidebar" 
+ *   :is-loading="isLoading"
+ *   @scroll-to-task="handleScroll"
+ *   @add-event="openAddDialog"
+ *   @edit-task="openEditDialog"
+ *   @close="closeSidebar"
+ * />
+ */
 <script setup>
 import { computed, ref } from 'vue'
 import { Plus, Settings2, X, Check } from 'lucide-vue-next'
@@ -172,6 +203,12 @@ import { useDayData } from '@/views/day/composables/useDayData'
 import { getSidebarPanelClass } from '@/views/day/composables/mobileLayers'
 import { playSuccessSound } from '@/utils/audio'
 
+/**
+ * 组件 Props 定义
+ * @property {boolean} isMobile - 是否为移动端模式
+ * @property {boolean} show - 侧边栏是否显示（用于移动端控制显隐）
+ * @property {boolean} isLoading - 是否正在加载数据（显示骨架屏）
+ */
 const props = defineProps({
   isMobile: Boolean,
   show: Boolean,
@@ -181,58 +218,113 @@ const props = defineProps({
   }
 })
 
+// ==================== 状态初始化 ====================
+
+// 日期状态管理，获取当前选中的日期
 const dateStore = useDateStore()
+
+// 从 useDayData 获取当日任务相关数据和方法
+// dailySchedule: 当日任务列表
+// completedCount: 已完成任务数量
+// handleToggleComplete: 切换任务完成状态的方法
 const { dailySchedule, completedCount, handleToggleComplete } = useDayData()
+
+// 宽度可调整功能（仅桌面端）
+// width: 当前侧边栏宽度
+// startResize: 开始拖拽调整宽度
+// isResizing: 是否正在调整宽度的状态
 const { width, startResize, isResizing } = useResizable()
 
+// ==================== 计算属性 ====================
+
+// 获取选中日期的天数（1-31）
 const selectedDay = computed(() => dateStore.currentDate.getDate())
+
+// 获取选中日期的完整月份名称（如 "January"）
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
 
-// 左滑完成状态管理
-const SWIPE_THRESHOLD = 0.5
-const MAX_SWIPE = 80
+// ==================== 移动端左滑完成功能 ====================
+// 左滑完成功能的常量配置
+const SWIPE_THRESHOLD = 0.5  // 完成手势的阈值比例（向左滑动超过 50% 则触发完成）
+const MAX_SWIPE = 80         // 最大左滑距离（像素），超过此距离不再增加
 
+/**
+ * 左滑操作的状态管理
+ * @property {number} activeIndex - 当前正在左滑的任务索引，-1 表示无操作
+ * @property {number} startX - 触摸起始点的 X 坐标
+ * @property {number} currentX - 触摸当前点的 X 坐标
+ */
 const swipeState = ref({
   activeIndex: -1,
   startX: 0,
   currentX: 0
 })
 
+/**
+ * 计算指定任务的左滑偏移量
+ * @param {number} index - 任务索引
+ * @returns {number} 当前的左滑偏移像素值
+ */
 const getSwipeOffset = (index) => {
   if (swipeState.value.activeIndex !== index) return 0
+  // delta > 0 表示向左滑（startX > currentX）
   const delta = swipeState.value.startX - swipeState.value.currentX
+  // 限制在 0 到 MAX_SWIPE 之间
   return Math.max(0, Math.min(delta, MAX_SWIPE))
 }
 
+/**
+ * 触摸开始事件处理 - 记录起始位置
+ * @param {TouchEvent} e - 触摸事件对象
+ * @param {number} index - 触发触摸的任务索引
+ */
 const handleTouchStart = (e, index) => {
   swipeState.value.activeIndex = index
   swipeState.value.startX = e.touches[0].clientX
   swipeState.value.currentX = e.touches[0].clientX
 }
 
+/**
+ * 触摸移动事件处理 - 更新当前位置
+ * @param {TouchEvent} e - 触摸事件对象
+ * @param {number} index - 触发触摸的任务索引
+ */
 const handleTouchMove = (e, index) => {
   if (swipeState.value.activeIndex !== index) return
   swipeState.value.currentX = e.touches[0].clientX
 }
 
+/**
+ * 触摸结束事件处理 - 判断是否触发完成操作
+ * @param {TouchEvent} e - 触摸事件对象
+ * @param {number} index - 触发触摸的任务索引
+ * @param {Object} item - 任务数据对象
+ */
 const handleTouchEnd = async (e, index, item) => {
   if (swipeState.value.activeIndex !== index) return
 
+  // 计算滑动比例：delta 为正表示向左滑
   const delta = swipeState.value.startX - swipeState.value.currentX
-  const ratio = delta / 280
+  const ratio = delta / 280  // 280 为参考滑动距离基准值
 
+  // 重置左滑状态
   swipeState.value.activeIndex = -1
 
+  // 当滑动比例达到阈值时，标记任务为完成
   if (ratio >= SWIPE_THRESHOLD) {
-    // 震动反馈
+    // 触发设备震动反馈（如果设备支持）
     if ('vibrate' in navigator) {
       navigator.vibrate(50)
     }
+    // 播放成功音效
     playSuccessSound()
+    // 调用任务完成处理函数
     await handleToggleComplete(item)
   }
 }
 
+// ==================== 事件定义 ====================
+// 向父组件暴露的事件
 defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 </script>
 

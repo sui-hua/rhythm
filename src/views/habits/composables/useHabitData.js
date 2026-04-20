@@ -27,7 +27,20 @@ import { useDateStore } from '@/stores/dateStore'
 
 /**
  * 习惯数据管理核心逻辑 (Composable)
+ *
  * 负责获取习惯列表数据、维护当前选中习惯、以及管理日历视图的年份和月份状态。
+ * 该 Composable 是 Habits 模块的数据中枢，协调数据库读取、状态管理和视图联动。
+ *
+ * @returns {Object} 包含以下属性：
+ *   - habits: 活跃习惯列表（过滤已归档）
+ *   - archivedHabits: 已归档习惯列表
+ *   - selectedHabit: 当前选中的习惯对象
+ *   - viewYear: 日历视图当前年份
+ *   - viewMonth: 日历视图当前月份
+ *   - handleMonthChange: 月份切换处理函数
+ *   - fetchHabits: 加载习惯列表核心方法
+ *   - fetchLogsForHabit: 加载指定习惯打卡记录
+ *   - isPageLoading: 页面级加载状态
  */
 export function useHabitData() {
     const dateStore = useDateStore()
@@ -54,8 +67,16 @@ export function useHabitData() {
     const viewMonth = ref(dateStore.currentDate.getMonth())
 
     /**
-     * 处理日历月份相互翻页切换的事件
-     * @param {Object} payload 包含解构所得的新年份 (year) 和新月份 (month)
+     * 处理日历月份切换事件
+     *
+     * 当用户在日历视图进行月份翻页时调用，用于更新 viewYear 和 viewMonth，
+     * 同时重新计算当前选中习惯的 completedDays 和 monthlyLogs。
+     * 注意：该方法不会重新从数据库获取数据，仅在内存中进行过滤计算。
+     *
+     * @param {Object} payload - 包含 year 和 month 的月份切换参数
+     * @param {number} payload.year - 目标年份
+     * @param {number} payload.month - 目标月份（0-11）
+     * @returns {void}
      */
     const handleMonthChange = ({ year, month }) => {
         viewYear.value = year
@@ -82,9 +103,16 @@ export function useHabitData() {
     }
 
     /**
-     * 简单的连击天数计算逻辑 (当前为简易占位符版本实现)
-     * @param {Array} logs - 该习惯的所有打卡记录
-     * @returns {number} 连击天数
+     * 计算习惯连续打卡天数（连击数）
+     *
+     * 算法逻辑：
+     * 1. 将打卡记录按日期去重并降序排序
+     * 2. 判断最近一次打卡是今天还是昨天，如果不是则连击中断返回 0
+     * 3. 从最近一次打卡开始向前遍历，计算连续天数
+     * 4. 遇到日期不连续的情况则中断计数
+     *
+     * @param {Array<Object>} logs - 该习惯的所有打卡记录数组，每条记录应包含 completed_at 字段
+     * @returns {number} 连续打卡天数（连击数），如果记录为空或最近打卡不是今天/昨天则返回 0
      */
     const calculateStreak = (logs) => {
   if (!logs || logs.length === 0) return 0
@@ -124,7 +152,14 @@ export function useHabitData() {
 }
 
     /**
-     * 核心异步逻辑：从数据库层拉取最新习惯数据并进行组合加工
+     * 从数据库加载习惯列表
+     *
+     * 核心异步方法，负责：
+     * 1. 从数据库获取所有习惯数据（包括活跃和已归档）
+     * 2. 初始化每个习惯的统计数据字段（completedDays、logs、monthlyLogs 等）
+     * 3. 维持当前选中习惯的选中状态（如果选中项被删除则自动降级选择）
+     *
+     * @returns {Promise<void>} 无返回值，通过修改 allHabits 等 ref 更新状态
      */
     const fetchHabits = async () => {
         isPageLoading.value = true
@@ -160,8 +195,16 @@ export function useHabitData() {
     }
 
     /**
-     * 获取指定习惯的所有打卡记录
-     * @param {string} habitId - 习惯 ID
+     * 获取指定习惯的所有打卡记录并更新相关统计
+     *
+     * 根据 habitId 从数据库加载该习惯的全部打卡日志，然后：
+     * 1. 计算当月（viewYear/viewMonth）的月度日志 monthlyLogs
+     * 2. 提取当月已打卡的天数数组 completedDays
+     * 3. 计算累计打卡次数 total、完成率 completionRate、连击数 streak
+     * 4. 更新 allHabits 中对应习惯的数据（selectedHabit 通过 computed 关联自动更新）
+     *
+     * @param {string} habitId - 目标习惯的唯一标识符
+     * @returns {Promise<void>} 无返回值，通过修改 currentHabitLogs 和 allHabits 更新状态
      */
     const fetchLogsForHabit = async (habitId) => {
         if (!habitId) {
@@ -221,12 +264,22 @@ export function useHabitData() {
 }
 
 /**
- * Patches a habit object with a new log entry without refetching.
- * Used for optimistic updates after toggle complete.
- * @param {Object} habit - Original habit object
- * @param {Object|null} newLog - New log entry to prepend
- * @param {Object} viewContext - { year, month } for filtering monthlyLogs
- * @returns {Object} Patched habit
+ * 构建带新打卡记录的临时习惯对象（乐观更新）
+ *
+ * 在用户点击完成/取消完成时，无需重新查询数据库即可更新界面数据。
+ * 该函数用于 optimistic update 场景，在发起实际请求前先更新 UI。
+ *
+ * 算法流程：
+ * 1. 将新日志 prepend 到 logs 数组头部
+ * 2. 根据 viewContext 过滤出当月月度日志 monthlyLogs
+ * 3. 重新计算 completedDays（当月已打卡天数数组）
+ *
+ * @param {Object} habit - 当前习惯对象
+ * @param {Object|null} newLog - 新增的打卡记录（若为 null 则直接返回原 habit）
+ * @param {Object} viewContext - 视图上下文，用于过滤月度日志
+ * @param {number} viewContext.year - 目标年份
+ * @param {number} viewContext.month - 目标月份（0-11）
+ * @returns {Object} 更新后的习惯对象（不含 streak 和 completionRate，需外部重新计算）
  */
 export function buildPatchedHabit(habit, newLog, viewContext) {
   if (!newLog) return habit

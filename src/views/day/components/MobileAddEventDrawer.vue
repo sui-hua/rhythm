@@ -133,6 +133,34 @@
 </template>
 
 <script setup>
+/**
+ * MobileAddEventDrawer.vue - 移动端添加/编辑事件抽屉组件
+ * 
+ * 功能说明：
+ * - 提供移动端友好的滑出式抽屉界面，用于快速创建或编辑任务/习惯
+ * - 支持从屏幕底部滑入/滑出动画（transition-transform）
+ * - 使用 Teleport 渲染到 body 解决层叠上下文问题
+ * 
+ * Props：
+ * - show: Boolean - 控制抽屉显示/隐藏
+ * - initialData: Object - 初始数据（传入时为编辑模式，否则为新建模式）
+ * - categories: Array - 项目分类标签列表，默认 ['工作', '个人', '会议', '设计', '其他']
+ * 
+ * Emits：
+ * - update:show - 双向绑定控制抽屉显隐
+ * 
+ * 表单字段：
+ * - title: 任务名称（必填）
+ * - time: 开始时间（必填）
+ * - duration: 预计时长
+ * - description: 补充描述（非习惯专用）
+ * - category: 项目分类（非习惯专用）
+ * 
+ * 与 useAddEventForm composable 配合使用：
+ * - 负责表单状态管理、验证、提交逻辑
+ * - 根据 initialData 判断是新建还是编辑模式
+ * - 支持习惯(Task) 和普通任务(Habit) 两种模式
+ */
 import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
 import { formatDuration } from '@/utils/formatDuration'
 import TimePicker from '@/components/ui/TimePicker.vue'

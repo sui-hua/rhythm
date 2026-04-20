@@ -92,8 +92,36 @@
 
 <script setup>
 /**
- * 习惯应用侧边导航栏 (HabitSidebar.vue)
- * 提供所有的习惯列表项入口展示区域，用户可点击切换焦点，以及展示全局本日完成度的大盘状况。
+ * HabitSidebar.vue — 习惯模块侧边导航栏组件
+ *
+ * 功能说明：
+ * - 展示用户所有习惯列表，支持单击选中、双击编辑快捷操作
+ * - 单独展示「归档项目」分区，归档习惯以半透明+删除线样式区分
+ * - 底部实时显示「今日习惯完成度」进度条，支持快速新增习惯
+ * - 右侧边缘支持拖拽调节侧边栏宽度（调用 useResizable composable）
+ *
+ * 交互逻辑：
+ * - 单击习惯项 → 触发 'select-habit' 事件，父组件将该习惯设为当前选中态
+ * - 双击习惯项 → 触发 'edit-habit' 事件，打开编辑弹窗
+ * - 悬停习惯项时显示设置图标按钮，点击可编辑该习惯
+ * - 底部「添加项目」按钮 → 触发 'add-habit' 事件，打开新建习惯弹窗
+ *
+ * 样式特点：
+ * - 选中态：bg-secondary + ring-1 ring-border + shadow-sm
+ * - 归档态：opacity-60 + line-through + hover 时恢复不透明度
+ * - 右侧可拖拽调整宽度，hover 时显示高亮 resize 手柄
+ *
+ * @component
+ * @example
+ * <HabitSidebar
+ *   :habits="habits"
+ *   :archived-habits="archivedHabits"
+ *   :selected-habit-id="selectedId"
+ *   :today-completion-rate="75"
+ *   @select-habit="handleSelect"
+ *   @edit-habit="handleEdit"
+ *   @add-habit="showAddDialog"
+ * />
  */
 import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'

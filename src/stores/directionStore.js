@@ -3,26 +3,31 @@
  * Direction 状态管理 (stores/directionStore.js)
  * ============================================
  *
- * 【模块职责】
- * - 管理 Direction 模块的全局共享状态（Pinia store）
- * - Direction 模块三级级联结构：
+ * @description
+ * 管理 Direction 模块的全局共享状态（Pinia store）。
+ * Direction 模块用于长期目标管理，采用三级级联结构：
  *   Plans（长期目标）→ MonthlyPlans（月度计划）→ DailyPlans（每日任务）
- * - 提供缓存机制提高性能
+ *
+ * @module stores/directionStore
  *
  * 【数据结构】
- * - plans           → 长期目标列表
- * - monthlyPlans    → 月度计划列表（扁平兼容格式）
- * - monthlyPlansCache → 按 planId 索引的月度计划缓存
- * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
- * - selectedGoal    → 当前选中的目标
- * - editingGoal     → 当前编辑的目标
- * - selectedMonth   → 当前选中的月份
- * - selectedDates   → 当前选中的日期集合
+ * - plans              {Array}    长期目标列表
+ * - monthlyPlans       {Array}    月度计划列表（扁平兼容格式）
+ * - monthlyPlansCache  {Object}   按 planId 索引的月度计划缓存 { [planId]: monthlyPlan[] }
+ * - dailyPlansCache    {Object}   按 monthlyPlanId 索引的日计划缓存 { [monthlyPlanId]: dailyPlan[] }
+ * - selectedGoal       {Object|null} 当前选中的目标
+ * - editingGoal        {Object|null} 当前编辑的目标
+ * - selectedMonth      {Number|null} 当前选中的月份 (1-12)
+ * - selectedDates      {Object}   当前选中的日期集合 { [date: string]: boolean }
  *
- * 【缓存机制】
- * - getMonthlyPlansByPlanId() → 按 planId 获取月度计划
- * - syncMonthlyPlansToFlatList() → 同步缓存到扁平列表
- * - clearDailyPlansCache() → 清空日计划缓存
+ * 【缓存策略】
+ * 为解决多组件并发请求导致的数据覆盖问题，采用以下缓存机制：
+ * - monthlyPlansCache: 按 planId 存储月度计划，避免重复请求
+ * - dailyPlansCache: 按 monthlyPlanId 存储日计划，支持按月筛选
+ * - syncMonthlyPlansToFlatList(): 将缓存数据同步到扁平列表（兼容旧接口）
+ * - clearDailyPlansCache(): 清空日计划缓存，可选择保留指定月度计划
+ *
+ * @see {@link https://github.com/nickhsine/static-rhythm/wiki/Direction-Module} 模块详情
  */
 import { defineStore } from 'pinia'
 import { ref, reactive, computed } from 'vue'
@@ -72,12 +77,37 @@ export const useDirectionStore = defineStore('direction', () => {
   // ============ 缓存操作 ============
 
   /**
-   * 按 planId 获取月度计划
+   * 按 planId 获取月度计划列表
+   *
+   * @description
+   * 从 monthlyPlansCache 中查找指定 planId 对应的月度计划列表。
+   * 若缓存中不存在该 planId，则返回空数组。
+   *
+   * @param {string|number} planId - 目标 ID
+   * @returns {Array} 该 planId 关联的月度计划列表，若无则返回空数组
+   *
+   * @example
+   * const plans = getMonthlyPlansByPlanId(123)
    */
   const getMonthlyPlansByPlanId = (planId) => monthlyPlansCache[planId] || []
 
   /**
-   * 清空日计划缓存（保留指定的 monthlyPlanId）
+   * 清空日计划缓存
+   *
+   * @description
+   * 清除 dailyPlansCache 中的所有数据。
+   * 可选保留指定的 monthlyPlanId 对应的数据，避免正在使用的日计划被清除。
+   *
+   * @param {string|number|null} [keepMonthlyPlanId=null] - 要保留的月度计划 ID
+   * @returns {void}
+   *
+   * @example
+   * // 清空所有日计划缓存
+   * clearDailyPlansCache()
+   *
+   * @example
+   * // 保留指定月度计划的日计划
+   * clearDailyPlansCache(456)
    */
   const clearDailyPlansCache = (keepMonthlyPlanId = null) => {
     if (keepMonthlyPlanId && dailyPlansCache[keepMonthlyPlanId]) {
@@ -94,7 +124,18 @@ export const useDirectionStore = defineStore('direction', () => {
   }
 
   /**
-   * 同步缓存到扁平兼容镜像
+   * 同步缓存数据到月度计划扁平列表
+   *
+   * @description
+   * 将 monthlyPlansCache[planId] 中的数据同步到 monthlyPlans 扁平列表中。
+   * 同步策略：保留其他 planId 的数据，只更新指定 planId 的数据。
+   * 用于保持缓存与旧接口的兼容性。
+   *
+   * @param {string|number} planId - 目标 ID
+   * @returns {void}
+   *
+   * @example
+   * syncMonthlyPlansToFlatList(123)
    */
   const syncMonthlyPlansToFlatList = (planId) => {
     const cached = monthlyPlansCache[planId] || []
@@ -106,6 +147,16 @@ export const useDirectionStore = defineStore('direction', () => {
 
   /**
    * 重置所有状态到初始值
+   *
+   * @description
+   * 清除所有状态、缓存和 UI 数据，将 store 恢复到初始未加载状态。
+   * 主要用于用户登出或切换账户时清理状态。
+   *
+   * @returns {void}
+   *
+   * @example
+   * const directionStore = useDirectionStore()
+   * directionStore.reset()
    */
   const reset = () => {
     plans.value = []

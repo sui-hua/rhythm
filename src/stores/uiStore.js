@@ -1,13 +1,7 @@
 /**
- * ============================================
- * UI 状态管理 (stores/uiStore.js)
- * ============================================
- *
- * 【模块职责】
- * - 管理全局 UI 状态（如导航栏显示/隐藏）
- *
- * 【数据结构】
- * - navbarHidden: boolean    → 导航栏是否隐藏
+ * UI Store - 全局 UI 状态管理
+ * @description 管理全局 UI 状态，包括导航栏显示/隐藏等
+ * @module stores/uiStore
  */
 import { defineStore } from 'pinia'
 

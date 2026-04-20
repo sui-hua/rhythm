@@ -1,25 +1,47 @@
 <script setup>
 /**
  * 归档项组件 (ArchiveItem.vue)
- * 显示单个日期的任务信息，支持内联编辑。
+ * 
+ * 功能说明：
+ * - 在归档时间线中显示单个日期的任务条目
+ * - 支持内联编辑任务标题、时间和时长
+ * - 配合 ArchiveSidebar 使用，展示日视图下的归档数据
+ * 
+ * 视觉特点：
+ * - 左侧时间轴圆点 + 日期标签
+ * - 右侧任务卡片显示任务详情
+ * - 悬停时圆点和日期高亮为主色调
+ * 
+ * @props {number} day - 日期数字（1-31）
+ * @props {Object|null} task - 任务数据对象，包含 title、task_time、duration 字段
+ * @props {string} taskKey - 日期任务键名，用于数据关联
+ * @emits {update-task} - 任务内容更新时触发，传递 (task, payload) 二元签名
+ */
+
+/**
+ * 定义组件接收的 props
+ * - day: 日期数字（1-31），用于显示在时间轴左侧
+ * - task: 任务数据对象，支持 null（无任务时只显示日期）
+ * - taskKey: 日期任务键名，用于数据关联和更新定位
  */
 defineProps({
   /**
-   * 日期数字
+   * 日期数字，如 1、15、31
    */
   day: {
     type: Number,
     required: true
   },
   /**
-   * 任务数据
+   * 任务数据对象，结构: { title: string, task_time: string|null, duration: number|null }
+   * 当为 null 时组件仅显示日期，不渲染任务卡片
    */
   task: {
     type: Object,
     default: null
   },
   /**
-   * 日期任务键名
+   * 日期任务键名，格式通常为 "YYYY-MM-DD"，用于数据关联
    */
   taskKey: {
     type: String,
@@ -27,9 +49,19 @@ defineProps({
   }
 })
 
+/**
+ * 定义组件可触发的事件
+ * @see update-task 用于向上层组件传递任务更新请求
+ */
 const emit = defineEmits(['update-task'])
 
-// 二元签名：handleUpdateTask(task, payload)
+/**
+ * 处理任务内容更新的回调函数
+ * 将子组件（input）的变更事件转换为向上层组件的 emit 调用
+ * 
+ * @param {Object} task - 被更新的任务对象（原始引用）
+ * @param {Object} payload - 包含更新字段的对象，如 { title: '新标题' }
+ */
 const handleUpdateTask = (task, payload) => {
   emit('update-task', task, payload)
 }

@@ -67,7 +67,7 @@ describe('useDirectionGoals', () => {
         { id: 'mp-2', plan_id: 'p1', month: '2026-07-01' }
       ]
     })
-    store.selectedGoal = { plan_id: 'p1' }
+    store.selectedGoal.value = { plan_id: 'p1', title: '目标' }
 
     const { handleEditGoal, editingGoal } = useDirectionGoals()
 
@@ -90,8 +90,8 @@ describe('useDirectionGoals', () => {
         { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
       ]
     })
-    store.selectedGoal = { plan_id: 'p1' }
-    store.selectedMonth = 4
+    store.selectedGoal.value = { plan_id: 'p1', title: '目标' }
+    store.selectedMonth.value = 4
 
     const { saveMonthlyPlan } = useDirectionGoals()
     await saveMonthlyPlan(4, { title: '更新标题' })

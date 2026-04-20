@@ -82,7 +82,11 @@ export function useHabitCalendar(emit) {
     emitMonthChange()
   }
 
-  /** 包装好的抛出含带最新年月状态的通用事件方法 */
+  /**
+   * 抛出月份变更事件
+   * 将当前视图的年月状态通知给父组件，用于数据加载等联动操作。
+   * @fires emit#month-changed - 携带 { year: number, month: number } 数据
+   */
   const emitMonthChange = () => {
     emit('month-changed', { year: viewYear.value, month: viewMonth.value })
   }

@@ -48,7 +48,11 @@ export function useDayData() {
     const dateStore = useDateStore()
     const routeDateContext = computed(() => getRouteDateContext(route.params, dateStore.currentDate))
 
-    // 当前选中的月份
+    /**
+     * 当前选中的月份信息
+     * 
+     * @type {import('vue').ComputedRef<{name: string, full: string, index: number}>}
+     */
     const selectedMonth = computed(() => {
         const monthNum = routeDateContext.value.month
         return {
@@ -58,12 +62,25 @@ export function useDayData() {
         }
     })
 
-    // 当前选中的天
+    /**
+     * 当前选中的天
+     * 
+     * @type {import('vue').ComputedRef<number>}
+     */
     const selectedDay = computed(() => {
         return routeDateContext.value.day
     })
 
-    // 获取数据
+    /**
+     * 获取日视图所需的任务数据（Task、DailyPlan、Habit）
+     * 
+     * @description 从数据库并行拉取当日任务、日程、习惯及打卡记录，
+     *             并处理任务自动恢复逻辑（若存在正在运行的任务，
+     *             且当前无活跃番茄钟，则自动恢复计时状态）
+     * @param {Object} options - 配置选项
+     * @param {boolean} [options.showLoading=true] - 是否显示加载状态
+     * @returns {Promise<void>}
+     */
     const fetchTasks = async (options = {}) => {
         const { showLoading = true } = options
         try {
@@ -104,7 +121,13 @@ export function useDayData() {
         }
     }
 
-    // 将所有模块整合成完整的打卡日程时间线（使用统一执行项模型）
+    /**
+     * 整合成完整的打卡日程时间线（使用统一执行项模型）
+     * 
+     * @description 将 Task、DailyPlan、Habit 三种数据源统一转换为
+     *             带有时间线位置、时长、完成状态等属性的执行项列表
+     * @returns {Array} 统一执行项数组
+     */
     const dailySchedule = computed(() => {
         return buildDayExecutionItems({
             tasks: tasks.value,
@@ -114,12 +137,29 @@ export function useDayData() {
         })
     })
 
+    /**
+     * 已完成日程项的数量
+     * 
+     * @type {import('vue').ComputedRef<number>}
+     */
     const completedCount = computed(() => dailySchedule.value.filter(t => t.completed).length)
 
+    /**
+     * 设置加载状态
+     * @param {boolean} value - 加载状态值
+     */
     const setLoading = (value) => {
         isLoading.value = value
     }
 
+    /**
+     * 将指定日期前一天的未完成任务顺延到目标日期
+     * 
+     * @description 筛选出 sourceDate（前一天）中未完成且在近 7 天内创建的任务，
+     *             将其 start_time 和 end_time 都向后推移一天
+     * @param {Date} targetDate - 目标日期（通常是今天）
+     * @returns {Promise<void>}
+     */
     const carryOverUncompletedTasksTo = async (targetDate) => {
         if (!targetDate) return
 
@@ -161,7 +201,20 @@ export function useDayData() {
         }
     }
 
-    // 切换各类日程项的完成状态
+    /**
+     * 切换日程项的完成状态
+     * 
+     * @description 根据类型执行不同操作：
+     *             - task: 更新 completed 状态，完成时记录 actual_end_time
+     *             - habit: 创建或删除打卡日志
+     *             - daily_plan: 更新 status 状态
+     *             完成时播放成功音效
+     * @param {Object} task - 日程执行项
+     * @param {string} task.type - 类型：'task' | 'habit' | 'daily_plan'
+     * @param {number} task.id - 原始数据 ID
+     * @param {boolean} task.completed - 当前完成状态
+     * @returns {Promise<void>}
+     */
     const handleToggleComplete = async (task) => {
         if (!task) return
         try {
@@ -201,7 +254,16 @@ export function useDayData() {
         }
     }
 
-    // 开始任务计时
+    /**
+     * 开始任务计时
+     * 
+     * @description 更新任务的 actual_start_time，启动番茄钟计时器，
+     *             并自动弹出计时模态框
+     * @param {Object} task - 任务执行项（仅 type='task' 有效）
+     * @param {string} task.type - 任务类型
+     * @param {number} task.id - 任务 ID
+     * @returns {Promise<void>}
+     */
     const handleStartTask = async (task) => {
         if (!task || task.type !== 'task') return
         const pomodoroStore = usePomodoroStore()

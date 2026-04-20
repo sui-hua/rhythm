@@ -51,7 +51,32 @@
 <script setup>
 /**
  * 习惯日历展示组件 (HabitCalendar.vue)
- * 用于呈现网格状的当月日历，并在特定的日期上标绘高亮。支持前后月份翻阅以及点击特定日期抛出打卡事件。
+ *
+ * 功能说明：
+ *   - 以网格形式展示当月日历，包含星期表头和日期格子
+ *   - 支持切换查看上/下月份的日历数据
+ *   - 根据 completedDays 属性，高亮标记已完成打卡的日期
+ *   - 今日（当前系统日期）会有特殊边框样式突出显示
+ *   - 支持点击任意日期格子触发 toggle-complete 事件，用于记录/取消打卡
+ *
+ * 使用方式：
+ *   - 通过 props.completedDays 传入已打卡日期数组，如 [1, 15, 23]
+ *   - 监听 @toggle-complete 事件获取点击的日期，执行打卡逻辑
+ *   - 监听 @month-changed 事件获取切换后的年月，用于加载对应数据
+ *
+ * 依赖组件：
+ *   - Card, CardContent, CardHeader, CardTitle（shadcn/ui）
+ *   - Button（shadcn/ui）
+ *   - ChevronLeft, ChevronRight（lucide-vue-next 图标）
+ *
+ * 核心逻辑：
+ *   - 使用 useHabitCalendar composable 处理日历状态（年月、网格数据、翻页等）
+ *   - calendarGrid 返回包含 null（空白格子）和日期数字的数组，用于渲染网格
+ *   - isToday() 判断某日期是否为今日，用于应用特殊样式
+ *
+ * @property {number[]} completedDays - 已完成打卡的日期数组（每月1~31之间的数字）
+ * @emits {toggle-complete} - 用户点击日期格子时触发，传递日期数字
+ * @emits {month-changed} - 用户切换月份时触发，传递 { year, month } 对象
  */
 import { onMounted } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'

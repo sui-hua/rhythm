@@ -1,3 +1,9 @@
+/**
+ * plansCategory.js
+ * 目标分类（Category）的 CRUD 操作模块
+ * 提供 plans_category 表的查询、创建、更新、删除接口
+ */
+
 import client from '@/config/supabase'
 
 const supabase = client.createBase('plans_category')

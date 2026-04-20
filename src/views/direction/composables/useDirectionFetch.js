@@ -21,6 +21,13 @@
  * 【Race Condition 修复】
  * - 所有数据通过 directionStore 管理，确保单一数据源
  * - 使用 Map 管理待处理的 planId，避免竞态条件
+ *
+ * @module useDirectionFetch
+ * @see {@link https://github.com/example/rhythm} 项目地址
+ * @requires vue
+ * @requires @/services/database
+ * @requires @/views/direction/utils/dateOnly
+ * @requires @/views/direction/composables/useDirectionState
  */
 import { computed, onMounted, watch, ref } from 'vue'
 import { db } from '@/services/database'
@@ -29,6 +36,23 @@ import { useDirectionState } from '@/views/direction/composables/useDirectionSta
 
 export { parseDateOnly } from '@/views/direction/utils/dateOnly'
 
+/**
+ * Direction 数据获取组合式函数
+ *
+ * 负责从数据库加载 plans、monthlyPlans、dailyPlans 数据，并管理缓存。
+ * 通过 directionStore 共享状态，确保单一数据源。
+ *
+ * @returns {Object} 包含数据获取相关的方法和计算属性
+ * @returns {Array<{category: string, items: Array}>}  returns.categorizedGoals - 按分类整理的目标列表
+ * @returns {Function} returns.fetchData - 加载所有初始数据
+ * @returns {Ref<boolean>} returns.isPageLoading - 页面加载状态
+ * @returns {Function} returns.loadPlans - 加载所有目标
+ * @returns {Function} returns.loadMonthlyPlans - 加载指定目标的月计划
+ * @returns {Function} returns.loadDailyPlans - 加载指定月计划的日计划
+ *
+ * @example
+ * const { categorizedGoals, fetchData, loadMonthlyPlans } = useDirectionFetch()
+ */
 export function useDirectionFetch() {
   const {
     plans,
@@ -51,6 +75,11 @@ export function useDirectionFetch() {
   // Race condition fix: Track pending plan IDs to avoid duplicate fetches
   const pendingPlanIds = new Map() // planId -> promise
 
+  /**
+   * 将目标列表按分类组织成树形结构
+   *
+   * @returns {Array<{category: string, items: Array}>} 按分类分组的目标列表
+   */
   const categorizedGoals = computed(() => {
     const map = new Map()
     for (const plan of plans.value) {
@@ -67,10 +96,23 @@ export function useDirectionFetch() {
     return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
   })
 
+  /**
+   * 从数据库加载所有目标计划
+   * @returns {Promise<void>}
+   */
   const loadPlans = async () => {
     plans.value = await db.plans.list()
   }
 
+  /**
+   * 按需加载指定目标的月计划
+   *
+   * 包含竞态条件修复：检查缓存和 pending 请求，避免重复加载。
+   * 加载完成后会同步到 monthlyMainGoals 和 monthlyPlansCache。
+   *
+   * @param {string|number} planId - 目标计划ID
+   * @returns {Promise<Array>} 月计划数据数组
+   */
   const loadMonthlyPlans = async (planId) => {
     // Race condition fix: Check both cache AND pending requests
     if (monthlyPlansCache[planId] || pendingPlanIds.has(planId)) return
@@ -101,6 +143,17 @@ export function useDirectionFetch() {
     return promise
   }
 
+  /**
+   * 按需加载指定月计划的日计划
+   *
+   * 包含竞态条件修复：检查缓存和 pending 请求，避免重复加载。
+   * 加载完成后会解析日期并存储到 dailyTasks 中。
+   *
+   * @param {string|number} monthlyPlanId - 月计划ID
+   * @param {Object} [options={}] - 配置选项
+   * @param {boolean} [options.force=false] - 是否强制重新加载（忽略缓存）
+   * @returns {Promise<void>}
+   */
   const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
     // Race condition fix: Check both cache AND pending requests
     if (!force && (dailyPlansCache[monthlyPlanId] || pendingPlanIds.has(monthlyPlanId))) return
@@ -141,6 +194,14 @@ export function useDirectionFetch() {
     return promise
   }
 
+  /**
+   * 初始化加载所有数据
+   *
+   * 页面首次加载时调用，加载所有目标、月计划，并默认选中第一个目标的第一个月。
+   * 设置 isPageLoading 状态，并在加载完成后标记 initialized。
+   *
+   * @returns {Promise<void>}
+   */
   const fetchData = async () => {
     isPageLoading.value = true
     try {
@@ -185,6 +246,12 @@ export function useDirectionFetch() {
   // Setup watchers only once using a flag
   let setupDone = false
 
+  /**
+   * 设置响应式监听器
+   *
+   * 监听 showAddModal、selectedMonth、selectedGoal 的变化，
+   * 自动触发相关数据的加载和缓存清理。只在首次调用时生效（setupDone 标志位）。
+   */
   const setupWatchers = () => {
     if (setupDone) return
     setupDone = true

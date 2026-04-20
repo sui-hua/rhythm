@@ -13,10 +13,30 @@
   </div>
 </template>
 
+/**
+ * TimelineMarker.vue - 当前时间线标记组件
+ * 
+ * 功能说明：
+ * 在日视图时间轴上显示当前时间的位置，通过垂直红色横线和"现在"标签标识此时此刻。
+ * 标记点会根据 currentHour prop 自动计算垂直位置（每小时对应 25vh）。
+ * 
+ * 视觉效果：
+ * - 红色渐变横线从左向右逐渐透明
+ * - 圆形标记点带有脉冲动画效果（animate-ping + animate-pulse）
+ * - "现在"标签使用 Badge 组件，带有红色主题样式
+ * - 整体带有阴影和光晕效果，提升视觉层次感
+ * 
+ * 使用方式：
+ * <TimelineMarker :currentHour="currentHour" />
+ * 
+ * @prop {number} currentHour - 当前小时数（0-23），用于计算标记的垂直位置
+ */
 <script setup>
 import { Badge } from '@/components/ui/badge'
 
 defineProps({
+  // 当前小时数（0-23），决定标记在时间轴上的垂直位置
+  // 计算公式：top = currentHour * 25 vh（每小时占据 25vh 高度）
   currentHour: Number
 })
 </script>

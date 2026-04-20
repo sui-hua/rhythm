@@ -101,6 +101,44 @@
   </div>
 </template>
 
+/**
+ * @file HabitsDesktopPage.vue
+ * @description 习惯追踪模块的桌面端主页面，采用三栏布局：
+ *               左侧为习惯列表导航（HabitSidebar），右侧主内容区展示习惯详情
+ *               （HabitHeader + HabitStats + HabitCalendar + HabitTodayCard + HabitLogs）
+ *
+ * @module habits
+ *
+ * @composables
+ * - useHabitData: 习惯列表数据管理，包含习惯 CRUD、选中状态、日历视图月份切换
+ * - useHabitStats: 习惯统计数据计算（今日完成率、周期统计等）
+ * - useHabitLogs: 习惯打卡状态切换与日志记录
+ *
+ * @components
+ * - HabitSidebar: 左侧导航栏，展示习惯列表与归档习惯，支持添加/编辑/选择习惯
+ * - HabitHeader: 习惯标题展示
+ * - HabitStats: 习惯统计数据卡片
+ * - HabitCalendar: 习惯完成热力图日历，支持按月切换与打卡操作
+ * - HabitTodayCard: 今日打卡快捷操作卡片
+ * - HabitLogs: 习惯日志记录列表
+ * - AddHabitModal: 添加新习惯弹窗（异步加载）
+ * - EditHabitModal: 编辑习惯弹窗（异步加载）
+ *
+ * @state
+ * - showAddModal: 控制添加习惯弹窗显示
+ * - showEditModal: 控制编辑习惯弹窗显示
+ * - selectedHabit: 当前选中的习惯对象（来自 useHabitData）
+ * - habits: 习惯列表（来自 useHabitData）
+ * - archivedHabits: 归档习惯列表（来自 useHabitData）
+ * - viewYear/viewMonth: 日历当前视图年月（来自 useHabitData）
+ * - todayCompletionRate: 今日所有习惯完成率（来自 useHabitStats）
+ * - habitStats: 当前选中习惯的统计数据（来自 useHabitStats）
+ *
+ * @lifecycle
+ * - onMounted: 初始化时调用 fetchHabits 拉取习惯列表
+ * - watch(selectedHabit): 切换选中习惯时自动加载对应日志
+ */
+
 <script setup>
 import { ref, watch, onMounted, defineAsyncComponent } from 'vue'
 import { Plus } from 'lucide-vue-next'

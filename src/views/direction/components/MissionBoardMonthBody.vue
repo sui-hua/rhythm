@@ -62,6 +62,29 @@
   </div>
 </template>
 
+/**
+ * MissionBoardMonthBody - 月度任务面板主体组件
+ *
+ * 功能说明：
+ * - 渲染月度日历网格视图，支持显示当月所有日期（1-31日）
+ * - 支持日期范围多选（鼠标拖拽选择连续日期）
+ * - 支持按星期筛选（点击星期表头筛选对应日期）
+ * - 显示每个日期的任务状态（有任务/无任务/禁用）
+ * - 提供批量任务操作（批量新增、修改、删除指定日期的任务）
+ *
+ * 布局结构：
+ * 1. week-header: 星期表头（周日~周六），点击可按星期筛选
+ * 2. month-grid: 月度日期网格，7列布局，包含：
+ *    - day-spacer: 月初空白占位（对齐网格）
+ *    - day-cell: 日期单元格，支持选中态、有任务态、禁用态
+ * 3. batch-bar: 批量操作栏，有选中日期时显示
+ *
+ * 状态管理（Composables）：
+ * - useDirectionSelection: 日期选择逻辑（选中、多选、范围选择、星期筛选）
+ * - useDirectionBatch: 批量任务操作逻辑（批量输入、提交、删除）
+ *
+ * @prop {number} month - 当前月份值（1-12）
+ */
 <script setup>
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionBatch } from '@/views/direction/composables/useDirectionBatch'

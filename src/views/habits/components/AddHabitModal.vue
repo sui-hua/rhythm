@@ -58,8 +58,17 @@
 
 <script setup>
 /**
- * 添加习惯弹窗组件 (AddHabitModal.vue)
- * 提供一个弹窗用于收集用户输入并创建新的习惯。
+ * @file AddHabitModal.vue
+ * @description 添加习惯弹窗组件，提供一个全屏居中的模态对话框，
+ * 用于引导用户输入新习惯的名称、时间和时长，并完成创建。
+ *
+ * @prop {boolean} show - 控制弹窗的显示与隐藏，遵循 v-model:show 双向绑定约定
+ *
+ * @emits {Function} close - 关闭弹窗事件（目前未独立使用，关闭通过 update:show 实现）
+ * @emits {Function} refresh - 创建成功后触发，通知父组件刷新习惯列表数据
+ * @emits {Function} update:show - 支持 v-model:show 语法，用于双向绑定弹窗可见性
+ *
+ * @see {@link https://github.com/radix-ui/primitives|Radix Vue Dialog} 底层 Dialog 组件
  */
 import { reactive } from 'vue'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -85,18 +94,29 @@ const emit = defineEmits([
 ])
 
 // 弹窗内的表单响应式数据
+// 用于收集用户输入的习惯名称、时间、时长等信息
 const form = reactive({
-  title: '', // 习惯名称
-  task_time: '', // 习惯指定的执行时间 (HH:mm)
-  duration: 10 / 60 // 习惯预估的持续时长, UI 表现层使用小时基数 (比如 10 分钟为 10/60)
+  title: '', // 习惯名称，用于显示在习惯列表和日历热力图中
+  task_time: '', // 习惯指定的执行时间，格式为 HH:mm，用于在日历上显示时间
+  duration: 10 / 60 // 习惯预估的持续时长，UI 表现层使用小时为单位（如 10 分钟存为 10/60）
 })
 
 /**
- * 提交表单创建新记录
+ * 提交表单创建新习惯记录
+ *
+ * 执行流程：
+ * 1. 验证表单数据（习惯名称必填）
+ * 2. 获取当前登录用户的 userId
+ * 3. 调用 db.habits.create 创建数据库记录
+ * 4. 重置表单数据
+ * 5. 关闭弹窗并通知父组件刷新列表
+ *
+ * 注意：数据库中 duration 以分钟为单位存储，因此需要将小时基数 * 60 转换
+ *       默认时长为 10 分钟（即 10/60 小时）
  */
 const submit = withLoadingLock(async () => {
   if (!form.title.trim()) return
-  
+
   const userId = authStore.userId
   if (!userId) {
       console.error('User not authenticated')
@@ -104,21 +124,23 @@ const submit = withLoadingLock(async () => {
   }
 
   try {
+    // 创建习惯记录，frequency 固定为 daily（每日习惯）
     await db.habits.create({
       user_id: userId,
       title: form.title,
-      task_time: form.task_time || null,
-      duration: Math.round((Number(form.duration) || 0) * 60) || 10,
-      frequency: { type: 'daily' },
-      target_value: 1,
-      archived: false
+      task_time: form.task_time || null, // 时间为空时存储 null
+      duration: Math.round((Number(form.duration) || 0) * 60) || 10, // 转换小时为分钟，默认 10 分钟
+      frequency: { type: 'daily' }, // 固定每日习惯
+      target_value: 1, // 目标完成值默认为 1
+      archived: false // 新习惯默认未归档
     })
-    
-    emit('refresh')
+
+    emit('refresh') // 通知父组件刷新习惯列表
+    // 重置表单为初始状态
     form.title = ''
     form.task_time = ''
     form.duration = 10 / 60
-    emit('update:show', false)
+    emit('update:show', false) // 关闭弹窗
   } catch (e) {
     console.error('Add habit failed in modal', e)
   }

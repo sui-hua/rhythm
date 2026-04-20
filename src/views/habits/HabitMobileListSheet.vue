@@ -136,11 +136,52 @@
   </Teleport>
 </template>
 
+/**
+ * HabitMobileListSheet.vue - 移动端习惯列表抽屉组件
+ * =========================================================
+ *
+ * 【组件定位】
+ * 移动端专用组件，作为 HabitSidebar（桌面端侧边栏）的替代方案。
+ * 采用底部抽屉（Bottom Sheet）交互模式，适配移动设备的小屏幕特点。
+ *
+ * 【核心功能】
+ * 1. 底部抽屉式交互 - 支持点击遮罩层或顶部拉手关闭抽屉
+ * 2. Tab 切换 - 区分"进行中"和"已归档"两类习惯
+ * 3. 习惯列表展示 - 显示习惯名称、颜色标识、连续打卡天数、今日完成状态
+ * 4. 今日完成率统计 - 底部显示当日所有习惯的完成进度
+ * 5. 添加习惯入口 - 快速添加新习惯的操作按钮
+ *
+ * 【数据流向】
+ * - Props 接收: habits(进行中列表), archivedHabits(归档列表), selectedHabitId, todayCompletionRate, isLoading
+ * - Events 触发: update:show(控制显隐), select-habit(选择习惯), add-habit(添加习惯)
+ *
+ * 【样式特点】
+ * - 使用 Tailwind CSS 4 原子化样式
+ * - 圆角 2.5rem 营造 iOS 风格底部抽屉感
+ * - 暗色模式适配 (dark:bg-zinc-900)
+ * - 骨架屏加载状态提供流畅体验
+ *
+ * 【抽屉动画】
+ * - translate-y 控制显隐: show=true 时 translate-y-0, show=false 时 translate-y-full
+ * - 动画时长 700ms, 使用 ease-expo 缓动函数提供流畅手感
+ *
+ * @see HabitSidebar - 桌面端对应组件，功能相似但布局不同
+ * @see useHabitList - 习惯列表相关 composable
+ */
+
 <script setup>
 import { ref, computed } from 'vue'
 import { Check, Plus } from 'lucide-vue-next'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+
+// ============ Props 定义 ============
+// show: 控制抽屉显隐，v-model 双向绑定
+// habits: 进行中的习惯列表，每项包含 id, title, color, currentStreak, completedDays
+// archivedHabits: 已归档的习惯列表，样式上降低透明度（opacity: 0.5）
+// selectedHabitId: 当前选中的习惯 ID，用于高亮显示
+// todayCompletionRate: 今日完成率百分比（0-100）
+// isLoading: 加载状态，为 true 时显示骨架屏
 
 const props = defineProps({
   show: Boolean,
@@ -167,6 +208,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:show', 'select-habit', 'edit-habit', 'add-habit'])
+
+// ============ 组件状态 ============
+// tabs: Tab 配置数组，定义进行中/已归档两个切换项
+// activeTab: 当前激活的 Tab ID，默认 'active'
 
 const tabs = [
   { id: 'active', label: '进行中' },

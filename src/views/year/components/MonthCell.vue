@@ -34,6 +34,32 @@
   </div>
 </template>
 
+/**
+ * MonthCell.vue - 年度视图月份单元格组件
+ *
+ * 功能说明：
+ * - 在年度概览页面中渲染单个月份的卡片
+ * - 显示月份名称、已完成天数统计、日期热力网格
+ * - 支持悬停交互动画和点击进入月份详情
+ *
+ * 接收的 props：
+ * - month: Object - 包含以下属性的月份数据对象
+ *   - name: string - 月份英文名称（如 "January"）
+ *   - days: number - 该月的总天数
+ *   - firstDayOffset: number - 该月第一天的星期偏移（用于对齐日历网格）
+ *   - completedDays?: number[] - 有完成记录的天数数组
+ *
+ * 触发的事件：
+ * - enterMonth: 点击卡片时触发，传递 month 对象，通知父组件导航至该月的详细视图
+ *
+ * 样式特点：
+ * - 使用 Tailwind CSS 响应式设计，适配 sm/lg 断点
+ * - 卡片具有悬停动画效果（背景色变化、箭头淡入、月度名称微移）
+ * - 日期圆点根据完成状态显示不同大小和颜色
+ *
+ * 依赖组件：
+ * - ArrowUpRight: lucide-vue-next 图标库中的箭头图标，用于悬停提示
+ */
 <script setup>
 import { ArrowUpRight } from 'lucide-vue-next'
 

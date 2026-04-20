@@ -30,8 +30,24 @@
 
 <script setup>
 /**
- * 习惯打卡流水日志组件 (HabitLogs.vue)
- * 列出特定习惯最近打卡的列表，用于展示随手记录下的每一条打卡心得语录。
+ * HabitLogs.vue - 习惯打卡日志组件
+ * 
+ * 功能说明：
+ * - 展示指定习惯的所有历史打卡记录列表
+ * - 每条记录显示打卡日期和用户填写的日志内容
+ * - 提供无记录时的空状态提示
+ * 
+ * 使用方式：
+ * <HabitLogs :logs="habitLogs" />
+ * 
+ * 依赖组件：
+ * - Card, CardContent (ui/card) - 日志卡片容器
+ * - ArrowUpRight (lucide-vue-next) - 右上角箭头图标
+ * 
+ * 依赖 Composable：
+ * - useHabitLogsFormatter - 格式化日志数据，转换为展示所需格式
+ * 
+ * @prop {Array} logs - 原始打卡记录数组，每项包含 id、日期、日志文本等字段
  */
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
