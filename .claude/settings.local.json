@@ -5,8 +5,8 @@
       "Bash(pnpm build *)",
       "Skill(ralph-loop:ralph-loop)",
       "mcp__context7__query-docs",
-      "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git *)",
+      "Bash(pnpm *)"
     ]
   }
 }

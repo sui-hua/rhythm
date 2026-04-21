@@ -73,7 +73,7 @@ DirectionSidebar.vue - 所向目标侧边栏组件
 - header: 侧边栏标题 "所向目标"
 - scroll area: 按类别分组的目标列表
 - footer: 月度进度展示 + 添加目标按钮
---></p>
+-->
 <script setup>
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'

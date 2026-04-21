@@ -60,7 +60,7 @@
   </div>
 </template>
 
-</script setup>
+<script setup>
 /**
  * TimePicker 时间选择器组件
  *

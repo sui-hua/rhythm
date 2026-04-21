@@ -6,6 +6,7 @@
   </div>
 </template>
 
+<script setup>
 /**
  * MissionBoard.vue - 任务面板根组件
  * 
@@ -26,7 +27,6 @@
  * - useDirectionGoals: 提供月份范围数据
  * - useDirectionSelection: 提供选择交互逻辑（endSelection）
  */
-<script setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import MissionBoardMonth from '@/views/direction/components/MissionBoardMonth.vue'
