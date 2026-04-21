@@ -1,3 +1,4 @@
+<script setup lang="ts">
 /**
  * Checkbox 复选框组件
  *
@@ -5,23 +6,15 @@
  *
  * @description
  * 该组件实现了一个圆形复选框，支持以下特性：
- * - 完全支持 Vue 3 Composition API 和 `<script setup>` 语法
+ * - 完全支持 Vue 3 Composition API 和 script setup 语法
  * - 集成 Radix Vue 的 CheckboxIndicator 和 CheckboxRoot 组件
  * - 使用 Lucide 图标库中的 Check 图标作为选中态指示器
  * - Tailwind CSS 样式，包含聚焦、悬停、禁用等完整状态
- * - 通过 `class` prop 支持自定义样式扩展
- *
- * @example
- * // 基础用法
- * <Checkbox v-model="checked" />
- *
- * // 带自定义类名
- * <Checkbox v-model="checked" class="ml-2" />
+ * - 通过 class prop 支持自定义样式扩展
  *
  * @see {@link https://radix-vue.com/components/checkbox.html Radix Vue Checkbox}
  * @see {@link https://lucide.dev/icons/check Lucide Check Icon}
  */
-<script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import type { CheckboxRootEmits, CheckboxRootProps } from 'radix-vue'
 import { CheckboxIndicator, CheckboxRoot, useForwardPropsEmits } from 'radix-vue'

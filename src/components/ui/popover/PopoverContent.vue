@@ -1,4 +1,5 @@
-<!--
+<script setup lang="ts">
+/*
 PopoverContent.vue - 弹出层内容组件
 
 功能说明：
@@ -7,11 +8,6 @@ PopoverContent.vue - 弹出层内容组件
   - 支持通过 props 和 emits 与父组件进行双向数据传递
   - 支持通过 $attrs 传递额外 HTML 属性
   - 支持自定义 class 覆盖默认样式
-
-使用方式：
-  <PopoverContent v-bind="{ ...forwarded, ...$attrs }" :class="cn(..., props.class)">
-    <!-- 弹出层内容插槽 -->
-  </PopoverContent>
 
 样式说明：
   - 默认样式：z-50、圆角边框、阴影、背景色等
@@ -31,8 +27,7 @@ Props：
 
 Emits：
   - 继承自 PopoverContentEmits，由 Radix Vue 定义
--->
-<script setup lang="ts">
+*/
 import type { PopoverContentEmits, PopoverContentProps } from "radix-vue"
 import type { HTMLAttributes } from "vue"
 import { reactiveOmit } from "@vueuse/core"

@@ -37,6 +37,17 @@
  * // &lt;/EmptyState&gt;
  */
 import { Compass } from 'lucide-vue-next'
+
+defineProps({
+  title: {
+    type: String,
+    default: ''
+  },
+  description: {
+    type: String,
+    default: ''
+  }
+})
 </script>
 
 <style scoped>

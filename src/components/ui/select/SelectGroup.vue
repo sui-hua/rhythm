@@ -1,27 +1,17 @@
+<script setup lang="ts">
 /**
  * SelectGroup.vue - 下拉选择框分组组件
- * 
+ *
  * 功能说明：
  * - 作为 Select 组件的分组容器，用于将多个 SelectItem 分组显示
  * - 每个分组可以拥有独立的标签（通过 SelectGroupLabel 组件）
  * - 分组之间会有视觉分隔效果
- * 
- * 使用方式：
- * <Select>
- *   <SelectGroup>
- *     <SelectGroupLabel>分组标题</SelectGroupLabel>
- *     <SelectItem value="1">选项1</SelectItem>
- *     <SelectItem value="2">选项2</SelectItem>
- *   </SelectGroup>
- * </Select>
- * 
+ *
  * 样式特点：
  * - 容器内边距 p-1
  * - 宽度占满父容器 w-full
  * - 可通过 class prop 添加自定义样式
  */
-
-<script setup lang="ts">
 // 从 reka-ui 导入 SelectGroup 组件的类型定义，用于类型检查
 import type { SelectGroupProps } from "reka-ui"
 

@@ -6,6 +6,7 @@
         <div class="relative" ref="triggerContainer" @pointerdown.stop>
           <Input 
             :id="id"
+            :name="id"
             :model-value="displayValue"
             @update:model-value="$emit('update:modelValue', $event)"
             :placeholder="placeholder"
@@ -60,7 +61,7 @@
   </div>
 </template>
 
-</script setup>
+<script setup>
 /**
  * TimePicker 时间选择器组件
  *

@@ -42,29 +42,6 @@
   </Dialog>
 </template>
 
-/**
- * CategoryManagementModal.vue
- * 
- * 类型管理模态框组件
- * 
- * 功能说明：
- * - 提供类别的增删查功能，用于管理长期目标的分类体系
- * - 添加新类别：用户输入名称后点击添加或按回车确认
- * - 查看类别列表：滚动区域展示所有已创建的类别
- * - 删除类别：点击删除按钮并二次确认后移除类别
- * 
- * 数据流：
- * - categories: 从 useDirectionState() 获取的响应式类别列表
- * - showCategoryModal: 控制模态框的显示/隐藏状态
- * - 操作完成后通过 emit('updated') 通知父组件刷新数据
- * 
- * 依赖服务：
- * - db.plansCategory: 数据库的类别表操作接口 (list/create/delete)
- * - useDirectionState: Direction 模块的全局状态管理
- * 
- * 使用场景：
- * - 在 Direction 页面中，通过"类型管理"按钮打开此模态框
- */
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -73,20 +50,12 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
-import { useDirectionState } from '@/views/direction/composables/useDirectionState'
-
-// 新类别名称的输入值（双向绑定）
+import { showCategoryModal, categories } from '@/views/direction/composables/useDirectionState'
 const newCategoryName = ref('')
-// 加载状态标识，控制列表区域的加载反馈
 const loading = ref(false)
 
-// 从全局状态中获取模态框显示状态和类别列表
-const { showCategoryModal, categories } = useDirectionState()
-
-// 定义组件向上传递的事件：updated - 类别数据更新后通知父组件
 const emit = defineEmits(['updated'])
 
-// 从数据库获取最新的类别列表并更新响应式状态
 const fetchCategories = async () => {
   loading.value = true
   try {
@@ -98,11 +67,6 @@ const fetchCategories = async () => {
   }
 }
 
-// 处理添加新类别的逻辑
-// 1. 校验输入非空
-// 2. 调用数据库接口创建类别
-// 3. 清空输入框并刷新列表
-// 4. 通知父组件数据已更新
 const handleAddCategory = async () => {
   if (!newCategoryName.value.trim()) return
   try {
@@ -115,10 +79,6 @@ const handleAddCategory = async () => {
   }
 }
 
-// 处理删除类别的逻辑
-// 1. 弹出浏览器原生确认框进行二次确认
-// 2. 确认后调用数据库接口删除指定类别
-// 3. 刷新列表并通知父组件
 const handleDeleteCategory = async (id) => {
   if (!confirm('确定要删除这个类型吗？')) return
   try {

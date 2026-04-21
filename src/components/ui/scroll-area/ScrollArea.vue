@@ -1,3 +1,4 @@
+<script setup lang="ts">
 /**
  * ScrollArea - 可滚动区域组件
  *
@@ -17,14 +18,8 @@
  * - ScrollAreaThumb: 滚动条滑块
  * - ScrollAreaCorner: 滚动条角落装饰（防止内容被滚动条遮挡）
  *
- * @example
- * <ScrollArea class="h-[200px]">
- *   <div>长内容...</div>
- * </ScrollArea>
- *
  * @see https://www.radix-ui.com/primitives/docs/components/scroll-area
  */
-<script setup lang="ts">
 import { type HTMLAttributes, computed, ref } from 'vue'
 import {
   ScrollAreaCorner,

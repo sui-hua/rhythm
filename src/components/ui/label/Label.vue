@@ -1,27 +1,16 @@
+<script setup lang="ts">
 /**
  * Label.vue - 表单标签组件
- * 
+ *
  * 基于 Radix Vue 的 Label 原语构建的表单标签组件，提供无障碍访问支持。
  * 该组件继承 Radix Label 的所有功能，并使用 Tailwind CSS 进行样式定制。
- * 
+ *
  * 主要特性：
- * - 语义化的 `<label>` 元素，关联表单控件实现无障碍访问
+ * - 语义化的 label 元素，关联表单控件实现无障碍访问
  * - 支持 Radix Label 的所有原生属性（for、required、disabled 等）
  * - 通过 Tailwind 样式实现默认样式，支持通过 class prop 自定义
  * - 自动处理 class 透传，避免与内部样式冲突
- * 
- * @example
- * // 基本用法
- * <Label>用户名</Label>
- * 
- * // 关联表单控件
- * <Label for="email">邮箱地址</Label>
- * <Input id="email" type="email" />
- * 
- * // 禁用状态的标签（配合 peer-disabled 使用）
- * <Label disabled>不可编辑</Label>
  */
-<script setup lang="ts">
 // Vue 核心库：computed 用于创建计算属性，type HTMLAttributes 用于类型定义
 import { type HTMLAttributes, computed } from 'vue'
 

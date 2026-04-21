@@ -6,7 +6,9 @@
       "Skill(ralph-loop:ralph-loop)",
       "mcp__context7__query-docs",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "mcp__MiniMax__understand_image"
     ]
   }
 }

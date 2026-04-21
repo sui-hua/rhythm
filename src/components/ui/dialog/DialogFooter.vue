@@ -1,3 +1,4 @@
+<script setup lang="ts">
 /**
  * DialogFooter 组件
  *
@@ -7,17 +8,8 @@
  *
  * @property {string} [class] - 自定义 CSS 类名，用于覆盖默认样式
  *
- * @example
- * ```vue
- * <DialogFooter>
- *   <Button variant="outline" @click="onCancel">取消</Button>
- *   <Button @click="onConfirm">确认</Button>
- * </DialogFooter>
- * ```
- *
  * @see https://ui.rhythm.cn/dialog
  */
-<script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { cn } from '@/lib/utils'
 

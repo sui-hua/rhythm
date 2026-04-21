@@ -5,19 +5,19 @@
     <p v-if="description" class="text-sm leading-6 text-muted-foreground">{{ description }}</p>
   </header>
 </template>
-
+<script setup>
 /**
- * SectionHeader - 页面/区块-section 标题组件
+ * SectionHeader - 页面/区块标题组件
  *
  * 用于渲染标准化的区块标题结构，包含眉题（eyebrow）、主标题（title）和可选描述（description）。
  * 常见于页面顶部或卡片内的区块标题展示。
  *
- * @example
+ * 使用示例：
  * // 基础用法
- * <SectionHeader eyebrow="Getting Started" title="Welcome" />
+ * // 传入 eyebrow、title 和可选的 description 参数
  *
  * // 带描述
- * <SectionHeader eyebrow="Overview" title="Project Status" description="Current progress and metrics" />
+ * // 传入 eyebrow、title 和 description 参数
  *
  * @props
  * @param {string} eyebrow - 眉题文字，通常为大写小号字母间距文字，如分类标签

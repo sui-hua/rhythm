@@ -112,29 +112,25 @@
     </div>
   </div>
 </template>
-
+<script setup>
 /**
  * TaskItem.vue - 日程任务卡片组件
- * 
+ *
  * 功能说明：
  * - 在日视图时间轴上渲染单个任务条目
  * - 根据任务时长（durationHours）动态选择三种布局：
- *   1. 极短布局 (< 0.4h)：迷你横向卡片，仅显示标题和呼吸点
- *   2. 中等布局 (0.4 ~ 0.8h)：紧凑横向卡片，显示标题和状态点
- *   3. 详细布局 (>= 0.8h)：竖向卡片，显示分类标签、时间、描述和操作按钮
+ *   1. 极短布局（小于 0.4h）：迷你横向卡片，仅显示标题和呼吸点
+ *   2. 中等布局（0.4 ~ 0.8h）：紧凑横向卡片，显示标题和状态点
+ *   3. 详细布局（大于等于 0.8h）：竖向卡片，显示分类标签、时间、描述和操作按钮
  * - 支持点击选中、双击编辑、运行中计时显示
  * - 根据完成状态和运行状态应用不同的视觉样式
- * 
+ *
  * 通信接口：
  * - Props: task (任务对象), index (在列表中的索引)
  * - Emits: select (点击选中), edit (双击编辑)
  * - 依赖 store: pomodoroStore (获取计时状态)
  * - 依赖 composable: useDayData (handleStartTask)
- * 
- * @see {@link https://github.com/your-repo/rhythm} 项目地址
  */
-
-<script setup>
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -165,7 +161,7 @@ const computedStyle = computed(() => {
   // _numCols: 当前时间段的总列数
   const col = props.task._col || 0
   const numCols = props.task._numCols || 1
-  
+
   const style = {
     // 使用 CSS 变量 --hour-height 计算实际像素位置
     top: `calc(${props.task.startHour} * var(--hour-height))`,
@@ -174,7 +170,7 @@ const computedStyle = computed(() => {
     minHeight: '28px',
     zIndex: col + 10
   }
-  
+
   // 多列布局：并行任务需要分割宽度
   if (numCols > 1) {
     // 宽度 = (总宽度 - 时间轴左侧宽度) / 列数 - 间距
@@ -186,7 +182,7 @@ const computedStyle = computed(() => {
     style.left = `var(--timeline-left)`
     style.right = `0`
   }
-  
+
   return style
 })
 
