@@ -31,9 +31,7 @@ import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoa
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import MissionBoardMonth from '@/views/direction/components/MissionBoardMonth.vue'
 
-// 从目标管理 composable 获取当前需要渲染的月份列表
 const { activeMonthRange } = useDirectionGoals()
-// 从选择交互 composable 获取结束选择操作（鼠标释放时触发）
 const { endSelection } = useDirectionSelection()
 </script>
 

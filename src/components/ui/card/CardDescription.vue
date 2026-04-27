@@ -1,3 +1,4 @@
+<script setup lang="ts">
 /**
  * CardDescription.vue
  *
@@ -11,23 +12,9 @@
  *
  * @prop {HTMLAttributes['class']} [class] - 可选的额外 CSS 类名，用于自定义样式
  *
- * @example
- * <!-- 基本用法 -->
- * <CardDescription>这是一段描述文本</CardDescription>
- *
- * <!-- 携带自定义样式 -->
- * <CardDescription class="font-bold">加粗的描述</CardDescription>
- *
- * <!-- 嵌套其他内容 -->
- * <CardDescription>
- *   <span>支持</span> <strong>HTML</strong> 内容
- * </CardDescription>
- *
  * @requires cn - 来自 @/lib/utils 的类名合并工具函数
  * @requires Card - 通常作为 Card 组件的子组件使用
  */
-
-<script setup lang="ts">
 import { type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 

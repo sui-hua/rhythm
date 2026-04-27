@@ -1,28 +1,7 @@
 <script setup>
 /**
  * 归档头部组件 (ArchiveHeader.vue)
- *
- * @description
- * 显示归档视图的顶部标题区域，包含：
- * - 左侧：模块标签"任务归档" + 月份完整名称（如"2025年1月"）
- * - 右侧：周期密度标签 + 有任务的天数统计（显示为 X / 31 的形式）
- *
- * 该组件属于 Direction 模块的归档功能，用于在月度归档视图中展示当前月份的
- * 基本信息和任务密度统计，帮助用户快速了解该月的任务完成情况。
- *
- * @props
- * @param {string} monthName - 月份完整名称，默认"无内容"
- * @param {number} taskCount - 有任务的天数（即周期密度分子），默认 0
- * @param {Array} months - 月份数据数组（用于下拉选择等），必填
- * @param {number|null} selectedMonth - 当前选中的月份索引，默认 null
- *
- * @example
- * <ArchiveHeader
- *   monthName="2025年1月"
- *   :taskCount="15"
- *   :months="monthList"
- *   :selectedMonth="0"
- * />
+ * 显示月份标题和周期密度统计。
  */
 defineProps({
   /**

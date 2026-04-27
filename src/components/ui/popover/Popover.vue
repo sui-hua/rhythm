@@ -1,20 +1,12 @@
+<script setup lang="ts">
 /**
  * Popover 组件
  *
  * 基于 Radix Vue 的 PopoverRoot 封装，提供弹出式面板功能。
  * 该组件是一个轻量级包装器，将 props 和 emits 转发给底层的 Radix Popover 组件。
  *
- * 使用方式：
- * ```vue
- * <Popover>
- *   <PopoverTrigger>打开</PopoverTrigger>
- *   <PopoverContent>内容</PopoverContent>
- * </Popover>
- * ```
- *
  * @see https://www.radix-vue.com/components/popover.html
  */
-<script setup lang="ts">
 import type { PopoverRootEmits, PopoverRootProps } from "radix-vue"
 import { PopoverRoot, useForwardPropsEmits } from "radix-vue"
 

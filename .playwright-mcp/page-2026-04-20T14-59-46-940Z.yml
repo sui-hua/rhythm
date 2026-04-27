@@ -1,0 +1,26 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T":
+      - list
+    - generic:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - button "时序" [ref=e6]:
+            - img
+            - text: 时序
+          - button "习惯" [ref=e7]:
+            - img
+            - text: 习惯
+          - button "所向" [ref=e8]:
+            - img
+            - text: 所向
+          - button "总结" [ref=e9]:
+            - img
+            - text: 总结
+      - button:
+        - img
+  - generic [ref=e11]:
+    - generic "Toggle devtools panel" [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+    - generic "Toggle Component Inspector" [ref=e18] [cursor=pointer]:
+      - img [ref=e19]

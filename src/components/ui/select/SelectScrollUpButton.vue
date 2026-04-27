@@ -1,24 +1,16 @@
+<script setup lang="ts">
 /**
  * SelectScrollUpButton 组件
- * 
+ *
  * 这是 Select 组件的滚动向上按钮，用于在 Select 下拉列表滚动时显示在顶部，
  * 允许用户快速滚动回列表顶部。
- * 
+ *
  * 功能说明：
  * - 基于 Reka UI 的 SelectScrollUpButton 封装
  * - 使用 lucide-vue-next 的 ChevronUp 图标作为默认向上滚动指示器
  * - 支持自定义 class 样式（通过 Tailwind CSS）
  * - 支持默认插槽，允许用户自定义按钮内容
- * 
- * 使用方式：
- * <SelectScrollUpButton>自定义内容</SelectScrollUpButton>
- * 
- * @example
- * <SelectScrollUpButton class="custom-scroll-button">
- *   <ArrowUp />
- * </SelectScrollUpButton>
  */
-<script setup lang="ts">
 // Reka UI 提供的 SelectScrollUpButton 类型定义，用于接收原生按钮属性
 import type { SelectScrollUpButtonProps } from "reka-ui"
 // Vue HTML 属性的类型定义，用于 class 属性的类型支持

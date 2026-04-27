@@ -6,6 +6,7 @@
         <div class="relative" ref="triggerContainer" @pointerdown.stop>
           <Input 
             :id="id"
+            :name="id"
             :model-value="displayValue"
             @update:model-value="$emit('update:modelValue', $event)"
             :placeholder="placeholder"

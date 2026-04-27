@@ -60,35 +60,6 @@
   </div>
 </template>
 
-/**
- * MissionBoardMonthHeader.vue - 月度任务面板头部组件
- * 
- * 功能说明：
- * - 显示月度任务的标题、默认时间和时长
- * - 支持点击展开/收起月度任务编辑面板
- * - 当 selectedMonth 等于当前月份时，显示编辑模式（Input 输入框）
- * - 否则显示只读模式（月度标题和时间信息）
- * 
- * 组件结构：
- * - 左侧：月份标签 + 标题区域（编辑/只读模式）
- * - 右侧：展开/收起按钮 + 箭头图标
- * 
- * 使用场景：
- * - MissionBoard 月度任务面板中的月份分组头部
- * - 每个月份对应一个 Header，可独立展开/收起
- * 
- * Props：
- * - month: Number - 月份数字（1-12）
- * 
- * 依赖的 Composable：
- * - useDirectionGoals: 获取 monthlyMainGoals 和 saveMonthlyPlan 方法
- * - useDirectionSelection: 获取 selectedMonth、goalKey 和 toggleMonth 方法
- * 
- * 样式说明：
- * - 使用 Tailwind CSS 4 原子化类名
- * - 支持 hover 状态、过渡动画
- * - 响应式设计，移动端隐藏部分按钮文字
- */
 <script setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'

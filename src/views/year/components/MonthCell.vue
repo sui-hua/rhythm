@@ -33,7 +33,7 @@
     </div>
   </div>
 </template>
-
+<script setup>
 /**
  * MonthCell.vue - 年度视图月份单元格组件
  *
@@ -44,9 +44,9 @@
  *
  * 接收的 props：
  * - month: Object - 包含以下属性的月份数据对象
- *   - name: string - 月份英文名称（如 "January"）
+ *   - name: string - 月份英文名称
  *   - days: number - 该月的总天数
- *   - firstDayOffset: number - 该月第一天的星期偏移（用于对齐日历网格）
+ *   - firstDayOffset: number - 该月第一天的星期偏移
  *   - completedDays?: number[] - 有完成记录的天数数组
  *
  * 触发的事件：
@@ -60,7 +60,6 @@
  * 依赖组件：
  * - ArrowUpRight: lucide-vue-next 图标库中的箭头图标，用于悬停提示
  */
-<script setup>
 import { ArrowUpRight } from 'lucide-vue-next'
 
 defineProps({

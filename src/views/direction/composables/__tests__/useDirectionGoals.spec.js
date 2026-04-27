@@ -1,75 +1,73 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { useDirectionStore } from '@/stores/directionStore'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
+import {
+  editingGoal,
+  monthlyPlansCache,
+  selectedGoal,
+  selectedMonth
+} from '@/views/direction/composables/useDirectionState'
 import { db } from '@/services/database'
 
-vi.mock('vue', async () => {
-  const actual = await vi.importActual('vue')
-
-  return {
-    ...actual,
-    onMounted: vi.fn(),
-    watch: vi.fn()
-  }
-})
+const loadMonthlyPlansMock = vi.fn()
 
 vi.mock('@/stores/authStore', () => ({
   useAuthStore: () => ({ userId: 'user-1' })
 }))
 
+vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
+  useDirectionFetch: () => ({
+    fetchData: vi.fn(),
+    loadMonthlyPlans: loadMonthlyPlansMock
+  })
+}))
+
 vi.mock('@/services/database', () => ({
   db: {
     plans: {
-      update: vi.fn().mockResolvedValue({}),
-      create: vi.fn().mockResolvedValue({ id: 'new-plan' }),
-      delete: vi.fn().mockResolvedValue({})
+      update: vi.fn(),
+      create: vi.fn(),
+      delete: vi.fn()
     },
     monthlyPlans: {
-      create: vi.fn().mockResolvedValue({}),
-      update: vi.fn().mockResolvedValue({}),
-      delete: vi.fn().mockResolvedValue({})
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn()
     }
   }
 }))
 
-vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
-  useDirectionFetch: () => ({
-    fetchData: vi.fn(),
-    loadMonthlyPlans: vi.fn()
-  })
-}))
-
 beforeEach(() => {
   vi.clearAllMocks()
-  const pinia = createPinia()
-  setActivePinia(pinia)
-  const store = useDirectionStore()
-  store.reset()
+  editingGoal.value = null
+  selectedGoal.value = null
+  selectedMonth.value = null
+
+  for (const key of Object.keys(monthlyPlansCache)) {
+    delete monthlyPlansCache[key]
+  }
 })
 
 describe('useDirectionGoals', () => {
-  it('handles add click correctly', async () => {
-    const { handleAddClick, editingGoal, showAddModal } = useDirectionGoals()
-    
-    handleAddClick()
-    
-    expect(editingGoal.value).toBe(null)
-    expect(showAddModal.value).toBe(true)
+  it('loads monthly plans before deriving editable month bounds from date-only strings', async () => {
+    const { handleEditGoal } = useDirectionGoals()
+
+    await handleEditGoal({
+      plan_id: 'p1',
+      title: '目标',
+      startMonth: 1,
+      endMonth: 12
+    })
+
+    expect(loadMonthlyPlansMock).toHaveBeenCalledWith('p1')
   })
 
   it('derives editable month bounds from date-only monthly plan strings', async () => {
-    const store = useDirectionStore()
-    
-    Object.assign(store.monthlyPlansCache, {
-      p1: [
-        { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' },
-        { id: 'mp-2', plan_id: 'p1', month: '2026-07-01' }
-      ]
-    })
-    store.selectedGoal.value = { plan_id: 'p1', title: '目标' }
+    monthlyPlansCache.p1 = [
+      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' },
+      { id: 'mp-2', plan_id: 'p1', month: '2026-07-01' }
+    ]
 
-    const { handleEditGoal, editingGoal } = useDirectionGoals()
+    const { handleEditGoal } = useDirectionGoals()
 
     await handleEditGoal({
       plan_id: 'p1',
@@ -83,15 +81,13 @@ describe('useDirectionGoals', () => {
   })
 
   it('uses date-only month values when saving monthly plans', async () => {
-    const store = useDirectionStore()
-    
-    Object.assign(store.monthlyPlansCache, {
-      p1: [
-        { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
-      ]
-    })
-    store.selectedGoal.value = { plan_id: 'p1', title: '目标' }
-    store.selectedMonth.value = 4
+    db.monthlyPlans.update.mockResolvedValue({})
+
+    monthlyPlansCache.p1 = [
+      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+    ]
+    selectedGoal.value = { plan_id: 'p1' }
+    selectedMonth.value = 4
 
     const { saveMonthlyPlan } = useDirectionGoals()
     await saveMonthlyPlan(4, { title: '更新标题' })

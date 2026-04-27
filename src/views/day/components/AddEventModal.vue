@@ -119,41 +119,39 @@
     </DialogContent>
   </Dialog>
 </template>
-
+<script setup>
 /**
  * AddEventModal.vue
  * ==================
  * 每日任务/习惯新增/编辑弹窗组件
- * 
+ *
  * 功能说明：
  * - 支持创建新任务或编辑已有任务
  * - 支持创建新习惯或编辑已有习惯（习惯无分类和描述字段）
  * - 根据 initialData 是否存在判断是新增还是编辑模式
  * - 表单验证依赖 useAddEventForm composable
  * - 支持的任务分类：工作、个人、会议、设计、其他
- * 
+ *
  * Props：
  * - show: Boolean，控制弹窗显示/隐藏（配合 v-model:show 使用）
  * - initialData: Object，待编辑的任务/习惯数据，为 null 时表示新增模式
  * - categories: Array，预定义分类标签列表，默认 ['工作', '个人', '会议', '设计', '其他']
- * 
+ *
  * Emits：
  * - close: 关闭弹窗事件（旧版，直接通知父组件）
  * - refresh: 刷新数据事件，提交成功或删除后通知父组件刷新列表
  * - update:show: 弹窗显示状态变更，用于 v-model:show 双向绑定
- * 
+ *
  * 依赖组件：
  * - Dialog/DialogContent/DialogTitle/DialogDescription（shadcn-vue）
  * - Input（shadcn-vue）
  * - Button（shadcn-vue）
  * - TimePicker，时间选择器
  * - DurationPicker，时长选择器
- * 
+ *
  * 依赖 Composable：
  * - useAddEventForm，管理表单状态、验证、提交、删除逻辑
  */
-
-<script setup>
 /**
  * 组件依赖的 UI 组件（来自 shadcn-vue）
  */

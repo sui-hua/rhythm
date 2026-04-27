@@ -1,8 +1,9 @@
+<script setup lang="ts">
 /**
  * Input 组件
- * 
- * 提供统一的表单输入框组件，基于原生 <input> 元素封装。
- * 
+ *
+ * 提供统一的表单输入框组件，基于原生 input 元素封装。
+ *
  * 功能特性：
  * - 支持 v-model 双向绑定，与 Vue 3 Composition API 无缝集成
  * - 通过 useVModel 自动处理 modelValue 的读取和更新事件
@@ -10,14 +11,10 @@
  * - 支持自定义 class 注入，可覆盖默认样式
  * - 内置 Tailwind CSS 样式，提供现代化的输入框外观
  * - 支持禁用状态、placeholder、focus 状态等原生 input 属性
- * 
+ *
  * 使用方式：
- * ```vue
- * <Input v-model="value" placeholder="请输入..." />
- * <Input v-model="value" default-value="默认值" />
- * <Input v-model="value" class="custom-input" />
- * ```
- * 
+ * v-model 绑定值，default-value 设置默认值，class 注入自定义样式
+ *
  * 样式说明：
  * - 高度 9 单位（h-9），符合 Tailwind 间距规范
  * - 圆角边框（rounded-md），略带阴影（shadow-sm）
@@ -25,8 +22,6 @@
  * - placeholder 使用 muted-foreground 颜色
  * - 禁用时 cursor-not-allowed + opacity-50
  */
-
-<script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { cn } from '@/lib/utils'

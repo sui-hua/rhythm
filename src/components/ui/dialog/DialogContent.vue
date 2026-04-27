@@ -1,24 +1,16 @@
+<script setup lang="ts">
 /**
  * DialogContent.vue - 对话框内容组件
- * 
+ *
  * 基于 Radix Vue 的 DialogContent 封装，提供了带有遮罩层的模态对话框内容区域。
  * 主要功能：
  * - 使用 DialogPortal 组件将内容传送到 body 末尾，避免 z-index 层级问题
  * - 使用 DialogOverlay 创建半透明黑色遮罩背景
  * - 使用 DialogContent 显示可聚焦、可访问的对话框内容
  * - 包含内置的关闭按钮（DialogClose）和过渡动画
- * 
- * 使用方式：
- * <Dialog v-model:open="isOpen">
- *   <DialogContent class="...">
- *     <!-- 对话框内容插槽 -->
- *   </DialogContent>
- * </Dialog>
- * 
+ *
  * @see https://www.radix-vue.com/components/dialog.html
  */
-
-<script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 // Radix Vue 提供的 Dialog 相关组件和 hooks
 // - DialogClose: 关闭按钮组件

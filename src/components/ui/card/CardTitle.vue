@@ -1,3 +1,4 @@
+<script setup lang="ts">
 /**
  * CardTitle 组件
  *
@@ -7,18 +8,9 @@
  * @feature - 支持通过 class prop 注入额外样式类，实现个性化定制
  * @feature - 透传插槽内容，允许嵌套其他组件或纯文本
  *
- * @example
- * // 基本用法
- * <CardTitle>项目标题</CardTitle>
- *
- * // 传入额外 class
- * <CardTitle class="text-red-500">红色标题</CardTitle>
- *
  * @see https://vuejs.org/api/sfc-script-setup.html
  * @see https://tailwindcss.com/docs/font-weight#font-semibold
  */
-
-<script setup lang="ts">
 import { type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 

@@ -1,7 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { useDirectionStore } from '@/stores/directionStore'
 import { parseDateOnly, useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+import {
+  dailyPlansCache,
+  dailyTasks,
+  editingGoal,
+  initialized,
+  monthlyMainGoals,
+  monthlyPlans,
+  monthlyPlansCache,
+  plans,
+  selectedGoal,
+  showAddModal
+} from '@/views/direction/composables/useDirectionState'
 import { db } from '@/services/database'
 
 const flushMicrotasks = () => new Promise(resolve => setImmediate(resolve))
@@ -40,13 +50,30 @@ vi.mock('@/services/database', () => ({
 }))
 
 beforeEach(() => {
-  setActivePinia(createPinia())
   vi.clearAllMocks()
 
-  const store = useDirectionStore()
-  store.reset()
-  // Initialize plans so fetchData works properly
-  store.plans = [{ id: 'p1', title: '目标 1' }]
+  plans.value = []
+  monthlyPlans.value = []
+  selectedGoal.value = null
+  editingGoal.value = null
+  initialized.value = false
+  showAddModal.value = false
+
+  for (const key of Object.keys(monthlyPlansCache)) {
+    delete monthlyPlansCache[key]
+  }
+
+  for (const key of Object.keys(dailyPlansCache)) {
+    delete dailyPlansCache[key]
+  }
+
+  for (const key of Object.keys(monthlyMainGoals)) {
+    delete monthlyMainGoals[key]
+  }
+
+  for (const key of Object.keys(dailyTasks)) {
+    delete dailyTasks[key]
+  }
 })
 
 describe('useDirectionFetch', () => {
@@ -60,8 +87,6 @@ describe('useDirectionFetch', () => {
   })
 
   it('builds monthly and daily keys from date-only database fields', async () => {
-    const store = useDirectionStore()
-
     db.plans.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
@@ -76,12 +101,12 @@ describe('useDirectionFetch', () => {
 
     await fetchData()
 
-    expect(store.monthlyMainGoals['plan-p1-4']).toEqual({
+    expect(monthlyMainGoals['plan-p1-4']).toEqual({
       id: 'mp1',
       plan_id: 'p1',
       month: '2026-04-01'
     })
-    expect(store.dailyTasks['plan-p1-4-30']).toEqual({
+    expect(dailyTasks['plan-p1-4-30']).toEqual({
       id: 'dp1',
       monthly_plan_id: 'mp1',
       day: '2026-04-30'

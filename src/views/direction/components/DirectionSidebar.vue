@@ -78,7 +78,7 @@ DirectionSidebar.vue - 所向目标侧边栏组件
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
+import { monthlyPlans, dailyTasks, getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
@@ -89,27 +89,13 @@ import { useResizable } from '@/composables/useResizable'
 import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
 import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
-// ==================== 组件 props & emits ====================
-// 本组件为纯展示型组件，通过 composables 获取数据，不接收 props
-
-// ==================== Composables 导入 ====================
-// useDirectionFetch: 获取分类后的目标列表 categorizedGoals
 const { categorizedGoals } = useDirectionFetch()
-
-// useDirectionSelection: 管理选中目标状态和当前月份
-const { selectedGoal, selectGoal, selectedMonth, dailyTasks } = useDirectionSelection()
-
-// useDirectionGoals: 处理添加/编辑目标的业务逻辑
+const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
 const { handleAddClick, handleEditGoal } = useDirectionGoals()
-
-// ==================== 响应式数据 ====================
-// 选中目标的名称，用于高亮当前选中项
 const selectedGoalName = computed(() => selectedGoal.value?.name || '')
 
-// ==================== 计算属性 ====================
 // 计算系统推进负载：基于选中目标当前月份的日计划完成率
 const systemLoad = computed(() => {
-  // 无选中目标或无月份时返回 0
   if (!selectedGoal.value || !selectedMonth.value) return 0
 
   const planId = selectedGoal.value.plan_id
@@ -120,10 +106,8 @@ const systemLoad = computed(() => {
     mp => getDateOnlyMonth(mp.month) === month
   )
 
-  // 无月度计划时返回 0
   if (!monthPlan) return 0
 
-  // 计算月度进度
   return getDirectionMonthlyProgress({
     dailyTasks,
     planId,
@@ -132,8 +116,6 @@ const systemLoad = computed(() => {
   })
 })
 
-// ==================== 可拖拽宽度 ====================
-// useResizable: 提供侧边栏宽度拖拽调整功能
 const { width, startResize, isResizing } = useResizable()
 </script>
 

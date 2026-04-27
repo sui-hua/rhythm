@@ -1,3 +1,4 @@
+<script setup lang="ts">
 /**
  * DialogHeader 组件
  *
@@ -9,17 +10,8 @@
  * - 内部通过默认插槽（slot）接收标题、描述等头部内容
  * - 通常配合 DialogTitle、DialogDescription 等子组件使用
  *
- * @example
- * ```vue
- * <DialogHeader>
- *   <DialogTitle>确认删除</DialogTitle>
- *   <DialogDescription>此操作不可撤销</DialogDescription>
- * </DialogHeader>
- * ```
- *
  * @see https://radix-vue.com/components/dialog
  */
-<script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { cn } from '@/lib/utils'
 
