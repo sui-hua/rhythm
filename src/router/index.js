@@ -65,7 +65,8 @@ const routes = [
   },
   {
     path: '/day',
-    redirect: () => buildDayPath(new Date())
+    name: 'DayViewDefault',
+    component: DayView
   },
   {
     path: '/day/:year/:month/:day',

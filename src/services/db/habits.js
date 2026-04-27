@@ -7,6 +7,12 @@
  * - 封装 habits 表的 CRUD 操作
  * - 支持习惯打卡记录管理
  *
+ * 【frequency 约定】
+ * - daily:   { type: 'daily' }
+ * - weekly:  { type: 'weekly', weekdays: [1, 3, 5] }
+ * - monthly: { type: 'monthly', monthDays: [1, 15, 28] }
+ * - 老数据缺失 frequency 时，运行时按 daily 兼容
+ *
  * 【方法说明】
  * - list()           → 查询所有习惯（不含打卡记录）
  * - listLite()      → 查询所有习惯（不含打卡记录，用于下拉选择）

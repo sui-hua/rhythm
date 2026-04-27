@@ -98,6 +98,10 @@
 
 - 当前线上同时存在 `archived` 和 `is_archived`
 - 前端后续应统一到一套字段命名
+- `frequency` 当前运行时约定为 JSON 结构：
+  - `{ "type": "daily" }`
+  - `{ "type": "weekly", "weekdays": [1, 3, 5] }`
+  - `{ "type": "monthly", "monthDays": [1, 15, 28] }`
 
 ### `public.habit_logs`
 

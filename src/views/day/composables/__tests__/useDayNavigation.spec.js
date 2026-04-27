@@ -91,6 +91,16 @@ describe('useDayNavigation', () => {
     expect(router.replace).toHaveBeenCalledWith('/day/2025/4/5')
   })
 
+  it('缺少 year/month/day 参数时保留 /day 地址并使用当前日期', () => {
+    route.params = {}
+
+    const { validateDayRoute } = useDayNavigation()
+    const result = validateDayRoute()
+
+    expect(result).toBe(true)
+    expect(router.replace).not.toHaveBeenCalled()
+  })
+
   it('首次挂载时将滚动目标委托给 getInitialScrollTarget', async () => {
     const fetchTasks = vi.fn()
     const openIfNeeded = vi.fn()

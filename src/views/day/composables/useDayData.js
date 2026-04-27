@@ -31,6 +31,7 @@ import { playSuccessSound } from '@/utils/audio'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { getRouteDateContext } from '@/views/day/utils/routeDateContext'
 import { buildDayExecutionItems } from './useDayExecutionItems'
+import { matchesHabitFrequency } from '@/views/habits/utils/habitFrequency'
 
 // 提升原始数据存储到模块顶层，实现跨组件共享数据单例
 const tasks = ref([])
@@ -112,7 +113,11 @@ export function useDayData() {
                 }
             }
             dailyPlans.value = fetchedPlans
-            habits.value = allHabits.filter(h => !h.is_archived && h.task_time)
+            habits.value = allHabits.filter((habit) => {
+                return !habit.is_archived
+                    && habit.task_time
+                    && matchesHabitFrequency(habit.frequency, startOfDay)
+            })
             habitLogs.value = dayHabitLogs
         } catch (error) {
             console.error('获取日数据失败:', error)

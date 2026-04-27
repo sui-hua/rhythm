@@ -34,11 +34,74 @@
             />
           </div>
 
+          <div class="grid gap-3">
+            <label class="text-sm font-medium leading-none">重复方式</label>
+
+            <div class="grid grid-cols-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                :class="form.frequencyType === 'daily' ? 'bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground' : ''"
+                @click="form.frequencyType = 'daily'"
+              >
+                每日
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                :class="form.frequencyType === 'weekly' ? 'bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground' : ''"
+                @click="form.frequencyType = 'weekly'"
+              >
+                每周
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                :class="form.frequencyType === 'monthly' ? 'bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground' : ''"
+                @click="form.frequencyType = 'monthly'"
+              >
+                每月
+              </Button>
+            </div>
+
+            <div v-if="form.frequencyType === 'weekly'" class="grid gap-2">
+              <p class="text-xs text-muted-foreground">选择每周执行的星期</p>
+              <div class="grid grid-cols-7 gap-2">
+                <Button
+                  v-for="item in WEEKDAY_OPTIONS"
+                  :key="item.value"
+                  type="button"
+                  variant="outline"
+                  :class="form.weekdays.includes(item.value) ? 'bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground' : ''"
+                  @click="toggleWeekday(item.value)"
+                >
+                  {{ item.label }}
+                </Button>
+              </div>
+            </div>
+
+            <div v-if="form.frequencyType === 'monthly'" class="grid gap-2">
+              <p class="text-xs text-muted-foreground">选择每月执行的日期</p>
+              <div class="grid grid-cols-7 gap-2 max-h-40 overflow-y-auto pr-1">
+                <Button
+                  v-for="day in MONTH_DAY_OPTIONS"
+                  :key="day"
+                  type="button"
+                  variant="outline"
+                  :class="form.monthDays.includes(day) ? 'bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground' : ''"
+                  @click="toggleMonthDay(day)"
+                >
+                  {{ day }}
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div class="flex flex-col gap-3 pt-2">
             <Button 
               class="w-full h-9 bg-primary text-primary-foreground font-semibold"
               @click="submit"
-              :disabled="!form.title.trim()"
+              :disabled="!form.title.trim() || !canSubmitFrequency"
             >
               确认创建
             </Button>
@@ -70,7 +133,7 @@
  *
  * @see {@link https://github.com/radix-ui/primitives|Radix Vue Dialog} 底层 Dialog 组件
  */
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -79,6 +142,10 @@ import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { withLoadingLock } from '@/utils/throttle'
+import {
+  createDefaultHabitFrequency,
+  normalizeHabitFrequency
+} from '@/views/habits/utils/habitFrequency'
 
 const props = defineProps({
   /** 控制弹窗的显示与隐藏状态 */
@@ -86,6 +153,18 @@ const props = defineProps({
 })
 
 const authStore = useAuthStore()
+
+const WEEKDAY_OPTIONS = [
+  { label: '一', value: 1 },
+  { label: '二', value: 2 },
+  { label: '三', value: 3 },
+  { label: '四', value: 4 },
+  { label: '五', value: 5 },
+  { label: '六', value: 6 },
+  { label: '日', value: 7 }
+]
+
+const MONTH_DAY_OPTIONS = Array.from({ length: 31 }, (_, index) => index + 1)
 
 const emit = defineEmits([
   'close', // 关闭弹窗事件 (暂未使用该单独事件)
@@ -97,9 +176,48 @@ const emit = defineEmits([
 // 用于收集用户输入的习惯名称、时间、时长等信息
 const form = reactive({
   title: '', // 习惯名称，用于显示在习惯列表和日历热力图中
-  task_time: '', // 习惯指定的执行时间，格式为 HH:mm，用于在日历上显示时间
-  duration: 10 / 60 // 习惯预估的持续时长，UI 表现层使用小时为单位（如 10 分钟存为 10/60）
+  task_time: '08:00', // 习惯指定的执行时间，格式为 HH:mm，用于在日历上显示时间
+  duration: 10 / 60, // 习惯预估的持续时长，UI 表现层使用小时为单位（如 10 分钟存为 10/60）
+  frequencyType: 'daily',
+  weekdays: [],
+  monthDays: []
 })
+
+const canSubmitFrequency = computed(() => {
+  if (form.frequencyType === 'weekly') return form.weekdays.length > 0
+  if (form.frequencyType === 'monthly') return form.monthDays.length > 0
+  return true
+})
+
+const toggleWeekday = (weekday) => {
+  form.weekdays = form.weekdays.includes(weekday)
+    ? form.weekdays.filter((item) => item !== weekday)
+    : [...form.weekdays, weekday].sort((a, b) => a - b)
+}
+
+const toggleMonthDay = (day) => {
+  form.monthDays = form.monthDays.includes(day)
+    ? form.monthDays.filter((item) => item !== day)
+    : [...form.monthDays, day].sort((a, b) => a - b)
+}
+
+const buildFrequencyPayload = () => {
+  if (form.frequencyType === 'weekly') {
+    return normalizeHabitFrequency({
+      type: 'weekly',
+      weekdays: form.weekdays
+    })
+  }
+
+  if (form.frequencyType === 'monthly') {
+    return normalizeHabitFrequency({
+      type: 'monthly',
+      monthDays: form.monthDays
+    })
+  }
+
+  return createDefaultHabitFrequency()
+}
 
 /**
  * 提交表单创建新习惯记录
@@ -115,7 +233,7 @@ const form = reactive({
  *       默认时长为 10 分钟（即 10/60 小时）
  */
 const submit = withLoadingLock(async () => {
-  if (!form.title.trim()) return
+  if (!form.title.trim() || !canSubmitFrequency.value) return
 
   const userId = authStore.userId
   if (!userId) {
@@ -130,7 +248,7 @@ const submit = withLoadingLock(async () => {
       title: form.title,
       task_time: form.task_time || null, // 时间为空时存储 null
       duration: Math.round((Number(form.duration) || 0) * 60) || 10, // 转换小时为分钟，默认 10 分钟
-      frequency: { type: 'daily' }, // 固定每日习惯
+      frequency: buildFrequencyPayload(),
       target_value: 1, // 目标完成值默认为 1
       archived: false // 新习惯默认未归档
     })
@@ -138,8 +256,11 @@ const submit = withLoadingLock(async () => {
     emit('refresh') // 通知父组件刷新习惯列表
     // 重置表单为初始状态
     form.title = ''
-    form.task_time = ''
+    form.task_time = '08:00'
     form.duration = 10 / 60
+    form.frequencyType = 'daily'
+    form.weekdays = []
+    form.monthDays = []
     emit('update:show', false) // 关闭弹窗
   } catch (e) {
     console.error('Add habit failed in modal', e)

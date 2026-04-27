@@ -200,7 +200,7 @@
  * 
  * 上下文导航 (contextInfo):
  * - 月视图 (/month/:year/:month): 显示年份 + 返回年视图按钮
- * - 日视图 (/day/:year/:month/:day): 显示月份名 + 左右翻日按钮 + 返回月视图按钮
+ * - 日视图 (`/day` 与 `/day/:year/:month/:day`): 显示月份名 + 左右翻日按钮 + 返回月视图按钮
  * 
  * 依赖:
  * - vue-router: 路由导航
@@ -261,7 +261,7 @@ const contextInfo = computed(() => {
       mode: 'month'
     }
   }
-  if (path.startsWith('/day/')) {
+  if (path === '/day' || path.startsWith('/day/')) {
     const prevDate = new Date(currentDate)
     prevDate.setDate(currentDate.getDate() - 1)
     const prevDayPath = buildDayPath(prevDate)

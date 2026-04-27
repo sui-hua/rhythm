@@ -83,6 +83,13 @@ export function useDayNavigation() {
      */
     const validateDayRoute = () => {
         const context = getRouteDateContext(route.params, dateStore.currentDate)
+        const hasAnyRouteParam = route.params.year !== undefined
+            || route.params.month !== undefined
+            || route.params.day !== undefined
+
+        if (!hasAnyRouteParam) {
+            return true
+        }
 
         if (!context.hasParsedParams) {
             router.replace(buildDayPath(context.date))
