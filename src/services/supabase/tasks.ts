@@ -1,4 +1,5 @@
 import type { TaskFormInput, TaskRecord } from '@/domain/tasks/types'
+import { validateTaskForm } from '@/domain/tasks/taskForm'
 import { supabase } from './client'
 
 function mapRow(row: any): TaskRecord {
@@ -8,7 +9,19 @@ function mapRow(row: any): TaskRecord {
     startAt: row.start_time,
     endAt: row.end_time,
     notes: row.description ?? '',
-    completed: row.completed
+    completed: Boolean(row.completed)
+  }
+}
+
+function toPayload(input: TaskFormInput) {
+  const validated = validateTaskForm(input)
+
+  return {
+    title: validated.title,
+    start_time: validated.startAt,
+    end_time: validated.endAt,
+    description: validated.notes,
+    completed: validated.completed
   }
 }
 
@@ -26,17 +39,49 @@ export async function listTasksForDate(date: Date): Promise<TaskRecord[]> {
     .lte('start_time', end.toISOString())
     .order('start_time', { ascending: true })
 
-  if (error) {
-    throw error
-  }
+  if (error) throw error
 
   return (data ?? []).map(mapRow)
 }
 
-export async function createTask(_input: TaskFormInput) {}
+export async function createTask(input: TaskFormInput) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert(toPayload(input))
+    .select('id,title,start_time,end_time,description,completed')
+    .single()
 
-export async function updateTask(_taskId: string, _input: Partial<TaskFormInput>) {}
+  if (error) throw error
 
-export async function deleteTask(_taskId: string) {}
+  return mapRow(data)
+}
 
-export async function toggleTaskComplete(_taskId: string, _completed: boolean) {}
+export async function updateTask(taskId: string, input: Partial<TaskFormInput>) {
+  const payload: Record<string, unknown> = {}
+
+  if (input.title !== undefined) payload.title = input.title.trim()
+  if (input.startAt !== undefined) payload.start_time = input.startAt
+  if (input.endAt !== undefined) payload.end_time = input.endAt
+  if (input.notes !== undefined) payload.description = input.notes.trim()
+  if (input.completed !== undefined) payload.completed = input.completed
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .update(payload)
+    .eq('id', taskId)
+    .select('id,title,start_time,end_time,description,completed')
+    .single()
+
+  if (error) throw error
+
+  return mapRow(data)
+}
+
+export async function deleteTask(taskId: string) {
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+  if (error) throw error
+}
+
+export async function toggleTaskComplete(taskId: string, completed: boolean) {
+  return updateTask(taskId, { completed })
+}

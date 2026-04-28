@@ -3,6 +3,13 @@ import { getCurrentSession, subscribeToAuthChanges } from '@/services/supabase/a
 
 type AuthSession = Awaited<ReturnType<typeof getCurrentSession>>
 
+// Dev mock session - set this to bypass auth in development
+let _devMockSession: AuthSession | null = null
+
+export function setDevMockSession(session: AuthSession | null) {
+  _devMockSession = session
+}
+
 export function useAuthSession() {
   const [session, setSession] = useState<AuthSession>(null)
   const [isReady, setIsReady] = useState(false)
@@ -28,8 +35,8 @@ export function useAuthSession() {
   }, [])
 
   return {
-    session,
+    session: _devMockSession ?? session,
     isReady,
-    isAuthenticated: Boolean(session)
+    isAuthenticated: Boolean(_devMockSession ?? session)
   }
 }

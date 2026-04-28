@@ -6,9 +6,11 @@ module.exports = function (api) {
       [
         'babel-preset-expo',
         {
-          unstable_transformImportMeta: false
+          unstable_transformImportMeta: false,
+          jsxImportSource: 'nativewind'
         }
-      ]
+      ],
+      'nativewind/babel'
     ],
     plugins: [
       [
@@ -18,7 +20,8 @@ module.exports = function (api) {
             '@': './src'
           }
         }
-      ]
+      ],
+      'react-native-reanimated/plugin'
     ]
   }
 }
