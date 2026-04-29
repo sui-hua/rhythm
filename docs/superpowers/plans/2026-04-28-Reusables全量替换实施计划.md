@@ -6,7 +6,7 @@
 
 **Architecture:** 继续以 `src/components/ui` 作为项目唯一基础组件出口，把 Reusables 官方生成组件和依赖文件落到现有别名体系内。页面层只重写展示结构，不改动 Day 相关查询、状态管理、Supabase 服务和领域模型的职责边界。
 
-**Tech Stack:** Bun, Expo, React Native, NativeWind, Tailwind CSS, React Native Reusables, Expo Router, TypeScript, Jest, React Native Testing Library
+**Tech Stack:** pnpm, Expo, React Native, NativeWind, Tailwind CSS, React Native Reusables, Expo Router, TypeScript, Jest, React Native Testing Library
 
 ---
 
@@ -27,8 +27,8 @@
 #### 2026-04-29 当前状态
 
 - 已确认 `components.json`、`global.css` 与当前别名配置可直接用于 Reusables。
-- 已完成 `bun add -D @react-native-reusables/cli`，`package.json` 与 `bun.lock` 已更新。
-- 已执行 `bunx @react-native-reusables/cli@latest add button input text card badge label textarea separator checkbox switch avatar`，CLI 已部分落库：
+- 已完成 `pnpm add -D @react-native-reusables/cli`，`package.json` 与 `pnpm-lock.yaml` 已更新。
+- 已执行 `pnpm dlx @react-native-reusables/cli@latest add button input text card badge label textarea separator checkbox switch avatar`，CLI 已部分落库：
   - 新增 `src/components/ui/avatar.tsx`
   - 新增 `src/components/ui/checkbox.tsx`
   - 新增 `src/components/ui/icon.tsx`
@@ -42,7 +42,7 @@
 
 #### 2026-04-29 续执行结果
 
-- 已通过本机 `C:\nvm4w\nodejs\bun.cmd` 同步依赖，补齐 `@rn-primitives/*` 实际安装目录。
+- 已通过本机 `C:\nvm4w\nodejs\pnpm.cmd` 同步依赖，补齐 `@rn-primitives/*` 实际安装目录。
 - 已执行 Reusables CLI 生成 `dialog`，新增 `src/components/ui/dialog.tsx` 与 `src/components/ui/native-only-animated-view.tsx`。
 - 已安装 `lucide-react-native`，用于 Reusables 官方 `icon/dialog/checkbox` 组件。
 - 已将根布局接入 `PortalHost`，供 Reusables Dialog 在页面中挂载。
@@ -58,7 +58,7 @@
 |------|------|
 | `components.json` | 对齐 Reusables 组件生成与别名配置 |
 | `package.json` | 增加 Reusables 及其依赖 |
-| `bun.lock` | Bun 依赖锁文件更新 |
+| `pnpm-lock.yaml` | pnpm 依赖锁文件更新 |
 | `tailwind.config.js` | 保持与 Reusables 组件要求一致 |
 | `global.css` | 保持 Reusables/NativeWind CSS 入口稳定 |
 | `src/lib/utils.ts` | 兼容 Reusables 推荐工具函数 |
@@ -98,7 +98,7 @@
 **Files:**
 - Modify: `components.json`
 - Modify: `package.json`
-- Modify: `bun.lock`
+- Modify: `pnpm-lock.yaml`
 - Modify: `tailwind.config.js`
 - Modify: `global.css`
 - Test: `src/__tests__/tailwindConfig.test.ts`
@@ -134,13 +134,13 @@
 Run:
 
 ```bash
-bun add -D @react-native-reusables/cli
+pnpm add -D @react-native-reusables/cli
 ```
 
 Expected:
 
 ```text
-package.json 中出现 @react-native-reusables/cli，bun.lock 更新。
+package.json 中出现 @react-native-reusables/cli，pnpm-lock.yaml 更新。
 ```
 
 - [x] **Step 3: 运行 CLI 预装高频组件**
@@ -148,7 +148,7 @@ package.json 中出现 @react-native-reusables/cli，bun.lock 更新。
 Run:
 
 ```bash
-bunx @react-native-reusables/cli@latest add button input text card badge label textarea separator checkbox switch avatar
+pnpm dlx @react-native-reusables/cli@latest add button input text card badge label textarea separator checkbox switch avatar
 ```
 
 Expected:
@@ -167,7 +167,7 @@ src/components/ui 下出现官方组件文件，必要依赖被追加到 package
 Run:
 
 ```bash
-bunx @react-native-reusables/cli@latest add dialog
+pnpm dlx @react-native-reusables/cli@latest add dialog
 ```
 
 Expected:
@@ -255,7 +255,7 @@ import { Input } from '@/components/ui/input'
 Run:
 
 ```bash
-bun run typecheck
+pnpm typecheck
 ```
 
 Expected:
@@ -309,7 +309,7 @@ await signInWithPassword('test@example.com', 'password')
 Run:
 
 ```bash
-bun run typecheck
+pnpm typecheck
 ```
 
 Expected:
@@ -421,7 +421,7 @@ expect(screen.getByText('晨间整理')).toBeTruthy()
 Run:
 
 ```bash
-bun test src/features/day/__tests__/DayScreen.test.tsx --runInBand
+pnpm test src/features/day/__tests__/DayScreen.test.tsx --runInBand
 ```
 
 Expected:
@@ -509,7 +509,7 @@ await onDelete(task.id)
 Run:
 
 ```bash
-bun run typecheck
+pnpm typecheck
 ```
 
 Expected:
@@ -530,9 +530,9 @@ PASS，弹层 props、文本输入、按钮组合没有类型错误。
 Run:
 
 ```bash
-bun test src/features/day/__tests__/DayScreen.test.tsx --runInBand
-bun test src/features/day/__tests__/useDayExecutionItems.test.tsx --runInBand
-bun test src/features/day/__tests__/useExecutionItemToggle.test.tsx --runInBand
+pnpm test src/features/day/__tests__/DayScreen.test.tsx --runInBand
+pnpm test src/features/day/__tests__/useDayExecutionItems.test.tsx --runInBand
+pnpm test src/features/day/__tests__/useExecutionItemToggle.test.tsx --runInBand
 ```
 
 Expected:
@@ -546,7 +546,7 @@ PASS，页面结构重写没有影响既有 hook 行为。
 Run:
 
 ```bash
-bun run typecheck
+pnpm typecheck
 ```
 
 Expected:

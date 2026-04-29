@@ -6,7 +6,7 @@
 
 **Architecture:** 以 `src/components/ui` 作为唯一基础组件出口，承载 Reusables 官方组件与其依赖封装。业务页面继续通过 `@/components/ui/*` 引用基础组件。Day 页与登录页的展示结构重写为 Reusables 官方推荐的容器、表单、动作区、标签与弹层组合方式，数据 hooks、领域模型与 Supabase 服务保持原职责不变。
 
-**Tech Stack:** Bun, Expo, React Native, Expo Router, NativeWind, Tailwind CSS, React Native Reusables, TypeScript, TanStack Query, Jest, React Native Testing Library
+**Tech Stack:** pnpm, Expo, React Native, Expo Router, NativeWind, Tailwind CSS, React Native Reusables, TypeScript, TanStack Query, Jest, React Native Testing Library
 
 ---
 
@@ -173,7 +173,7 @@ Day 页面重写为 Reusables 官方推荐的组合结构，但保留现有信�
 ### 4.1 先接基础设施
 
 1. 安装 Reusables CLI、组件与依赖
-2. 校验 `bun`、`NativeWind`、`Tailwind`、`components.json` 的兼容性
+2. 校验 `pnpm`、`NativeWind`、`Tailwind`、`components.json` 的兼容性
 3. 生成并整理基础组件到 `src/components/ui`
 
 ### 4.2 再替换基础组件
