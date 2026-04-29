@@ -1,5 +1,6 @@
 import { Pressable, View } from 'react-native'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Text } from '@/components/ui/text'
 import type { DayExecutionItem } from '@/domain/day/types'
 import { cn } from '@/lib/utils'
@@ -16,37 +17,28 @@ export function ExecutionCard({ item, onPress, onToggle }: ExecutionCardProps) {
 
   return (
     <Pressable accessibilityLabel={`查看${item.title}`} onPress={() => onPress(item)}>
-      <Card className="rounded-lg border-border bg-card py-0 shadow-none">
-        <CardContent className="flex-row gap-3 px-4 py-4">
-          <Pressable
-            accessibilityLabel={`${item.completed ? '取消完成' : '完成'}${item.title}`}
-            className="h-7 w-7 items-center justify-center"
-            onPress={() => onToggle(item)}
-          >
-            <Text className="text-[20px] font-extrabold text-foreground">
-              {item.completed ? '●' : '○'}
-            </Text>
-          </Pressable>
-
-          <View className="flex-1 gap-2">
-            <Text
-              className={cn(
-                'text-base font-extrabold text-foreground',
-                item.completed && 'text-[#827B6E] line-through'
-              )}
-            >
-              {item.title}
-            </Text>
-
-            <View className="flex-row flex-wrap items-center gap-2">
+      <Card>
+        <CardHeader>
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1 gap-2">
+              <CardTitle className={cn(item.completed && 'text-muted-foreground line-through')}>
+                {item.title}
+              </CardTitle>
               <SourceBadge source={item.source} label={item.categoryLabel} />
-              <Text className="text-[12px] font-semibold text-muted">{timeText}</Text>
             </View>
-
-            {item.description ? (
-              <Text className="text-[13px] leading-[18px] text-[#625C52]">{item.description}</Text>
-            ) : null}
+            <Button
+              accessibilityLabel={`${item.completed ? '取消完成' : '完成'}${item.title}`}
+              onPress={() => onToggle(item)}
+              size="sm"
+              variant="ghost"
+            >
+              <Text>{item.completed ? '已完成' : '完成'}</Text>
+            </Button>
           </View>
+        </CardHeader>
+        <CardContent className="gap-2">
+          <Text className="text-sm text-muted-foreground">{timeText}</Text>
+          {item.description ? <Text className="text-sm leading-5">{item.description}</Text> : null}
         </CardContent>
       </Card>
     </Pressable>

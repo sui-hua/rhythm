@@ -18,31 +18,21 @@ export function DateSwitcher({ date, onChange }: DateSwitcherProps) {
   const day = date.getDate()
 
   return (
-    <View className="flex-row items-center justify-between px-5 py-4">
-      <Button
-        accessibilityLabel="前一天"
-        className="min-w-[84px] items-start bg-transparent px-0 shadow-none"
-        onPress={() => onChange(shiftDate(date, -1))}
-        size="sm"
-        variant="ghost"
-      >
-        <Text className="text-sm font-semibold text-muted">‹ 昨天</Text>
-      </Button>
+    <View className="px-4 py-3">
+      <View className="flex-row items-center justify-between">
+        <Button accessibilityLabel="前一天" onPress={() => onChange(shiftDate(date, -1))} variant="ghost">
+          <Text>昨天</Text>
+        </Button>
 
-      <View className="items-center gap-0.5">
-        <Text className="text-[22px] font-extrabold text-foreground">今天</Text>
-        <Text className="text-xs text-muted">{month}月{day}日</Text>
+        <View className="items-center">
+          <Text className="text-lg font-semibold">今天</Text>
+          <Text className="text-sm text-muted-foreground">{month}月{day}日</Text>
+        </View>
+
+        <Button accessibilityLabel="后一天" onPress={() => onChange(shiftDate(date, 1))} variant="ghost">
+          <Text>明天</Text>
+        </Button>
       </View>
-
-      <Button
-        accessibilityLabel="后一天"
-        className="min-w-[84px] items-end bg-transparent px-0 shadow-none"
-        onPress={() => onChange(shiftDate(date, 1))}
-        size="sm"
-        variant="ghost"
-      >
-        <Text className="text-sm font-semibold text-muted">明天 ›</Text>
-      </Button>
     </View>
   )
 }

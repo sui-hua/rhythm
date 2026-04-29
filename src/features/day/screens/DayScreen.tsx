@@ -1,5 +1,6 @@
 import { ActivityIndicator, SafeAreaView, ScrollView, View } from 'react-native'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Text } from '@/components/ui/text'
 import type { DayExecutionItem } from '@/domain/day/types'
 import type { TaskFormInput, TaskRecord } from '@/domain/tasks/types'
@@ -53,15 +54,17 @@ export function DayScreen() {
       <DateSwitcher date={currentDate} onChange={setCurrentDate} />
 
       {errors.length > 0 ? (
-        <View className="mx-5 mb-2 flex-row items-center justify-between rounded-lg bg-[#FFF0ED] p-3">
-          <Text className="font-bold text-danger">部分数据同步失败</Text>
-          <Button className="h-8 bg-transparent px-2 shadow-none" onPress={refetchAll} variant="ghost">
-            <Text className="font-extrabold text-danger">重试</Text>
-          </Button>
-        </View>
+        <Card className="mx-5 mb-2 border-danger/30 bg-[#FFF0ED] py-0 shadow-none">
+          <CardContent className="flex-row items-center justify-between px-3 py-3">
+            <Text className="font-semibold text-danger">部分数据同步失败</Text>
+            <Button onPress={refetchAll} size="sm" variant="ghost">
+              <Text className="text-danger">重试</Text>
+            </Button>
+          </CardContent>
+        </Card>
       ) : null}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {isLoading ? <ActivityIndicator /> : null}
 
         <ExecutionTimeline items={scheduledItems} onPressItem={handlePressItem} onToggleItem={toggleItem} />
@@ -70,10 +73,10 @@ export function DayScreen() {
 
       <Button
         accessibilityLabel="新增任务"
-        className="absolute bottom-6 right-5 rounded-lg bg-accent px-4 py-3 shadow-none"
+        className="absolute bottom-6 right-5"
         onPress={openNewTask}
       >
-        <Text className="font-extrabold text-white">＋新建任务</Text>
+        <Text>＋新建任务</Text>
       </Button>
 
       <TaskEditorSheet

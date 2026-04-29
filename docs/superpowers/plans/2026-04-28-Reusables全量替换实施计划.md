@@ -40,6 +40,16 @@
 - 本轮执行在组件批量生成后被人工中断，`dialog` 尚未安装，基础组件兼容性与类型校验尚未开始。
 - `tailwind.config.js` 的 `darkMode: 'class'` 修复和 `src/__tests__/tailwindConfig.test.ts` 回归测试仍保留在工作区。
 
+#### 2026-04-29 续执行结果
+
+- 已通过本机 `C:\nvm4w\nodejs\bun.cmd` 同步依赖，补齐 `@rn-primitives/*` 实际安装目录。
+- 已执行 Reusables CLI 生成 `dialog`，新增 `src/components/ui/dialog.tsx` 与 `src/components/ui/native-only-animated-view.tsx`。
+- 已安装 `lucide-react-native`，用于 Reusables 官方 `icon/dialog/checkbox` 组件。
+- 已将根布局接入 `PortalHost`，供 Reusables Dialog 在页面中挂载。
+- 已完成登录页、Day 页列表结构、任务编辑弹层、只读详情弹层的 Reusables 组件替换。
+- 已补充 Jest 对 Reusables 相关依赖的转译配置和 Reanimated 测试 mock。
+- 已通过配置回归测试、Day 页测试集合与全量类型检查。
+
 ## 1. 文件结构
 
 ### 1.1 重点修改文件
@@ -133,7 +143,7 @@ Expected:
 package.json 中出现 @react-native-reusables/cli，bun.lock 更新。
 ```
 
-- [ ] **Step 3: 运行 CLI 预装高频组件**
+- [x] **Step 3: 运行 CLI 预装高频组件**
 
 Run:
 
@@ -152,7 +162,7 @@ src/components/ui 下出现官方组件文件，必要依赖被追加到 package
 - 本步骤已执行过一次，但只完成了部分组件落库。
 - 继续实施前，需要先核对现有 `button.tsx / input.tsx / text.tsx / card.tsx / badge.tsx` 是否已被覆盖，及 `lucide-react-native` 等新增依赖是否已完整安装。
 
-- [ ] **Step 4: 补充弹层能力**
+- [x] **Step 4: 补充弹层能力**
 
 Run:
 
@@ -166,7 +176,7 @@ Expected:
 项目中新增官方推荐的弹层组件或其等价文件，供 Day 页两个弹层复用。
 ```
 
-- [ ] **Step 5: 运行配置回归测试**
+- [x] **Step 5: 运行配置回归测试**
 
 Run:
 
@@ -196,7 +206,7 @@ PASS，确认 `tailwind.config.js` 仍保持 `darkMode: 'class'`。
 - Create: `src/components/ui/avatar.tsx`
 - Create: `src/components/ui/dialog.tsx` 或 CLI 生成文件
 
-- [ ] **Step 1: 保留现有导入入口，替换内部实现**
+- [x] **Step 1: 保留现有导入入口，替换内部实现**
 
 每个基础组件文件继续保留当前导出路径，例如：
 
@@ -208,7 +218,7 @@ import { Input } from '@/components/ui/input'
 
 目标是业务层 import 不变，只替换组件实现与默认外观。
 
-- [ ] **Step 2: 对齐 Button / Text / Card / Badge 的官方样式与 API**
+- [x] **Step 2: 对齐 Button / Text / Card / Badge 的官方样式与 API**
 
 重点保留这类外部调用兼容性：
 
@@ -228,7 +238,7 @@ import { Input } from '@/components/ui/input'
 - `variant`、`size` 仍可使用
 - `TextClassContext` 或等效能力仍支撑嵌套文本配色
 
-- [ ] **Step 3: 用 Textarea 替代当前多行 Input 的用途**
+- [x] **Step 3: 用 Textarea 替代当前多行 Input 的用途**
 
 迁移后，表单中的多行备注输入统一改为：
 
@@ -240,7 +250,7 @@ import { Input } from '@/components/ui/input'
 />
 ```
 
-- [ ] **Step 4: 运行类型检查**
+- [x] **Step 4: 运行类型检查**
 
 Run:
 
@@ -259,7 +269,7 @@ PASS，无基础组件导出或 props 类型错误。
 **Files:**
 - Modify: `app/(auth)/login.tsx`
 
-- [ ] **Step 1: 用 Card + Input + Button 重写页面骨架**
+- [x] **Step 1: 用 Card + Input + Button 重写页面骨架**
 
 把当前纯 `View + Pressable + Text` 结构改为官方容器组合，保留两个动作入口：
 
@@ -284,7 +294,7 @@ PASS，无基础组件导出或 props 类型错误。
 </SafeAreaView>
 ```
 
-- [ ] **Step 2: 保持登录逻辑不变**
+- [x] **Step 2: 保持登录逻辑不变**
 
 这些逻辑必须原样保留：
 
@@ -294,7 +304,7 @@ router.replace('/(app)/day')
 await signInWithPassword('test@example.com', 'password')
 ```
 
-- [ ] **Step 3: 运行页面相关测试或最小类型校验**
+- [x] **Step 3: 运行页面相关测试或最小类型校验**
 
 Run:
 
@@ -319,7 +329,7 @@ PASS，登录页 JSX 结构切换后无类型错误。
 - Modify: `src/features/day/screens/DayScreen.tsx`
 - Test: `src/features/day/__tests__/DayScreen.test.tsx`
 
-- [ ] **Step 1: 用官方按钮组重写日期切换**
+- [x] **Step 1: 用官方按钮组重写日期切换**
 
 目标结构：
 
@@ -340,7 +350,7 @@ PASS，登录页 JSX 结构切换后无类型错误。
 </View>
 ```
 
-- [ ] **Step 2: 用 Badge 重写来源标签**
+- [x] **Step 2: 用 Badge 重写来源标签**
 
 来源映射保持不变，只调整承载方式：
 
@@ -352,7 +362,7 @@ const sourceLabelMap = {
 }
 ```
 
-- [ ] **Step 3: 用 Card 重写执行项卡片**
+- [x] **Step 3: 用 Card 重写执行项卡片**
 
 执行项卡片统一组合为：
 
@@ -376,7 +386,7 @@ const sourceLabelMap = {
 </Card>
 ```
 
-- [ ] **Step 4: 重写 DayScreen 页面骨架**
+- [x] **Step 4: 重写 DayScreen 页面骨架**
 
 保留当前信息层级，但把页面结构统一切到官方容器组合：
 
@@ -396,7 +406,7 @@ const sourceLabelMap = {
 </SafeAreaView>
 ```
 
-- [ ] **Step 5: 更新 DayScreen 测试断言**
+- [x] **Step 5: 更新 DayScreen 测试断言**
 
 保持关键断言继续成立：
 
@@ -406,7 +416,7 @@ expect(screen.getByLabelText('新增任务')).toBeTruthy()
 expect(screen.getByText('晨间整理')).toBeTruthy()
 ```
 
-- [ ] **Step 6: 运行 Day 页测试**
+- [x] **Step 6: 运行 Day 页测试**
 
 Run:
 
@@ -426,7 +436,7 @@ PASS，Day 页关键信息与交互入口保持可用。
 - Modify: `src/features/day/components/TaskEditorSheet.tsx`
 - Modify: `src/features/day/components/ExecutionReadonlySheet.tsx`
 
-- [ ] **Step 1: 用官方弹层能力重写任务编辑弹层**
+- [x] **Step 1: 用官方弹层能力重写任务编辑弹层**
 
 目标结构：
 
@@ -450,7 +460,7 @@ PASS，Day 页关键信息与交互入口保持可用。
 </Dialog>
 ```
 
-- [ ] **Step 2: 保留现有保存和删除逻辑**
+- [x] **Step 2: 保留现有保存和删除逻辑**
 
 这些行为必须继续成立：
 
@@ -469,7 +479,7 @@ await onSave(
 await onDelete(task.id)
 ```
 
-- [ ] **Step 3: 用官方弹层能力重写只读详情弹层**
+- [x] **Step 3: 用官方弹层能力重写只读详情弹层**
 
 目标结构：
 
@@ -494,7 +504,7 @@ await onDelete(task.id)
 </Dialog>
 ```
 
-- [ ] **Step 4: 运行类型检查**
+- [x] **Step 4: 运行类型检查**
 
 Run:
 
@@ -515,7 +525,7 @@ PASS，弹层 props、文本输入、按钮组合没有类型错误。
 - Review: `app/(auth)/login.tsx`
 - Review: `src/features/day/screens/DayScreen.tsx`
 
-- [ ] **Step 1: 运行 Day 相关测试集合**
+- [x] **Step 1: 运行 Day 相关测试集合**
 
 Run:
 
@@ -531,7 +541,7 @@ Expected:
 PASS，页面结构重写没有影响既有 hook 行为。
 ```
 
-- [ ] **Step 2: 运行全量类型检查**
+- [x] **Step 2: 运行全量类型检查**
 
 Run:
 

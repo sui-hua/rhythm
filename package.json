@@ -19,13 +19,15 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(?:-community)?|expo(?:nent)?|@expo(?:nent)?/.*|expo-modules-core|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|nativewind|@rn-primitives/slot)/)"
+      "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(?:-community)?|expo(?:nent)?|@expo(?:nent)?/.*|expo-modules-core|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|nativewind|react-native-css-interop|react-native-reanimated|react-native-worklets|@rn-primitives/.*|lucide-react-native)/)"
     ]
   },
   "dependencies": {
     "@rn-primitives/avatar": "^1.4.0",
     "@rn-primitives/checkbox": "^1.4.0",
+    "@rn-primitives/dialog": "^1.4.0",
     "@rn-primitives/label": "^1.4.0",
+    "@rn-primitives/portal": "^1.4.0",
     "@rn-primitives/separator": "^1.4.0",
     "@rn-primitives/slot": "^1.4.0",
     "@rn-primitives/switch": "^1.4.0",
@@ -39,6 +41,7 @@
     "expo-notifications": "~0.32.16",
     "expo-router": "~6.0.23",
     "expo-status-bar": "~3.0.9",
+    "lucide-react-native": "^1.14.0",
     "nativewind": "^4.2.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",

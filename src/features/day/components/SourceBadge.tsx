@@ -18,7 +18,7 @@ const textMap = {
   task: 'text-[#31451F]',
   daily_plan: 'text-[#263E57]',
   habit: 'text-[#5B4320]'
-}
+} satisfies Record<DayExecutionItem['source'], string>
 
 export function SourceBadge({ source, label }: SourceBadgeProps) {
   return (

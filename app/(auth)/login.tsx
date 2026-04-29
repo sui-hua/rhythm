@@ -1,5 +1,8 @@
 import { router } from 'expo-router'
-import { Pressable, Text, View } from 'react-native'
+import { SafeAreaView, View } from 'react-native'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Text } from '@/components/ui/text'
 import { setDevMockSession } from '@/features/auth/useAuthSession'
 import { signInWithPassword } from '@/services/supabase/auth'
 
@@ -20,23 +23,23 @@ export default function LoginPage() {
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
-      <Text style={{ fontSize: 28, fontWeight: '700' }}>Rhythm</Text>
-      <Text style={{ marginTop: 8 }}>今日执行，从这里开始</Text>
-
-      <Pressable
-        onPress={handleMockLogin}
-        style={{ marginTop: 40, backgroundColor: '#1E1E1E', padding: 16, borderRadius: 8 }}
-      >
-        <Text style={{ color: '#FFF', fontWeight: '700', textAlign: 'center' }}>进入应用 (开发模式)</Text>
-      </Pressable>
-
-      <Pressable
-        onPress={handleRealLogin}
-        style={{ marginTop: 12, backgroundColor: '#DDE9F5', padding: 16, borderRadius: 8 }}
-      >
-        <Text style={{ color: '#263E57', fontWeight: '700', textAlign: 'center' }}>真实登录</Text>
-      </Pressable>
-    </View>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 justify-center p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Rhythm</CardTitle>
+            <CardDescription>今日执行，从这里开始</CardDescription>
+          </CardHeader>
+          <CardContent className="gap-3">
+            <Button onPress={handleMockLogin}>
+              <Text>进入应用（开发模式）</Text>
+            </Button>
+            <Button variant="secondary" onPress={handleRealLogin}>
+              <Text>真实登录</Text>
+            </Button>
+          </CardContent>
+        </Card>
+      </View>
+    </SafeAreaView>
   )
 }

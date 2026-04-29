@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, renderHook } from '@testing-library/react-native'
+import { act, renderHook, waitFor } from '@testing-library/react-native'
 
 jest.mock('@/services/supabase/tasks', () => ({
   toggleTaskComplete: jest.fn().mockResolvedValue({})
@@ -16,26 +16,33 @@ jest.mock('@/services/supabase/habits', () => ({
   deleteHabitLog: jest.fn().mockResolvedValue(undefined)
 }))
 
-function createWrapper() {
+function createHarness() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         gcTime: Infinity,
         retry: false
+      },
+      mutations: {
+        gcTime: 0,
+        retry: false
       }
     }
   })
 
-  return function Wrapper({ children }: PropsWithChildren) {
+  function Wrapper({ children }: PropsWithChildren) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   }
+
+  return { Wrapper, queryClient }
 }
 
 describe('useExecutionItemToggle', () => {
   it('toggles task completion', async () => {
     const { useExecutionItemToggle } = require('../hooks/useExecutionItemToggle')
+    const { Wrapper, queryClient } = createHarness()
     const { result } = renderHook(() => useExecutionItemToggle(new Date('2026-04-28')), {
-      wrapper: createWrapper()
+      wrapper: Wrapper
     })
 
     const mockItem = {
@@ -56,8 +63,10 @@ describe('useExecutionItemToggle', () => {
     await act(async () => {
       await result.current.toggleItem(mockItem)
     })
+    await waitFor(() => expect(result.current.isPending).toBe(false))
 
     const { toggleTaskComplete } = require('@/services/supabase/tasks')
     expect(toggleTaskComplete).toHaveBeenCalledWith('task-1', true)
+    queryClient.clear()
   })
 })

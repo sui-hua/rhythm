@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { View } from 'react-native'
+import { Text } from '@/components/ui/text'
 import type { DayExecutionItem } from '@/domain/day/types'
 import { ExecutionCard } from './ExecutionCard'
 
@@ -12,25 +13,11 @@ export function UnscheduledSection({ items, onPressItem, onToggleItem }: Unsched
   if (items.length === 0) return null
 
   return (
-    <View style={styles.root}>
-      <Text style={styles.title}>未安排时间（{items.length}）</Text>
+    <View className="gap-3 px-5 pb-7 pt-5">
+      <Text className="text-lg font-semibold">未安排时间（{items.length}）</Text>
       {items.map((item) => (
         <ExecutionCard key={`${item.source}-${item.id}`} item={item} onPress={onPressItem} onToggle={onToggleItem} />
       ))}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  root: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 28,
-    gap: 12
-  },
-  title: {
-    color: '#1E1E1E',
-    fontSize: 17,
-    fontWeight: '800'
-  }
-})

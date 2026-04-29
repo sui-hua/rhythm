@@ -48,10 +48,12 @@ export function useExecutionItemToggle(date: Date) {
         queryClient.setQueryData(['day-habit-logs', dateKey], context.previousHabitLogs)
       }
     },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ['day-tasks', dateKey] })
-      void queryClient.invalidateQueries({ queryKey: ['day-daily-plans', dateKey] })
-      void queryClient.invalidateQueries({ queryKey: ['day-habit-logs', dateKey] })
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['day-tasks', dateKey] }),
+        queryClient.invalidateQueries({ queryKey: ['day-daily-plans', dateKey] }),
+        queryClient.invalidateQueries({ queryKey: ['day-habit-logs', dateKey] })
+      ])
     }
   })
 

@@ -13,3 +13,18 @@ Object.defineProperty(globalThis, 'structuredClone', {
   configurable: true,
   writable: true
 })
+
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native')
+  const animationBuilder = {
+    delay: () => animationBuilder,
+    duration: () => animationBuilder
+  }
+
+  return {
+    __esModule: true,
+    default: { View },
+    FadeIn: animationBuilder,
+    FadeOut: animationBuilder
+  }
+})

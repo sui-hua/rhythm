@@ -1,7 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
+import { PortalHost } from '@rn-primitives/portal'
 import { DayScreen } from '../screens/DayScreen'
 
 const mockToggleItem = jest.fn()
+
+function renderDayScreen() {
+  return render(
+    <>
+      <DayScreen />
+      <PortalHost />
+    </>
+  )
+}
 
 jest.mock('../hooks/useDayExecutionItems', () => ({
   useDayExecutionItems: () => ({
@@ -57,7 +67,7 @@ describe('DayScreen', () => {
   })
 
   it('renders today header, scheduled item and add task button', () => {
-    render(<DayScreen />)
+    renderDayScreen()
 
     expect(screen.getByText('今天')).toBeTruthy()
     expect(screen.getByText('晨间整理')).toBeTruthy()
@@ -65,7 +75,7 @@ describe('DayScreen', () => {
   })
 
   it('opens task editor from add button', () => {
-    render(<DayScreen />)
+    renderDayScreen()
 
     fireEvent.press(screen.getByLabelText('新增任务'))
 
@@ -73,7 +83,7 @@ describe('DayScreen', () => {
   })
 
   it('toggles an execution item from the card check control', () => {
-    render(<DayScreen />)
+    renderDayScreen()
 
     fireEvent.press(screen.getByLabelText('完成晨间整理'))
 

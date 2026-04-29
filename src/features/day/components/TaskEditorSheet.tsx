@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Modal, View } from 'react-native'
+import { View } from 'react-native'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Text } from '@/components/ui/text'
 import type { TaskFormInput, TaskRecord } from '@/domain/tasks/types'
 
@@ -63,52 +65,43 @@ export function TaskEditorSheet({ visible, task, date, isSaving, onClose, onSave
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/25">
-        <Card className="rounded-t-lg border-x-0 border-b-0 bg-card py-0 shadow-none">
-          <CardContent className="gap-3 px-5 py-5">
-            <Text className="text-[20px] font-extrabold text-foreground">
-              {task ? '编辑任务' : '新建任务'}
-            </Text>
+    <Dialog open={visible} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{task ? '编辑任务' : '新建任务'}</DialogTitle>
+        </DialogHeader>
 
-            <Text className="text-[13px] font-bold text-[#625C52]">标题</Text>
-            <Input placeholder="输入任务标题" value={title} onChangeText={setTitle} />
+        <View className="gap-3">
+          <Label>标题</Label>
+          <Input placeholder="输入任务标题" value={title} onChangeText={setTitle} />
 
-            <Text className="text-[13px] font-bold text-[#625C52]">开始时间</Text>
-            <Input placeholder="09:00" value={startTime} onChangeText={setStartTime} />
+          <Label>开始时间</Label>
+          <Input placeholder="09:00" value={startTime} onChangeText={setStartTime} />
 
-            <Text className="text-[13px] font-bold text-[#625C52]">结束时间</Text>
-            <Input placeholder="10:00" value={endTime} onChangeText={setEndTime} />
+          <Label>结束时间</Label>
+          <Input placeholder="10:00" value={endTime} onChangeText={setEndTime} />
 
-            <Text className="text-[13px] font-bold text-[#625C52]">备注</Text>
-            <Input
-              className="min-h-[88px] py-3 align-top"
-              multiline
-              placeholder="补充说明"
-              style={{ textAlignVertical: 'top' }}
-              value={notes}
-              onChangeText={setNotes}
-            />
+          <Label>备注</Label>
+          <Textarea placeholder="补充说明" value={notes} onChangeText={setNotes} />
+        </View>
 
-            {error ? <Text className="text-sm text-danger">{error}</Text> : null}
+        {error ? <Text className="text-sm text-danger">{error}</Text> : null}
 
-            <View className="flex-row items-center justify-end gap-2 pt-2">
-              {task ? (
-                <Button className="mr-auto px-0" disabled={isSaving} onPress={handleDelete} variant="ghost">
-                  <Text className="font-extrabold text-danger">删除任务</Text>
-                </Button>
-              ) : null}
-              <Button disabled={isSaving} onPress={onClose} variant="ghost">
-                <Text className="font-bold text-muted">取消</Text>
-              </Button>
-              <Button disabled={isSaving} onPress={handleSave}>
-                <Text className="font-extrabold text-white">{isSaving ? '保存中' : '保存'}</Text>
-              </Button>
-            </View>
-          </CardContent>
-        </Card>
-      </View>
-    </Modal>
+        <View className="flex-row items-center justify-end gap-2 pt-2">
+          {task ? (
+            <Button className="mr-auto" disabled={isSaving} onPress={handleDelete} variant="ghost">
+              <Text className="text-danger">删除任务</Text>
+            </Button>
+          ) : null}
+          <Button disabled={isSaving} onPress={onClose} variant="ghost">
+            <Text>取消</Text>
+          </Button>
+          <Button disabled={isSaving} onPress={handleSave}>
+            <Text>{isSaving ? '保存中' : '保存'}</Text>
+          </Button>
+        </View>
+      </DialogContent>
+    </Dialog>
   )
 }
 
