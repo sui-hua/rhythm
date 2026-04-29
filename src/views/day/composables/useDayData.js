@@ -28,6 +28,7 @@ import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
+import { toDailyPlanStatus } from '@/utils/dailyPlanStatus'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { getRouteDateContext } from '@/views/day/utils/routeDateContext'
 import { buildDayExecutionItems } from './useDayExecutionItems'
@@ -48,6 +49,71 @@ export function useDayData() {
     const route = useRoute()
     const dateStore = useDateStore()
     const routeDateContext = computed(() => getRouteDateContext(route.params, dateStore.currentDate))
+
+    /**
+     * 基于当前 dateStore 计算当天的起止时间
+     *
+     * @returns {{ startOfDay: Date, endOfDay: Date }}
+     */
+    const getCurrentDayRange = () => {
+        const { year, month, day } = routeDateContext.value
+
+        return {
+            startOfDay: new Date(year, month - 1, day, 0, 0, 0),
+            endOfDay: new Date(year, month - 1, day, 23, 59, 59)
+        }
+    }
+
+    /**
+     * 切换普通任务完成状态
+     *
+     * @param {Object} task - day 视图中的统一执行项
+     * @returns {Promise<void>}
+     */
+    const toggleTaskCompletion = async (task) => {
+        const updates = { completed: !task.completed }
+
+        // 如果是标记为完成，且已经开始了计时，则记录结束时间
+        if (!task.completed) {
+            updates.actual_end_time = new Date().toISOString()
+        }
+
+        await db.tasks.update(task.id, updates)
+    }
+
+    /**
+     * 切换习惯当日打卡状态
+     *
+     * @param {Object} task - day 视图中的统一执行项
+     * @returns {Promise<void>}
+     */
+    const toggleHabitCompletion = async (task) => {
+        if (task.completed) {
+            const { startOfDay, endOfDay } = getCurrentDayRange()
+            const logs = await db.habits.listLogsByDate(startOfDay, endOfDay)
+            const log = logs.find((item) => item.habit_id === task.id)
+
+            if (log) {
+                await db.habits.deleteLog(log.id)
+            }
+
+            return
+        }
+
+        const { startOfDay } = getCurrentDayRange()
+        await db.habits.log(task.id, '', startOfDay.toISOString())
+    }
+
+    /**
+     * 切换日计划完成状态
+     *
+     * @param {Object} task - day 视图中的统一执行项
+     * @returns {Promise<void>}
+     */
+    const toggleDailyPlanCompletion = async (task) => {
+        const newStatus = toDailyPlanStatus(!task.completed)
+        await db.dailyPlans.update(task.id, { status: newStatus })
+    }
 
     /**
      * 当前选中的月份信息
@@ -224,28 +290,13 @@ export function useDayData() {
         if (!task) return
         try {
             if (task.type === 'task') {
-                const updates = { completed: !task.completed }
-                // 如果是标记为完成，且已经开始了计时，则记录结束时间
-                if (!task.completed) {
-                    updates.actual_end_time = new Date().toISOString()
-                }
-                await db.tasks.update(task.id, updates)
-            } else if (task.type === 'habit') {
-                if (task.completed) {
-                    const year = dateStore.currentDate.getFullYear()
-                    const month = dateStore.currentDate.getMonth()
-                    const day = dateStore.currentDate.getDate()
-                    const startOfDay = new Date(year, month, day, 0, 0, 0)
-                    const endOfDay = new Date(year, month, day, 23, 59, 59)
-                    const logs = await db.habits.listLogsByDate(startOfDay, endOfDay)
-                    const log = logs.find(l => l.habit_id === task.id)
-                    if (log) await db.habits.deleteLog(log.id)
-                } else {
-                    await db.habits.log(task.id, '')
-                }
-            } else if (task.type === 'daily_plan') {
-                const newStatus = toDailyPlanStatus(!task.completed)
-                await db.dailyPlans.update(task.id, { status: newStatus })
+                await toggleTaskCompletion(task)
+            }
+            if (task.type === 'habit') {
+                await toggleHabitCompletion(task)
+            } 
+            if (task.type === 'daily_plan') {
+                await toggleDailyPlanCompletion(task)
             }
 
             // 如果操作是将状态改为已完成，则播放成功音效

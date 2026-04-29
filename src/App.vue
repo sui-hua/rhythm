@@ -45,6 +45,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 const directionStore = useDirectionStore()
+const { requestPermission } = useNotifications()
 
 // 根据路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
 const transitionName = computed(() => {
@@ -69,7 +70,6 @@ onMounted(async () => {
     if (session?.user) {
       authStore.setUser(session.user)
       // 请求通知权限
-      const { requestPermission } = useNotifications()
       requestPermission()
     } else {
       // 当前没有登录用户
