@@ -1,10 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun test *)",
-      "Bash(bun run *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(pnpm typecheck *)"
     ]
   }
 }
