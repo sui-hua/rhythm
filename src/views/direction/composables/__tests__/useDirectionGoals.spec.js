@@ -9,6 +9,7 @@ import {
 import { db } from '@/services/database'
 
 const loadMonthlyPlansMock = vi.fn()
+const fetchDataMock = vi.fn()
 
 vi.mock('@/stores/authStore', () => ({
   useAuthStore: () => ({ userId: 'user-1' })
@@ -16,7 +17,7 @@ vi.mock('@/stores/authStore', () => ({
 
 vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
   useDirectionFetch: () => ({
-    fetchData: vi.fn(),
+    fetchData: fetchDataMock,
     loadMonthlyPlans: loadMonthlyPlansMock
   })
 }))
@@ -38,6 +39,9 @@ vi.mock('@/services/database', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  db.plans.create.mockResolvedValue({ id: 'p-new' })
+  db.monthlyPlans.create.mockResolvedValue({})
+  db.monthlyPlans.update.mockResolvedValue({})
   editingGoal.value = null
   selectedGoal.value = null
   selectedMonth.value = null
@@ -95,5 +99,77 @@ describe('useDirectionGoals', () => {
     expect(db.monthlyPlans.update).toHaveBeenCalledWith('mp-1', {
       title: '更新标题'
     })
+  })
+
+  it('writes goal time into created monthly plans when adding a goal', async () => {
+    const { handleAddGoal } = useDirectionGoals()
+
+    await handleAddGoal({
+      title: '读书',
+      description: '',
+      startMonth: 4,
+      endMonth: 5,
+      category_id: null,
+      task_time: '07:30',
+      duration: 45
+    })
+
+    expect(db.plans.create).toHaveBeenCalledWith(expect.objectContaining({
+      task_time: '07:30',
+      duration: 45
+    }))
+    expect(db.monthlyPlans.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      plan_id: 'p-new',
+      month: expect.stringMatching(/-04-01$/),
+      task_time: '07:30',
+      duration: 45
+    }))
+    expect(db.monthlyPlans.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      plan_id: 'p-new',
+      month: expect.stringMatching(/-05-01$/),
+      task_time: '07:30',
+      duration: 45
+    }))
+  })
+
+  it('refreshes direction data after adding a goal', async () => {
+    const { handleAddGoal } = useDirectionGoals()
+
+    await handleAddGoal({
+      title: '新目标',
+      startMonth: 4,
+      endMonth: 4,
+      category_id: null,
+      task_time: '09:00',
+      duration: 30
+    })
+
+    expect(loadMonthlyPlansMock).toHaveBeenCalledWith('p-new')
+    expect(fetchDataMock).toHaveBeenCalled()
+  })
+
+  it('writes goal time into missing monthly plans when expanding a goal range', async () => {
+    monthlyPlansCache.p1 = [
+      { id: 'mp-4', plan_id: 'p1', month: '2026-04-01', task_time: '08:00', duration: 30 }
+    ]
+    selectedGoal.value = {
+      plan_id: 'p1',
+      title: '读书',
+      task_time: '08:00',
+      duration: 30,
+      startMonth: 4,
+      endMonth: 4
+    }
+
+    const { handleConfirmRange } = useDirectionGoals()
+
+    await handleConfirmRange({ start: 4, end: 5 })
+
+    expect(db.monthlyPlans.create).toHaveBeenCalledWith(expect.objectContaining({
+      plan_id: 'p1',
+      month: expect.stringMatching(/-05-01$/),
+      task_time: '08:00',
+      duration: 30
+    }))
   })
 })

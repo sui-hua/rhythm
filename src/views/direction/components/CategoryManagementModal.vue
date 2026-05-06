@@ -50,9 +50,11 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
+import { useAuthStore } from '@/stores/authStore'
 import { showCategoryModal, categories } from '@/views/direction/composables/useDirectionState'
 const newCategoryName = ref('')
 const loading = ref(false)
+const authStore = useAuthStore()
 
 const emit = defineEmits(['updated'])
 
@@ -69,8 +71,12 @@ const fetchCategories = async () => {
 
 const handleAddCategory = async () => {
   if (!newCategoryName.value.trim()) return
+  if (!authStore.userId) return
   try {
-    await db.plansCategory.create({ name: newCategoryName.value.trim() })
+    await db.plansCategory.create({
+      name: newCategoryName.value.trim(),
+      user_id: authStore.userId
+    })
     newCategoryName.value = ''
     await fetchCategories()
     emit('updated')

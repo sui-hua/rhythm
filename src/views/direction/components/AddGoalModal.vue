@@ -24,7 +24,7 @@
               <SelectTrigger class="form-select-trigger">
                 <SelectValue placeholder="选择月份" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent disable-portal>
                 <SelectItem v-for="m in months" :key="m.value" :value="m.value.toString()">
                   {{ m.label }}
                 </SelectItem>
@@ -37,7 +37,7 @@
               <SelectTrigger class="form-select-trigger">
                 <SelectValue placeholder="选择月份" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent disable-portal>
                 <SelectItem
                   v-for="m in months"
                   :key="m.value"
@@ -67,7 +67,7 @@
             <SelectTrigger class="form-select-trigger">
               <SelectValue placeholder="选择分类" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent disable-portal>
               <SelectItem value="none">未分类</SelectItem>
               <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
@@ -99,12 +99,12 @@
   </Dialog>
 
   <!-- 类别管理弹窗 -->
-  <CategoryManagementModal @updated="fetchCategories" />
+  <CategoryManagementModal @updated="() => fetchCategories(true)" />
 </template>
 
 <script setup lang="ts">
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -130,8 +130,8 @@ const { showAddModal, showCategoryModal, editingGoal, handleAddGoal, handleUpdat
 
 import { categories } from '@/views/direction/composables/useDirectionState'
 
-const fetchCategories = async () => {
-  if (categories.value?.length > 0) return  // 已有数据则跳过，避免重复请求
+const fetchCategories = async (force = false) => {
+  if (!force && categories.value?.length > 0) return  // 已有数据则跳过，避免重复请求
   try {
     categories.value = await db.plansCategory.list()
   } catch (e) {
@@ -139,11 +139,17 @@ const fetchCategories = async () => {
   }
 }
 
-onMounted(fetchCategories)
+onMounted(() => fetchCategories(true))
+
+watch(() => showAddModal.value, (newVal) => {
+  if (newVal) {
+    fetchCategories(true)
+  }
+})
 
 watch(() => showCategoryModal.value, (newVal) => {
   if (!newVal) {
-    fetchCategories()
+    fetchCategories(true)
   }
 })
 

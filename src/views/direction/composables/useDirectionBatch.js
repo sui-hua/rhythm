@@ -40,6 +40,11 @@ export function useDirectionBatch() {
     return cachedPlans.find(mp => getDateOnlyMonth(mp.month) === month) || null
   }
 
+  const resolveDailyTiming = (monthlyPlan, goal) => ({
+    task_time: monthlyPlan?.task_time ?? goal?.task_time ?? '09:00',
+    duration: monthlyPlan?.duration ?? goal?.duration ?? 30
+  })
+
   const getExistingDailyPlanMap = async (monthlyPlanId) => {
     if (!dailyPlansCache[monthlyPlanId]) {
       await loadDailyPlans(monthlyPlanId, { force: true })
@@ -69,6 +74,7 @@ export function useDirectionBatch() {
     if (!monthDate) return
 
     const year = monthDate.getFullYear()
+    const currentTiming = resolveDailyTiming(currentMp, selectedGoal.value)
 
     const currentSelectedDates = selectedDates[m] || []
     let daysToUpdate = currentSelectedDates.filter(day => hasTask(m, day))
@@ -85,8 +91,8 @@ export function useDirectionBatch() {
         user_id: authStore.userId,
         day: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
         title: batchInput.value,
-        task_time: null,
-        duration: null
+        task_time: currentTiming.task_time,
+        duration: currentTiming.duration
       }
 
       if (existingDailyPlan) {
@@ -116,11 +122,16 @@ export function useDirectionBatch() {
 
     const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
 
+    const idsToDelete = []
     for (const day of currentSelectedDates) {
       const existingDailyPlan = existingDailyPlanMap.get(day)
       if (existingDailyPlan) {
-        await db.dailyPlans.delete(existingDailyPlan.id)
+        idsToDelete.push(existingDailyPlan.id)
       }
+    }
+
+    if (idsToDelete.length > 0) {
+      await db.dailyPlans.deleteByIds(idsToDelete)
     }
 
     await loadDailyPlans(currentMp.id, { force: true })

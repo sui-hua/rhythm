@@ -35,7 +35,8 @@ vi.mock('@/services/database', () => ({
     dailyPlans: {
       create: vi.fn(),
       update: vi.fn(),
-      delete: vi.fn()
+      delete: vi.fn(),
+      deleteByIds: vi.fn()
     }
   }
 }))
@@ -67,7 +68,7 @@ describe('useDirectionBatch', () => {
     db.dailyPlans.update.mockResolvedValue({ id: 'dp-1' })
 
     monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01', task_time: '09:45', duration: 25 }
     ]
     dailyPlansCache['mp-1'] = [
       { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
@@ -83,8 +84,8 @@ describe('useDirectionBatch', () => {
     expect(db.rpc).not.toHaveBeenCalled()
     expect(db.dailyPlans.update).toHaveBeenCalledWith('dp-1', {
       title: '新标题',
-      task_time: null,
-      duration: null
+      task_time: '09:45',
+      duration: 25
     })
     expect(db.dailyPlans.create).not.toHaveBeenCalled()
     expect(selectedDates[4]).toEqual([])
@@ -96,7 +97,7 @@ describe('useDirectionBatch', () => {
     hasTaskDays = new Set()
 
     monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01', task_time: '10:15', duration: 50 }
     ]
       selectedGoal.value = { plan_id: 'p1' }
       selectedMonth.value = 4
@@ -112,21 +113,44 @@ describe('useDirectionBatch', () => {
       user_id: 'user-1',
       day: '2026-04-01',
       title: '批量新增',
-      task_time: null,
-      duration: null
+      task_time: '10:15',
+      duration: 50
     })
     expect(db.dailyPlans.create).toHaveBeenNthCalledWith(2, {
       monthly_plan_id: 'mp-1',
       user_id: 'user-1',
       day: '2026-04-02',
       title: '批量新增',
-      task_time: null,
-      duration: null
+      task_time: '10:15',
+      duration: 50
     })
   })
 
-  it('deletes selected daily plans through CRUD instead of RPC', async () => {
-    db.dailyPlans.delete.mockResolvedValue({ id: 'dp-1' })
+  it('falls back to selected goal time when current monthly plan has no time', async () => {
+    db.dailyPlans.create.mockResolvedValue({ id: 'dp-new' })
+    hasTaskDays = new Set()
+
+    monthlyPlansCache.p1 = [
+      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01', task_time: null, duration: null }
+    ]
+    selectedGoal.value = { plan_id: 'p1', task_time: '06:30', duration: 40 }
+    selectedMonth.value = 4
+    selectedDates[4] = [3]
+    batchInput.value = '晨读'
+
+    const { applyBatchTask } = useDirectionBatch()
+    await applyBatchTask()
+
+    expect(db.dailyPlans.create).toHaveBeenCalledWith(expect.objectContaining({
+      day: '2026-04-03',
+      title: '晨读',
+      task_time: '06:30',
+      duration: 40
+    }))
+  })
+
+  it('deletes selected daily plans in one bulk request instead of one by one', async () => {
+    db.dailyPlans.deleteByIds.mockResolvedValue({})
 
     monthlyPlansCache.p1 = [
       { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
@@ -143,7 +167,7 @@ describe('useDirectionBatch', () => {
     await handleBatchDelete()
 
     expect(db.rpc).not.toHaveBeenCalled()
-    expect(db.dailyPlans.delete).toHaveBeenNthCalledWith(1, 'dp-1')
-    expect(db.dailyPlans.delete).toHaveBeenNthCalledWith(2, 'dp-2')
+    expect(db.dailyPlans.deleteByIds).toHaveBeenCalledWith(['dp-1', 'dp-2'])
+    expect(db.dailyPlans.delete).not.toHaveBeenCalled()
   })
 })

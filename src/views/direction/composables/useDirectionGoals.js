@@ -25,6 +25,11 @@ export function useDirectionGoals() {
   // 写操作按钮 loading 状态
   const isSubmitting = ref(false)
 
+  const resolvePlanTiming = (source = {}, fallback = {}) => ({
+    task_time: source.task_time ?? fallback.task_time ?? '09:00',
+    duration: source.duration ?? fallback.duration ?? 30
+  })
+
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
     const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
@@ -98,6 +103,10 @@ export function useDirectionGoals() {
       }
 
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
+      const currentTiming = resolvePlanTiming(
+        { task_time: newTaskTime, duration: newDuration },
+        goalToUpdate
+      )
 
       const existingMonthlyPlans = getMonthlyPlansByPlanId(planId)
       const existingMonths = existingMonthlyPlans
@@ -120,16 +129,21 @@ export function useDirectionGoals() {
             month: `${year}-${String(m).padStart(2, '0')}-01`,
             status: 'active',
             priority: 2,
-            task_time: null,
-            duration: null
+            task_time: currentTiming.task_time,
+            duration: currentTiming.duration
           }))
         }
       }
 
-      const updatePromises = []
-      if (newTitle !== undefined) {
-        updatePromises.push(...existingMonthlyPlans.map(mp => db.monthlyPlans.update(mp.id, { title: newTitle })))
-      }
+      const updatePromises = existingMonthlyPlans
+        .map(mp => {
+          const payload = {}
+          if (newTitle !== undefined) payload.title = newTitle
+          if (newTaskTime !== undefined && !mp.task_time) payload.task_time = currentTiming.task_time
+          if (newDuration !== undefined && !mp.duration) payload.duration = currentTiming.duration
+          return Object.keys(payload).length > 0 ? db.monthlyPlans.update(mp.id, payload) : null
+        })
+        .filter(Boolean)
 
       const toDelete = existingMonthlyPlans.filter(mp => {
         const m = getDateOnlyMonth(mp.month)
@@ -216,14 +230,15 @@ export function useDirectionGoals() {
           month: `${year}-${String(m).padStart(2, '0')}-01`,
           status: 'active',
           priority: 2,
-          task_time: null,
-          duration: null
+          task_time: planData.task_time,
+          duration: planData.duration
         }
         promises.push(db.monthlyPlans.create(monthlyPlanData))
       }
 
       await Promise.all(promises)
       await loadMonthlyPlans(createdPlan.id)
+      await fetchData()
       showAddModal.value = false
     } catch (e) {
       console.error('Add goal failed:', e)

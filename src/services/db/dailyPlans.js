@@ -94,6 +94,20 @@ export const dailyPlans = {
     },
 
     /**
+     * 批量删除日计划，避免选中多天时逐条发起删除请求。
+     * @param {string[]} ids - 日计划 ID 列表
+     * @returns {Promise<Array>} 删除结果
+     */
+    async deleteByIds(ids) {
+        if (!Array.isArray(ids) || ids.length === 0) return []
+
+        return await supabase.query(q => q
+            .delete()
+            .in('id', ids)
+        )
+    },
+
+    /**
      * 按日期查询日计划，包含完整的关联数据（三级级联）
      * 查询路径：daily_plans → monthly_plans → plans
      * @param {Date} date - 要查询的日期对象

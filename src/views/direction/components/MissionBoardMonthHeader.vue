@@ -14,28 +14,29 @@
             @keyup.enter="() => saveMonthlyPlan(month, { title: monthlyMainGoals[goalKey(month)]?.title })"
           />
 
-          <div class="month-meta">
-            <div class="month-meta-item">
-              <span class="month-meta-label">默认时间</span>
+          <div class="month-meta" aria-label="月目标默认安排">
+            <div class="month-meta-pill">
+              <Clock3 class="month-meta-icon" :size="14" />
               <Input
                 type="time"
-                class="month-meta-input"
+                class="month-time-input"
                 :model-value="monthlyMainGoals[goalKey(month)]?.task_time || ''"
                 @update:model-value="val => { if (monthlyMainGoals[goalKey(month)]) monthlyMainGoals[goalKey(month)].task_time = val || null }"
                 @blur="() => saveMonthlyPlan(month, { task_time: monthlyMainGoals[goalKey(month)]?.task_time || null })"
                 @keyup.enter="() => saveMonthlyPlan(month, { task_time: monthlyMainGoals[goalKey(month)]?.task_time || null })"
               />
-            </div>
-            <div class="month-meta-item">
-              <span class="month-meta-label">默认时长(分)</span>
+              <span class="month-meta-divider"></span>
+              <Timer class="month-meta-icon" :size="14" />
               <Input
                 type="number"
-                class="month-meta-input"
+                min="1"
+                class="month-duration-input"
                 :model-value="monthlyMainGoals[goalKey(month)]?.duration || ''"
                 @update:model-value="val => { if (monthlyMainGoals[goalKey(month)]) monthlyMainGoals[goalKey(month)].duration = val ? parseInt(val) : null }"
                 @blur="() => saveMonthlyPlan(month, { duration: monthlyMainGoals[goalKey(month)]?.duration || null })"
                 @keyup.enter="() => saveMonthlyPlan(month, { duration: monthlyMainGoals[goalKey(month)]?.duration || null })"
               />
+              <span class="month-duration-unit">分</span>
             </div>
           </div>
         </div>
@@ -45,16 +46,16 @@
             {{ monthlyMainGoals[goalKey(month)]?.title || '暂无计划' }}
           </h3>
           <span v-if="monthlyMainGoals[goalKey(month)]?.task_time" class="month-time">
-            {{ monthlyMainGoals[goalKey(month)]?.task_time.slice(0, 5) }} ({{ monthlyMainGoals[goalKey(month)]?.duration }}m)
+            {{ monthlyMainGoals[goalKey(month)]?.task_time.slice(0, 5) }}
+            <span v-if="monthlyMainGoals[goalKey(month)]?.duration" class="month-time-duration">
+              {{ monthlyMainGoals[goalKey(month)]?.duration }} 分
+            </span>
           </span>
         </div>
       </div>
     </div>
 
     <div class="month-header-right">
-      <Button class="month-toggle" variant="ghost" size="sm" @click.stop="toggleMonth(month)">
-        {{ selectedMonth === month ? '收起面板' : '展开规划' }}
-      </Button>
       <ChevronDown class="month-chevron" :class="{ 'is-open': selectedMonth === month }" :size="18" />
     </div>
   </div>
@@ -63,8 +64,7 @@
 <script setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
-import { ChevronDown } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
+import { ChevronDown, Clock3, Timer } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 
 const { month } = defineProps({
@@ -83,7 +83,7 @@ const { selectedMonth, goalKey, toggleMonth } = useDirectionSelection()
 @reference "@/assets/tw-theme.css";
 
 .month-header {
-  @apply px-6 py-4 cursor-pointer flex items-center justify-between bg-zinc-50/30 transition-colors hover:bg-zinc-100/50;
+  @apply px-6 py-5 cursor-pointer flex items-center justify-between bg-zinc-50/30 transition-colors hover:bg-zinc-100/50;
 }
 
 .month-header-left {
@@ -95,31 +95,49 @@ const { selectedMonth, goalKey, toggleMonth } = useDirectionSelection()
 }
 
 .month-title-area {
-  @apply flex-1 min-w-0 max-w-xl;
+  @apply flex-1 min-w-0;
 }
 
 .month-edit {
-  @apply mb-1 flex flex-col gap-2;
+  @apply flex items-center gap-4 min-w-0;
 }
 
 .month-input {
-  @apply bg-background text-lg font-semibold tracking-tight h-10 shadow-sm w-full;
+  @apply h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-lg font-semibold tracking-tight shadow-none focus-visible:ring-1;
 }
 
 .month-meta {
-  @apply flex gap-4 items-center pl-1;
+  @apply flex items-center gap-2 shrink-0;
 }
 
-.month-meta-item {
-  @apply flex flex-col gap-1 w-32;
+
+.month-meta-pill {
+  @apply h-10 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-background px-3 shadow-sm transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10;
 }
 
-.month-meta-label {
-  @apply text-[10px] font-bold text-muted-foreground uppercase tracking-wider;
+.month-meta-icon {
+  @apply text-muted-foreground/50 shrink-0;
 }
 
-.month-meta-input {
-  @apply h-8 text-sm;
+.month-meta-divider {
+  @apply h-4 w-px bg-zinc-200 mx-0.5;
+}
+
+.month-time-input,
+.month-duration-input {
+  @apply h-6 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0;
+}
+
+.month-time-input {
+  @apply w-[74px] font-mono;
+}
+
+.month-duration-input {
+  @apply w-8 text-center font-mono;
+}
+
+.month-duration-unit {
+  @apply text-[10px] font-bold text-muted-foreground/50;
 }
 
 .month-title {
@@ -135,15 +153,15 @@ const { selectedMonth, goalKey, toggleMonth } = useDirectionSelection()
 }
 
 .month-time {
-  @apply text-xs font-mono text-muted-foreground/60;
+  @apply inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-mono text-muted-foreground/70;
+}
+
+.month-time-duration {
+  @apply border-l border-zinc-300 pl-1.5 font-sans text-[10px] font-bold;
 }
 
 .month-header-right {
-  @apply flex items-center gap-4;
-}
-
-.month-toggle {
-  @apply h-7 px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-primary hidden md:flex;
+  @apply flex items-center shrink-0 ml-3;
 }
 
 .month-chevron {
