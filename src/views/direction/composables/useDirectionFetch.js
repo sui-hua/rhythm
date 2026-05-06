@@ -40,6 +40,23 @@ import {
 let setupDone = false
 let isInitializing = false
 
+const resolveDefaultMonthlyPlan = (monthlyPlanList) => {
+  const sorted = monthlyPlanList
+    .map(mp => ({
+      item: mp,
+      month: getDateOnlyMonth(mp.month)
+    }))
+    .filter(({ month }) => month !== null)
+    .sort((a, b) => a.month - b.month)
+
+  if (sorted.length === 0) return null
+
+  const currentMonth = new Date().getMonth() + 1
+  const current = sorted.find(({ month }) => month === currentMonth)
+
+  return current?.item || sorted[0].item
+}
+
 export { parseDateOnly } from '@/views/direction/utils/dateOnly'
 
 export function useDirectionFetch() {
@@ -126,22 +143,14 @@ export function useDirectionFetch() {
         monthlyPlans.value = monthlyPlansCache[selectedGoal.value.plan_id] || []
       }
 
-      // 选中第一个目标的第一个月，并预加载该月 dailyPlans
+      // 当前月在目标范围内时优先展开当前月，否则展开排序后的第一个月
       if (selectedGoal.value && monthlyPlans.value.length > 0) {
-        // 按月份排序，选中第一个月
-        const sorted = [...monthlyPlans.value].sort((a, b) => {
-          const mA = getDateOnlyMonth(a.month) || 0
-          const mB = getDateOnlyMonth(b.month) || 0
-          return mA - mB
-        })
-        const firstMp = sorted[0]
-        if (firstMp) {
-          const firstMonth = getDateOnlyMonth(firstMp.month)
-          if (firstMonth) {
-            selectedMonth.value = firstMonth
-            // 预加载该月的 dailyPlans
-            await loadDailyPlans(firstMp.id, { force: true })
-          }
+        const targetMp = resolveDefaultMonthlyPlan(monthlyPlans.value)
+        const targetMonth = targetMp ? getDateOnlyMonth(targetMp.month) : null
+
+        if (targetMp && targetMonth) {
+          selectedMonth.value = targetMonth
+          await loadDailyPlans(targetMp.id, { force: true })
         }
       }
     } catch (e) {
@@ -188,20 +197,14 @@ export function useDirectionFetch() {
       await loadMonthlyPlans(planId)
       monthlyPlans.value = monthlyPlansCache[planId] || []
 
-      // 选中第一个月并预加载
+      // 当前月在目标范围内时优先展开当前月，否则展开排序后的第一个月
       if (monthlyPlans.value.length > 0) {
-        const sorted = [...monthlyPlans.value].sort((a, b) => {
-          const mA = getDateOnlyMonth(a.month) || 0
-          const mB = getDateOnlyMonth(b.month) || 0
-          return mA - mB
-        })
-        const firstMp = sorted[0]
-        if (firstMp) {
-          const firstMonth = getDateOnlyMonth(firstMp.month)
-          if (firstMonth) {
-            selectedMonth.value = firstMonth
-            await loadDailyPlans(firstMp.id, { force: true })
-          }
+        const targetMp = resolveDefaultMonthlyPlan(monthlyPlans.value)
+        const targetMonth = targetMp ? getDateOnlyMonth(targetMp.month) : null
+
+        if (targetMp && targetMonth) {
+          selectedMonth.value = targetMonth
+          await loadDailyPlans(targetMp.id, { force: true })
         }
       }
     })
