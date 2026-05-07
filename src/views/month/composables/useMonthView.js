@@ -45,6 +45,9 @@ export const useMonthView = () => {
 
   /** @type {Ref<Array>} 当月所有任务列表 */
   const tasks = ref([])
+  const route = useRoute()
+  const router = useRouter()
+  const dateStore = useDateStore()
 
   /**
    * 路由日期上下文计算属性

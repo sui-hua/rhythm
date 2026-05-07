@@ -22,6 +22,7 @@
 - `description`
 - `year`
 - `category_id`
+- `carry_over_lookback_days`
 - `task_time`
 - `duration`
 - `status`
@@ -32,6 +33,7 @@
 说明：
 
 - 已包含 Day / Direction 依赖的 `task_time`、`duration`
+- `carry_over_lookback_days` 用于 Day 页面只读补查历史未完成目标日计划，`0` 表示关闭
 - `category_id` 外键指向 `plans_category.id`
 
 ### `public.monthly_plans`

@@ -160,7 +160,7 @@ export function useDayData() {
 
             const [fetchedTasks, fetchedPlans, allHabits, dayHabitLogs] = await Promise.all([
                 db.tasks.list(startOfDay, endOfDay),
-                db.dailyPlans.listByDate(startOfDay),
+                db.dailyPlans.listForDayView(startOfDay),
                 db.habits.listLite(),
                 db.habits.listLogsByDate(startOfDay, endOfDay)
             ])
@@ -201,6 +201,11 @@ export function useDayData() {
      */
     const dailySchedule = computed(() => {
         return buildDayExecutionItems({
+            targetDate: new Date(
+                routeDateContext.value.year,
+                routeDateContext.value.month - 1,
+                routeDateContext.value.day
+            ),
             tasks: tasks.value,
             dailyPlans: dailyPlans.value,
             habits: habits.value,

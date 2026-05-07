@@ -42,6 +42,18 @@
 import { formatDuration } from '@/utils/formatDuration'
 import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
 
+const toDateOnly = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+const formatCarryOverLabel = (dateOnly) => {
+    const [, month, day] = dateOnly.split('-').map(Number)
+    return `原计划 ${month}月${day}日`
+}
+
 /**
  * 构建日执行项数组
  *
@@ -74,9 +86,10 @@ import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
  *   habitLogs: []
  * })
  */
-export function buildDayExecutionItems({ tasks = [], dailyPlans = [], habits = [], habitLogs = [] }) {
+export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPlans = [], habits = [], habitLogs = [] }) {
     /** @type {Array} 执行项数组 */
     const schedule = []
+    const targetDateStr = targetDate ? toDateOnly(targetDate) : null
 
     // ============================================
     // 阶段一：处理任务（sourceLabel: 'task'）
@@ -153,6 +166,15 @@ export function buildDayExecutionItems({ tasks = [], dailyPlans = [], habits = [
             durationStr = '-'
         }
 
+        // 这里不改变原始 day，只在展示层标记它是历史未完成补查项，
+        // 这样 Sidebar 和 Timeline 都能用同一份语义提示用户“这不是改了日期”。
+        const isCarryOver = Boolean(
+            targetDateStr &&
+            plan.day &&
+            plan.day < targetDateStr &&
+            !isDailyPlanCompleted(plan.status)
+        )
+
         schedule.push({
             id: plan.id,
             sourceLabel: 'daily_plan',
@@ -166,7 +188,10 @@ export function buildDayExecutionItems({ tasks = [], dailyPlans = [], habits = [
             category: '今日计划',
             title: plan.title,
             description: plan.description || '',
-            completed: isDailyPlanCompleted(plan.status)
+            completed: isDailyPlanCompleted(plan.status),
+            isCarryOver,
+            carryOverSourceDate: isCarryOver ? plan.day : null,
+            carryOverLabel: isCarryOver ? formatCarryOverLabel(plan.day) : ''
         })
     })
 

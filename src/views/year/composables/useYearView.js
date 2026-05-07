@@ -44,6 +44,9 @@ export const useYearView = () => {
 
   /** @type {import('vue').Ref<Array>} 当前年度所有习惯的打卡日志 */
   const yearLogs = ref([])
+  const route = useRoute()
+  const router = useRouter()
+  const dateStore = useDateStore()
 
   /**
    * 从路由参数解析出的年份

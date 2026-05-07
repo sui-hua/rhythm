@@ -40,6 +40,31 @@
 import client from '@/config/supabase'
 
 const supabase = client.createBase('daily_plans')
+const plansBase = client.createBase('plans')
+
+const toDateOnly = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+const subtractDays = (date, days) => {
+    const next = new Date(date)
+    next.setDate(next.getDate() - days)
+    return next
+}
+
+async function getMaxCarryOverLookbackDays() {
+    const rows = await plansBase.query(q => q
+        .select('carry_over_lookback_days')
+        .gt('carry_over_lookback_days', 0)
+        .order('carry_over_lookback_days', { ascending: false })
+        .limit(1)
+    )
+
+    return Number(rows?.[0]?.carry_over_lookback_days || 0)
+}
 
 export const dailyPlans = {
     /**
@@ -114,10 +139,7 @@ export const dailyPlans = {
      * @returns {Promise<{data: Array, error: object|null}>} 日计划列表及其关联的月度计划和上级目标信息
      */
     async listByDate(date) {
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const dateStr = `${year}-${month}-${day}`
+        const dateStr = toDateOnly(date)
 
         return await supabase.query(q => q
             .select(`
@@ -135,5 +157,56 @@ export const dailyPlans = {
             `)
             .eq('day', dateStr)
         )
+    },
+
+    /**
+     * Day 页面专用查询：
+     * 1. 保留当天原始 daily_plans
+     * 2. 只读补查目标配置窗口内的历史未完成项
+     * 3. 不改写 daily_plans.day，只在读取层把它们一起带出来
+     * @param {Date} date - Day 页面当前查看的日期
+     * @returns {Promise<Array>} 当天项与历史未完成项的合并结果
+     */
+    async listForDayView(date) {
+        const targetDateStr = toDateOnly(date)
+        const maxLookbackDays = await getMaxCarryOverLookbackDays()
+
+        if (maxLookbackDays === 0) {
+            return await this.listByDate(date)
+        }
+
+        const earliestDateStr = toDateOnly(subtractDays(date, maxLookbackDays))
+        const rows = await supabase.query(q => q
+            .select(`
+                *,
+                monthly_plans (
+                    id,
+                    task_time,
+                    duration,
+                    plans (
+                        id,
+                        task_time,
+                        duration,
+                        carry_over_lookback_days
+                    )
+                )
+            `)
+            .gte('day', earliestDateStr)
+            .lte('day', targetDateStr)
+            .order('day', { ascending: true })
+        )
+
+        return (rows || []).filter((plan) => {
+            if (plan.day === targetDateStr) return true
+            if (plan.status !== 0) return false
+
+            const lookbackDays = Number(plan.monthly_plans?.plans?.carry_over_lookback_days || 0)
+            if (lookbackDays <= 0) return false
+
+            // 每个目标只在自己的窗口内回看历史未完成项，避免把更久之前的积压任务误带到今天。
+            const earliestAllowed = subtractDays(date, lookbackDays)
+            const planDate = new Date(`${plan.day}T00:00:00`)
+            return planDate >= earliestAllowed && plan.day < targetDateStr
+        })
     }
 }

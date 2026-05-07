@@ -87,17 +87,36 @@ export function useDirectionGoals() {
     showAddModal.value = true
   }
 
-  const updateGoalData = async (goalToUpdate, newTitle, newCategoryId, newTaskTime, newDuration) => {
+  const updateGoalData = async (
+    goalToUpdate,
+    newTitle,
+    newCategoryId,
+    newTaskTime,
+    newDuration,
+    newCarryOverLookbackDays
+  ) => {
     try {
       const planId = goalToUpdate.plan_id
       const year = new Date().getFullYear()
 
-      if (planId && (newTitle !== undefined || newCategoryId !== undefined || newTaskTime !== undefined || newDuration !== undefined)) {
+      if (
+        planId &&
+        (
+          newTitle !== undefined ||
+          newCategoryId !== undefined ||
+          newTaskTime !== undefined ||
+          newDuration !== undefined ||
+          newCarryOverLookbackDays !== undefined
+        )
+      ) {
         const updates = {}
         if (newTitle !== undefined) updates.title = newTitle
         if (newCategoryId !== undefined) updates.category_id = newCategoryId
         if (newTaskTime !== undefined) updates.task_time = newTaskTime
         if (newDuration !== undefined) updates.duration = newDuration
+        if (newCarryOverLookbackDays !== undefined) {
+          updates.carry_over_lookback_days = newCarryOverLookbackDays
+        }
 
         await db.plans.update(planId, updates)
       }
@@ -170,7 +189,8 @@ export function useDirectionGoals() {
       updatedGoal.title,
       updatedGoal.category_id,
       updatedGoal.task_time,
-      updatedGoal.duration
+      updatedGoal.duration,
+      updatedGoal.carry_over_lookback_days
     )
     isSubmitting.value = false
 
@@ -214,6 +234,8 @@ export function useDirectionGoals() {
         category_id: newGoal.category_id || null,
         task_time: newGoal.task_time || '09:00',
         duration: newGoal.duration || 30,
+        // 目标级配置只影响 Day 页查询窗口，不改写 daily_plans.day。
+        carry_over_lookback_days: newGoal.carry_over_lookback_days || 0,
         status: 'active',
         priority: 2,
       }

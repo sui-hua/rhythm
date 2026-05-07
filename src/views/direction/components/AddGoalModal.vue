@@ -82,6 +82,43 @@
           <TimePicker v-model="form.task_time" label="任务时间" id="task-time" />
           <DurationPicker v-model="form.duration" label="预计时长" id="task-duration" />
         </div>
+
+        <div class="form-group gap-3">
+          <div class="carry-over-row">
+            <Label class="carry-over-label">未完成延后展示</Label>
+
+            <div class="carry-over-segmented" role="group" aria-label="未完成延后展示开关">
+              <button
+                type="button"
+                class="carry-over-segmented__button"
+                :class="{ 'carry-over-segmented__button--active': !form.carryOverEnabled }"
+                @click="form.carryOverEnabled = false"
+              >
+                关闭
+              </button>
+              <button
+                type="button"
+                class="carry-over-segmented__button"
+                :class="{ 'carry-over-segmented__button--active': form.carryOverEnabled }"
+                @click="form.carryOverEnabled = true"
+              >
+                开启
+              </button>
+            </div>
+          </div>
+
+          <div v-if="form.carryOverEnabled" class="carry-over-body">
+            <Label for="goal-carry-over-days" class="form-label">延后展示天数</Label>
+            <Input
+              id="goal-carry-over-days"
+              v-model.number="form.carryOverLookbackDays"
+              type="number"
+              min="1"
+              step="1"
+              class="form-input"
+            />
+          </div>
+        </div>
       </div>
 
       <DialogFooter class="modal-footer">
@@ -159,7 +196,9 @@ const form = reactive({
   endMonth: (new Date().getMonth() + 1).toString(),
   category_id: 'none',
   task_time: '09:00',
-  duration: 0.5
+  duration: 0.5,
+  carryOverEnabled: false,
+  carryOverLookbackDays: 1
 })
 
 watch(() => showAddModal.value, (newVal) => {
@@ -171,6 +210,8 @@ watch(() => showAddModal.value, (newVal) => {
       form.category_id = editingGoal.value.category_id || 'none'
       form.task_time = editingGoal.value.task_time || '09:00'
       form.duration = editingGoal.value.duration ? editingGoal.value.duration / 60 : 0.5
+      form.carryOverEnabled = Number(editingGoal.value.carry_over_lookback_days || 0) > 0
+      form.carryOverLookbackDays = Math.max(1, Number(editingGoal.value.carry_over_lookback_days || 1))
     } else {
       form.title = ''
       form.category_id = 'none'
@@ -178,6 +219,8 @@ watch(() => showAddModal.value, (newVal) => {
       form.endMonth = (new Date().getMonth() + 1).toString()
       form.task_time = '09:00'
       form.duration = 0.5
+      form.carryOverEnabled = false
+      form.carryOverLookbackDays = 1
     }
   }
 })
@@ -200,6 +243,10 @@ const submit = withLoadingLock(async () => {
     category_id: form.category_id === 'none' ? null : form.category_id,
     task_time: form.task_time,
     duration: Math.round(form.duration * 60),
+    // 关闭时回写 0，避免旧窗口值继续影响 Day 页只读补查。
+    carry_over_lookback_days: form.carryOverEnabled
+      ? Math.max(1, Number(form.carryOverLookbackDays || 1))
+      : 0,
     status: 'active',
   }
 
@@ -272,5 +319,29 @@ const submit = withLoadingLock(async () => {
 
 .btn-submit {
   @apply h-10 rounded-lg font-bold px-8 shadow-md hover:scale-[1.02] active:scale-95 transition-all;
+}
+
+.carry-over-row {
+  @apply flex items-center justify-between gap-4;
+}
+
+.carry-over-label {
+  @apply text-sm font-bold tracking-wide text-foreground leading-none;
+}
+
+.carry-over-segmented {
+  @apply flex h-10 w-fit overflow-hidden rounded-xl border border-input bg-background p-1;
+}
+
+.carry-over-segmented__button {
+  @apply min-w-16 rounded-lg px-3 text-xs font-bold text-muted-foreground transition-all;
+}
+
+.carry-over-segmented__button--active {
+  @apply bg-foreground text-background shadow-sm;
+}
+
+.carry-over-body {
+  @apply grid gap-2 rounded-2xl border border-input bg-background p-4;
 }
 </style>

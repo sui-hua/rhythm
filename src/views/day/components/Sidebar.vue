@@ -84,6 +84,12 @@
                 <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </div>
+            <p
+              v-if="item.isCarryOver"
+              class="text-[11px] font-medium text-amber-600 dark:text-amber-400 truncate"
+            >
+              {{ item.carryOverLabel }}
+            </p>
           </div>
         </div>
       </div>
@@ -119,6 +125,12 @@
                 <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </div>
+            <p
+              v-if="item.isCarryOver"
+              class="text-[11px] font-medium text-amber-600 dark:text-amber-400 truncate"
+            >
+              {{ item.carryOverLabel }}
+            </p>
           </div>
         </div>
       </div>

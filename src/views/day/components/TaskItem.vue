@@ -34,6 +34,12 @@
             {{ task.title }}
           </h3>
         </div>
+        <p
+          v-if="task.isCarryOver"
+          class="ml-4 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400"
+        >
+          {{ task.carryOverLabel }}
+        </p>
       </template>
 
       <!-- 长任务详细布局 (>= 0.8h) -->
@@ -44,6 +50,13 @@
           </Badge>
           <span class="text-[11px] font-mono font-medium text-zinc-400 tracking-tight transition-colors group-hover:text-zinc-500">{{ task.time }} — {{ task.duration }}</span>
         </div>
+
+        <p
+          v-if="task.isCarryOver"
+          class="ml-4 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400"
+        >
+          {{ task.carryOverLabel }}
+        </p>
         
         <div class="flex items-center gap-2.5 mt-0.5 w-full shrink-0">
           <div 

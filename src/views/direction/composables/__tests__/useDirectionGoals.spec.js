@@ -132,6 +132,25 @@ describe('useDirectionGoals', () => {
     }))
   })
 
+  it('writes carry-over lookback days into created plans when adding a goal', async () => {
+    const { handleAddGoal } = useDirectionGoals()
+
+    await handleAddGoal({
+      title: '读书',
+      description: '',
+      startMonth: 4,
+      endMonth: 4,
+      category_id: null,
+      task_time: '07:30',
+      duration: 45,
+      carry_over_lookback_days: 3
+    })
+
+    expect(db.plans.create).toHaveBeenCalledWith(expect.objectContaining({
+      carry_over_lookback_days: 3
+    }))
+  })
+
   it('refreshes direction data after adding a goal', async () => {
     const { handleAddGoal } = useDirectionGoals()
 
@@ -170,6 +189,28 @@ describe('useDirectionGoals', () => {
       month: expect.stringMatching(/-05-01$/),
       task_time: '08:00',
       duration: 30
+    }))
+  })
+
+  it('writes carry-over lookback days into updated plans when editing a goal', async () => {
+    editingGoal.value = {
+      plan_id: 'p1',
+      title: '目标',
+      carry_over_lookback_days: 0
+    }
+
+    const { handleUpdateGoal } = useDirectionGoals()
+
+    await handleUpdateGoal({
+      title: '目标',
+      category_id: null,
+      task_time: '09:00',
+      duration: 30,
+      carry_over_lookback_days: 5
+    })
+
+    expect(db.plans.update).toHaveBeenCalledWith('p1', expect.objectContaining({
+      carry_over_lookback_days: 5
     }))
   })
 })

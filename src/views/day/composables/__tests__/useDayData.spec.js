@@ -15,6 +15,7 @@ vi.mock('@/services/database', () => ({
       update: vi.fn()
     },
     dailyPlans: {
+      listForDayView: vi.fn(),
       listByDate: vi.fn(),
       update: vi.fn()
     },
@@ -61,6 +62,7 @@ describe('useDayData', () => {
     })
 
     db.tasks.list.mockResolvedValue([])
+    db.dailyPlans.listForDayView.mockResolvedValue([])
     db.dailyPlans.listByDate.mockResolvedValue([])
     db.dailyPlans.update.mockResolvedValue({})
     db.habits.listLite.mockResolvedValue([])
@@ -125,5 +127,19 @@ describe('useDayData', () => {
     })
 
     expect(db.dailyPlans.update).toHaveBeenCalledWith('plan-1', { status: 1 })
+  })
+
+  it('fetches daily plans through the day-view carry-over query', async () => {
+    db.dailyPlans.listForDayView.mockResolvedValue([
+      { id: 'plan-today', title: '今天任务', day: '2026-04-28', status: 0, task_time: '09:00', duration: 30 },
+      { id: 'plan-old', title: '昨天任务', day: '2026-04-27', status: 0, task_time: '10:00', duration: 30 }
+    ])
+
+    const { fetchTasks, dailySchedule } = useDayData()
+    await fetchTasks({ showLoading: false })
+
+    expect(db.dailyPlans.listForDayView).toHaveBeenCalledTimes(1)
+    expect(db.dailyPlans.listForDayView).toHaveBeenCalledWith(expect.any(Date))
+    expect(dailySchedule.value.filter(item => item.type === 'daily_plan')).toHaveLength(2)
   })
 })

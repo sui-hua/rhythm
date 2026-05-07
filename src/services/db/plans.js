@@ -64,6 +64,7 @@ export const plans = {
      * @param {number} [plan.priority] - 优先级（数值越大优先级越高）
      * @param {string} [plan.category_id] - 关联的分类 ID
      * @param {string} [plan.description] - 目标描述
+     * @param {number} [plan.carry_over_lookback_days] - Day 页面补查历史未完成日计划的回看天数，0 表示关闭
      * @returns {Promise<SupabaseResponse>} 创建结果
      *
      * @example
@@ -87,6 +88,7 @@ export const plans = {
      * @param {number} [updates.priority] - 优先级
      * @param {string} [updates.category_id] - 关联的分类 ID
      * @param {string} [updates.description] - 目标描述
+     * @param {number} [updates.carry_over_lookback_days] - Day 页面补查历史未完成日计划的回看天数
      * @returns {Promise<SupabaseResponse>} 更新结果
      *
      * @example
