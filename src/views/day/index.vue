@@ -65,8 +65,7 @@
       />
 
       <!-- Main Timeline Area -->
-      <div class="relative flex-1 overflow-hidden">
-       
+      <div class="relative flex flex-1 flex-col overflow-hidden">
         <Timeline
           ref="timeline"
           :class="['transition-all duration-300 ease-in-out flex-1', isReady ? 'opacity-100' : 'opacity-0']"
@@ -192,10 +191,6 @@ import {
   MOBILE_SIDEBAR_WIDTH
 } from '@/views/day/composables/mobileLayers'
 import { useNotifications } from '@/composables/useNotifications'
-import PageIntroBanner from '@/components/PageIntroBanner.vue'
-import { getPageNarrative } from '@/config/pageNarratives'
-
-const narrative = getPageNarrative('day')
 
 const AddEventModal = defineAsyncComponent(() => import('@/views/day/components/AddEventModal.vue'))
 const MobileAddEventDrawer = defineAsyncComponent(() => import('@/views/day/components/MobileAddEventDrawer.vue'))
