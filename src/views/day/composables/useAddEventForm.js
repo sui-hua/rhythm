@@ -95,6 +95,28 @@ export function useAddEventForm(props, emit) {
         description: ''
     })
 
+    const touched = reactive({
+        title: false,
+        time: false,
+        duration: false
+    })
+
+    const markAllTouched = () => {
+        Object.keys(touched).forEach((field) => {
+            touched[field] = true
+        })
+    }
+
+    const resetTouched = () => {
+        Object.keys(touched).forEach((field) => {
+            touched[field] = false
+        })
+    }
+
+    const touchField = (field) => {
+        if (field in touched) touched[field] = true
+    }
+
     /**
      * 记忆上一次新建事件时使用的时间
      * 下次新建时会自动回填该时间，提升连续创建效率
@@ -116,6 +138,8 @@ export function useAddEventForm(props, emit) {
      */
     watch(() => props.show, (newShow) => {
         if (newShow) {
+            resetTouched()
+
             if (props.initialData) {
                 // ========================================
                 // 编辑模式：回显已有数据
@@ -189,10 +213,16 @@ export function useAddEventForm(props, emit) {
      * 
      * @type {import('vue').ComputedRef<Object>}
      */
-    const errors = computed(() => ({
+    const validationErrors = computed(() => ({
         title: validationRules.title(form.title),
         time: validationRules.time(form.time),
         duration: validationRules.duration(form.duration)
+    }))
+
+    const errors = computed(() => ({
+        title: touched.title ? validationErrors.value.title : '',
+        time: touched.time ? validationErrors.value.time : '',
+        duration: touched.duration ? validationErrors.value.duration : ''
     }))
 
     /**
@@ -202,7 +232,7 @@ export function useAddEventForm(props, emit) {
      * @type {import('vue').ComputedRef<boolean>}
      */
     const isValid = computed(() => {
-        return !errors.value.title && !errors.value.time && !errors.value.duration
+        return !validationErrors.value.title && !validationErrors.value.time && !validationErrors.value.duration
     })
 
     /**
@@ -223,7 +253,10 @@ export function useAddEventForm(props, emit) {
      * @returns {Promise<void>}
      */
     const submit = withLoadingLock(async () => {
-        if (!isValid.value) return
+        if (!isValid.value) {
+            markAllTouched()
+            return
+        }
 
         isSubmitting.value = true
         const [hours, minutes] = form.time.split(':').map(Number)
@@ -332,6 +365,7 @@ export function useAddEventForm(props, emit) {
         isValid,
         submit,
         handleDelete,
-        isSubmitting
+        isSubmitting,
+        touchField
     }
 }

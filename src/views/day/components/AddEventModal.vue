@@ -31,6 +31,7 @@
               v-model="form.title"
               placeholder="例如：周会 / 健身"
               class="h-9"
+              @blur="touchField('title')"
             />
             <!-- 错误提示：当 title 验证失败时显示 -->
             <p v-if="errors.title" class="text-xs text-rose-500">{{ errors.title }}</p>
@@ -203,7 +204,7 @@ const emit = defineEmits(['close', 'refresh', 'update:show'])
  * submit: 提交表单处理函数
  * handleDelete: 删除任务处理函数
  */
-const { form, isHabit, errors, isValid, submit, handleDelete } = useAddEventForm(props, emit)
+const { form, isHabit, errors, isValid, submit, handleDelete, touchField } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>

@@ -48,6 +48,7 @@
                 type="text"
                 class="w-full bg-zinc-50 dark:bg-zinc-800/50 border-none rounded-2xl px-4 py-3 text-base text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary/20 transition-all"
                 placeholder="例如：早起锻炼 / 部门周会"
+                @blur="touchField('title')"
               />
               <p v-if="errors.title" class="text-xs text-rose-500 mt-1 px-1">{{ errors.title }}</p>
             </div>
@@ -180,7 +181,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show'])
 
-const { form, isHabit, errors, isValid, submit, handleDelete, isSubmitting } = useAddEventForm(props, emit)
+const { form, isHabit, errors, isValid, submit, handleDelete, isSubmitting, touchField } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>
