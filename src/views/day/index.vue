@@ -65,14 +65,8 @@
       />
 
       <!-- Main Timeline Area -->
-      <div class="relative flex-1 flex flex-col overflow-hidden">
-        <div class="shrink-0 px-6 pt-6">
-          <PageIntroBanner
-            eyebrow="今日执行"
-            :title="narrative.title"
-            :subtitle="narrative.subtitle"
-          />
-        </div>
+      <div class="relative flex-1 overflow-hidden">
+       
         <Timeline
           ref="timeline"
           :class="['transition-all duration-300 ease-in-out flex-1', isReady ? 'opacity-100' : 'opacity-0']"
