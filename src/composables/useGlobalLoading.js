@@ -18,12 +18,22 @@
  * - useGlobalLoading()     → 获取当前 loading 状态
  * - beginGlobalLoading()   → 手动显示 loading
  * - endGlobalLoading()     → 手动隐藏 loading
+ * - beginRouteLoading()    → 路由切换开始时显示 loading
+ * - endRouteLoading()      → 路由切换结束时隐藏 loading
  *
  * @module composables/useGlobalLoading
  * @author rhythm dev team
  * @since 2024
  */
+import NProgress from 'nprogress'
 import { computed, ref } from 'vue'
+
+NProgress.configure({
+  showSpinner: false,
+  trickle: true,
+  trickleSpeed: 120,
+  minimum: 0.08
+})
 
 /**
  * 延迟显示阈值（毫秒）
@@ -68,6 +78,21 @@ let hideTimer = null
  */
 let visibleAt = 0
 
+function startProgressBar() {
+  if (visible.value) return
+  visible.value = true
+  visibleAt = Date.now()
+  hideTimer = null
+  NProgress.start()
+}
+
+function finishProgressBar() {
+  if (!visible.value) return
+  visible.value = false
+  hideTimer = null
+  NProgress.done()
+}
+
 /**
  * 开始全局loading
  * - 增加pending计数
@@ -84,11 +109,21 @@ let visibleAt = 0
 function beginGlobalLoading() {
   pendingCount.value++
   if (pendingCount.value === 1) {
+    clearTimeout(hideTimer)
+    hideTimer = null
     showTimer = setTimeout(() => {
-      visible.value = true
-      visibleAt = Date.now()
+      showTimer = null
+      startProgressBar()
     }, SHOW_DELAY_MS)
   }
+}
+
+/**
+ * 开始路由加载
+ * 路由切换与接口请求共享同一计数器，避免顶部进度条被提前结束。
+ */
+function beginRouteLoading() {
+  beginGlobalLoading()
 }
 
 /**
@@ -111,16 +146,26 @@ function endGlobalLoading() {
   pendingCount.value--
   if (pendingCount.value === 0) {
     clearTimeout(showTimer)
+    showTimer = null
+    if (!visible.value) return
     const elapsed = Date.now() - visibleAt
     const remaining = MIN_VISIBLE_MS - elapsed
     if (remaining > 0) {
       hideTimer = setTimeout(() => {
-        visible.value = false
+        finishProgressBar()
       }, remaining)
     } else {
-      visible.value = false
+      finishProgressBar()
     }
   }
+}
+
+/**
+ * 结束路由加载
+ * 与 beginRouteLoading() 配对使用。
+ */
+function endRouteLoading() {
+  endGlobalLoading()
 }
 
 /**
@@ -171,4 +216,11 @@ function useGlobalLoading() {
   }
 }
 
-export { beginGlobalLoading, endGlobalLoading, trackGlobalLoading, useGlobalLoading }
+export {
+  beginGlobalLoading,
+  beginRouteLoading,
+  endGlobalLoading,
+  endRouteLoading,
+  trackGlobalLoading,
+  useGlobalLoading
+}

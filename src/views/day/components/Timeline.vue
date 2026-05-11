@@ -105,6 +105,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import TaskItem from '@/views/day/components/TaskItem.vue'
 import TimelineMarker from '@/views/day/components/TimelineMarker.vue'
 import { useDayData } from '@/views/day/composables/useDayData'
+import { buildTimelineDisplaySchedule } from '@/views/day/composables/timelineLayout'
 
 // ── Props ─────────────────────────────────────────────────────────────────
 const props = defineProps({
@@ -144,77 +145,8 @@ const { dailySchedule } = useDayData()
  * @returns {Array} 经过布局元数据注入的任务数组
  */
 const displaySchedule = computed(() => {
-  // 注入原始 index，以防改变日常排序后导致点击选区或编辑触发的下标错误
-  const tasks = dailySchedule.value
-    .map((t, idx) => ({ ...t, _originalIndex: idx }))
-    .filter(t => t.startHour !== undefined)
-  
-  // 基于开始时间和持续时长做二次排序
-  tasks.sort((a, b) => a.startHour - b.startHour || (b.durationHours || 1) - (a.durationHours || 1))
-
-  /** 当前重叠区间的列组，每列为一个任务数组 */
-  let columns = []
-  /** 当前重叠区间中所有任务的最晚结束时刻（小时），用于检测区间边界 */
-  let lastEventEnding = null
-  
-  tasks.forEach((task) => {
-    // 若新任务在当前区间结束之后开始，则提交当前列组并重置
-    if (lastEventEnding !== null && task.startHour >= lastEventEnding) {
-        packEvents(columns)
-        columns = []
-        lastEventEnding = null
-    }
-    let placed = false
-    const dur = task.durationHours || 1
-    // 遍历已有列，找到第一个"尾部任务已结束"的列放入
-    for (let col of columns) {
-      const lastInCol = col[col.length - 1]
-      const lastDur = lastInCol.durationHours || 1
-      if (lastInCol.startHour + lastDur <= task.startHour) {
-        col.push(task)
-        placed = true
-        break
-      }
-    }
-    // 所有列均与当前任务重叠，新开一列
-    if (!placed) {
-      columns.push([task])
-    }
-    // 更新当前区间的最晚结束时刻
-    if (lastEventEnding === null || task.startHour + dur > lastEventEnding) {
-      lastEventEnding = task.startHour + dur
-    }
-  })
-  
-  // 处理最后一组列（循环结束后不会再触发区间检测，需手动提交）
-  if (columns.length > 0) {
-     packEvents(columns)
-  }
-  
-  return tasks
+  return buildTimelineDisplaySchedule(dailySchedule.value)
 })
-
-/**
- * packEvents - 将列布局元数据写入任务对象
- *
- * 在一组重叠事件处理完毕后调用。
- * 遍历所有列，为每条任务注入：
- *   - _col     {number} 该任务所在列的索引（0-based）
- *   - _numCols {number} 当前重叠区间共有多少列
- *
- * TaskItem 根据这两个值计算绝对定位的 left 和 width，实现并排布局。
- *
- * @param {Array[]} columns - 二维数组，外层为列，内层为任务
- */
-function packEvents(columns) {
-  const numCols = columns.length
-  columns.forEach((col, i) => {
-    col.forEach(t => {
-      t._col = i        // 列索引，决定 left 百分比
-      t._numCols = numCols // 总列数，决定 width 百分比
-    })
-  })
-}
 
 // ── Refs ──────────────────────────────────────────────────────────────────
 /** ScrollArea 组件实例引用，用于 expose 出 viewport DOM 供父组件滚动定位 */

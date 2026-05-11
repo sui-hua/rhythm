@@ -19,6 +19,7 @@
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { beginRouteLoading, endRouteLoading } from '@/composables/useGlobalLoading'
 import { buildDayPath, buildMonthPath, buildYearPath } from '@/views/day/utils/routeDateContext'
 
 // 页面组件按需加载 - 仅在访问对应路由时才加载（路由懒加载）
@@ -106,8 +107,17 @@ router.beforeEach((to, from, next) => {
     // 如果用户已经登录，重定向到首页
     next('/')
   } else {
+    beginRouteLoading()
     next()
   }
+})
+
+router.afterEach(() => {
+  endRouteLoading()
+})
+
+router.onError(() => {
+  endRouteLoading()
 })
 
 export default router

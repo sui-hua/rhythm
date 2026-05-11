@@ -42,97 +42,211 @@
     <ScrollArea class="flex-1 px-4 relative z-10">
       <!-- 移动端：支持左滑完成任务 -->
       <div v-if="isMobile && dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
-        <div v-for="(item, index) in dailySchedule" :key="index"
-             @click="$emit('scrollToTask', index)"
-             @dblclick="$emit('edit-task', index)"
-             @touchstart="handleTouchStart($event, index)"
-             @touchmove="handleTouchMove($event, index)"
-             @touchend="handleTouchEnd($event, index, item)"
-             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
-             :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
-             :style="{ transform: `translateX(-${getSwipeOffset(index)}px)`, transition: swipeState.activeIndex === index ? 'none' : 'transform 0.3s ease' }">
-
-          <!-- 左滑显示的完成按钮区域 -->
-          <div
-            v-if="getSwipeOffset(index) > 0"
-            class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
-            :style="{ width: `${getSwipeOffset(index)}px` }"
+        <template v-for="(section, sectionIndex) in sidebarSections" :key="`mobile-${sectionIndex}`">
+          <button
+            v-if="section.type === 'carry-over-group'"
+            type="button"
+            class="mx-1 flex items-center justify-between rounded-xl border border-border/50 bg-zinc-50/80 px-4 py-3 text-left transition-colors hover:bg-zinc-100/80"
+            @click="toggleCarryOverGroup"
           >
-            <Check class="w-5 h-5 text-white" />
-          </div>
-
-          <div @click.stop @dblclick.stop>
-            <Checkbox
-              :checked="item.completed"
-              @update:checked="handleToggleComplete(item)"
-              class="shrink-0 w-5 h-5 rounded-md"
-            />
-          </div>
-
-          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <div class="flex items-center justify-between gap-2 w-full">
-              <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
-                :class="item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
-              >
-                {{ item.title }}
-              </h4>
-              <button
-                class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
-                @click.stop="$emit('edit-task', index)"
-                aria-label="编辑任务"
-              >
-                <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
+            <div class="flex flex-col gap-1">
+              <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">延后项</span>
+              <span class="text-sm font-semibold text-foreground">{{ section.count }} 个未完成目标</span>
             </div>
-            <p
-              v-if="item.isCarryOver"
-              class="text-[11px] font-medium text-amber-600 dark:text-amber-400 truncate"
+            <ChevronDown class="h-4 w-4 text-muted-foreground transition-transform" :class="isCarryOverExpanded ? 'rotate-180' : ''" />
+          </button>
+
+          <template v-if="section.type === 'item'">
+            <div
+              @click="$emit('scrollToTask', section.item._originalIndex)"
+              @dblclick="$emit('edit-task', section.item._originalIndex)"
+              @touchstart="handleTouchStart($event, section.item._originalIndex)"
+              @touchmove="handleTouchMove($event, section.item._originalIndex)"
+              @touchend="handleTouchEnd($event, section.item._originalIndex, section.item)"
+              class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
+              :class="section.item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
+              :style="{ transform: `translateX(-${getSwipeOffset(section.item._originalIndex)}px)`, transition: swipeState.activeIndex === section.item._originalIndex ? 'none' : 'transform 0.3s ease' }"
             >
-              {{ item.carryOverLabel }}
-            </p>
+              <div
+                v-if="getSwipeOffset(section.item._originalIndex) > 0"
+                class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
+                :style="{ width: `${getSwipeOffset(section.item._originalIndex)}px` }"
+              >
+                <Check class="w-5 h-5 text-white" />
+              </div>
+
+              <div @click.stop @dblclick.stop>
+                <Checkbox
+                  :checked="section.item.completed"
+                  @update:checked="handleToggleComplete(section.item)"
+                  class="shrink-0 w-5 h-5 rounded-md"
+                />
+              </div>
+
+              <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                <div class="flex items-center justify-between gap-2 w-full">
+                  <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
+                    :class="section.item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+                  >
+                    {{ section.item.title }}
+                  </h4>
+                  <button
+                    class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
+                    @click.stop="$emit('edit-task', section.item._originalIndex)"
+                    aria-label="编辑任务"
+                  >
+                    <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <div
+            v-else-if="section.type === 'carry-over-group' && isCarryOverExpanded"
+            class="ml-3 flex flex-col gap-2 border-l border-border/50 pl-3"
+          >
+            <div
+              v-for="item in section.items"
+              :key="`mobile-carry-${item._originalIndex}`"
+              @click="$emit('scrollToTask', item._originalIndex)"
+              @dblclick="$emit('edit-task', item._originalIndex)"
+              @touchstart="handleTouchStart($event, item._originalIndex)"
+              @touchmove="handleTouchMove($event, item._originalIndex)"
+              @touchend="handleTouchEnd($event, item._originalIndex, item)"
+              class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
+              :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50/80'"
+              :style="{ transform: `translateX(-${getSwipeOffset(item._originalIndex)}px)`, transition: swipeState.activeIndex === item._originalIndex ? 'none' : 'transform 0.3s ease' }"
+            >
+              <div
+                v-if="getSwipeOffset(item._originalIndex) > 0"
+                class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
+                :style="{ width: `${getSwipeOffset(item._originalIndex)}px` }"
+              >
+                <Check class="w-5 h-5 text-white" />
+              </div>
+
+              <div @click.stop @dblclick.stop>
+                <Checkbox
+                  :checked="item.completed"
+                  @update:checked="handleToggleComplete(item)"
+                  class="shrink-0 w-5 h-5 rounded-md"
+                />
+              </div>
+
+              <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                <div class="flex items-center justify-between gap-2 w-full">
+                  <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
+                    :class="item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+                  >
+                    {{ item.title }}
+                  </h4>
+                  <button
+                    class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
+                    @click.stop="$emit('edit-task', item._originalIndex)"
+                    aria-label="编辑任务"
+                  >
+                    <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+                <p class="text-[11px] font-medium text-amber-600/85 dark:text-amber-400/85 truncate">
+                  {{ item.carryOverLabel }}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
 
       <!-- 桌面端：普通列表 -->
       <div v-else-if="!isMobile && dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
-        <div v-for="(item, index) in dailySchedule" :key="index"
-             @click="$emit('scrollToTask', index)"
-             @dblclick="$emit('edit-task', index)"
-             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
-             :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50'">
-
-          <div @click.stop @dblclick.stop>
-            <Checkbox
-              :checked="item.completed"
-              @update:checked="handleToggleComplete(item)"
-              class="shrink-0 w-5 h-5 rounded-md"
-            />
-          </div>
-
-          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <div class="flex items-center justify-between gap-2 w-full">
-              <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
-                :class="item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
-              >
-                {{ item.title }}
-              </h4>
-              <button
-                class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
-                @click.stop="$emit('edit-task', index)"
-                aria-label="编辑任务"
-              >
-                <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
+        <template v-for="(section, sectionIndex) in sidebarSections" :key="`desktop-${sectionIndex}`">
+          <div
+            v-if="section.type === 'item'"
+            @click="$emit('scrollToTask', section.item._originalIndex)"
+            @dblclick="$emit('edit-task', section.item._originalIndex)"
+            class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
+            :class="section.item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
+          >
+            <div @click.stop @dblclick.stop>
+              <Checkbox
+                :checked="section.item.completed"
+                @update:checked="handleToggleComplete(section.item)"
+                class="shrink-0 w-5 h-5 rounded-md"
+              />
             </div>
-            <p
-              v-if="item.isCarryOver"
-              class="text-[11px] font-medium text-amber-600 dark:text-amber-400 truncate"
-            >
-              {{ item.carryOverLabel }}
-            </p>
+
+            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+              <div class="flex items-center justify-between gap-2 w-full">
+                <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
+                  :class="section.item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+                >
+                  {{ section.item.title }}
+                </h4>
+                <button
+                  class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
+                  @click.stop="$emit('edit-task', section.item._originalIndex)"
+                  aria-label="编辑任务"
+                >
+                  <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div v-else class="mx-1 flex flex-col gap-2 rounded-xl border border-border/50 bg-zinc-50/70 p-2">
+            <button
+              type="button"
+              class="flex items-center justify-between rounded-lg px-2 py-2 text-left transition-colors hover:bg-zinc-100/80"
+              @click="toggleCarryOverGroup"
+            >
+              <div class="flex min-w-0 flex-col gap-1">
+                <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{{ section.label }}</span>
+                <span class="text-sm font-semibold text-foreground">{{ section.count }} 个未完成目标</span>
+              </div>
+              <ChevronDown class="h-4 w-4 shrink-0 text-muted-foreground transition-transform" :class="isCarryOverExpanded ? 'rotate-180' : ''" />
+            </button>
+
+            <div v-if="isCarryOverExpanded" class="flex flex-col gap-1 border-l border-border/50 pl-3">
+              <div
+                v-for="item in section.items"
+                :key="`desktop-carry-${item._originalIndex}`"
+                @click="$emit('scrollToTask', item._originalIndex)"
+                @dblclick="$emit('edit-task', item._originalIndex)"
+                class="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer group"
+                :class="item.completed ? 'opacity-50' : 'hover:bg-white/90'"
+              >
+                <div @click.stop @dblclick.stop>
+                  <Checkbox
+                    :checked="item.completed"
+                    @update:checked="handleToggleComplete(item)"
+                    class="shrink-0 w-5 h-5 rounded-md"
+                  />
+                </div>
+
+                <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                  <div class="flex items-center justify-between gap-2 w-full">
+                    <h4 class="text-sm font-semibold tracking-tight truncate transition-all"
+                      :class="item.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground group-hover:text-foreground'"
+                    >
+                      {{ item.title }}
+                    </h4>
+                    <button
+                      class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
+                      @click.stop="$emit('edit-task', item._originalIndex)"
+                      aria-label="编辑任务"
+                    >
+                      <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  </div>
+                  <p class="text-[11px] font-medium text-amber-600/85 dark:text-amber-400/85 truncate">
+                    {{ item.carryOverLabel }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
       <div v-else-if="!isLoading" class="pb-24 pt-4">
         <EmptyState
@@ -195,7 +309,7 @@
  * //   @edit-task="openEditDialog" @close="closeSidebar" /&gt;
  */
 import { computed, ref } from 'vue'
-import { Plus, Settings2, X, Check } from 'lucide-vue-next'
+import { ChevronDown, Plus, Settings2, X, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -207,6 +321,7 @@ import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { getSidebarPanelClass } from '@/views/day/composables/mobileLayers'
+import { buildSidebarSections } from '@/views/day/composables/sidebarSections'
 import { playSuccessSound } from '@/utils/audio'
 
 /**
@@ -234,6 +349,9 @@ const dateStore = useDateStore()
 // completedCount: 已完成任务数量
 // handleToggleComplete: 切换任务完成状态的方法
 const { dailySchedule, completedCount, handleToggleComplete } = useDayData()
+const indexedDailySchedule = computed(() => dailySchedule.value.map((item, index) => ({ ...item, _originalIndex: index })))
+const sidebarSections = computed(() => buildSidebarSections(indexedDailySchedule.value))
+const isCarryOverExpanded = ref(false)
 
 // 宽度可调整功能（仅桌面端）
 // width: 当前侧边栏宽度
@@ -248,6 +366,10 @@ const selectedDay = computed(() => dateStore.currentDate.getDate())
 
 // 获取选中日期的完整月份名称（如 "January"）
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
+
+const toggleCarryOverGroup = () => {
+  isCarryOverExpanded.value = !isCarryOverExpanded.value
+}
 
 // ==================== 移动端左滑完成功能 ====================
 // 左滑完成功能的常量配置

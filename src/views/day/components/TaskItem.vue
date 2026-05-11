@@ -174,6 +174,7 @@ const computedStyle = computed(() => {
   // _numCols: 当前时间段的总列数
   const col = props.task._col || 0
   const numCols = props.task._numCols || 1
+  const isStackedCarryOver = Boolean(props.task._isStackedCarryOver)
 
   const style = {
     // 使用 CSS 变量 --hour-height 计算实际像素位置
@@ -182,6 +183,24 @@ const computedStyle = computed(() => {
     height: `calc(${props.task.durationHours || 1} * var(--hour-height))`,
     minHeight: '28px',
     zIndex: col + 10
+  }
+
+  if (isStackedCarryOver) {
+    const visibleStackIndex = Math.min(props.task._stackIndex || 0, 4)
+    const baseOffsetX = visibleStackIndex * 14
+    const baseOffsetY = visibleStackIndex * 8
+
+    // carry-over 项的语义不是“同一时段并行安排了很多任务”，而是“历史积压堆到今天”。
+    // 所以这里不沿用横向平铺，而是把它们压在同一列里，通过轻微位移露出后层边缘。
+    style.left = numCols > 1
+      ? `calc(var(--timeline-left) + ((100% - var(--timeline-left)) / ${numCols}) * ${col})`
+      : 'var(--timeline-left)'
+    style.width = numCols > 1
+      ? `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`
+      : 'min(360px, calc(100% - var(--timeline-left) - 12px))'
+    style.transform = `translate(${baseOffsetX}px, ${baseOffsetY}px)`
+    style.zIndex = 40 + ((props.task._stackSize || 1) - visibleStackIndex)
+    return style
   }
 
   // 多列布局：并行任务需要分割宽度
