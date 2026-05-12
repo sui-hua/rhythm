@@ -65,7 +65,7 @@
       />
 
       <!-- Main Timeline Area -->
-      <div class="relative flex flex-1 flex-col overflow-hidden">
+      <div class="relative flex-1 flex flex-col overflow-hidden">
         <Timeline
           ref="timeline"
           :class="['transition-all duration-300 ease-in-out flex-1', isReady ? 'opacity-100' : 'opacity-0']"

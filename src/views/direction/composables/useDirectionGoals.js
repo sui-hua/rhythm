@@ -93,7 +93,9 @@ export function useDirectionGoals() {
     newCategoryId,
     newTaskTime,
     newDuration,
-    newCarryOverLookbackDays
+    newCarryOverLookbackDays,
+    newStartMonth,
+    newEndMonth
   ) => {
     try {
       const planId = goalToUpdate.plan_id
@@ -132,8 +134,8 @@ export function useDirectionGoals() {
         .map(mp => getDateOnlyMonth(mp.month))
         .filter(m => m !== null)
 
-      const startM = goalToUpdate.startMonth || 1
-      const endM = goalToUpdate.endMonth || startM
+      const startM = newStartMonth !== undefined ? newStartMonth : (goalToUpdate.startMonth || 1)
+      const endM = newEndMonth !== undefined ? newEndMonth : (goalToUpdate.endMonth || startM)
       const targetMonths = []
       for (let m = startM; m <= endM; m++) targetMonths.push(m)
 
@@ -190,7 +192,9 @@ export function useDirectionGoals() {
       updatedGoal.category_id,
       updatedGoal.task_time,
       updatedGoal.duration,
-      updatedGoal.carry_over_lookback_days
+      updatedGoal.carry_over_lookback_days,
+      updatedGoal.startMonth,
+      updatedGoal.endMonth
     )
     isSubmitting.value = false
 

@@ -10,7 +10,7 @@
     <div 
       class="flex h-full relative overflow-hidden transition-all duration-500 border border-transparent shadow-none"
       :class="[
-        (task.durationHours || 1) < 0.4 ? 'flex-row items-center py-1 px-3 min-h-[24px] rounded-lg' : 
+        (task.durationHours || 1) < 0.4 ? 'flex-row items-center py-0 px-2 rounded-lg' : 
         (task.durationHours || 1) < 0.8 ? 'flex-row items-center py-2 px-4 rounded-xl min-h-[40px]' : 'flex-col py-4 px-5 gap-3 rounded-2xl',
         task.completed 
           ? 'opacity-80 grayscale-[0.5] bg-zinc-50/80 dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 border-dashed' 
@@ -181,7 +181,6 @@ const computedStyle = computed(() => {
     top: `calc(${props.task.startHour} * var(--hour-height))`,
     // 使用 CSS 变量 --hour-height 计算实际像素高度
     height: `calc(${props.task.durationHours || 1} * var(--hour-height))`,
-    minHeight: '28px',
     zIndex: col + 10
   }
 
