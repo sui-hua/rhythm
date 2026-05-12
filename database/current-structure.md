@@ -152,7 +152,6 @@
 - `period_end` (timestamptz)
 - `title` (text, nullable)
 - `content` (jsonb)
-- `scope` (varchar, nullable) — 已废弃，仅保留用于兼容，不再有 NOT NULL/check 约束
 - `created_at` (timestamptz, default now())
 - `updated_at` (timestamptz, default now())
 
@@ -160,7 +159,6 @@
 
 - `id` 默认值仍为 `uuid_generate_v4()`
 - `user_id` 仍为必填列
-- `scope` 已解除 NOT NULL 和 `year|quarter|month|week` 的 check 约束
 - `content` 当前类型为 `jsonb`
 - `created_at` 默认值仍为 `now()`
 - `updated_at` 默认值仍为 `now()`
