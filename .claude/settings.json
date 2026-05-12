@@ -3,13 +3,14 @@
     "allow": [
       "mcp__playwright__*",
       "mcp__chrome-devtools__*",
-      "Bash(pnpm build *)",
-      "Bash(pnpm vue-tsc:*)",
-      "Bash(pnpm test:*)",
-      "Bash(pnpm install:*)",
+      "Bash(pnpm *)",
       "mcp__MiniMax__web_search",
-      "Bash(git log)",
-      "mcp__supabase__*"
+      "mcp__MiniMax__understand_image",
+      "mcp__supabase__*",
+      "Skill(ralph-loop:ralph-loop)",
+      "mcp__context7__query-docs",
+      "Bash(git *)",
+      "Bash(grep:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
