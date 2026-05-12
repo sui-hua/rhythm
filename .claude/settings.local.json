@@ -10,7 +10,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(grep:*)",
-      "mcp__MiniMax__understand_image"
+      "mcp__MiniMax__understand_image",
+      "Bash(npx vue-tsc:*)"
     ]
   }
 }
