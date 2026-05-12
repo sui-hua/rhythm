@@ -23,20 +23,6 @@
       />
     </div>
 
-    <div class="grid gap-2">
-      <label class="text-sm font-medium leading-none">
-        {{ typeName }}心情
-      </label>
-      <Input
-        v-model.number="mood"
-        type="number"
-        min="1"
-        max="5"
-        placeholder="1 到 5"
-        class="h-10"
-      />
-    </div>
-
     <div class="flex flex-wrap items-center justify-between gap-3 pt-4">
       <Button
         v-if="initialData?.id"
@@ -62,12 +48,12 @@
  * GenericSummaryForm.vue - 通用总结表单组件
  *
  * @description
- * 提供统一的日/周/月/年总结编辑界面，包含标题、内容、心情三个字段。
+ * 提供统一的周/月/年总结编辑界面，包含标题、内容两个字段。
  * 该组件是一个纯展示层组件，核心业务逻辑通过 useGenericSummaryForm composable 处理。
  *
  * @props
- * - initialData: Object  - 初始数据（编辑模式时传入，包含 id, title, content, mood 等）
- * - type: String         - 总结类型，用于区分 'day' | 'week' | 'month' | 'year'
+ * - initialData: Object  - 初始数据（编辑模式时传入，包含 id, title, content 等）
+ * - type: String         - 总结类型，用于区分 'week' | 'month' | 'year'
  *
  * @emits
  * - save:    提交表单时触发，携带 buildPayload() 构建的 payload 对象
@@ -77,7 +63,7 @@
  * @usage
  * <GenericSummaryForm
  *   :initial-data="someSummaryData"
- *   type="day"
+ *   type="week"
  *   @save="handleSave"
  *   @cancel="handleCancel"
  *   @delete="handleDelete"
@@ -89,7 +75,6 @@
 <script setup>
 import { useGenericSummaryForm } from '@/views/summary/composables/useGenericSummaryForm'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toRef } from 'vue'
 
@@ -106,7 +91,7 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'cancel', 'delete'])
 
-const { title, content, mood, typeName, placeholderText, buildPayload } = useGenericSummaryForm(
+const { title, content, typeName, placeholderText, buildPayload } = useGenericSummaryForm(
   toRef(props, 'initialData'),
   toRef(props, 'type')
 )

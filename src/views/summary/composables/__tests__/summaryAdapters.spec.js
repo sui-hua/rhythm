@@ -13,7 +13,6 @@ describe('mapSummaryRowToRecord', () => {
       period_end: '2026-04-18T23:59:59.000Z',
       title: null,
       content: { done: '完成任务', improve: '少刷手机', tomorrow: '继续推进' },
-      mood: 4,
       created_at: '2026-04-18T12:00:00.000Z',
       updated_at: '2026-04-18T12:00:00.000Z'
     })
@@ -36,7 +35,6 @@ describe('mapSummaryRowToRecord', () => {
       period_end: '2026-04-30T23:59:59.000Z',
       title: '四月复盘',
       content: '本月整体推进稳定',
-      mood: null,
       created_at: '2026-04-30T12:00:00.000Z'
     })
 
@@ -56,8 +54,7 @@ describe('buildSummaryPayload', () => {
       },
       formData: {
         title: '四月复盘',
-        text: '本月整体推进稳定',
-        mood: 5
+        text: '本月整体推进稳定'
       }
     })
 
@@ -67,40 +64,8 @@ describe('buildSummaryPayload', () => {
       period_start: '2026-04-01T00:00:00.000Z',
       period_end: '2026-04-30T23:59:59.000Z',
       title: '四月复盘',
-      content: { text: '本月整体推进稳定' },
-      mood: 5
+      content: { text: '本月整体推进稳定' }
     })
-  })
-
-  it('normalizes invalid mood values to null', () => {
-    const payload = buildSummaryPayload({
-      kind: 'monthly',
-      userId: 'u1',
-      period: {
-        periodStart: '2026-04-01T00:00:00.000Z',
-        periodEnd: '2026-04-30T23:59:59.000Z'
-      },
-      formData: {
-        title: '四月复盘',
-        text: '本月整体推进稳定',
-        mood: ''
-      }
-    })
-
-    const record = mapSummaryRowToRecord({
-      id: '3',
-      user_id: 'u1',
-      kind: 'monthly',
-      period_start: '2026-04-01T00:00:00.000Z',
-      period_end: '2026-04-30T23:59:59.000Z',
-      title: '四月复盘',
-      content: { text: '本月整体推进稳定' },
-      mood: NaN,
-      created_at: '2026-04-30T12:00:00.000Z'
-    })
-
-    expect(payload.mood).toBeNull()
-    expect(record.mood).toBeNull()
   })
 
   it('builds a daily payload from the daily form fields', () => {
@@ -114,8 +79,7 @@ describe('buildSummaryPayload', () => {
       formData: {
         done: '完成任务',
         improve: '少刷手机',
-        tomorrow: '继续推进',
-        mood: 4
+        tomorrow: '继续推进'
       }
     })
 

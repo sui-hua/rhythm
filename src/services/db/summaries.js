@@ -16,74 +16,13 @@ import { mapSummaryRowToRecord } from '@/views/summary/utils/summaryAdapters'
 const table = 'summaries'
 
 /**
- * 允许的时间范围 scope 枚举值集合
- * 用于验证 scope 参数的合法性
- * @type {Set<string>}
- */
-const allowedScopes = new Set(['year', 'quarter', 'month', 'week'])
-
-/**
- * 旧版 kind 到 scope 的映射表
- * 将 daily/weekly/monthly/yearly 映射为对应的 scope 值
- * 用于兼容历史数据结构
- * @type {Object.<string, string>}
- */
-const kindToLegacyScope = {
-  daily: 'week',
-  weekly: 'week',
-  monthly: 'month',
-  yearly: 'year'
-}
-
-/**
- * 标准化 scope 值
- * 
- * 将不规范的 scope 值转换为标准值：
- * - 'day' 转换为 'week'（兼容旧数据）
- * - 无效值返回 null
- * 
- * @param {string} scope - 原始 scope 值
- * @returns {string|null} 标准化后的 scope 值，或 null（无效时）
- */
-const normalizeScope = (scope) => {
-  if (scope === 'day') return 'week'
-  return allowedScopes.has(scope) ? scope : null
-}
-
-/**
- * 桥接旧版 scope 字段
- * 
- * 检查 payload 中的 scope 和 kind 字段，
- * 如果 scope 无效但 kind 有对应映射，则补充正确的 scope 值。
- * 确保数据持久化时 scope 字段符合数据库约束。
- * 
- * @param {Object} payload - 待处理的 payload 对象
- * @param {string} [payload.scope] - 当前 scope 值
- * @param {string} [payload.kind] - 当前 kind 值
- * @returns {Object} 处理后的 payload，scope 字段已确保有效
- */
-const bridgeLegacyScope = (payload) => {
-  if (!payload || typeof payload !== 'object') return payload
-
-  const legacyScope = normalizeScope(payload.scope) ?? kindToLegacyScope[payload.kind]
-  if (!legacyScope) return payload
-
-  return {
-    ...payload,
-    scope: legacyScope
-  }
-}
-
-/**
  * 持久化总结记录（插入或更新）
- * 
+ *
  * 根据 payload 是否包含 id 判断执行插入还是更新操作。
- * 自动调用 bridgeLegacyScope 处理 scope 兼容性问题。
- * 
+ *
  * @param {Object} payload - 总结记录数据
  * @param {string} [payload.id] - 记录 ID（存在则更新，不存在则插入）
  * @param {string} payload.kind - 总结类型（daily/weekly/monthly/yearly）
- * @param {string} [payload.scope] - 时间范围（year/quarter/month/week）
  * @param {string} payload.period_start - 周期开始日期
  * @param {string} [payload.period_end] - 周期结束日期
  * @param {Object} [payload.content] - 总结内容（JSON 格式）
@@ -91,10 +30,9 @@ const bridgeLegacyScope = (payload) => {
  * @throws {Error} Supabase 查询错误
  */
 const persistSummary = async (payload) => {
-  const bridgedPayload = bridgeLegacyScope(payload)
   const query = payload.id
-    ? client.from(table).update(bridgedPayload).eq('id', payload.id)
-    : client.from(table).insert(bridgedPayload)
+    ? client.from(table).update(payload).eq('id', payload.id)
+    : client.from(table).insert(payload)
 
   const { data, error } = await query.select().single()
 

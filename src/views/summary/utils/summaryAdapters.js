@@ -4,7 +4,7 @@
  * - 数据库记录与前端记录之间的映射
  * - 统一载荷格式的转换
  * - 遗留数据结构（scope-based）到新结构（kind-based）的兼容
- * - 内容（content）和心情（mood）字段的规范化处理
+ * - 内容（content）字段的规范化处理
  * 
  * @module summaryAdapters
  */
@@ -44,37 +44,6 @@ const normalizeContent = (content) => {
   return {}
 }
 
-/**
- * 规范化心情（mood）字段
- * 
- * 将各种格式的心情值统一转换为数字或 null。
- * 支持：空字符串、null、undefined、数字、数字字符串（带空白字符）。
- * 
- * @param {string|number|null|undefined} mood - 原始心情值
- * @returns {number|null} - 规范化后的心情值（无效值返回 null）
- * 
- * @example
- * normalizeMood(5)              // => 5
- * normalizeMood('  3  ')        // => 3
- * normalizeMood('')             // => null
- * normalizeMood('invalid')     // => null
- */
-const normalizeMood = (mood) => {
-  if (mood === '' || mood === null || mood === undefined) {
-    return null
-  }
-
-  if (typeof mood === 'number') {
-    return Number.isFinite(mood) ? mood : null
-  }
-
-  if (typeof mood === 'string') {
-    const parsedMood = Number(mood.trim())
-    return Number.isFinite(parsedMood) ? parsedMood : null
-  }
-
-  return null
-}
 
 /**
  * 遗留的 scope 字段到 kind 字段的映射表
@@ -152,44 +121,40 @@ const resolvePeriod = (summary, kind) => {
 
 /**
  * 从 summary 和 kind 解析表单数据
- * 
+ *
  * 将 summary 的各字段和 content 内的字段合并，提取出表单所需的数据。
  * daily 类型使用 done/improve/tomorrow 字段，其他类型使用 title/text 字段。
- * mood 值从 summary.mood 或 content.mood 中获取。
- * 
+ *
  * @param {object} summary - Summary 对象
  * @param {string} kind - Summary 类型
  * @returns {object} - 表单数据对象
  */
 const resolveFormData = (summary, kind) => {
   const content = normalizeContent(summary.content)
-  const mood = normalizeMood(summary.mood ?? content.mood ?? null)
 
   if (kind === 'daily') {
     return {
       done: summary.done ?? content.done ?? '',
       improve: summary.improve ?? content.improve ?? '',
-      tomorrow: summary.tomorrow ?? content.tomorrow ?? '',
-      mood
+      tomorrow: summary.tomorrow ?? content.tomorrow ?? ''
     }
   }
 
   return {
     title: summary.title ?? '',
-    text: summary.text ?? content.text ?? '',
-    mood
+    text: summary.text ?? content.text ?? ''
   }
 }
 
 /**
  * 将数据库行数据映射为前端记录格式
- * 
+ *
  * 用于从 Supabase 查询返回的原始行数据转换为前端使用的标准记录格式。
- * 同时对 content 和 mood 字段进行规范化处理。
- * 
+ * 同时对 content 字段进行规范化处理。
+ *
  * @param {object} row - 数据库行对象
  * @returns {object} - 转换后的前端记录对象
- * 
+ *
  * @example
  * // 输入：数据库行
  * mapSummaryRowToRecord({
@@ -199,7 +164,6 @@ const resolveFormData = (summary, kind) => {
  *   period_start: '2024-01-01',
  *   period_end: '2024-01-01',
  *   content: { done: 'task1', improve: 'task2' },
- *   mood: 4,
  *   created_at: '2024-01-01T00:00:00Z',
  *   updated_at: null
  * })
@@ -212,7 +176,6 @@ const resolveFormData = (summary, kind) => {
  *   period_end: '2024-01-01',
  *   title: null,
  *   content: { done: 'task1', improve: 'task2' },
- *   mood: 4,
  *   created_at: '2024-01-01T00:00:00Z',
  *   updated_at: '2024-01-01T00:00:00Z'
  * }
@@ -225,18 +188,17 @@ export const mapSummaryRowToRecord = (row) => ({
   period_end: row.period_end,
   title: row.title ?? null,
   content: normalizeContent(row.content),
-  mood: normalizeMood(row.mood),
   created_at: row.created_at,
   updated_at: row.updated_at ?? row.created_at
 })
 
 /**
  * 构建提交到数据库的 summary 载荷
- * 
+ *
  * 根据 kind 类型和表单数据构建完整的数据库写入对象。
  * daily 类型使用特殊的 content 结构（done/improve/tomorrow），
  * 其他类型使用 title 和 text 字段。
- * 
+ *
  * @param {object} params - 构建参数
  * @param {string} params.kind - Summary 类型
  * @param {string} params.userId - 用户 ID
@@ -244,13 +206,13 @@ export const mapSummaryRowToRecord = (row) => ({
  * @param {object} params.formData - 表单数据
  * @param {object} [params.existingRecord] - 已存在的记录（用于更新时保留 id）
  * @returns {object} - 数据库载荷对象
- * 
+ *
  * @example
  * buildSummaryPayload({
  *   kind: 'daily',
  *   userId: 'user-123',
  *   period: { periodStart: '2024-01-01', periodEnd: '2024-01-01' },
- *   formData: { done: 'task1', improve: 'improve1', tomorrow: 'plan1', mood: 4 }
+ *   formData: { done: 'task1', improve: 'improve1', tomorrow: 'plan1' }
  * })
  * // => {
  *   user_id: 'user-123',
@@ -258,8 +220,7 @@ export const mapSummaryRowToRecord = (row) => ({
  *   period_start: '2024-01-01',
  *   period_end: '2024-01-01',
  *   title: null,
- *   content: { done: 'task1', improve: 'improve1', tomorrow: 'plan1' },
- *   mood: 4
+ *   content: { done: 'task1', improve: 'improve1', tomorrow: 'plan1' }
  * }
  */
 export const buildSummaryPayload = ({ kind, userId, period, formData, existingRecord }) => {
@@ -280,47 +241,43 @@ export const buildSummaryPayload = ({ kind, userId, period, formData, existingRe
         }
       : {
           text: formData.text || ''
-        },
-    mood: normalizeMood(formData.mood)
+        }
   }
 }
 
 /**
  * 将任意 summary 数据转换为统一载荷格式
- * 
+ *
  * 核心转换函数，自动处理新旧两种数据格式：
  * - 如果已是统一载荷格式（包含 kind、period_start 等），直接规范化后返回
  * - 否则通过 resolveKind、resolvePeriod、resolveFormData 逐步解析转换
- * 
+ *
  * 这是将外部数据（如表单输入、API 返回、旧格式数据）统一为标准载荷的入口。
- * 
+ *
  * @param {object} summary - 原始 summary 数据
  * @returns {object} - 统一载荷格式的 summary 对象
- * 
+ *
  * @example
  * // 新格式数据（直接通过）
  * toUnifiedSummaryPayload({
  *   kind: 'daily',
  *   period_start: '2024-01-01',
  *   period_end: '2024-01-01',
- *   content: { done: 'task1' },
- *   mood: 4
+ *   content: { done: 'task1' }
  * })
- * 
+ *
  * // 旧格式数据（会被转换）
  * toUnifiedSummaryPayload({
  *   scope: 'day',
  *   created_at: '2024-01-01T00:00:00Z',
- *   content: 'some text',
- *   mood: '3'
+ *   content: 'some text'
  * })
  */
 export const toUnifiedSummaryPayload = (summary) => {
   if (isUnifiedPayload(summary)) {
     return {
       ...summary,
-      content: normalizeContent(summary.content),
-      mood: normalizeMood(summary.mood)
+      content: normalizeContent(summary.content)
     }
   }
 

@@ -8,7 +8,8 @@
       "Bash(pnpm test:*)",
       "Bash(pnpm install:*)",
       "mcp__MiniMax__web_search",
-      "Bash(git log)"
+      "Bash(git log)",
+      "mcp__supabase__*"
     ]
   },
   "enableAllProjectMcpServers": true,

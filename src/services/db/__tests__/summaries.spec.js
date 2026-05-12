@@ -25,8 +25,7 @@ beforeEach(() => {
   selectSingle.mockResolvedValue({
     data: {
       id: 'summary-1',
-      kind: 'daily',
-      scope: 'day'
+      kind: 'daily'
     },
     error: null
   })
@@ -57,7 +56,7 @@ beforeEach(() => {
 })
 
 describe('summaries service', () => {
-  it('normalizes daily summaries to an allowed database scope when saving', async () => {
+  it('saves a summary without legacy scope bridging', async () => {
     const { summaries } = await import('@/services/db/summaries')
 
     await summaries.save({
@@ -71,9 +70,8 @@ describe('summaries service', () => {
     })
 
     expect(insert).toHaveBeenCalledTimes(1)
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      kind: 'daily',
-      scope: 'week'
+    expect(insert).toHaveBeenCalledWith(expect.not.objectContaining({
+      scope: expect.anything()
     }))
   })
 })

@@ -145,56 +145,25 @@
 
 当前表结构 / 当前快照：
 
-- `id`
-- `user_id`
-- `scope`
-- `kind`
-- `period_start`
-- `period_end`
-- `title`
-- `content`
-- `mood`
-- `created_at`
-- `updated_at`
-
-当前仍存在的兼容列：
-
-- `scope`：当前仍然是数据库层 mandatory 字段；线上约束未包含 `day`，写入层会把历史 `day` 归一为 `week` 后再提交
+- `id` (uuid, PK)
+- `user_id` (uuid, NOT NULL)
+- `kind` (text, daily/weekly/monthly/yearly)
+- `period_start` (timestamptz)
+- `period_end` (timestamptz)
+- `title` (text, nullable)
+- `content` (jsonb)
+- `scope` (varchar, nullable) — 已废弃，仅保留用于兼容，不再有 NOT NULL/check 约束
+- `created_at` (timestamptz, default now())
+- `updated_at` (timestamptz, default now())
 
 约束 / 默认值：
 
 - `id` 默认值仍为 `uuid_generate_v4()`
 - `user_id` 仍为必填列
-- `scope` 仍为 `NOT NULL`，且受 `summaries_scope_check` 约束限制为 `year|quarter|month|week`
+- `scope` 已解除 NOT NULL 和 `year|quarter|month|week` 的 check 约束
 - `content` 当前类型为 `jsonb`
 - `created_at` 默认值仍为 `now()`
 - `updated_at` 默认值仍为 `now()`
-
-迁移 / 兼容说明：
-
-- 已完成第一阶段非破坏性结构改造
-- 运行时已经冻结到统一的 `summaries`
-- 正式读取与写入模型已收敛为 `kind + period_start + period_end`
-- `scope` 仍然需要由写入层兼容补齐，但只能写入数据库实际允许的值；`day` 不再是可直接写入值
-- `daily_summaries` 仅作为回退或审计用途的遗留保留对象，不是正常读写路径
-
-### `public.daily_summaries`
-
-当前主要字段：
-
-- `id`
-- `user_id`
-- `today_did`
-- `today_issue`
-- `tomorrow_fix`
-- `mood`
-- `created_at`
-
-现状说明：
-
-- 仍是旧模型
-- 仅作回退或审计保留，不是正常读写路径
-- 运行时已经冻结到统一的 `summaries`
 
 ### `public.plans_category`
 
@@ -220,9 +189,8 @@
 
 基于 MCP 查询，当前真正还需要统一的数据库问题主要集中在：
 
-1. `daily_summaries` 仍然是旧结构
-2. `habits` 同时存在 `archived` 和 `is_archived`
-3. 线上当前缺失 `batch_upsert_daily_plans` / `batch_delete_daily_plans` 这两个 RPC，相关批量日计划操作不能假设数据库侧已具备这两项能力
+1. `habits` 同时存在 `archived` 和 `is_archived` — `archived` 已清理 ✅
+2. 线上当前缺失 `batch_upsert_daily_plans` / `batch_delete_daily_plans` 这两个 RPC，相关批量日计划操作不能假设数据库侧已具备这两项能力
 
 ## 当前表数量与数据量
 
