@@ -61,14 +61,14 @@ describe('useDayData', () => {
       currentDate: new Date(2026, 3, 29)
     })
 
-    db.tasks.list.mockResolvedValue([])
-    db.dailyPlans.listForDayView.mockResolvedValue([])
-    db.dailyPlans.listByDate.mockResolvedValue([])
-    db.dailyPlans.update.mockResolvedValue({})
-    db.habits.listLite.mockResolvedValue([])
-    db.habits.listLogsByDate.mockResolvedValue([])
-    db.habits.log.mockResolvedValue({})
-    db.habits.deleteLog.mockResolvedValue()
+    db.task.list.mockResolvedValue([])
+    db.goalDays.listForDayView.mockResolvedValue([])
+    db.goalDays.listByDate.mockResolvedValue([])
+    db.goalDays.update.mockResolvedValue({})
+    db.habit.listLite.mockResolvedValue([])
+    db.habit.listLogsByDate.mockResolvedValue([])
+    db.habit.log.mockResolvedValue({})
+    db.habit.deleteLog.mockResolvedValue()
   })
 
   it('查看昨天时，补打卡会把习惯日志写入当前路由日期', async () => {
@@ -80,17 +80,17 @@ describe('useDayData', () => {
       completed: false
     })
 
-    expect(db.habits.log).toHaveBeenCalledTimes(1)
-    expect(db.habits.log).toHaveBeenCalledWith('habit-1', '', expect.any(String))
+    expect(db.habit.log).toHaveBeenCalledTimes(1)
+    expect(db.habit.log).toHaveBeenCalledWith('habit-1', '', expect.any(String))
 
-    const completedAt = new Date(db.habits.log.mock.calls[0][2])
+    const completedAt = new Date(db.habit.log.mock.calls[0][2])
     expect(completedAt.getFullYear()).toBe(2026)
     expect(completedAt.getMonth()).toBe(3)
     expect(completedAt.getDate()).toBe(28)
   })
 
   it('查看昨天时，取消打卡会在当前路由日期范围内查找日志', async () => {
-    db.habits.listLogsByDate.mockResolvedValue([
+    db.habit.listLogsByDate.mockResolvedValue([
       { id: 'log-1', habit_id: 'habit-1' }
     ])
 
@@ -102,9 +102,9 @@ describe('useDayData', () => {
       completed: true
     })
 
-    expect(db.habits.listLogsByDate).toHaveBeenCalledTimes(2)
+    expect(db.habit.listLogsByDate).toHaveBeenCalledTimes(2)
 
-    const [startOfDay, endOfDay] = db.habits.listLogsByDate.mock.calls[0]
+    const [startOfDay, endOfDay] = db.habit.listLogsByDate.mock.calls[0]
     expect(startOfDay.getFullYear()).toBe(2026)
     expect(startOfDay.getMonth()).toBe(3)
     expect(startOfDay.getDate()).toBe(28)
@@ -114,7 +114,7 @@ describe('useDayData', () => {
     expect(endOfDay.getDate()).toBe(28)
     expect(endOfDay.getHours()).toBe(23)
 
-    expect(db.habits.deleteLog).toHaveBeenCalledWith('log-1')
+    expect(db.habit.deleteLog).toHaveBeenCalledWith('log-1')
   })
 
   it('切换日计划完成状态时会把布尔完成态转换为 daily plan status', async () => {
@@ -126,11 +126,11 @@ describe('useDayData', () => {
       completed: false
     })
 
-    expect(db.dailyPlans.update).toHaveBeenCalledWith('plan-1', { status: 1 })
+    expect(db.goalDays.update).toHaveBeenCalledWith('plan-1', { status: 1 })
   })
 
   it('fetches daily plans through the day-view carry-over query', async () => {
-    db.dailyPlans.listForDayView.mockResolvedValue([
+    db.goalDays.listForDayView.mockResolvedValue([
       { id: 'plan-today', title: '今天任务', day: '2026-04-28', status: 0, task_time: '09:00', duration: 30 },
       { id: 'plan-old', title: '昨天任务', day: '2026-04-27', status: 0, task_time: '10:00', duration: 30 }
     ])
@@ -138,8 +138,8 @@ describe('useDayData', () => {
     const { fetchTasks, dailySchedule } = useDayData()
     await fetchTasks({ showLoading: false })
 
-    expect(db.dailyPlans.listForDayView).toHaveBeenCalledTimes(1)
-    expect(db.dailyPlans.listForDayView).toHaveBeenCalledWith(expect.any(Date))
+    expect(db.goalDays.listForDayView).toHaveBeenCalledTimes(1)
+    expect(db.goalDays.listForDayView).toHaveBeenCalledWith(expect.any(Date))
     expect(dailySchedule.value.filter(item => item.type === 'daily_plan')).toHaveLength(2)
   })
 })

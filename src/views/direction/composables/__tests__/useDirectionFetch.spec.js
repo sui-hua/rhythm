@@ -27,13 +27,13 @@ vi.mock('vue', async () => {
 
 vi.mock('@/services/database', () => ({
   db: {
-    plans: {
+    goal: {
       list: vi.fn()
     },
-    monthlyPlans: {
+    goalMonths: {
       list: vi.fn()
     },
-    dailyPlans: {
+    goalDays: {
       list: vi.fn()
     }
   }
@@ -78,13 +78,13 @@ describe('useDirectionFetch', () => {
   })
 
   it('builds monthly and daily keys from date-only database fields', async () => {
-    db.plans.list.mockResolvedValue([
+    db.goal.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
-    db.monthlyPlans.list.mockResolvedValue([
+    db.goalMonths.list.mockResolvedValue([
       { id: 'mp1', plan_id: 'p1', month: '2026-04-01' }
     ])
-    db.dailyPlans.list.mockResolvedValue([
+    db.goalDays.list.mockResolvedValue([
       { id: 'dp1', monthly_plan_id: 'mp1', day: '2026-04-30' }
     ])
 
@@ -105,21 +105,21 @@ describe('useDirectionFetch', () => {
   })
 
   it('loads monthly plans only for the default selected goal during initial fetch', async () => {
-    db.plans.list.mockResolvedValue([
+    db.goal.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' },
       { id: 'p2', title: '目标 2' }
     ])
-    db.monthlyPlans.list.mockResolvedValue([
+    db.goalMonths.list.mockResolvedValue([
       { id: 'mp1', plan_id: 'p1', month: '2026-04-01' }
     ])
-    db.dailyPlans.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
 
     const { fetchData } = useDirectionFetch()
     await fetchData()
 
-    expect(db.monthlyPlans.list).toHaveBeenCalledTimes(1)
-    expect(db.monthlyPlans.list).toHaveBeenCalledWith('p1')
-    expect(db.monthlyPlans.list).not.toHaveBeenCalledWith('p2')
+    expect(db.goalMonths.list).toHaveBeenCalledTimes(1)
+    expect(db.goalMonths.list).toHaveBeenCalledWith('p1')
+    expect(db.goalMonths.list).not.toHaveBeenCalledWith('p2')
   })
 
   it('loads daily plans only for the resolved default month during initial fetch', async () => {
@@ -128,21 +128,21 @@ describe('useDirectionFetch', () => {
     const otherMonth = currentMonth === 1 ? 2 : 1
     const otherMonthDate = `2026-${String(otherMonth).padStart(2, '0')}-01`
 
-    db.plans.list.mockResolvedValue([
+    db.goal.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
-    db.monthlyPlans.list.mockResolvedValue([
+    db.goalMonths.list.mockResolvedValue([
       { id: 'mp-other', plan_id: 'p1', month: otherMonthDate },
       { id: 'mp-current', plan_id: 'p1', month: currentMonthDate }
     ])
-    db.dailyPlans.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
 
     const { fetchData } = useDirectionFetch()
     await fetchData()
 
-    expect(db.dailyPlans.list).toHaveBeenCalledTimes(1)
-    expect(db.dailyPlans.list).toHaveBeenCalledWith('mp-current')
-    expect(db.dailyPlans.list).not.toHaveBeenCalledWith('mp-other')
+    expect(db.goalDays.list).toHaveBeenCalledTimes(1)
+    expect(db.goalDays.list).toHaveBeenCalledWith('mp-current')
+    expect(db.goalDays.list).not.toHaveBeenCalledWith('mp-other')
   })
 
   it('selects the current month during initial fetch when the current month exists', async () => {
@@ -150,21 +150,21 @@ describe('useDirectionFetch', () => {
     const currentMonthDate = `2026-${String(currentMonth).padStart(2, '0')}-01`
     const fallbackMonthDate = currentMonth === 1 ? '2026-02-01' : '2026-01-01'
 
-    db.plans.list.mockResolvedValue([
+    db.goal.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
-    db.monthlyPlans.list.mockResolvedValue([
+    db.goalMonths.list.mockResolvedValue([
       { id: 'mp-fallback', plan_id: 'p1', month: fallbackMonthDate },
       { id: 'mp-current', plan_id: 'p1', month: currentMonthDate }
     ])
-    db.dailyPlans.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
 
     const { fetchData } = useDirectionFetch()
 
     await fetchData()
 
     expect(selectedMonth.value).toBe(currentMonth)
-    expect(db.dailyPlans.list).toHaveBeenCalledWith('mp-current')
+    expect(db.goalDays.list).toHaveBeenCalledWith('mp-current')
   })
 
   it('falls back to the first available month during initial fetch when the current month is missing', async () => {
@@ -174,20 +174,20 @@ describe('useDirectionFetch', () => {
     const firstMonthDate = `2026-${String(firstMonth).padStart(2, '0')}-01`
     const laterMonthDate = `2026-${String(laterMonth).padStart(2, '0')}-01`
 
-    db.plans.list.mockResolvedValue([
+    db.goal.list.mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
-    db.monthlyPlans.list.mockResolvedValue([
+    db.goalMonths.list.mockResolvedValue([
       { id: 'mp-later', plan_id: 'p1', month: laterMonthDate },
       { id: 'mp-first', plan_id: 'p1', month: firstMonthDate }
     ])
-    db.dailyPlans.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
 
     const { fetchData } = useDirectionFetch()
 
     await fetchData()
 
     expect(selectedMonth.value).toBe(firstMonth)
-    expect(db.dailyPlans.list).toHaveBeenCalledWith('mp-first')
+    expect(db.goalDays.list).toHaveBeenCalledWith('mp-first')
   })
 })

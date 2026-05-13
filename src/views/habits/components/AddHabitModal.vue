@@ -225,7 +225,7 @@ const buildFrequencyPayload = () => {
  * 执行流程：
  * 1. 验证表单数据（习惯名称必填）
  * 2. 获取当前登录用户的 userId
- * 3. 调用 db.habits.create 创建数据库记录
+ * 3. 调用 db.habit.create 创建数据库记录
  * 4. 重置表单数据
  * 5. 关闭弹窗并通知父组件刷新列表
  *
@@ -243,14 +243,14 @@ const submit = withLoadingLock(async () => {
 
   try {
     // 创建习惯记录，frequency 固定为 daily（每日习惯）
-    await db.habits.create({
+    await db.habit.create({
       user_id: userId,
       title: form.title,
       task_time: form.task_time || null, // 时间为空时存储 null
       duration: Math.round((Number(form.duration) || 0) * 60) || 10, // 转换小时为分钟，默认 10 分钟
       frequency: buildFrequencyPayload(),
       target_value: 1, // 目标完成值默认为 1
-      archived: false // 新习惯默认未归档
+      is_archived: false // 新习惯默认未归档
     })
 
     emit('refresh') // 通知父组件刷新习惯列表

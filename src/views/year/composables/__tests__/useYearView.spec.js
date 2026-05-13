@@ -57,8 +57,8 @@ describe('useYearView', () => {
     useRoute.mockReturnValue(route)
     useRouter.mockReturnValue(router)
     useDateStore.mockReturnValue(dateStore)
-    db.habits.list.mockResolvedValue([])
-    db.habits.listLogsByYear.mockResolvedValue([])
+    db.habit.list.mockResolvedValue([])
+    db.habit.listLogsByYear.mockResolvedValue([])
   })
 
   it('0-99 的 year 路由会先规范化到 1900 年代，再继续年视图同步', async () => {
@@ -73,6 +73,6 @@ describe('useYearView', () => {
     expect(result).toBe(false)
     expect(router.replace).toHaveBeenCalledWith('/year/1901')
     expect(dateStore.setYearMonthDay).not.toHaveBeenCalled()
-    expect(db.habits.list).not.toHaveBeenCalled()
+    expect(db.habit.list).not.toHaveBeenCalled()
   })
 })

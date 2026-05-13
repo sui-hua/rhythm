@@ -66,7 +66,7 @@ export const useYearView = () => {
   const fetchHabits = async () => {
     isPageLoading.value = true
     try {
-      const allHabits = await db.habits.list()
+      const allHabits = await db.habit.list()
       // 过滤掉已归档的习惯，只保留活跃习惯
       habits.value = allHabits.filter((habit) => !habit.is_archived)
     } catch (e) {
@@ -84,7 +84,7 @@ export const useYearView = () => {
    */
   const fetchYearLogs = async (year) => {
     try {
-      yearLogs.value = await db.habits.listLogsByYear(year)
+      yearLogs.value = await db.habit.listLogsByYear(year)
     } catch (e) {
       console.error('Failed to fetch year logs', e)
       yearLogs.value = []

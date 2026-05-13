@@ -78,12 +78,12 @@ export function useDirectionFetch() {
   })
 
   const loadPlans = async () => {
-    plans.value = await db.plans.list()
+    plans.value = await db.goal.list()
   }
 
   const loadMonthlyPlans = async (planId) => {
     if (monthlyPlansCache[planId]) return
-    monthlyPlansCache[planId] = await db.monthlyPlans.list(planId)
+    monthlyPlansCache[planId] = await db.goalMonths.list(planId)
 
     // Populate monthlyMainGoals for UI display
     for (const mp of monthlyPlansCache[planId]) {
@@ -100,7 +100,7 @@ export function useDirectionFetch() {
   const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
     if (!force && dailyPlansCache[monthlyPlanId]) return
 
-    const dps = await db.dailyPlans.list(monthlyPlanId)
+    const dps = await db.goalDays.list(monthlyPlanId)
     dailyPlansCache[monthlyPlanId] = dps
 
     const mp = Object.values(monthlyPlansCache)
@@ -130,7 +130,7 @@ export function useDirectionFetch() {
     isPageLoading.value = true
     isInitializing = true
     try {
-      plans.value = await db.plans.list()
+      plans.value = await db.goal.list()
 
       // 默认选中第一个目标
       if (plans.value.length > 0) {

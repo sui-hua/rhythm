@@ -1,14 +1,15 @@
 /**
- * plansCategory.js
+ * goalCategories.js
  * 目标分类（Category）的 CRUD 操作模块
  * 提供 plans_category 表的查询、创建、更新、删除接口
  */
 
 import client from '@/config/supabase'
+import { TABLES } from './tables'
 
-const supabase = client.createBase('plans_category')
+const supabase = client.createBase(TABLES.GOAL_CATEGORIES)
 
-export const plansCategory = {
+export const goalCategories = {
     async list() {
         return await supabase.query(q => q
             .select('*')

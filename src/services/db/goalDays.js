@@ -1,6 +1,6 @@
 /**
  * ============================================
- * 日计划数据表操作 (services/db/dailyPlans.js)
+ * 日计划数据表操作 (services/db/goalDays.js)
  * ============================================
  *
  * 【模块职责】
@@ -29,18 +29,19 @@
  * - listByDate()           → 按日期查询日计划（包含关联的月度计划和上级目标信息）
  *
  * 【使用示例】
- * import { dailyPlans } from '@/services/db/dailyPlans'
+ * import { goalDays } from '@/services/db/goalDays'
  *
  * // 查询某月度计划下的所有日计划
- * const { data } = await dailyPlans.list('monthly-plan-uuid')
+ * const { data } = await goalDays.list('monthly-plan-uuid')
  *
  * // 按日期查询（返回完整三级关联数据）
- * const { data } = await dailyPlans.listByDate(new Date('2026-04-20'))
+ * const { data } = await goalDays.listByDate(new Date('2026-04-20'))
  */
 import client from '@/config/supabase'
+import { TABLES } from './tables'
 
-const supabase = client.createBase('daily_plans')
-const plansBase = client.createBase('plans')
+const supabase = client.createBase(TABLES.GOAL_DAYS)
+const plansBase = client.createBase(TABLES.GOAL)
 
 const toDateOnly = (date) => {
     const year = date.getFullYear()
@@ -66,7 +67,7 @@ async function getMaxCarryOverLookbackDays() {
     return Number(rows?.[0]?.carry_over_lookback_days || 0)
 }
 
-export const dailyPlans = {
+export const goalDays = {
     /**
      * 按月度计划 ID 查询日计划列表
      * @description 查询指定月度计划下的所有日计划，按 day 字段升序排列
@@ -76,7 +77,7 @@ export const dailyPlans = {
     async list(monthlyPlanId) {
         return await supabase.query(q => {
             let query = q.select('*').order('day', { ascending: true })
-            if (monthlyPlanId) query = query.eq('monthly_plan_id', monthlyPlanId)
+            if (monthlyPlanId) query = query.eq('goal_month_id', monthlyPlanId)
             return query
         })
     },
@@ -144,11 +145,11 @@ export const dailyPlans = {
         return await supabase.query(q => q
             .select(`
                 *,
-                monthly_plans (
+                goal_months (
                     id,
                     task_time,
                     duration,
-                    plans (
+                    goal (
                         id,
                         task_time,
                         duration
@@ -179,11 +180,11 @@ export const dailyPlans = {
         const rows = await supabase.query(q => q
             .select(`
                 *,
-                monthly_plans (
+                goal_months (
                     id,
                     task_time,
                     duration,
-                    plans (
+                    goal (
                         id,
                         task_time,
                         duration,
@@ -200,7 +201,7 @@ export const dailyPlans = {
             if (plan.day === targetDateStr) return true
             if (plan.status !== 0) return false
 
-            const lookbackDays = Number(plan.monthly_plans?.plans?.carry_over_lookback_days || 0)
+            const lookbackDays = Number(plan.goal_months?.goal?.carry_over_lookback_days || 0)
             if (lookbackDays <= 0) return false
 
             // 每个目标只在自己的窗口内回看历史未完成项，避免把更久之前的积压任务误带到今天。

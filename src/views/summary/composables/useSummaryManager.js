@@ -70,7 +70,7 @@ export const useSummaryManager = () => {
   const loadSummaries = async () => {
     loading.value = true
     try {
-      summaries.value = await db.summaries.listByKind(summaryTabToKind(activeTab.value))
+      summaries.value = await db.summary.listByKind(summaryTabToKind(activeTab.value))
     } catch (error) {
       console.error('Failed to load summaries', error)
       summaries.value = []
@@ -160,7 +160,7 @@ export const useSummaryManager = () => {
         existingRecord: existingSummary
       })
 
-      const savedSummary = await db.summaries.save(payload)
+      const savedSummary = await db.summary.save(payload)
       selectedSummary.value = savedSummary
       await loadSummaries()
       isCreating.value = false
@@ -193,7 +193,7 @@ export const useSummaryManager = () => {
     if (!confirm('确定要删除这条总结吗？')) return
 
     try {
-      await db.summaries.remove(id)
+      await db.summary.remove(id)
       selectedSummary.value = null
       await loadSummaries()
     } catch (error) {

@@ -170,7 +170,7 @@ import { categories } from '@/views/direction/composables/useDirectionState'
 const fetchCategories = async (force = false) => {
   if (!force && categories.value?.length > 0) return  // 已有数据则跳过，避免重复请求
   try {
-    categories.value = await db.plansCategory.list()
+    categories.value = await db.goalCategories.list()
   } catch (e) {
     console.error('Failed to fetch categories', e)
   }

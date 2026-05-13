@@ -28,18 +28,11 @@
  * @namespace tasks
  */
 import client from '@/config/supabase'
+import { TABLES } from './tables'
 
-/**
- * Supabase tasks 表基础操作实例
- * @type {import('@/config/supabase').SupabaseBase}
- */
-const supabase = client.createBase('tasks')
+const supabase = client.createBase(TABLES.TASK)
 
-/**
- * Tasks 模块 - 提供 tasks 表的 CRUD 操作
- * @namespace tasks
- */
-export const tasks = {
+export const task = {
     /**
      * 按时间范围查询任务列表
      * @async

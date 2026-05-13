@@ -61,7 +61,7 @@ const emit = defineEmits(['updated'])
 const fetchCategories = async () => {
   loading.value = true
   try {
-    categories.value = await db.plansCategory.list()
+    categories.value = await db.goalCategories.list()
   } catch (e) {
     console.error('Failed to fetch categories:', e)
   } finally {
@@ -73,7 +73,7 @@ const handleAddCategory = async () => {
   if (!newCategoryName.value.trim()) return
   if (!authStore.userId) return
   try {
-    await db.plansCategory.create({
+    await db.goalCategories.create({
       name: newCategoryName.value.trim(),
       user_id: authStore.userId
     })
@@ -88,7 +88,7 @@ const handleAddCategory = async () => {
 const handleDeleteCategory = async (id) => {
   if (!confirm('确定要删除这个类型吗？')) return
   try {
-    await db.plansCategory.delete(id)
+    await db.goalCategories.delete(id)
     await fetchCategories()
     emit('updated')
   } catch (e) {

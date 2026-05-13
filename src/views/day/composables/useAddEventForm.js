@@ -240,9 +240,9 @@ export function useAddEventForm(props, emit) {
      * 
      * 根据 props.initialData 是否存在判断操作类型：
      * - **有 initialData**：执行更新（Update）操作
-     *   - isHabit = true：更新 db.habits 记录
-     *   - isHabit = false：更新 db.tasks 记录
-     * - **无 initialData**：执行新建（Create）操作，创建 db.tasks 记录
+     *   - isHabit = true：更新 db.habit 记录
+     *   - isHabit = false：更新 db.task 记录
+     * - **无 initialData**：执行新建（Create）操作，创建 db.task 记录
      * 
      * 提交成功后：
      * 1. 刷新当前日期的任务列表（fetchTasks）
@@ -270,7 +270,7 @@ export function useAddEventForm(props, emit) {
                 if (isHabit.value) {
                     // 习惯类型：更新习惯表（标题、时间、时长）
                     const taskTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-                    await db.habits.update(props.initialData.id, {
+                    await db.habit.update(props.initialData.id, {
                         title: form.title,
                         task_time: taskTimeStr,
                         duration: Math.round(durationValue * 60) || 10  // 转换为分钟存储
@@ -283,7 +283,7 @@ export function useAddEventForm(props, emit) {
                     const startTime = new Date(year, month, day, hours, minutes)
                     const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
 
-                    await db.tasks.update(props.initialData.id, {
+                    await db.task.update(props.initialData.id, {
                         title: form.title,
                         description: form.description,
                         start_time: startTime.toISOString(),
@@ -307,7 +307,7 @@ export function useAddEventForm(props, emit) {
                 const startTime = new Date(year, month, day, hours, minutes)
                 const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
 
-                await db.tasks.create({
+                await db.task.create({
                     user_id: userId,
                     title: form.title,
                     description: form.description,
@@ -330,8 +330,8 @@ export function useAddEventForm(props, emit) {
      * 删除当前编辑的项目
      * 
      * 根据 isHabit 判断删除目标表：
-     * - isHabit = true：删除 db.habits 中的记录
-     * - isHabit = false：删除 db.tasks 中的记录
+     * - isHabit = true：删除 db.habit 中的记录
+     * - isHabit = false：删除 db.task 中的记录
      * 
      * 删除成功后刷新列表并关闭弹窗
      * 
@@ -343,9 +343,9 @@ export function useAddEventForm(props, emit) {
             isSubmitting.value = true
             try {
                 if (isHabit.value) {
-                    await db.habits.delete(props.initialData.id)
+                    await db.habit.delete(props.initialData.id)
                 } else {
-                    await db.tasks.delete(props.initialData.id)
+                    await db.task.delete(props.initialData.id)
                 }
                 await fetchTasks({ showLoading: false })
                 emit('update:show', false)

@@ -165,8 +165,8 @@
  * - DurationPicker (ui/DurationPicker.vue) - 时长选择器
  *
  * 数据库操作：
- * - db.habits.update() 更新习惯信息
- * - db.habits.delete() 删除习惯
+ * - db.habit.update() 更新习惯信息
+ * - db.habit.delete() 删除习惯
  * - 均通过 withLoadingLock 包装防止重复提交
  */
 import { computed, reactive, watch } from 'vue'
@@ -281,7 +281,7 @@ const submit = withLoadingLock(async () => {
   if (!form.title.trim() || !props.habitData?.id || !canSubmitFrequency.value) return
   
   try {
-    await db.habits.update(props.habitData.id, {
+    await db.habit.update(props.habitData.id, {
       title: form.title,
       task_time: form.task_time || null,
       duration: Math.round((Number(form.duration) || 0) * 60) || 10,
@@ -300,7 +300,7 @@ const submit = withLoadingLock(async () => {
 const handleDelete = withLoadingLock(async () => {
   if (!props.habitData?.id) return
   try {
-    await db.habits.delete(props.habitData.id)
+    await db.habit.delete(props.habitData.id)
     emit('deleted')
     emit('refresh')
     emit('update:show', false)
@@ -315,7 +315,7 @@ const handleDelete = withLoadingLock(async () => {
 const handleArchive = withLoadingLock(async (isArchived) => {
   if (!props.habitData?.id) return
   try {
-    await db.habits.update(props.habitData.id, {
+    await db.habit.update(props.habitData.id, {
       is_archived: isArchived
     })
     emit('refresh')

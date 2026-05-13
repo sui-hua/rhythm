@@ -11,9 +11,9 @@
 import client from '@/config/supabase'
 import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 import { mapSummaryRowToRecord } from '@/views/summary/utils/summaryAdapters'
+import { TABLES } from './tables'
 
-/** @type {string} summaries 表名 */
-const table = 'summaries'
+const table = TABLES.SUMMARY
 
 /**
  * 持久化总结记录（插入或更新）
@@ -48,7 +48,7 @@ const persistSummary = async (payload) => {
  * 
  * @namespace summaries
  */
-export const summaries = {
+export const summary = {
   /**
    * 根据 kind 类型查询总结列表
    * 

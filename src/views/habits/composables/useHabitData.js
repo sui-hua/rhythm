@@ -164,7 +164,7 @@ export function useHabitData() {
     const fetchHabits = async () => {
         isPageLoading.value = true
         try {
-            const rawHabits = await db.habits.list()
+            const rawHabits = await db.habit.list()
             allHabits.value = rawHabits.map((h) => {
                 return {
                     ...h,
@@ -213,7 +213,7 @@ export function useHabitData() {
         }
 
         try {
-            const logs = await db.habits.listLogsByHabit(habitId)
+            const logs = await db.habit.listLogsByHabit(habitId)
             currentHabitLogs.value = logs
 
             // 找到对应的习惯，更新其 logs 相关字段

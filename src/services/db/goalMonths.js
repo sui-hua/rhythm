@@ -1,6 +1,6 @@
 /**
  * ============================================
- * 月计划数据表操作 (services/db/monthlyPlans.js)
+ * 月计划数据表操作 (services/db/goalMonths.js)
  * ============================================
  *
  * 【模块职责】
@@ -16,15 +16,16 @@
  * - update()        → 更新月计划信息
  * - delete()        → 删除月计划
  *
- * @module services/db/monthlyPlans
+ * @module services/db/goalMonths
  * @author Rhythm Team
  * @since 2024
  */
 import client from '@/config/supabase'
+import { TABLES } from './tables'
 
-const supabase = client.createBase('monthly_plans')
+const supabase = client.createBase(TABLES.GOAL_MONTHS)
 
-export const monthlyPlans = {
+export const goalMonths = {
     /**
      * 查询月计划列表
      * @description 根据目标ID查询该目标下的所有月计划，按月份升序排列
@@ -39,7 +40,7 @@ export const monthlyPlans = {
     async list(planId) {
         return await supabase.query(q => {
             let query = q.select('*').order('month', { ascending: true })
-            if (planId) query = query.eq('plan_id', planId)
+            if (planId) query = query.eq('goal_id', planId)
             return query
         })
     },

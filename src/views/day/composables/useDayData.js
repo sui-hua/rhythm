@@ -78,7 +78,7 @@ export function useDayData() {
             updates.actual_end_time = new Date().toISOString()
         }
 
-        await db.tasks.update(task.id, updates)
+        await db.task.update(task.id, updates)
     }
 
     /**
@@ -90,18 +90,18 @@ export function useDayData() {
     const toggleHabitCompletion = async (task) => {
         if (task.completed) {
             const { startOfDay, endOfDay } = getCurrentDayRange()
-            const logs = await db.habits.listLogsByDate(startOfDay, endOfDay)
+            const logs = await db.habit.listLogsByDate(startOfDay, endOfDay)
             const log = logs.find((item) => item.habit_id === task.id)
 
             if (log) {
-                await db.habits.deleteLog(log.id)
+                await db.habit.deleteLog(log.id)
             }
 
             return
         }
 
         const { startOfDay } = getCurrentDayRange()
-        await db.habits.log(task.id, '', startOfDay.toISOString())
+        await db.habit.log(task.id, '', startOfDay.toISOString())
     }
 
     /**
@@ -112,7 +112,7 @@ export function useDayData() {
      */
     const toggleDailyPlanCompletion = async (task) => {
         const newStatus = toDailyPlanStatus(!task.completed)
-        await db.dailyPlans.update(task.id, { status: newStatus })
+        await db.goalDays.update(task.id, { status: newStatus })
     }
 
     /**
@@ -159,10 +159,10 @@ export function useDayData() {
             const endOfDay = new Date(year, monthZeroBased, day, 23, 59, 59)
 
             const [fetchedTasks, fetchedPlans, allHabits, dayHabitLogs] = await Promise.all([
-                db.tasks.list(startOfDay, endOfDay),
-                db.dailyPlans.listForDayView(startOfDay),
-                db.habits.listLite(),
-                db.habits.listLogsByDate(startOfDay, endOfDay)
+                db.task.list(startOfDay, endOfDay),
+                db.goalDays.listForDayView(startOfDay),
+                db.habit.listLite(),
+                db.habit.listLogsByDate(startOfDay, endOfDay)
             ])
 
             tasks.value = fetchedTasks || []
@@ -248,7 +248,7 @@ export function useDayData() {
         const targetStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0)
 
         try {
-            const sourceTasks = await db.tasks.list(startOfSource, endOfSource)
+            const sourceTasks = await db.task.list(startOfSource, endOfSource)
             const uncompleted = (sourceTasks || []).filter(t => !t.completed).filter(t => {
                 const createdAt = t.created_at ? new Date(t.created_at) : null
                 if (!createdAt || isNaN(createdAt.getTime())) return false
@@ -266,7 +266,7 @@ export function useDayData() {
                     const newEnd = new Date(end)
                     newStart.setDate(newStart.getDate() + 1)
                     newEnd.setDate(newEnd.getDate() + 1)
-                    return db.tasks.update(task.id, {
+                    return db.task.update(task.id, {
                         start_time: newStart.toISOString(),
                         end_time: newEnd.toISOString()
                     })
@@ -330,7 +330,7 @@ export function useDayData() {
         const pomodoroStore = usePomodoroStore()
         try {
             const startTime = new Date().toISOString()
-            await db.tasks.update(task.id, { 
+            await db.task.update(task.id, { 
                 actual_start_time: startTime,
                 actual_end_time: null // 重置结束时间以防重复开始
             })

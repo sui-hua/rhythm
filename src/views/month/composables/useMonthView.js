@@ -151,7 +151,7 @@ export const useMonthView = () => {
     const end = new Date(currentYear, monthZeroBased + 1, 0, 23, 59, 59)
 
     try {
-      tasks.value = await db.tasks.list(start, end)
+      tasks.value = await db.task.list(start, end)
     } catch (e) {
       console.error('获取月度任务失败:', e)
     } finally {

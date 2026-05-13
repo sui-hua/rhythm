@@ -95,7 +95,7 @@ export function useHabitLogsFormatter(logs) {
  * - 撤销打卡记录（toggleComplete 删除已有记录）
  * - 快速打卡并附带用户备注（handleQuickLog）
  *
- * 该 Composable 负责与 db.habits 进行交互，完成后调用 fetchHabits 刷新界面数据。
+ * 该 Composable 负责与 db.habit 进行交互，完成后调用 fetchHabits 刷新界面数据。
  *
  * @param {Ref<Object>} selectedHabit - 当前选中的习惯对象，包含 id 和 monthlyLogs 等属性
  * @param {Ref<number>} viewYear - 日历视图所在的年份（用于确定新建打卡记录的日期）
@@ -155,13 +155,13 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
             if (existingLog) {
                 // 情况一：该日期已有打卡 → 删除记录（取消打卡）
                 // 使用数据库服务的 deleteLog 方法根据日志 ID 删除
-                await db.habits.deleteLog(existingLog.id)
+                await db.habit.deleteLog(existingLog.id)
             } else {
                 // 情况二：该日期没有打卡 → 创建新记录（完成打卡）
                 // 构建该日正午 12:00 的日期对象（避免午夜时分导致日期偏移）
                 const date = new Date(viewYear.value, viewMonth.value, day, 12, 0, 0)
                 // 传入空字符串作为备注（toggleComplete 不支持备注）
-                await db.habits.log(habit.id, '', date.toISOString())
+                await db.habit.log(habit.id, '', date.toISOString())
             }
 
             // 数据库操作成功后，调用回调函数刷新习惯列表
@@ -230,7 +230,7 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
                     0                    // 秒
                 )
                 // 调用数据库服务创建打卡记录，包含用户输入的备注
-                await db.habits.log(selectedHabit.value.id, note.trim(), date.toISOString())
+                await db.habit.log(selectedHabit.value.id, note.trim(), date.toISOString())
             }
 
             // 操作成功后刷新习惯列表

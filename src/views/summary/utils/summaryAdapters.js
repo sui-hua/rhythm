@@ -3,9 +3,8 @@
  * @description 提供总结数据在不同格式之间的转换能力，包括：
  * - 数据库记录与前端记录之间的映射
  * - 统一载荷格式的转换
- * - 遗留数据结构（scope-based）到新结构（kind-based）的兼容
  * - 内容（content）字段的规范化处理
- * 
+ *
  * @module summaryAdapters
  */
 
@@ -46,21 +45,6 @@ const normalizeContent = (content) => {
 
 
 /**
- * 遗留的 scope 字段到 kind 字段的映射表
- * 
- * 旧版数据结构使用 `scope` 字段（day/week/month/year），
- * 新版统一使用 `kind` 字段（daily/weekly/monthly/yearly）。
- * 
- * @type {Record<string, string>}
- */
-const legacyScopeToKind = {
-  day: 'daily',
-  week: 'weekly',
-  month: 'monthly',
-  year: 'yearly'
-}
-
-/**
  * 检查 summary 是否已是统一载荷格式
  * 
  * 统一载荷包含 kind、period_start、period_end 和 content 字段。
@@ -79,21 +63,13 @@ const isUnifiedPayload = (summary) => (
 
 /**
  * 从 summary 对象中解析 kind 类型
- * 
- * 优先使用 kind 字段；若存在遗留的 scope 字段，
- * 则通过映射表转换为对应的 kind 值。
- * 
+ *
  * @param {object} summary - Summary 对象
  * @returns {string} - Summary 类型（daily/weekly/monthly/yearly）
- * @throws {Error} - 当缺少 kind 且 scope 不受支持时抛出
+ * @throws {Error} - 当缺少 kind 时抛出
  */
 const resolveKind = (summary) => {
   if (typeof summary.kind === 'string') return summary.kind
-  if (typeof summary.scope === 'string') {
-    const legacyKind = legacyScopeToKind[summary.scope]
-    if (legacyKind) return legacyKind
-    throw new Error(`Unsupported legacy summary scope: ${summary.scope}`)
-  }
 
   throw new Error('Summary payload is missing kind')
 }
@@ -248,29 +224,19 @@ export const buildSummaryPayload = ({ kind, userId, period, formData, existingRe
 /**
  * 将任意 summary 数据转换为统一载荷格式
  *
- * 核心转换函数，自动处理新旧两种数据格式：
- * - 如果已是统一载荷格式（包含 kind、period_start 等），直接规范化后返回
- * - 否则通过 resolveKind、resolvePeriod、resolveFormData 逐步解析转换
+ * 核心转换函数，通过 resolveKind、resolvePeriod、resolveFormData 逐步解析转换。
  *
- * 这是将外部数据（如表单输入、API 返回、旧格式数据）统一为标准载荷的入口。
+ * 这是将外部数据（如表单输入、API 返回等）统一为标准载荷的入口。
  *
  * @param {object} summary - 原始 summary 数据
  * @returns {object} - 统一载荷格式的 summary 对象
  *
  * @example
- * // 新格式数据（直接通过）
  * toUnifiedSummaryPayload({
  *   kind: 'daily',
  *   period_start: '2024-01-01',
  *   period_end: '2024-01-01',
  *   content: { done: 'task1' }
- * })
- *
- * // 旧格式数据（会被转换）
- * toUnifiedSummaryPayload({
- *   scope: 'day',
- *   created_at: '2024-01-01T00:00:00Z',
- *   content: 'some text'
  * })
  */
 export const toUnifiedSummaryPayload = (summary) => {

@@ -1,8 +1,9 @@
 import client from '@/config/supabase'
+import { TABLES } from './tables'
 
-const supabase = client.createBase('daily_report_views')
+const supabase = client.createBase(TABLES.DAILY_REPORT_LOG)
 
-export const dailyReportViews = {
+export const dailyReportLog = {
   async getByUserAndDate(userId, reportDate) {
     if (!userId || !reportDate) return null
     const rows = await supabase.query(q =>

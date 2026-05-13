@@ -96,13 +96,13 @@ export function useDirectionBatch() {
       }
 
       if (existingDailyPlan) {
-        await db.dailyPlans.update(existingDailyPlan.id, {
+        await db.goalDays.update(existingDailyPlan.id, {
           title: payload.title,
           task_time: payload.task_time,
           duration: payload.duration
         })
       } else {
-        await db.dailyPlans.create(payload)
+        await db.goalDays.create(payload)
       }
     }
 
@@ -131,7 +131,7 @@ export function useDirectionBatch() {
     }
 
     if (idsToDelete.length > 0) {
-      await db.dailyPlans.deleteByIds(idsToDelete)
+      await db.goalDays.deleteByIds(idsToDelete)
     }
 
     await loadDailyPlans(currentMp.id, { force: true })

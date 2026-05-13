@@ -2,7 +2,7 @@
 
 本文档基于 Supabase MCP 查询结果整理，反映当前远程数据库中的主要表结构。
 
-更新时间：2026-04-18
+更新时间：2026-05-13
 
 ## 使用说明
 
@@ -12,7 +12,7 @@
 
 ## 核心表
 
-### `public.plans`
+### `public.goal`
 
 主要字段：
 
@@ -32,16 +32,17 @@
 
 说明：
 
+- 原名 `plans`，Phase 2 更名为 `goal`
 - 已包含 Day / Direction 依赖的 `task_time`、`duration`
 - `carry_over_lookback_days` 用于 Day 页面只读补查历史未完成目标日计划，`0` 表示关闭
-- `category_id` 外键指向 `plans_category.id`
+- `category_id` 外键指向 `goal_categories.id`
 
-### `public.monthly_plans`
+### `public.goal_months`
 
 主要字段：
 
 - `id`
-- `plan_id`
+- `goal_id`（原名 `plan_id`）
 - `user_id`
 - `title`
 - `description`
@@ -55,15 +56,16 @@
 
 说明：
 
+- 原名 `monthly_plans`，Phase 2 更名为 `goal_months`
 - 已包含时间继承链需要的 `task_time`、`duration`
-- `plan_id` 外键指向 `plans.id`
+- `goal_id` 外键指向 `goal.id`
 
-### `public.daily_plans`
+### `public.goal_days`
 
 主要字段：
 
 - `id`
-- `monthly_plan_id`
+- `goal_month_id`（原名 `monthly_plan_id`）
 - `user_id`
 - `title`
 - `description`
@@ -77,10 +79,11 @@
 
 说明：
 
+- 原名 `daily_plans`，Phase 2 更名为 `goal_days`
 - 当前 `status` 为 `smallint`
-- `monthly_plan_id` 外键指向 `monthly_plans.id`
+- `goal_month_id` 外键指向 `goal_months.id`
 
-### `public.habits`
+### `public.habit`
 
 主要字段：
 
@@ -89,7 +92,6 @@
 - `title`
 - `frequency`
 - `target_value`
-- `archived`
 - `is_archived`
 - `task_time`
 - `duration`
@@ -98,8 +100,7 @@
 
 说明：
 
-- 当前线上同时存在 `archived` 和 `is_archived`
-- 前端后续应统一到一套字段命名
+- 原名 `habits`，Phase 2 更名为 `habit`
 - `frequency` 当前运行时约定为 JSON 结构：
   - `{ "type": "daily" }`
   - `{ "type": "weekly", "weekdays": [1, 3, 5] }`
@@ -118,10 +119,11 @@
 
 说明：
 
-- 已存在 `user_id`
-- `habit_id` 外键指向 `habits.id`
+- 表名保持不变
+- `habit_id` 外键指向 `habit.id`
+- `user_id` 外键指向 `auth.users.id`
 
-### `public.tasks`
+### `public.task`
 
 主要字段：
 
@@ -139,9 +141,10 @@
 
 说明：
 
+- 原名 `tasks`，Phase 2 更名为 `task`
 - 已包含 Pomodoro 和任务计时依赖字段
 
-### `public.summaries`
+### `public.summary`
 
 当前表结构 / 当前快照：
 
@@ -155,15 +158,12 @@
 - `created_at` (timestamptz, default now())
 - `updated_at` (timestamptz, default now())
 
-约束 / 默认值：
+说明：
 
-- `id` 默认值仍为 `uuid_generate_v4()`
-- `user_id` 仍为必填列
-- `content` 当前类型为 `jsonb`
-- `created_at` 默认值仍为 `now()`
-- `updated_at` 默认值仍为 `now()`
+- 原名 `summaries`，Phase 2 更名为 `summary`
+- 已从 `scope` 字段迁移到 `kind` + `period_start/end`
 
-### `public.plans_category`
+### `public.goal_categories`
 
 主要字段：
 
@@ -174,7 +174,11 @@
 - `created_at`
 - `updated_at`
 
-### `public.daily_report_views`
+说明：
+
+- 原名 `plans_category`，Phase 2 更名为 `goal_categories`
+
+### `public.daily_report_log`
 
 主要字段：
 
@@ -183,24 +187,36 @@
 - `report_date`
 - `created_at`
 
-## 当前重点问题
+说明：
 
-基于 MCP 查询，当前真正还需要统一的数据库问题主要集中在：
-
-1. `habits` 同时存在 `archived` 和 `is_archived` — `archived` 已清理 ✅
-2. 线上当前缺失 `batch_upsert_daily_plans` / `batch_delete_daily_plans` 这两个 RPC，相关批量日计划操作不能假设数据库侧已具备这两项能力
+- 原名 `daily_report_views`，Phase 2 更名为 `daily_report_log`
 
 ## 当前表数量与数据量
 
-2026-04-18 查询结果：
+2026-05-13 查询结果（Phase 2 重命名后）：
 
-- `plans`: 18
-- `monthly_plans`: 128
-- `daily_plans`: 51
-- `habits`: 23
-- `habit_logs`: 65
-- `tasks`: 246
-- `summaries`: 0
-- `daily_summaries`: 0
-- `plans_category`: 7
-- `daily_report_views`: 36
+| 表名 | 行数 | 说明 |
+|------|------|------|
+| `goal` | 18 | 原 `plans` |
+| `goal_months` | 128 | 原 `monthly_plans` |
+| `goal_days` | 60 | 原 `daily_plans` |
+| `habit` | 29 | 原 `habits` |
+| `habit_logs` | 163 | 保持不变 |
+| `task` | 284 | 原 `tasks` |
+| `summary` | 4 | 原 `summaries` |
+| `goal_categories` | 7 | 原 `plans_category` |
+| `daily_report_log` | 62 | 原 `daily_report_views` |
+## 服务层表名映射
+
+表名常量定义见 `src/services/db/tables.js`。
+
+| 服务层导出 | 当前表名 |
+|-----------|---------|
+| `db.goal` | `goal` |
+| `db.goalMonths` | `goal_months` |
+| `db.goalDays` | `goal_days` |
+| `db.goalCategories` | `goal_categories` |
+| `db.task` | `task` |
+| `db.habit` | `habit` |
+| `db.summary` | `summary` |
+| `db.dailyReportLog` | `daily_report_log` |

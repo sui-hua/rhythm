@@ -6,7 +6,7 @@ export function useDirectionTasks() {
   const handleUpdateTask = async (task, payload) => {
     if (!task || !task.id) return
     try {
-      await db.dailyPlans.update(task.id, {
+      await db.goalDays.update(task.id, {
         title: payload.title ?? task.title,
         task_time: payload.task_time ?? task.task_time,
         duration: payload.duration ?? task.duration

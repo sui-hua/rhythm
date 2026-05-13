@@ -24,12 +24,12 @@ vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
 
 vi.mock('@/services/database', () => ({
   db: {
-    plans: {
+    goal: {
       update: vi.fn(),
       create: vi.fn(),
       delete: vi.fn()
     },
-    monthlyPlans: {
+    goalMonths: {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn()
@@ -39,9 +39,9 @@ vi.mock('@/services/database', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
-  db.plans.create.mockResolvedValue({ id: 'p-new' })
-  db.monthlyPlans.create.mockResolvedValue({})
-  db.monthlyPlans.update.mockResolvedValue({})
+  db.goal.create.mockResolvedValue({ id: 'p-new' })
+  db.goalMonths.create.mockResolvedValue({})
+  db.goalMonths.update.mockResolvedValue({})
   editingGoal.value = null
   selectedGoal.value = null
   selectedMonth.value = null
@@ -85,7 +85,7 @@ describe('useDirectionGoals', () => {
   })
 
   it('uses date-only month values when saving monthly plans', async () => {
-    db.monthlyPlans.update.mockResolvedValue({})
+    db.goalMonths.update.mockResolvedValue({})
 
     monthlyPlansCache.p1 = [
       { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
@@ -96,7 +96,7 @@ describe('useDirectionGoals', () => {
     const { saveMonthlyPlan } = useDirectionGoals()
     await saveMonthlyPlan(4, { title: '更新标题' })
 
-    expect(db.monthlyPlans.update).toHaveBeenCalledWith('mp-1', {
+    expect(db.goalMonths.update).toHaveBeenCalledWith('mp-1', {
       title: '更新标题'
     })
   })
@@ -114,17 +114,17 @@ describe('useDirectionGoals', () => {
       duration: 45
     })
 
-    expect(db.plans.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(db.goal.create).toHaveBeenCalledWith(expect.objectContaining({
       task_time: '07:30',
       duration: 45
     }))
-    expect(db.monthlyPlans.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
+    expect(db.goalMonths.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
       plan_id: 'p-new',
       month: expect.stringMatching(/-04-01$/),
       task_time: '07:30',
       duration: 45
     }))
-    expect(db.monthlyPlans.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
+    expect(db.goalMonths.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
       plan_id: 'p-new',
       month: expect.stringMatching(/-05-01$/),
       task_time: '07:30',
@@ -146,7 +146,7 @@ describe('useDirectionGoals', () => {
       carry_over_lookback_days: 3
     })
 
-    expect(db.plans.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(db.goal.create).toHaveBeenCalledWith(expect.objectContaining({
       carry_over_lookback_days: 3
     }))
   })
@@ -184,7 +184,7 @@ describe('useDirectionGoals', () => {
 
     await handleConfirmRange({ start: 4, end: 5 })
 
-    expect(db.monthlyPlans.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(db.goalMonths.create).toHaveBeenCalledWith(expect.objectContaining({
       plan_id: 'p1',
       month: expect.stringMatching(/-05-01$/),
       task_time: '08:00',
@@ -209,7 +209,7 @@ describe('useDirectionGoals', () => {
       carry_over_lookback_days: 5
     })
 
-    expect(db.plans.update).toHaveBeenCalledWith('p1', expect.objectContaining({
+    expect(db.goal.update).toHaveBeenCalledWith('p1', expect.objectContaining({
       carry_over_lookback_days: 5
     }))
   })

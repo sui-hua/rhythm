@@ -57,7 +57,7 @@ describe('useMonthView', () => {
     useRoute.mockReturnValue(route)
     useRouter.mockReturnValue(router)
     useDateStore.mockReturnValue(dateStore)
-    db.tasks.list.mockResolvedValue([])
+    db.task.list.mockResolvedValue([])
   })
 
   it('会先把非 canonical month 路由重定向到 canonical URL，再避免同步和取数', async () => {
@@ -72,7 +72,7 @@ describe('useMonthView', () => {
     expect(result).toBe(false)
     expect(router.replace).toHaveBeenCalledWith('/month/2026/4')
     expect(dateStore.setYearMonthDay).not.toHaveBeenCalled()
-    expect(db.tasks.list).not.toHaveBeenCalled()
+    expect(db.task.list).not.toHaveBeenCalled()
   })
 
   it('year 非法但 month 有效时，会保留 month 并回到 canonical month 路由', async () => {
@@ -89,7 +89,7 @@ describe('useMonthView', () => {
     expect(result).toBe(false)
     expect(router.replace).toHaveBeenCalledWith('/month/2025/4')
     expect(dateStore.setYearMonthDay).not.toHaveBeenCalled()
-    expect(db.tasks.list).not.toHaveBeenCalled()
+    expect(db.task.list).not.toHaveBeenCalled()
   })
 
   it('会把超出范围的 month 路由回退到 year 路由，而不是继续取数', async () => {
@@ -106,7 +106,7 @@ describe('useMonthView', () => {
     expect(result).toBe(false)
     expect(router.replace).toHaveBeenCalledWith('/year/2026')
     expect(dateStore.setYearMonthDay).not.toHaveBeenCalled()
-    expect(db.tasks.list).not.toHaveBeenCalled()
+    expect(db.task.list).not.toHaveBeenCalled()
   })
 
   it('0-99 的 year 路由会先规范化到 1900 年代，再继续月视图同步', async () => {
@@ -123,6 +123,6 @@ describe('useMonthView', () => {
     expect(result).toBe(false)
     expect(router.replace).toHaveBeenCalledWith('/month/1901/4')
     expect(dateStore.setYearMonthDay).not.toHaveBeenCalled()
-    expect(db.tasks.list).not.toHaveBeenCalled()
+    expect(db.task.list).not.toHaveBeenCalled()
   })
 })

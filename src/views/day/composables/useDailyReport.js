@@ -15,7 +15,7 @@
  * - carryoverToToday → 顺延到今天的未完成任务数
  *
  * 【防重复机制】
- * - 通过 dailyReportViews 表记录用户已查看的日期
+ * - 通过 dailyReportLog 表记录用户已查看的日期
  * - 同一用户同一天只弹一次
  */
 import { ref } from 'vue'
@@ -89,8 +89,8 @@ export const useDailyReport = () => {
     const { start: tStart, end: tEnd } = getDayRange(today)
 
     const [yesterdayTasks, todayTasks] = await Promise.all([
-      db.tasks.list(yStart, yEnd),
-      db.tasks.list(tStart, tEnd)
+      db.task.list(yStart, yEnd),
+      db.task.list(tStart, tEnd)
     ])
 
     const yCompleted = (yesterdayTasks || []).filter(t => t.completed).length
@@ -116,7 +116,7 @@ export const useDailyReport = () => {
 
   /**
    * 检查是否需要弹出日报弹窗
-   * - 通过 dailyReportViews 表判断用户今日是否已查看
+   * - 通过 dailyReportLog 表判断用户今日是否已查看
    * - 若未查看，则构建统计数据并显示弹窗
    * @returns {Promise<void>}
    */
@@ -128,7 +128,7 @@ export const useDailyReport = () => {
 
     try {
       isLoading.value = true
-      const existing = await db.dailyReportViews.getByUserAndDate(userId, todayKey)
+      const existing = await db.dailyReportLog.getByUserAndDate(userId, todayKey)
       if (existing) return
 
       await buildStats()
@@ -143,7 +143,7 @@ export const useDailyReport = () => {
   /**
    * 关闭日报弹窗并记录查看状态
    * - 隐藏弹窗
-   * - 向 dailyReportViews 表插入记录，防止同一用户同一天重复弹窗
+   * - 向 dailyReportLog 表插入记录，防止同一用户同一天重复弹窗
    * @returns {Promise<void>}
    */
   const closeReport = async () => {
@@ -154,7 +154,7 @@ export const useDailyReport = () => {
 
     const todayKey = formatDateKey(new Date())
     try {
-      await db.dailyReportViews.create({
+      await db.dailyReportLog.create({
         user_id: userId,
         report_date: todayKey
       })

@@ -146,9 +146,9 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPla
 
         // 计算继承的时间和时长
         // 优先级：plan.task_time > monthly_plans.task_time > monthly_plans.plans.task_time
-        const inheritedTime = plan.task_time || plan.monthly_plans?.task_time || plan.monthly_plans?.plans?.task_time
+        const inheritedTime = plan.task_time || plan.goal_months?.task_time || plan.goal_months?.goal?.task_time
         // 优先级：plan.duration > monthly_plans.duration > monthly_plans.plans.duration > 30
-        const inheritedDuration = plan.duration || plan.monthly_plans?.duration || plan.monthly_plans?.plans?.duration || 30
+        const inheritedDuration = plan.duration || plan.goal_months?.duration || plan.goal_months?.goal?.duration || 30
 
         if (inheritedTime) {
             // 解析时间字符串 "HH:MM" 并转换为小时浮点数

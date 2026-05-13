@@ -1,6 +1,6 @@
 /**
  * ============================================
- * 目标数据表操作 (services/db/plans.js)
+ * 目标数据表操作 (services/db/goal.js)
  * ============================================
  *
  * 【模块职责】
@@ -25,18 +25,19 @@
 
 /**
  * @fileoverview plans 表（长期目标）数据库操作模块
- * @module services/db/plans
+ * @module services/db/goal
  */
 
 import client from '@/config/supabase'
+import { TABLES } from './tables'
 
-const supabase = client.createBase('plans')
+const supabase = client.createBase(TABLES.GOAL)
 
 /**
- * @namespace plans
+ * @namespace goal
  * @description 长期目标（Plan）数据表操作集合
  */
-export const plans = {
+export const goal = {
     /**
      * @async
      * @function list
@@ -49,7 +50,7 @@ export const plans = {
      */
     async list() {
         return await supabase.query(q => q
-            .select('*, plans_category(id, name)')
+            .select('*, goal_categories(id, name)')
             .order('priority', { ascending: false })
             .order('created_at', { ascending: false })
         )

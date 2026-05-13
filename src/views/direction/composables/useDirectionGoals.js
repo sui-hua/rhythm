@@ -120,7 +120,7 @@ export function useDirectionGoals() {
           updates.carry_over_lookback_days = newCarryOverLookbackDays
         }
 
-        await db.plans.update(planId, updates)
+        await db.goal.update(planId, updates)
       }
 
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
@@ -142,7 +142,7 @@ export function useDirectionGoals() {
       const createPromises = []
       for (const m of targetMonths) {
         if (!existingMonths.includes(m)) {
-          createPromises.push(db.monthlyPlans.create({
+          createPromises.push(db.goalMonths.create({
             plan_id: planId,
             user_id: authStore.userId,
             title: currentTitle,
@@ -162,7 +162,7 @@ export function useDirectionGoals() {
           if (newTitle !== undefined) payload.title = newTitle
           if (newTaskTime !== undefined && !mp.task_time) payload.task_time = currentTiming.task_time
           if (newDuration !== undefined && !mp.duration) payload.duration = currentTiming.duration
-          return Object.keys(payload).length > 0 ? db.monthlyPlans.update(mp.id, payload) : null
+          return Object.keys(payload).length > 0 ? db.goalMonths.update(mp.id, payload) : null
         })
         .filter(Boolean)
 
@@ -171,7 +171,7 @@ export function useDirectionGoals() {
         return !targetMonths.includes(m)
       })
 
-      const deletePromises = toDelete.map(mp => db.monthlyPlans.delete(mp.id))
+      const deletePromises = toDelete.map(mp => db.goalMonths.delete(mp.id))
 
       await Promise.all([...createPromises, ...updatePromises, ...deletePromises])
       await fetchData()
@@ -209,7 +209,7 @@ export function useDirectionGoals() {
     )
     if (currentMp) {
       try {
-        await db.monthlyPlans.update(currentMp.id, payload)
+        await db.goalMonths.update(currentMp.id, payload)
       } catch (e) {
         console.error('Failed to save monthly plan details', e)
       }
@@ -244,7 +244,7 @@ export function useDirectionGoals() {
         priority: 2,
       }
 
-      const createdPlan = await db.plans.create(planData)
+      const createdPlan = await db.goal.create(planData)
 
       const promises = []
       for (let m = startM; m <= endM; m++) {
@@ -259,7 +259,7 @@ export function useDirectionGoals() {
           task_time: planData.task_time,
           duration: planData.duration
         }
-        promises.push(db.monthlyPlans.create(monthlyPlanData))
+        promises.push(db.goalMonths.create(monthlyPlanData))
       }
 
       await Promise.all(promises)
@@ -284,9 +284,9 @@ export function useDirectionGoals() {
       const relatedMonthlyPlans = getMonthlyPlansByPlanId(planId)
 
       // 靠数据库级联删除，只需删 monthlyPlans
-      await Promise.all(relatedMonthlyPlans.map(mp => db.monthlyPlans.delete(mp.id)))
+      await Promise.all(relatedMonthlyPlans.map(mp => db.goalMonths.delete(mp.id)))
 
-      await db.plans.delete(planId)
+      await db.goal.delete(planId)
 
       if (selectedGoal.value && selectedGoal.value.plan_id === planId) {
         selectedGoal.value = null

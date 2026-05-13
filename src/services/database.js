@@ -12,14 +12,14 @@
  * @see {@link https://supabase.com/docs} Supabase 文档
  *
  * 【数据表模块】
- * - plans              → 总计划/年度计划
- * - plansCategory      → 计划分类
- * - monthlyPlans       → 月计划
- * - dailyPlans         → 日计划
- * - habits            → 习惯及打卡记录
- * - tasks             → 每日具体任务
- * - summaries          → 各种类型总结记录
- * - dailyReportViews   → 日报弹窗查看记录
+ * - goal              → 总计划/年度计划
+ * - goalCategories    → 计划分类
+ * - goalMonths        → 月计划
+ * - goalDays          → 日计划
+ * - habit            → 习惯及打卡记录
+ * - task             → 每日具体任务
+ * - summary           → 各种类型总结记录
+ * - dailyReportLog   → 日报弹窗查看记录
  */
 
 /**
@@ -31,28 +31,28 @@ import client from '@/config/supabase'
 /**
  * 各数据表操作模块
  */
-import { plans } from './db/plans'
-import { monthlyPlans } from './db/monthlyPlans'
-import { dailyPlans } from './db/dailyPlans'
-import { habits } from './db/habits'
-import { tasks } from './db/tasks'
-import { summaries } from './db/summaries'
-import { plansCategory } from './db/plansCategory'
-import { dailyReportViews } from './db/dailyReportViews'
+import { goal } from './db/goal'
+import { goalMonths } from './db/goalMonths'
+import { goalDays } from './db/goalDays'
+import { habit } from './db/habit'
+import { task } from './db/task'
+import { summary } from './db/summary'
+import { goalCategories } from './db/goalCategories'
+import { dailyReportLog } from './db/dailyReportLog'
 
 /**
  * 数据库服务对象
  * @namespace db
  * @type {Object}
  *
- * @property {Object} plans - 总计划/年度计划表操作接口
- * @property {Object} plansCategory - 计划分类表操作接口
- * @property {Object} monthlyPlans - 月计划表操作接口
- * @property {Object} dailyPlans - 日计划表操作接口
- * @property {Object} habits - 习惯及打卡记录表操作接口
- * @property {Object} tasks - 每日具体任务表操作接口
- * @property {Object} summaries - 各种类型总结记录表操作接口
- * @property {Object} dailyReportViews - 日报弹窗查看记录表操作接口
+ * @property {Object} goal - 总计划/年度计划表操作接口
+ * @property {Object} goalCategories - 计划分类表操作接口
+ * @property {Object} goalMonths - 月计划表操作接口
+ * @property {Object} goalDays - 日计划表操作接口
+ * @property {Object} habit - 习惯及打卡记录表操作接口
+ * @property {Object} task - 每日具体任务表操作接口
+ * @property {Object} summary - 各种类型总结记录表操作接口
+ * @property {Object} dailyReportLog - 日报弹窗查看记录表操作接口
  * @property {Function} rpc - 远程过程调用方法
  */
 export const db = {
@@ -82,47 +82,47 @@ export const db = {
    * 总计划/年度计划表操作接口
    * @type {Object}
    */
-  plans,
+  goal,
 
   /**
    * 计划分类表操作接口
    * @type {Object}
    */
-  plansCategory,
+  goalCategories,
 
   /**
    * 月计划表操作接口
    * @type {Object}
    */
-  monthlyPlans,
+  goalMonths,
 
   /**
    * 日计划表操作接口
    * @type {Object}
    */
-  dailyPlans,
+  goalDays,
 
   /**
    * 习惯及打卡记录表操作接口
    * @type {Object}
    */
-  habits,
+  habit,
 
   /**
    * 每日具体任务表操作接口
    * @type {Object}
    */
-  tasks,
+  task,
 
   /**
    * 各种类型总结记录表操作接口
    * @type {Object}
    */
-  summaries,
+  summary,
 
   /**
    * 日报弹窗查看记录表操作接口
    * @type {Object}
    */
-  dailyReportViews
+  dailyReportLog
 }
