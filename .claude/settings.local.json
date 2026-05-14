@@ -1,9 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir /s /b src\\\\**\\\\*.vue src\\\\**\\\\*.js src\\\\**\\\\*.ts)",
-      "Bash(npx vitest *)",
-      "PowerShell(pnpm build *)"
+      
     ]
   }
 }
