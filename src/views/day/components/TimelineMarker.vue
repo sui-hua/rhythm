@@ -1,7 +1,7 @@
 <template>
   <div 
     class="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 via-red-400 to-transparent z-50 flex items-center pointer-events-none transition-all duration-500 animate-pulse"
-    :style="{ top: (currentHour * 25) + 'vh' }"
+    :style="{ top: `calc(${currentHour} * var(--hour-height))` }"
   >
     <div class="relative flex items-center">
       <div class="w-4 h-4 bg-gradient-to-br from-red-500 to-red-600 rounded-full -ml-2 shadow-2xl shadow-red-500/60 ring-4 ring-red-500/20 animate-ping absolute"></div>

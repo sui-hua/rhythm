@@ -62,10 +62,10 @@
               @dblclick="$emit('edit-task', section.item._originalIndex)"
               @touchstart="handleTouchStart($event, section.item._originalIndex)"
               @touchmove="handleTouchMove($event, section.item._originalIndex)"
-              @touchend="handleTouchEnd($event, section.item._originalIndex, section.item)"
+              @touchend="handleTouchEnd($event, section.item._originalIndex)"
               class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
               :class="section.item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
-              :style="{ transform: `translateX(-${getSwipeOffset(section.item._originalIndex)}px)`, transition: swipeState.activeIndex === section.item._originalIndex ? 'none' : 'transform 0.3s ease' }"
+              :style="{ transform: `translateX(-${getSwipeOffset(section.item._originalIndex)}px)`, transition: swipeState.activeId === section.item._originalIndex ? 'none' : 'transform 0.3s ease' }"
             >
               <div
                 v-if="getSwipeOffset(section.item._originalIndex) > 0"
@@ -116,7 +116,7 @@
               @touchend="handleTouchEnd($event, item._originalIndex, item)"
               class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
               :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50/80'"
-              :style="{ transform: `translateX(-${getSwipeOffset(item._originalIndex)}px)`, transition: swipeState.activeIndex === item._originalIndex ? 'none' : 'transform 0.3s ease' }"
+              :style="{ transform: `translateX(-${getSwipeOffset(item._originalIndex)}px)`, transition: swipeState.activeId === item._originalIndex ? 'none' : 'transform 0.3s ease' }"
             >
               <div
                 v-if="getSwipeOffset(item._originalIndex) > 0"
@@ -322,7 +322,7 @@ import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { getSidebarPanelClass } from '@/views/day/composables/mobileLayers'
 import { buildSidebarSections } from '@/views/day/composables/sidebarSections'
-import { playSuccessSound } from '@/utils/audio'
+import { useSwipeToComplete } from '@/views/day/composables/useSwipeToComplete'
 
 /**
  * 组件 Props 定义
@@ -372,84 +372,15 @@ const toggleCarryOverGroup = () => {
 }
 
 // ==================== 移动端左滑完成功能 ====================
-// 左滑完成功能的常量配置
-const SWIPE_THRESHOLD = 0.5  // 完成手势的阈值比例（向左滑动超过 50% 则触发完成）
-const MAX_SWIPE = 80         // 最大左滑距离（像素），超过此距离不再增加
-
-/**
- * 左滑操作的状态管理
- * @property {number} activeIndex - 当前正在左滑的任务索引，-1 表示无操作
- * @property {number} startX - 触摸起始点的 X 坐标
- * @property {number} currentX - 触摸当前点的 X 坐标
- */
-const swipeState = ref({
-  activeIndex: -1,
-  startX: 0,
-  currentX: 0
+const { swipeState, getOffset: getSwipeOffset, handleTouchStart: swipeStart, handleTouchMove: swipeMove, handleTouchEnd: swipeEnd } = useSwipeToComplete(async (activeId) => {
+  if (activeId === null) return
+  const item = dailySchedule.value[activeId]
+  if (item) await handleToggleComplete(item)
 })
 
-/**
- * 计算指定任务的左滑偏移量
- * @param {number} index - 任务索引
- * @returns {number} 当前的左滑偏移像素值
- */
-const getSwipeOffset = (index) => {
-  if (swipeState.value.activeIndex !== index) return 0
-  // delta > 0 表示向左滑（startX > currentX）
-  const delta = swipeState.value.startX - swipeState.value.currentX
-  // 限制在 0 到 MAX_SWIPE 之间
-  return Math.max(0, Math.min(delta, MAX_SWIPE))
-}
-
-/**
- * 触摸开始事件处理 - 记录起始位置
- * @param {TouchEvent} e - 触摸事件对象
- * @param {number} index - 触发触摸的任务索引
- */
-const handleTouchStart = (e, index) => {
-  swipeState.value.activeIndex = index
-  swipeState.value.startX = e.touches[0].clientX
-  swipeState.value.currentX = e.touches[0].clientX
-}
-
-/**
- * 触摸移动事件处理 - 更新当前位置
- * @param {TouchEvent} e - 触摸事件对象
- * @param {number} index - 触发触摸的任务索引
- */
-const handleTouchMove = (e, index) => {
-  if (swipeState.value.activeIndex !== index) return
-  swipeState.value.currentX = e.touches[0].clientX
-}
-
-/**
- * 触摸结束事件处理 - 判断是否触发完成操作
- * @param {TouchEvent} e - 触摸事件对象
- * @param {number} index - 触发触摸的任务索引
- * @param {Object} item - 任务数据对象
- */
-const handleTouchEnd = async (e, index, item) => {
-  if (swipeState.value.activeIndex !== index) return
-
-  // 计算滑动比例：delta 为正表示向左滑
-  const delta = swipeState.value.startX - swipeState.value.currentX
-  const ratio = delta / 280  // 280 为参考滑动距离基准值
-
-  // 重置左滑状态
-  swipeState.value.activeIndex = -1
-
-  // 当滑动比例达到阈值时，标记任务为完成
-  if (ratio >= SWIPE_THRESHOLD) {
-    // 触发设备震动反馈（如果设备支持）
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50)
-    }
-    // 播放成功音效
-    playSuccessSound()
-    // 调用任务完成处理函数
-    await handleToggleComplete(item)
-  }
-}
+const handleTouchStart = (e, index) => swipeStart(e, index)
+const handleTouchMove = (e, index) => swipeMove(e, index)
+const handleTouchEnd = (e, index) => swipeEnd(index)
 
 // ==================== 事件定义 ====================
 // 向父组件暴露的事件

@@ -31,113 +31,71 @@
 import { ref } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
 
-/**
- * 左滑完成任务 Composable
- *
- * 提供移动端左滑手势识别和任务完成处理能力。通过监听触摸事件，
- * 计算滑动距离并判断是否达到完成阈值，触发相应的回调和反馈。
- *
- * @param {Function} onComplete - 滑动完成达到阈值时触发的回调函数
- * @param {Promise<void>} [onComplete] - 回调可为异步函数
- *
- * @returns {Object} 返回状态和方法对象
- * @returns {Ref<SwipeState>} returns.swipeState - 滑动状态（isSwiping/offserX/startX）
- * @returns {Function} returns.handleTouchStart - 触摸开始事件处理（e: TouchEvent）
- * @returns {Function} returns.handleTouchMove - 触摸移动事件处理（e: TouchEvent）
- * @returns {Function} returns.handleTouchEnd - 触摸结束事件处理（异步）
- * @returns {Function} returns.resetSwipe - 强制重置滑动状态
- *
- * @example
- * const { swipeState, handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeToComplete(async () => {
- *   await completeTask(taskId)
- * })
- */
-export function useSwipeToComplete(onComplete) {
-    const SWIPE_THRESHOLD = 0.5 // 50% 宽度触发完成
-    const MAX_SWIPE = 80 // 最大滑动距离(px)
+const SWIPE_THRESHOLD = 0.5
+const MAX_SWIPE = 80
+const REFERENCE_WIDTH = 280
 
+export function useSwipeToComplete(onComplete) {
     const swipeState = ref({
         isSwiping: false,
         offsetX: 0,
-        startX: 0
+        startX: 0,
+        activeId: null
     })
 
-    /**
-     * 触摸开始事件处理
-     * 记录触摸起始位置，初始化滑动状态
-     * @param {TouchEvent} e - 触摸事件对象
-     */
-    const handleTouchStart = (e) => {
-        swipeState.value.startX = e.touches[0].clientX
-        swipeState.value.isSwiping = true
-        swipeState.value.offsetX = 0
+    const handleTouchStart = (e, id = null) => {
+        swipeState.value = {
+            startX: e.touches[0].clientX,
+            isSwiping: true,
+            offsetX: 0,
+            activeId: id
+        }
     }
 
-    /**
-     * 触摸移动事件处理
-     * 实时计算滑动距离，只响应左滑（deltaX > 0），限制最大滑动距离
-     * @param {TouchEvent} e - 触摸事件对象
-     */
-    const handleTouchMove = (e) => {
+    const handleTouchMove = (e, id = null) => {
         if (!swipeState.value.isSwiping) return
+        if (id !== null && swipeState.value.activeId !== id) return
 
         const currentX = e.touches[0].clientX
         let deltaX = swipeState.value.startX - currentX
 
-        // 只响应左滑（deltaX > 0）
         if (deltaX < 0) {
             deltaX = 0
         } else {
-            // 限制最大滑动距离
             deltaX = Math.min(deltaX, MAX_SWIPE)
         }
 
         swipeState.value.offsetX = deltaX
     }
 
-    /**
-     * 触摸结束事件处理
-     * 判断滑动距离是否达到完成阈值，触发完成反馈和回调
-     * @returns {Promise<void>}
-     */
-    const handleTouchEnd = async () => {
+    const handleTouchEnd = async (id = null) => {
         if (!swipeState.value.isSwiping) return
+        if (id !== null && swipeState.value.activeId !== id) return
 
-        const { offsetX, startX } = swipeState.value
-        const elementWidth = 280 // 预估侧边栏宽度
-        const ratio = offsetX / elementWidth
+        const { offsetX, activeId } = swipeState.value
+        const ratio = offsetX / REFERENCE_WIDTH
 
         swipeState.value.isSwiping = false
+        swipeState.value.activeId = null
 
-        // 超过阈值，触发完成
         if (ratio >= SWIPE_THRESHOLD) {
-            // 震动反馈
             if ('vibrate' in navigator) {
                 navigator.vibrate(50)
             }
-
-            // 播放成功音效
             playSuccessSound()
-
-            // 执行完成回调
             if (onComplete) {
-                await onComplete()
+                await onComplete(activeId)
             }
         }
 
-        // 重置状态
         setTimeout(() => {
             swipeState.value.offsetX = 0
         }, 300)
     }
 
-    /**
-     * 重置滑动状态
-     * 强制将滑动距离和状态归零，通常用于外部中断
-     */
-    const resetSwipe = () => {
-        swipeState.value.offsetX = 0
-        swipeState.value.isSwiping = false
+    const getOffset = (id = null) => {
+        if (id !== null && swipeState.value.activeId !== id) return 0
+        return swipeState.value.offsetX
     }
 
     return {
@@ -145,6 +103,6 @@ export function useSwipeToComplete(onComplete) {
         handleTouchStart,
         handleTouchMove,
         handleTouchEnd,
-        resetSwipe
+        getOffset
     }
 }

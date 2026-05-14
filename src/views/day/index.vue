@@ -111,13 +111,6 @@
         :initial-data="editingTask"
       />
 
-      <!-- Quick Add Drawer (移动端快速添加) -->
-      <MobileAddEventDrawer
-        v-if="isMobile"
-        v-model:show="showAddModal"
-        :initial-data="null"
-      />
-
       <!-- Daily Report Modal -->
       <DailyReportModal
         :show="reportVisible"
