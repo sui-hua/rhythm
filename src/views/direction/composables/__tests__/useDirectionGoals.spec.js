@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import {
   editingGoal,
-  monthlyPlansCache,
+  goalMonthsCache,
   selectedGoal,
   selectedMonth
 } from '@/views/direction/composables/useDirectionState'
 import { db } from '@/services/database'
 
-const loadMonthlyPlansMock = vi.fn()
+const loadGoalMonthsMock = vi.fn()
 const fetchDataMock = vi.fn()
 
 vi.mock('@/stores/authStore', () => ({
@@ -18,7 +18,7 @@ vi.mock('@/stores/authStore', () => ({
 vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
   useDirectionFetch: () => ({
     fetchData: fetchDataMock,
-    loadMonthlyPlans: loadMonthlyPlansMock
+    loadGoalMonths: loadGoalMonthsMock
   })
 }))
 
@@ -46,8 +46,8 @@ beforeEach(() => {
   selectedGoal.value = null
   selectedMonth.value = null
 
-  for (const key of Object.keys(monthlyPlansCache)) {
-    delete monthlyPlansCache[key]
+  for (const key of Object.keys(goalMonthsCache)) {
+    delete goalMonthsCache[key]
   }
 })
 
@@ -56,25 +56,25 @@ describe('useDirectionGoals', () => {
     const { handleEditGoal } = useDirectionGoals()
 
     await handleEditGoal({
-      plan_id: 'p1',
+      goal_id: 'p1',
       title: '目标',
       startMonth: 1,
       endMonth: 12
     })
 
-    expect(loadMonthlyPlansMock).toHaveBeenCalledWith('p1')
+    expect(loadGoalMonthsMock).toHaveBeenCalledWith('p1')
   })
 
   it('derives editable month bounds from date-only monthly plan strings', async () => {
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' },
-      { id: 'mp-2', plan_id: 'p1', month: '2026-07-01' }
+    goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' },
+      { id: 'mp-2', goal_id: 'p1', month: '2026-07-01' }
     ]
 
     const { handleEditGoal } = useDirectionGoals()
 
     await handleEditGoal({
-      plan_id: 'p1',
+      goal_id: 'p1',
       title: '目标',
       startMonth: 1,
       endMonth: 12
@@ -87,10 +87,10 @@ describe('useDirectionGoals', () => {
   it('uses date-only month values when saving monthly plans', async () => {
     db.goalMonths.update.mockResolvedValue({})
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+    goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' }
     ]
-    selectedGoal.value = { plan_id: 'p1' }
+    selectedGoal.value = { goal_id: 'p1' }
     selectedMonth.value = 4
 
     const { saveMonthlyPlan } = useDirectionGoals()
@@ -119,13 +119,13 @@ describe('useDirectionGoals', () => {
       duration: 45
     }))
     expect(db.goalMonths.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      plan_id: 'p-new',
+      goal_id: 'p-new',
       month: expect.stringMatching(/-04-01$/),
       task_time: '07:30',
       duration: 45
     }))
     expect(db.goalMonths.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      plan_id: 'p-new',
+      goal_id: 'p-new',
       month: expect.stringMatching(/-05-01$/),
       task_time: '07:30',
       duration: 45
@@ -163,16 +163,16 @@ describe('useDirectionGoals', () => {
       duration: 30
     })
 
-    expect(loadMonthlyPlansMock).toHaveBeenCalledWith('p-new')
+    expect(loadGoalMonthsMock).toHaveBeenCalledWith('p-new')
     expect(fetchDataMock).toHaveBeenCalled()
   })
 
   it('writes goal time into missing monthly plans when expanding a goal range', async () => {
-    monthlyPlansCache.p1 = [
-      { id: 'mp-4', plan_id: 'p1', month: '2026-04-01', task_time: '08:00', duration: 30 }
+    goalMonthsCache.p1 = [
+      { id: 'mp-4', goal_id: 'p1', month: '2026-04-01', task_time: '08:00', duration: 30 }
     ]
     selectedGoal.value = {
-      plan_id: 'p1',
+      goal_id: 'p1',
       title: '读书',
       task_time: '08:00',
       duration: 30,
@@ -185,7 +185,7 @@ describe('useDirectionGoals', () => {
     await handleConfirmRange({ start: 4, end: 5 })
 
     expect(db.goalMonths.create).toHaveBeenCalledWith(expect.objectContaining({
-      plan_id: 'p1',
+      goal_id: 'p1',
       month: expect.stringMatching(/-05-01$/),
       task_time: '08:00',
       duration: 30
@@ -194,7 +194,7 @@ describe('useDirectionGoals', () => {
 
   it('writes carry-over lookback days into updated plans when editing a goal', async () => {
     editingGoal.value = {
-      plan_id: 'p1',
+      goal_id: 'p1',
       title: '目标',
       carry_over_lookback_days: 0
     }

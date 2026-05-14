@@ -14,7 +14,7 @@
  * - /month/:y/:m   → 月视图
  * - /year/:y       → 年视图
  * - /habits        → 习惯追踪
- * - /direction     → 目标管理（plans → monthly_plans → daily_plans 三级）
+ * - /direction     → 目标管理（goal → goal_months → goal_days 三级）
  * - /summary       → 日/周/月/年总结
  */
 import { createRouter, createWebHistory } from 'vue-router'

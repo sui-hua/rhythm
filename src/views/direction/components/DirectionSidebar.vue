@@ -18,7 +18,7 @@
           <div class="goal-list">
             <button
               v-for="goal in group.items"
-              :key="goal.plan_id"
+              :key="goal.goal_id"
               class="goal-button"
               :class="{ 'is-active': selectedGoalName === goal.name }"
               @click="selectGoal(goal)"
@@ -78,7 +78,7 @@ DirectionSidebar.vue - 所向目标侧边栏组件
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { monthlyPlans, dailyTasks, getMonthlyPlansByPlanId } from '@/views/direction/composables/useDirectionState'
+import { goalMonths, dailyTasks, getGoalMonthsByGoalId } from '@/views/direction/composables/useDirectionState'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
@@ -86,7 +86,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 import { useResizable } from '@/composables/useResizable'
-import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
+import { isGoalDayCompleted } from '@/utils/goalDayStatus'
 import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
 const { categorizedGoals } = useDirectionFetch()
@@ -98,11 +98,11 @@ const selectedGoalName = computed(() => selectedGoal.value?.name || '')
 const systemLoad = computed(() => {
   if (!selectedGoal.value || !selectedMonth.value) return 0
 
-  const planId = selectedGoal.value.plan_id
+  const goalId = selectedGoal.value.goal_id
   const month = selectedMonth.value
 
   // 找到该目标当前月份的月度计划
-  const monthPlan = getMonthlyPlansByPlanId(planId).find(
+  const monthPlan = getGoalMonthsByGoalId(goalId).find(
     mp => getDateOnlyMonth(mp.month) === month
   )
 
@@ -110,9 +110,9 @@ const systemLoad = computed(() => {
 
   return getDirectionMonthlyProgress({
     dailyTasks,
-    planId,
+    goalId,
     month,
-    isDailyPlanCompleted
+    isGoalDayCompleted
   })
 })
 

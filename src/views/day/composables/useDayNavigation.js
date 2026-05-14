@@ -1,50 +1,12 @@
-/**
- * ============================================
- * Day 视图导航管理 (views/day/composables/useDayNavigation.js)
- * ============================================
- *
- * 【模块职责】
- * - Day 视图的导航和交互管理
- * - 路由校验与自动跳转
- * - 当前时间线指示器
- * - 滚动定位到当前/首个未完成任务
- * - 首次访问日的日报弹窗逻辑
- *
- * 【初始化流程】
- * 1. validateDayRoute() → 校验路由参数合法性
- * 2. handleFirstEntryForDay() → 首次访问显示日报弹窗
- * 3. syncDateWithRoute() → 同步日期到 dateStore
- * 4. fetchTasks() → 加载日程数据
- * 5. 滚动定位 → 定位到首个未完成任务或默认位置
- *
- * 【时间线逻辑】
- * - updateCurrentHour() → 每秒更新当前小时指示器
- * - 定时器 setInterval(updateCurrentHour, 1000)
- *
- * @module useDayNavigation
- * @see {@link https://github.com/example/rhythm} for more details
- */
-import { ref, nextTick, onMounted, watch } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useDayData } from './useDayData'
 import { useDateStore } from '@/stores/dateStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { buildDayPath, getRouteDateContext } from '@/views/day/utils/routeDateContext'
 import { getInitialScrollTarget } from '@/views/day/composables/getInitialScrollTarget'
+import { isSameDay } from '@/utils/dateFormatter'
 
-/**
- * Day 视图导航与交互管理 (Composable)
- * 包含路由校验跳转、当前时间指针、滚动定位以及页面初始化
- *
- * @function useDayNavigation
- * @returns {Object} Day 视图导航相关状态和方法
- * @returns {Ref<number>} returns.currentHour - 当前小时数（浮点数，例：14.5 表示 14:30）
- * @returns {Ref<boolean>} returns.isReady - 页面是否已完成初始化（用于淡入动画）
- * @returns {Ref<boolean>} returns.isLoading - 任务数据加载状态
- * @returns {Function} returns.scrollToTask - 滚动到指定任务
- * @returns {Function} returns.updateCurrentHour - 手动更新当前小时指示器
- * @returns {Function} returns.validateDayRoute - 校验路由参数合法性
- */
 export function useDayNavigation() {
     const { dailySchedule, fetchTasks, isLoading } = useDayData()
     const router = useRouter()
@@ -104,28 +66,9 @@ export function useDayNavigation() {
         return true
     }
 
-    /**
-     * 判断两个日期是否为同一天
-     * @param {Date} a - 第一个日期
-     * @param {Date} b - 第二个日期
-     * @returns {boolean} 是否为同一天
-     */
-    const isSameDay = (a, b) => {
-        return a.getFullYear() === b.getFullYear()
-            && a.getMonth() === b.getMonth()
-            && a.getDate() === b.getDate()
-    }
-
-    /**
-     * 处理当日首次访问逻辑
-     * 当用户首次访问当天时，检查是否需要显示日报弹窗
-     * @param {Date} targetDate - 目标日期
-     * @returns {Promise<void>}
-     */
     const handleFirstEntryForDay = async (targetDate) => {
         if (!targetDate) return
         const today = new Date()
-        // DB-based: openIfNeeded() will check daily_report_views to decide whether to show the modal.
         if (isSameDay(targetDate, today)) await openIfNeeded()
     }
 
@@ -190,6 +133,12 @@ export function useDayNavigation() {
         return true
     }
 
+    let intervalId = null
+
+    onUnmounted(() => {
+        if (intervalId) clearInterval(intervalId)
+    })
+
     // 页面挂载初始化：校验路由、加载数据、滚动定位、淡入显示、启动时间线刷新
     onMounted(async () => {
         const isValid = await handleRouteSync()
@@ -204,7 +153,7 @@ export function useDayNavigation() {
             }, 50)
         })
 
-        setInterval(updateCurrentHour, 1000)
+        intervalId = setInterval(updateCurrentHour, 1000)
     })
 
     watch(

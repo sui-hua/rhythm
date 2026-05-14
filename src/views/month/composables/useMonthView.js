@@ -20,7 +20,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
-import { getMonthName } from '@/utils/dateFormatter'
+import { getMonthName, getDaysInMonth, getFirstDayOffset } from '@/utils/dateFormatter'
 import {
   buildDayPath,
   buildMonthPath,
@@ -83,16 +83,12 @@ export const useMonthView = () => {
   const selectedMonth = computed(() => {
     const currentYear = routeYear.value
     const monthNum = routeMonth.value
-    // 转换为零基月份（JavaScript Date 月份从0开始）
     const monthZeroBased = monthNum - 1
-    // getDate(0) 返回上个月最后一天，即当月天数
-    const daysInMonth = new Date(currentYear, monthZeroBased + 1, 0).getDate()
 
     return {
       name: getMonthName(monthNum, 'en'),
-      days: daysInMonth,
-      // getDay() 返回 0=周日，需转换为周日=6, 周一=0 的偏移量
-      firstDayOffset: (new Date(currentYear, monthZeroBased, 1).getDay() + 6) % 7,
+      days: getDaysInMonth(currentYear, monthNum),
+      firstDayOffset: getFirstDayOffset(currentYear, monthNum),
       index: monthZeroBased
     }
   })
@@ -192,32 +188,30 @@ export const useMonthView = () => {
     const currentYear = routeYear.value
     const grid = []
     const { index, days, firstDayOffset } = selectedMonth.value
-    // 获取上个月最后一天的日期（用于填充上月末尾）
     const prevMonthLastDay = new Date(currentYear, index, 0).getDate()
 
-    // === 填充上月末尾日期（灰色部分）===
+    const tasksByDay = new Map()
+    for (const t of tasks.value) {
+      const d = new Date(t.start_time)
+      if (d.getFullYear() === currentYear && d.getMonth() === index) {
+        const day = d.getDate()
+        if (!tasksByDay.has(day)) tasksByDay.set(day, [])
+        tasksByDay.get(day).push(t)
+      }
+    }
+
     for (let i = firstDayOffset - 1; i >= 0; i--) {
       grid.push({ date: prevMonthLastDay - i, isCurrent: false })
     }
 
-    // === 填充当月所有日期 ===
     for (let i = 1; i <= days; i++) {
-      // 筛选出该日期的所有任务
-      const dayTasks = tasks.value.filter((t) => {
-        const d = new Date(t.start_time)
-        return d.getDate() === i && d.getMonth() === index && d.getFullYear() === currentYear
-      })
-
-      // 计算每个任务占用的小时时段（用于日历格子内显示）
+      const dayTasks = tasksByDay.get(i) || []
       const taskHours = dayTasks.flatMap((task) => {
         const dStart = new Date(task.start_time)
         const dEnd = new Date(task.end_time)
-        // 转换为小数小时以便计算
         const start = dStart.getHours() + dStart.getMinutes() / 60
         const end = dEnd.getHours() + dEnd.getMinutes() / 60
-
         const hours = []
-        // 收集该任务覆盖的每个完整小时
         for (let h = Math.floor(start); h < Math.ceil(end); h++) {
           hours.push(h)
         }
@@ -232,9 +226,7 @@ export const useMonthView = () => {
       })
     }
 
-    // === 填充下月开头日期（灰色部分）===
     while (grid.length < 42) {
-      // 计算填充日期的日号
       grid.push({ date: grid.length - days - firstDayOffset + 1, isCurrent: false })
     }
 

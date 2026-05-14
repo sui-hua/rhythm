@@ -7,15 +7,15 @@ import {
   dailyTasks,
   isSelecting,
   activePicker,
-  monthlyPlansCache,
-  dailyPlansCache,
+  goalMonthsCache,
+  goalDaysCache,
   archiveVersion
 } from '@/views/direction/composables/useDirectionState'
 
 export function useDirectionSelection() {
   const goalKey = (m) => {
     if (!selectedGoal.value) return `undefined-${m}`
-    return `plan-${selectedGoal.value.plan_id}-${m}`
+    return `goal-${selectedGoal.value.goal_id}-${m}`
   }
 
   const dayTaskKey = (day) => `${goalKey(selectedMonth.value)}-${day}`
@@ -69,7 +69,7 @@ const getMonthOffset = (month) => {
     return new Date(new Date().getFullYear(), month - 1, 1).getDay()
   }
 
-  const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
+  const cached = goalMonthsCache[selectedGoal.value.goal_id] || []
   const mp = cached.find(item => getDateOnlyMonth(item.month) === month)
   if (!mp) {
     return new Date(new Date().getFullYear(), month - 1, 1).getDay()
@@ -126,16 +126,16 @@ const isAllSelectedDatesHaveTask = (month) => {
 
   const datesWithTasks = computed(() => {
   archiveVersion.value
-  const planId = selectedGoal.value?.plan_id
-  if (!planId || selectedMonth.value == null) return []
+  const goalId = selectedGoal.value?.goal_id
+  if (!goalId || selectedMonth.value == null) return []
 
-  const monthlyPlansOfGoal = monthlyPlansCache[planId] || []
-  const mp = monthlyPlansOfGoal.find(
+  const goalMonthsOfGoal = goalMonthsCache[goalId] || []
+  const mp = goalMonthsOfGoal.find(
     item => getDateOnlyMonth(item.month) === selectedMonth.value
   )
   if (!mp) return []
 
-  return (dailyPlansCache[mp.id] || [])
+  return (goalDaysCache[mp.id] || [])
     .filter(dp => dp.title)
     .map(dp => getDateOnlyDay(dp.day))
     .filter(day => day !== null)

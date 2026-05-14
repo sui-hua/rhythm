@@ -4,6 +4,7 @@
       :month-name="selectedMonth ? months[selectedMonth - 1].full : '无内容'"
       :task-count="datesWithTasks.length"
       :selected-month="selectedMonth"
+      :months="months"
     />
 
     <ScrollArea class="archive-scroll">

@@ -6,12 +6,12 @@
       <div class="month-title-area">
         <div v-if="selectedMonth === month" class="month-edit" @click.stop>
           <Input
-            :model-value="monthlyMainGoals[goalKey(month)]?.title || ''"
+            :model-value="goalMonthsMap[goalKey(month)]?.title || ''"
             class="month-input"
             placeholder="点此分配本月主要任务..."
-            @update:model-value="val => { if (monthlyMainGoals[goalKey(month)]) monthlyMainGoals[goalKey(month)].title = val }"
-            @blur="() => saveMonthlyPlan(month, { title: monthlyMainGoals[goalKey(month)]?.title })"
-            @keyup.enter="() => saveMonthlyPlan(month, { title: monthlyMainGoals[goalKey(month)]?.title })"
+            @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)].title = val }"
+            @blur="() => saveMonthlyPlan(month, { title: goalMonthsMap[goalKey(month)]?.title })"
+            @keyup.enter="() => saveMonthlyPlan(month, { title: goalMonthsMap[goalKey(month)]?.title })"
           />
 
           <div class="month-meta" aria-label="月目标默认安排">
@@ -20,10 +20,10 @@
               <Input
                 type="time"
                 class="month-time-input"
-                :model-value="monthlyMainGoals[goalKey(month)]?.task_time || ''"
-                @update:model-value="val => { if (monthlyMainGoals[goalKey(month)]) monthlyMainGoals[goalKey(month)].task_time = val || null }"
-                @blur="() => saveMonthlyPlan(month, { task_time: monthlyMainGoals[goalKey(month)]?.task_time || null })"
-                @keyup.enter="() => saveMonthlyPlan(month, { task_time: monthlyMainGoals[goalKey(month)]?.task_time || null })"
+                :model-value="goalMonthsMap[goalKey(month)]?.task_time || ''"
+                @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)].task_time = val || null }"
+                @blur="() => saveMonthlyPlan(month, { task_time: goalMonthsMap[goalKey(month)]?.task_time || null })"
+                @keyup.enter="() => saveMonthlyPlan(month, { task_time: goalMonthsMap[goalKey(month)]?.task_time || null })"
               />
               <span class="month-meta-divider"></span>
               <Timer class="month-meta-icon" :size="14" />
@@ -31,10 +31,10 @@
                 type="number"
                 min="1"
                 class="month-duration-input"
-                :model-value="monthlyMainGoals[goalKey(month)]?.duration || ''"
-                @update:model-value="val => { if (monthlyMainGoals[goalKey(month)]) monthlyMainGoals[goalKey(month)].duration = val ? parseInt(val) : null }"
-                @blur="() => saveMonthlyPlan(month, { duration: monthlyMainGoals[goalKey(month)]?.duration || null })"
-                @keyup.enter="() => saveMonthlyPlan(month, { duration: monthlyMainGoals[goalKey(month)]?.duration || null })"
+                :model-value="goalMonthsMap[goalKey(month)]?.duration || ''"
+                @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)].duration = val ? parseInt(val) : null }"
+                @blur="() => saveMonthlyPlan(month, { duration: goalMonthsMap[goalKey(month)]?.duration || null })"
+                @keyup.enter="() => saveMonthlyPlan(month, { duration: goalMonthsMap[goalKey(month)]?.duration || null })"
               />
               <span class="month-duration-unit">分</span>
             </div>
@@ -42,13 +42,13 @@
         </div>
 
         <div v-else class="month-title">
-          <h3 class="month-title-text" :class="{ 'is-empty': !monthlyMainGoals[goalKey(month)]?.title }">
-            {{ monthlyMainGoals[goalKey(month)]?.title || '暂无计划' }}
+          <h3 class="month-title-text" :class="{ 'is-empty': !goalMonthsMap[goalKey(month)]?.title }">
+            {{ goalMonthsMap[goalKey(month)]?.title || '暂无计划' }}
           </h3>
-          <span v-if="monthlyMainGoals[goalKey(month)]?.task_time" class="month-time">
-            {{ monthlyMainGoals[goalKey(month)]?.task_time.slice(0, 5) }}
-            <span v-if="monthlyMainGoals[goalKey(month)]?.duration" class="month-time-duration">
-              {{ monthlyMainGoals[goalKey(month)]?.duration }} 分
+          <span v-if="goalMonthsMap[goalKey(month)]?.task_time" class="month-time">
+            {{ goalMonthsMap[goalKey(month)]?.task_time.slice(0, 5) }}
+            <span v-if="goalMonthsMap[goalKey(month)]?.duration" class="month-time-duration">
+              {{ goalMonthsMap[goalKey(month)]?.duration }} 分
             </span>
           </span>
         </div>
@@ -74,7 +74,7 @@ const { month } = defineProps({
   }
 })
 
-const { monthlyMainGoals, saveMonthlyPlan } = useDirectionGoals()
+const { goalMonthsMap, saveMonthlyPlan } = useDirectionGoals()
 const { selectedMonth, goalKey, toggleMonth } = useDirectionSelection()
 
 </script>

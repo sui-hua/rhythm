@@ -5,7 +5,7 @@ describe('buildDayExecutionItems', () => {
   it('marks historical pending daily plans as carry-over items', () => {
     const items = buildDayExecutionItems({
       targetDate: new Date('2026-04-28T00:00:00'),
-      dailyPlans: [
+      goalDays: [
         {
           id: 'plan-old',
           title: '补做复盘',
@@ -19,7 +19,7 @@ describe('buildDayExecutionItems', () => {
 
     expect(items[0]).toMatchObject({
       id: 'plan-old',
-      type: 'daily_plan',
+      type: 'goal_day',
       isCarryOver: true,
       carryOverSourceDate: '2026-04-27',
       carryOverLabel: '原计划 4月27日'

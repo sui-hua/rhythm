@@ -117,11 +117,9 @@ export function useHabitData() {
     const calculateStreak = (logs) => {
   if (!logs || logs.length === 0) return 0
 
-  // 按日期排序（最新的在前）
-  const sortedDates = logs
-    .map(log => new Date(log.completed_at).toDateString())
-    .filter((date, index, self) => self.indexOf(date) === index) // 去重
-    .sort((a, b) => new Date(b) - new Date(a)) // 降序
+  const sortedDates = [...new Set(
+    logs.map(log => new Date(log.completed_at).toDateString())
+  )].sort().reverse()
 
   if (sortedDates.length === 0) return 0
 

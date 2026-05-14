@@ -1,50 +1,29 @@
-/**
- * ============================================
- * Direction 数据获取层 (views/direction/composables/useDirectionFetch.js)
- * ============================================
- *
- * 【模块职责】
- * - 从数据库获取 plans、monthlyPlans、dailyPlans 数据
- * - 按分类整理目标列表
- * - 管理数据缓存，减少重复请求
- * - 支持按需加载（lazy load）
- *
- * 【数据流】
- * 1. fetchData() → 加载所有目标及月度计划
- * 2. loadMonthlyPlans(planId) → 按需加载某个目标的月计划
- * 3. loadDailyPlans(monthlyPlanId) → 按需加载某个月的日计划
- *
- * 【缓存机制】
- * - monthlyPlansCache → 按 planId 索引的月计划缓存
- * - dailyPlansCache → 按 monthlyPlanId 索引的日计划缓存
- */
-import { computed, onMounted, watch, ref } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { db } from '@/services/database'
 import { parseDateOnly, getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import {
-  plans,
-  monthlyPlans,
-  monthlyMainGoals,
+  goals,
+  goalMonths,
+  goalMonthsMap,
   dailyTasks,
   selectedGoal,
   editingGoal,
   showAddModal,
   initialized,
-  monthlyPlansCache,
-  dailyPlansCache,
-  syncMonthlyPlansToFlatList,
+  goalMonthsCache,
+  goalDaysCache,
+  syncGoalMonthsToFlatList,
   selectedMonth,
-  clearDailyPlansCache
+  clearGoalDaysCache
 } from '@/views/direction/composables/useDirectionState'
 
-let setupDone = false
 let isInitializing = false
 
-const resolveDefaultMonthlyPlan = (monthlyPlanList) => {
-  const sorted = monthlyPlanList
-    .map(mp => ({
-      item: mp,
-      month: getDateOnlyMonth(mp.month)
+const resolveDefaultGoalMonth = (list) => {
+  const sorted = list
+    .map(gm => ({
+      item: gm,
+      month: getDateOnlyMonth(gm.month)
     }))
     .filter(({ month }) => month !== null)
     .sort((a, b) => a.month - b.month)
@@ -57,174 +36,160 @@ const resolveDefaultMonthlyPlan = (monthlyPlanList) => {
   return current?.item || sorted[0].item
 }
 
+const isPageLoading = ref(false)
+const categorizedGoals = computed(() => {
+  const map = new Map()
+  for (const goal of goals.value) {
+    const categoryName = goal.goal_categories?.name || '未分类'
+    if (!map.has(categoryName)) map.set(categoryName, [])
+
+    map.get(categoryName).push({
+      ...goal,
+      name: goal.title,
+      goal_id: goal.id,
+      category_name: categoryName
+    })
+  }
+  return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
+})
+
+const loadGoals = async () => {
+  goals.value = await db.goal.list()
+}
+
+const loadGoalMonths = async (goalId) => {
+  if (goalMonthsCache[goalId]) return
+  goalMonthsCache[goalId] = await db.goalMonths.list(goalId)
+
+  for (const gm of goalMonthsCache[goalId]) {
+    const month = getDateOnlyMonth(gm.month)
+    if (month) {
+      const key = `goal-${goalId}-${month}`
+      goalMonthsMap[key] = gm
+    }
+  }
+
+  syncGoalMonthsToFlatList(goalId)
+}
+
+const loadGoalDays = async (monthPlanId, { force = false } = {}) => {
+  if (!force && goalDaysCache[monthPlanId]) return
+
+  const gd = await db.goalDays.list(monthPlanId)
+  goalDaysCache[monthPlanId] = gd
+
+  const gm = Object.values(goalMonthsCache)
+    .flat()
+    .find(item => item.id === monthPlanId)
+  if (!gm) return
+
+  const monthDate = parseDateOnly(gm.month)
+  if (!monthDate) return
+
+  const month = monthDate.getMonth() + 1
+  const prefix = `goal-${gm.goal_id}-${month}-`
+  for (const key of Object.keys(dailyTasks)) {
+    if (key.startsWith(prefix)) delete dailyTasks[key]
+  }
+
+  for (const item of gd) {
+    const dayDate = parseDateOnly(item.day)
+    if (!dayDate) continue
+
+    const day = dayDate.getDate()
+    dailyTasks[`goal-${gm.goal_id}-${month}-${day}`] = item
+  }
+}
+
+const fetchData = async () => {
+  isPageLoading.value = true
+  isInitializing = true
+  try {
+    goals.value = await db.goal.list()
+
+    if (goals.value.length > 0) {
+      selectedGoal.value = categorizedGoals.value[0]?.items[0] || null
+    }
+
+    if (selectedGoal.value) {
+      await loadGoalMonths(selectedGoal.value.goal_id)
+      goalMonths.value = goalMonthsCache[selectedGoal.value.goal_id] || []
+    }
+
+    if (selectedGoal.value && goalMonths.value.length > 0) {
+      const targetGm = resolveDefaultGoalMonth(goalMonths.value)
+      const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
+
+      if (targetGm && targetMonth) {
+        selectedMonth.value = targetMonth
+        await loadGoalDays(targetGm.id, { force: true })
+      }
+    }
+  } catch (e) {
+    console.error('Failed to fetch direction data', e)
+  } finally {
+    isPageLoading.value = false
+    isInitializing = false
+  }
+}
+
+watch(showAddModal, (val) => {
+  if (!val) {
+    setTimeout(() => { editingGoal.value = null }, 300)
+  }
+})
+
+watch(selectedMonth, async (newMonth, oldMonth) => {
+  if (isInitializing) return
+  if (!newMonth || newMonth === oldMonth) return
+  if (!selectedGoal.value) return
+
+  const goalId = selectedGoal.value.goal_id
+  if (!goalId) return
+
+  const cached = goalMonthsCache[goalId] || []
+  const gm = cached.find(item => getDateOnlyMonth(item.month) === newMonth)
+  if (!gm) return
+
+  clearGoalDaysCache(gm.id)
+  await loadGoalDays(gm.id, { force: true })
+})
+
+watch(selectedGoal, async (newGoal, oldGoal) => {
+  if (isInitializing) return
+  if (!newGoal || newGoal === oldGoal) return
+
+  const goalId = newGoal.goal_id
+  if (!goalId) return
+
+  await loadGoalMonths(goalId)
+  goalMonths.value = goalMonthsCache[goalId] || []
+
+  if (goalMonths.value.length > 0) {
+    const targetGm = resolveDefaultGoalMonth(goalMonths.value)
+    const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
+
+    if (targetGm && targetMonth) {
+      selectedMonth.value = targetMonth
+      await loadGoalDays(targetGm.id, { force: true })
+    }
+  }
+})
+
+if (!initialized.value) {
+  fetchData()
+  initialized.value = true
+}
+
 export { parseDateOnly } from '@/views/direction/utils/dateOnly'
 
 export function useDirectionFetch() {
-  const isPageLoading = ref(false)
-  const categorizedGoals = computed(() => {
-    const map = new Map()
-    for (const plan of plans.value) {
-      const categoryName = plan.goal_categories?.name || '未分类'
-      if (!map.has(categoryName)) map.set(categoryName, [])
-
-      map.get(categoryName).push({
-        ...plan,
-        name: plan.title,
-        plan_id: plan.id,
-        category_name: categoryName
-      })
-    }
-    return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
-  })
-
-  const loadPlans = async () => {
-    plans.value = await db.goal.list()
-  }
-
-  const loadMonthlyPlans = async (planId) => {
-    if (monthlyPlansCache[planId]) return
-    monthlyPlansCache[planId] = await db.goalMonths.list(planId)
-
-    // Populate monthlyMainGoals for UI display
-    for (const mp of monthlyPlansCache[planId]) {
-      const month = getDateOnlyMonth(mp.month)
-      if (month) {
-        const key = `plan-${planId}-${month}`
-        monthlyMainGoals[key] = mp
-      }
-    }
-
-    syncMonthlyPlansToFlatList(planId)
-  }
-
-  const loadDailyPlans = async (monthlyPlanId, { force = false } = {}) => {
-    if (!force && dailyPlansCache[monthlyPlanId]) return
-
-    const dps = await db.goalDays.list(monthlyPlanId)
-    dailyPlansCache[monthlyPlanId] = dps
-
-    const mp = Object.values(monthlyPlansCache)
-      .flat()
-      .find(item => item.id === monthlyPlanId)
-    if (!mp) return
-
-    const monthDate = parseDateOnly(mp.month)
-    if (!monthDate) return
-
-    const month = monthDate.getMonth() + 1
-    const prefix = `plan-${mp.goal_id}-${month}-`
-    for (const key of Object.keys(dailyTasks)) {
-      if (key.startsWith(prefix)) delete dailyTasks[key]
-    }
-
-    for (const dp of dps) {
-      const dayDate = parseDateOnly(dp.day)
-      if (!dayDate) continue
-
-      const day = dayDate.getDate()
-      dailyTasks[`plan-${mp.goal_id}-${month}-${day}`] = dp
-    }
-  }
-
-  const fetchData = async () => {
-    isPageLoading.value = true
-    isInitializing = true
-    try {
-      plans.value = await db.goal.list()
-
-      // 默认选中第一个目标
-      if (plans.value.length > 0) {
-        selectedGoal.value = categorizedGoals.value[0]?.items[0] || null
-      }
-
-      // 只加载默认选中目标的 monthlyPlans
-      if (selectedGoal.value) {
-        await loadMonthlyPlans(selectedGoal.value.plan_id)
-        monthlyPlans.value = monthlyPlansCache[selectedGoal.value.plan_id] || []
-      }
-
-      // 当前月在目标范围内时优先展开当前月，否则展开排序后的第一个月
-      if (selectedGoal.value && monthlyPlans.value.length > 0) {
-        const targetMp = resolveDefaultMonthlyPlan(monthlyPlans.value)
-        const targetMonth = targetMp ? getDateOnlyMonth(targetMp.month) : null
-
-        if (targetMp && targetMonth) {
-          selectedMonth.value = targetMonth
-          await loadDailyPlans(targetMp.id, { force: true })
-        }
-      }
-    } catch (e) {
-      console.error('Failed to fetch direction data', e)
-    } finally {
-      isPageLoading.value = false
-      isInitializing = false
-    }
-  }
-
-  if (!setupDone) {
-    watch(showAddModal, (val) => {
-      if (!val) {
-        setTimeout(() => { editingGoal.value = null }, 300)
-      }
-    })
-
-    watch(selectedMonth, async (newMonth, oldMonth) => {
-      if (isInitializing) return
-      if (!newMonth || newMonth === oldMonth) return
-      if (!selectedGoal.value) return
-
-      const planId = selectedGoal.value.plan_id
-      if (!planId) return
-
-      const cached = monthlyPlansCache[planId] || []
-      const mp = cached.find(item => getDateOnlyMonth(item.month) === newMonth)
-      if (!mp) return
-
-      // 清空其他月份的缓存，只保留新的
-      clearDailyPlansCache(mp.id)
-      // 加载新月份的 dailyPlans
-      await loadDailyPlans(mp.id, { force: true })
-    })
-
-    watch(selectedGoal, async (newGoal, oldGoal) => {
-      if (isInitializing) return
-      if (!newGoal || newGoal === oldGoal) return
-
-      const planId = newGoal.plan_id
-      if (!planId) return
-
-      // 加载新目标的 monthlyPlans
-      await loadMonthlyPlans(planId)
-      monthlyPlans.value = monthlyPlansCache[planId] || []
-
-      // 当前月在目标范围内时优先展开当前月，否则展开排序后的第一个月
-      if (monthlyPlans.value.length > 0) {
-        const targetMp = resolveDefaultMonthlyPlan(monthlyPlans.value)
-        const targetMonth = targetMp ? getDateOnlyMonth(targetMp.month) : null
-
-        if (targetMp && targetMonth) {
-          selectedMonth.value = targetMonth
-          await loadDailyPlans(targetMp.id, { force: true })
-        }
-      }
-    })
-
-    onMounted(() => {
-      if (!initialized.value) {
-        fetchData()
-        initialized.value = true
-      }
-    })
-
-    setupDone = true
-  }
-
   return {
     categorizedGoals,
     fetchData,
     isPageLoading,
-    loadPlans,
-    loadMonthlyPlans,
-    loadDailyPlans
+    loadGoals,
+    loadGoalMonths,
+    loadGoalDays
   }
 }

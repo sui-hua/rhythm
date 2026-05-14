@@ -4,23 +4,23 @@ import { db } from '@/services/database'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import {
   months,
-  monthlyPlans,
-  monthlyPlansCache,
-  monthlyMainGoals,
+  goalMonths,
+  goalMonthsCache,
+  goalMonthsMap,
   selectedGoal,
   editingGoal,
   selectedMonth,
   activePicker,
   showAddModal,
   showCategoryModal,
-  getMonthlyPlansByPlanId
+  getGoalMonthsByGoalId
 } from '@/views/direction/composables/useDirectionState'
 
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionGoals() {
   const authStore = useAuthStore()
-  const { fetchData, loadMonthlyPlans } = useDirectionFetch()
+  const { fetchData, loadGoalMonths } = useDirectionFetch()
 
   // 写操作按钮 loading 状态
   const isSubmitting = ref(false)
@@ -32,7 +32,7 @@ export function useDirectionGoals() {
 
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
-    const cached = monthlyPlansCache[selectedGoal.value.plan_id] || []
+    const cached = goalMonthsCache[selectedGoal.value.goal_id] || []
     if (cached.length === 0) return []
 
     const months = cached
@@ -54,16 +54,16 @@ export function useDirectionGoals() {
   }
 
   const handleEditGoal = async (goal) => {
-    if (!monthlyPlansCache[goal.plan_id]) {
-      await loadMonthlyPlans(goal.plan_id)
+    if (!goalMonthsCache[goal.goal_id]) {
+      await loadGoalMonths(goal.goal_id)
     }
-    const relatedMonthlyPlans = getMonthlyPlansByPlanId(goal.plan_id)
+    const relatedGoalMonths = getGoalMonthsByGoalId(goal.goal_id)
 
     let minMonth = 12
     let maxMonth = 1
 
-    if (relatedMonthlyPlans.length > 0) {
-      const months = relatedMonthlyPlans
+    if (relatedGoalMonths.length > 0) {
+      const months = relatedGoalMonths
         .map(mp => (mp.month ? getDateOnlyMonth(mp.month) : null))
         .filter(m => m !== null)
 
@@ -98,11 +98,11 @@ export function useDirectionGoals() {
     newEndMonth
   ) => {
     try {
-      const planId = goalToUpdate.plan_id
+      const goalId = goalToUpdate.goal_id
       const year = new Date().getFullYear()
 
       if (
-        planId &&
+        goalId &&
         (
           newTitle !== undefined ||
           newCategoryId !== undefined ||
@@ -120,7 +120,7 @@ export function useDirectionGoals() {
           updates.carry_over_lookback_days = newCarryOverLookbackDays
         }
 
-        await db.goal.update(planId, updates)
+        await db.goal.update(goalId, updates)
       }
 
       const currentTitle = newTitle !== undefined ? newTitle : goalToUpdate.title
@@ -129,8 +129,8 @@ export function useDirectionGoals() {
         goalToUpdate
       )
 
-      const existingMonthlyPlans = getMonthlyPlansByPlanId(planId)
-      const existingMonths = existingMonthlyPlans
+      const existingGoalMonths = getGoalMonthsByGoalId(goalId)
+      const existingMonths = existingGoalMonths
         .map(mp => getDateOnlyMonth(mp.month))
         .filter(m => m !== null)
 
@@ -143,7 +143,7 @@ export function useDirectionGoals() {
       for (const m of targetMonths) {
         if (!existingMonths.includes(m)) {
           createPromises.push(db.goalMonths.create({
-            goal_id: planId,
+            goal_id: goalId,
             user_id: authStore.userId,
             title: currentTitle,
             description: goalToUpdate.description || '',
@@ -156,7 +156,7 @@ export function useDirectionGoals() {
         }
       }
 
-      const updatePromises = existingMonthlyPlans
+      const updatePromises = existingGoalMonths
         .map(mp => {
           const payload = {}
           if (newTitle !== undefined) payload.title = newTitle
@@ -166,7 +166,7 @@ export function useDirectionGoals() {
         })
         .filter(Boolean)
 
-      const toDelete = existingMonthlyPlans.filter(mp => {
+      const toDelete = existingGoalMonths.filter(mp => {
         const m = getDateOnlyMonth(mp.month)
         return !targetMonths.includes(m)
       })
@@ -204,7 +204,7 @@ export function useDirectionGoals() {
   }
 
   const saveMonthlyPlan = async (m, payload) => {
-    const currentMp = getMonthlyPlansByPlanId(selectedGoal.value.plan_id).find(
+    const currentMp = getGoalMonthsByGoalId(selectedGoal.value.goal_id).find(
       mp => getDateOnlyMonth(mp.month) === m
     )
     if (currentMp) {
@@ -238,7 +238,7 @@ export function useDirectionGoals() {
         category_id: newGoal.category_id || null,
         task_time: newGoal.task_time || '09:00',
         duration: newGoal.duration || 30,
-        // 目标级配置只影响 Day 页查询窗口，不改写 daily_plans.day。
+        // 目标级配置只影响 Day 页查询窗口，不改写 goal_days.day。
         carry_over_lookback_days: newGoal.carry_over_lookback_days || 0,
         status: 'active',
         priority: 2,
@@ -263,7 +263,7 @@ export function useDirectionGoals() {
       }
 
       await Promise.all(promises)
-      await loadMonthlyPlans(createdPlan.id)
+      await loadGoalMonths(createdPlan.id)
       await fetchData()
       showAddModal.value = false
     } catch (e) {
@@ -278,17 +278,17 @@ export function useDirectionGoals() {
 
     isSubmitting.value = true
     try {
-      const planId = editingGoal.value.plan_id
-      if (!planId) return
+      const goalId = editingGoal.value.goal_id
+      if (!goalId) return
 
-      const relatedMonthlyPlans = getMonthlyPlansByPlanId(planId)
+      const relatedGoalMonths = getGoalMonthsByGoalId(goalId)
 
-      // 靠数据库级联删除，只需删 monthlyPlans
-      await Promise.all(relatedMonthlyPlans.map(mp => db.goalMonths.delete(mp.id)))
+      // 靠数据库级联删除，只需删 goalMonths
+      await Promise.all(relatedGoalMonths.map(mp => db.goalMonths.delete(mp.id)))
 
-      await db.goal.delete(planId)
+      await db.goal.delete(goalId)
 
-      if (selectedGoal.value && selectedGoal.value.plan_id === planId) {
+      if (selectedGoal.value && selectedGoal.value.goal_id === goalId) {
         selectedGoal.value = null
         selectedMonth.value = null
       }
@@ -321,7 +321,7 @@ export function useDirectionGoals() {
     activePicker,
     showAddModal,
     showCategoryModal,
-    monthlyMainGoals,
+    goalMonthsMap,
 
     activeMonthRange,
     handleAddClick,

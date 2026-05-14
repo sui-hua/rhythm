@@ -2,20 +2,20 @@ export const getDirectionMonthPrefix = (month) => String(month)
 
 export const getDirectionMonthlyProgress = ({
   dailyTasks,
-  planId,
+  goalId,
   month,
-  isDailyPlanCompleted
+  isGoalDayCompleted
 }) => {
-  if (!planId || !month) return 0
+  if (!goalId || !month) return 0
 
   const monthPrefix = getDirectionMonthPrefix(month)
   let total = 0
   let completed = 0
 
   for (const [key, task] of Object.entries(dailyTasks)) {
-    if (key.startsWith(`plan-${planId}-${monthPrefix}-`)) {
+    if (key.startsWith(`goal-${goalId}-${monthPrefix}-`)) {
       total++
-      if (isDailyPlanCompleted(task.status)) completed++
+      if (isGoalDayCompleted(task.status)) completed++
     }
   }
 

@@ -14,13 +14,13 @@ vi.mock('@/services/database', () => ({
       list: vi.fn(),
       update: vi.fn()
     },
-    dailyPlans: {
+    goalDays: {
       listForDayView: vi.fn(),
       listByDate: vi.fn(),
       update: vi.fn()
     },
     habits: {
-      listLite: vi.fn(),
+      list: vi.fn(),
       listLogsByDate: vi.fn(),
       log: vi.fn(),
       deleteLog: vi.fn()
@@ -65,7 +65,7 @@ describe('useDayData', () => {
     db.goalDays.listForDayView.mockResolvedValue([])
     db.goalDays.listByDate.mockResolvedValue([])
     db.goalDays.update.mockResolvedValue({})
-    db.habit.listLite.mockResolvedValue([])
+    db.habit.list.mockResolvedValue([])
     db.habit.listLogsByDate.mockResolvedValue([])
     db.habit.log.mockResolvedValue({})
     db.habit.deleteLog.mockResolvedValue()
@@ -122,7 +122,7 @@ describe('useDayData', () => {
 
     await handleToggleComplete({
       id: 'plan-1',
-      type: 'daily_plan',
+      type: 'goal_day',
       completed: false
     })
 
@@ -140,6 +140,6 @@ describe('useDayData', () => {
 
     expect(db.goalDays.listForDayView).toHaveBeenCalledTimes(1)
     expect(db.goalDays.listForDayView).toHaveBeenCalledWith(expect.any(Date))
-    expect(dailySchedule.value.filter(item => item.type === 'daily_plan')).toHaveLength(2)
+    expect(dailySchedule.value.filter(item => item.type === 'goal_day')).toHaveLength(2)
   })
 })

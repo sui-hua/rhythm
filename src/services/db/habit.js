@@ -1,44 +1,10 @@
-/**
- * ============================================
- * 习惯数据表操作 (services/db/habits.js)
- * ============================================
- *
- * 【模块职责】
- * - 封装 habits 表的 CRUD 操作
- * - 支持习惯打卡记录管理
- *
- * 【frequency 约定】
- * - daily:   { type: 'daily' }
- * - weekly:  { type: 'weekly', weekdays: [1, 3, 5] }
- * - monthly: { type: 'monthly', monthDays: [1, 15, 28] }
- * - 老数据缺失 frequency 时，运行时按 daily 兼容
- *
- * 【方法说明】
- * - list()           → 查询所有习惯（不含打卡记录）
- * - listLite()      → 查询所有习惯（不含打卡记录，用于下拉选择）
- * - listLogsByDate()→ 查询指定日期范围内的打卡记录
- * - listLogsByHabit()→ 查询指定习惯的所有打卡记录
- * - create()         → 创建新习惯
- * - update()        → 更新习惯信息
- * - delete()        → 删除习惯
- * - log()           → 习惯打卡
- * - deleteLog()     → 取消打卡记录
- */
 import client from '@/config/supabase'
 import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 import { TABLES } from './tables'
 
 const supabase = client.createBase(TABLES.HABIT)
 
-/**
- * 习惯管理模块
- * 提供 habits 表和 habit_logs 表的 CRUD 操作封装
- */
 export const habit = {
-    /**
-     * 查询所有习惯列表
-     * @returns {Promise<Array>} 习惯列表，按创建时间升序排列
-     */
     async list() {
         return await supabase.query(q => q
             .select('*')
@@ -46,23 +12,6 @@ export const habit = {
         )
     },
 
-    /**
-     * 查询所有习惯列表（轻量版，用于下拉选择等场景）
-     * @returns {Promise<Array>} 习惯列表，按创建时间升序排列
-     */
-    async listLite() {
-        return await supabase.query(q => q
-            .select('*')
-            .order('created_at', { ascending: true })
-        )
-    },
-
-    /**
-     * 查询指定日期范围内的打卡记录
-     * @param {Date} startDate - 开始日期
-     * @param {Date} endDate - 结束日期
-     * @returns {Promise<Array>} 打卡记录列表
-     */
     async listLogsByDate(startDate, endDate) {
         return await trackGlobalLoading(async () => {
             const { data, error } = await client

@@ -4,7 +4,7 @@
  * ============================================
  *
  * 【模块职责】
- * - 处理日计划的批量创建、批量删除
+ * - 处理 goal_days 的批量创建、批量删除
  * - 通过 RPC 实现高性能批量操作
  *
  * 【RPC 调用】
@@ -19,8 +19,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
 import {
-  monthlyPlansCache,
-  dailyPlansCache,
+  goalMonthsCache,
+  goalDaysCache,
   selectedGoal,
   selectedMonth,
   selectedDates,
@@ -33,11 +33,11 @@ import { useDirectionFetch } from '@/views/direction/composables/useDirectionFet
 export function useDirectionBatch() {
   const authStore = useAuthStore()
   const { hasTask } = useDirectionSelection()
-  const { loadDailyPlans } = useDirectionFetch()
+  const { loadGoalDays } = useDirectionFetch()
 
-  const getCurrentMonthlyPlan = (planId, month) => {
-    const cachedPlans = monthlyPlansCache[planId] || []
-    return cachedPlans.find(mp => getDateOnlyMonth(mp.month) === month) || null
+  const getCurrentMonthlyPlan = (goalId, month) => {
+    const cachedGoalMonths = goalMonthsCache[goalId] || []
+    return cachedGoalMonths.find(mp => getDateOnlyMonth(mp.month) === month) || null
   }
 
   const resolveDailyTiming = (monthlyPlan, goal) => ({
@@ -45,12 +45,12 @@ export function useDirectionBatch() {
     duration: monthlyPlan?.duration ?? goal?.duration ?? 30
   })
 
-  const getExistingDailyPlanMap = async (monthlyPlanId) => {
-    if (!dailyPlansCache[monthlyPlanId]) {
-      await loadDailyPlans(monthlyPlanId, { force: true })
+  const getExistingDailyPlanMap = async (monthPlanId) => {
+    if (!goalDaysCache[monthPlanId]) {
+      await loadGoalDays(monthPlanId, { force: true })
     }
 
-    const existingDailyPlans = dailyPlansCache[monthlyPlanId] || []
+    const existingDailyPlans = goalDaysCache[monthPlanId] || []
     const planMap = new Map()
 
     for (const plan of existingDailyPlans) {
@@ -67,7 +67,7 @@ export function useDirectionBatch() {
     const m = selectedMonth.value
     if (!m || !batchInput.value.trim()) return
 
-    const currentMp = getCurrentMonthlyPlan(selectedGoal.value.plan_id, m)
+    const currentMp = getCurrentMonthlyPlan(selectedGoal.value.goal_id, m)
     if (!currentMp) return
 
     const monthDate = parseDateOnly(currentMp.month)
@@ -106,7 +106,7 @@ export function useDirectionBatch() {
       }
     }
 
-    await loadDailyPlans(currentMp.id, { force: true })
+    await loadGoalDays(currentMp.id, { force: true })
     archiveVersion.value++
     batchInput.value = ''
     selectedDates[m] = []
@@ -117,7 +117,7 @@ export function useDirectionBatch() {
     const currentSelectedDates = selectedDates[m] || []
     if (!m || currentSelectedDates.length === 0) return
 
-    const currentMp = getCurrentMonthlyPlan(selectedGoal.value.plan_id, m)
+    const currentMp = getCurrentMonthlyPlan(selectedGoal.value.goal_id, m)
     if (!currentMp) return
 
     const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
@@ -134,7 +134,7 @@ export function useDirectionBatch() {
       await db.goalDays.deleteByIds(idsToDelete)
     }
 
-    await loadDailyPlans(currentMp.id, { force: true })
+    await loadGoalDays(currentMp.id, { force: true })
     archiveVersion.value++
     selectedDates[m] = []
     batchInput.value = ''

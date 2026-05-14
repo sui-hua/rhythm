@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDirectionBatch } from '@/views/direction/composables/useDirectionBatch'
 import {
   batchInput,
-  dailyPlansCache,
-  monthlyPlansCache,
+  goalDaysCache,
+  goalMonthsCache,
   selectedDates,
   selectedGoal,
   selectedMonth
@@ -25,7 +25,7 @@ vi.mock('@/views/direction/composables/useDirectionSelection', () => ({
 
 vi.mock('@/views/direction/composables/useDirectionFetch', () => ({
   useDirectionFetch: () => ({
-    loadDailyPlans: vi.fn()
+    loadGoalDays: vi.fn()
   })
 }))
 
@@ -48,12 +48,12 @@ beforeEach(() => {
   selectedGoal.value = null
   selectedMonth.value = null
 
-  for (const key of Object.keys(monthlyPlansCache)) {
-    delete monthlyPlansCache[key]
+  for (const key of Object.keys(goalMonthsCache)) {
+    delete goalMonthsCache[key]
   }
 
-  for (const key of Object.keys(dailyPlansCache)) {
-    delete dailyPlansCache[key]
+  for (const key of Object.keys(goalDaysCache)) {
+    delete goalDaysCache[key]
   }
 
   for (const key of Object.keys(selectedDates)) {
@@ -67,13 +67,13 @@ describe('useDirectionBatch', () => {
   it('upserts daily plans through CRUD instead of RPC', async () => {
     db.goalDays.update.mockResolvedValue({ id: 'dp-1' })
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01', task_time: '09:45', duration: 25 }
+    goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: '09:45', duration: 25 }
     ]
-    dailyPlansCache['mp-1'] = [
+    goalDaysCache['mp-1'] = [
       { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
     ]
-    selectedGoal.value = { plan_id: 'p1' }
+    selectedGoal.value = { goal_id: 'p1' }
     selectedMonth.value = 4
     selectedDates[4] = [1]
     batchInput.value = '新标题'
@@ -96,10 +96,10 @@ describe('useDirectionBatch', () => {
     db.goalDays.create.mockResolvedValue({ id: 'dp-new' })
     hasTaskDays = new Set()
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01', task_time: '10:15', duration: 50 }
+    goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: '10:15', duration: 50 }
     ]
-      selectedGoal.value = { plan_id: 'p1' }
+      selectedGoal.value = { goal_id: 'p1' }
       selectedMonth.value = 4
     selectedDates[4] = [1, 2]
     batchInput.value = '批量新增'
@@ -130,10 +130,10 @@ describe('useDirectionBatch', () => {
     db.goalDays.create.mockResolvedValue({ id: 'dp-new' })
     hasTaskDays = new Set()
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01', task_time: null, duration: null }
+    goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: null, duration: null }
     ]
-    selectedGoal.value = { plan_id: 'p1', task_time: '06:30', duration: 40 }
+    selectedGoal.value = { goal_id: 'p1', task_time: '06:30', duration: 40 }
     selectedMonth.value = 4
     selectedDates[4] = [3]
     batchInput.value = '晨读'
@@ -152,14 +152,14 @@ describe('useDirectionBatch', () => {
   it('deletes selected daily plans in one bulk request instead of one by one', async () => {
     db.goalDays.deleteByIds.mockResolvedValue({})
 
-    monthlyPlansCache.p1 = [
-      { id: 'mp-1', plan_id: 'p1', month: '2026-04-01' }
+    goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' }
     ]
-    dailyPlansCache['mp-1'] = [
+    goalDaysCache['mp-1'] = [
       { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' },
       { id: 'dp-2', monthly_plan_id: 'mp-1', day: '2026-04-02' }
     ]
-    selectedGoal.value = { plan_id: 'p1' }
+    selectedGoal.value = { goal_id: 'p1' }
     selectedMonth.value = 4
     selectedDates[4] = [1, 2]
 

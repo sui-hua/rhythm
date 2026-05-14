@@ -1,14 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { parseDateOnly, useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import {
-  dailyPlansCache,
+  goalDaysCache,
   dailyTasks,
   editingGoal,
   initialized,
-  monthlyMainGoals,
-  monthlyPlans,
-  monthlyPlansCache,
-  plans,
+  goalMonthsMap,
+  goalMonths,
+  goalMonthsCache,
+  goals,
   selectedGoal,
   selectedMonth,
   showAddModal
@@ -42,24 +42,24 @@ vi.mock('@/services/database', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
 
-  plans.value = []
-  monthlyPlans.value = []
+  goals.value = []
+  goalMonths.value = []
   selectedGoal.value = null
   selectedMonth.value = null
   editingGoal.value = null
   initialized.value = false
   showAddModal.value = false
 
-  for (const key of Object.keys(monthlyPlansCache)) {
-    delete monthlyPlansCache[key]
+  for (const key of Object.keys(goalMonthsCache)) {
+    delete goalMonthsCache[key]
   }
 
-  for (const key of Object.keys(dailyPlansCache)) {
-    delete dailyPlansCache[key]
+  for (const key of Object.keys(goalDaysCache)) {
+    delete goalDaysCache[key]
   }
 
-  for (const key of Object.keys(monthlyMainGoals)) {
-    delete monthlyMainGoals[key]
+  for (const key of Object.keys(goalMonthsMap)) {
+    delete goalMonthsMap[key]
   }
 
   for (const key of Object.keys(dailyTasks)) {
@@ -82,24 +82,24 @@ describe('useDirectionFetch', () => {
       { id: 'p1', title: '目标 1' }
     ])
     db.goalMonths.list.mockResolvedValue([
-      { id: 'mp1', plan_id: 'p1', month: '2026-04-01' }
+      { id: 'mp1', goal_id: 'p1', month: '2026-04-01' }
     ])
     db.goalDays.list.mockResolvedValue([
-      { id: 'dp1', monthly_plan_id: 'mp1', day: '2026-04-30' }
+      { id: 'dp1', monthly_goal_id: 'mp1', day: '2026-04-30' }
     ])
 
     const { fetchData } = useDirectionFetch()
 
     await fetchData()
 
-    expect(monthlyMainGoals['plan-p1-4']).toEqual({
+    expect(goalMonthsMap['goal-p1-4']).toEqual({
       id: 'mp1',
-      plan_id: 'p1',
+      goal_id: 'p1',
       month: '2026-04-01'
     })
-    expect(dailyTasks['plan-p1-4-30']).toEqual({
+    expect(dailyTasks['goal-p1-4-30']).toEqual({
       id: 'dp1',
-      monthly_plan_id: 'mp1',
+      monthly_goal_id: 'mp1',
       day: '2026-04-30'
     })
   })
@@ -110,7 +110,7 @@ describe('useDirectionFetch', () => {
       { id: 'p2', title: '目标 2' }
     ])
     db.goalMonths.list.mockResolvedValue([
-      { id: 'mp1', plan_id: 'p1', month: '2026-04-01' }
+      { id: 'mp1', goal_id: 'p1', month: '2026-04-01' }
     ])
     db.goalDays.list.mockResolvedValue([])
 
@@ -132,8 +132,8 @@ describe('useDirectionFetch', () => {
       { id: 'p1', title: '目标 1' }
     ])
     db.goalMonths.list.mockResolvedValue([
-      { id: 'mp-other', plan_id: 'p1', month: otherMonthDate },
-      { id: 'mp-current', plan_id: 'p1', month: currentMonthDate }
+      { id: 'mp-other', goal_id: 'p1', month: otherMonthDate },
+      { id: 'mp-current', goal_id: 'p1', month: currentMonthDate }
     ])
     db.goalDays.list.mockResolvedValue([])
 
@@ -154,8 +154,8 @@ describe('useDirectionFetch', () => {
       { id: 'p1', title: '目标 1' }
     ])
     db.goalMonths.list.mockResolvedValue([
-      { id: 'mp-fallback', plan_id: 'p1', month: fallbackMonthDate },
-      { id: 'mp-current', plan_id: 'p1', month: currentMonthDate }
+      { id: 'mp-fallback', goal_id: 'p1', month: fallbackMonthDate },
+      { id: 'mp-current', goal_id: 'p1', month: currentMonthDate }
     ])
     db.goalDays.list.mockResolvedValue([])
 
@@ -178,8 +178,8 @@ describe('useDirectionFetch', () => {
       { id: 'p1', title: '目标 1' }
     ])
     db.goalMonths.list.mockResolvedValue([
-      { id: 'mp-later', plan_id: 'p1', month: laterMonthDate },
-      { id: 'mp-first', plan_id: 'p1', month: firstMonthDate }
+      { id: 'mp-later', goal_id: 'p1', month: laterMonthDate },
+      { id: 'mp-first', goal_id: 'p1', month: firstMonthDate }
     ])
     db.goalDays.list.mockResolvedValue([])
 

@@ -5,7 +5,7 @@ import { useDirectionStore } from '@/stores/directionStore'
 vi.mock('@/services/database', () => ({
   db: {
     plans: { list: vi.fn() },
-    monthlyPlans: { list: vi.fn() },
+    goalMonths: { list: vi.fn() },
     dailyPlans: { list: vi.fn() }
   }
 }))
@@ -13,13 +13,15 @@ vi.mock('@/services/database', () => ({
 describe('directionStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    const store = useDirectionStore()
+    store.reset()
   })
 
   it('has correct initial state', () => {
     const store = useDirectionStore()
     
-    expect(store.plans).toEqual([])
-    expect(store.monthlyPlans).toEqual([])
+    expect(store.goals).toEqual([])
+    expect(store.goalMonths).toEqual([])
     expect(store.selectedGoal).toBe(null)
     expect(store.editingGoal).toBe(null)
     expect(store.selectedMonth).toBe(null)
@@ -34,8 +36,8 @@ describe('directionStore', () => {
   it('resets all state to initial values', () => {
     const store = useDirectionStore()
     
-    store.plans = [{ id: 'p1', title: 'Test Plan' }]
-    store.monthlyPlans = [{ id: 'mp1' }]
+    store.goals = [{ id: 'p1', title: 'Test Plan' }]
+    store.goalMonths = [{ id: 'mp1' }]
     store.selectedGoal = { id: 'p1' }
     store.editingGoal = { id: 'p1' }
     store.selectedMonth = 4
@@ -47,10 +49,10 @@ describe('directionStore', () => {
     store.categories = [{ id: 'c1' }]
     
     store.$patch({
-      monthlyPlansCache: { p1: [{ id: 'mp1' }] },
-      dailyPlansCache: { mp1: [{ id: 'dp1' }] },
-      monthlyMainGoals: { 'plan-p1-4': { id: 'mp1' } },
-      dailyTasks: { 'plan-p1-4-30': { id: 'dp1' } },
+      goalMonthsCache: { p1: [{ id: 'mp1' }] },
+      goalDaysCache: { mp1: [{ id: 'dp1' }] },
+      goalMonthsMap: { 'goal-p1-4': { id: 'mp1' } },
+      dailyTasks: { 'goal-p1-4-30': { id: 'dp1' } },
       selectedDates: { 4: [1, 2, 3] },
       batchInput: 'test',
       archiveVersion: 5
@@ -58,8 +60,8 @@ describe('directionStore', () => {
     
     store.reset()
     
-    expect(store.plans).toEqual([])
-    expect(store.monthlyPlans).toEqual([])
+    expect(store.goals).toEqual([])
+    expect(store.goalMonths).toEqual([])
     expect(store.selectedGoal).toBe(null)
     expect(store.editingGoal).toBe(null)
     expect(store.selectedMonth).toBe(null)
@@ -69,9 +71,9 @@ describe('directionStore', () => {
     expect(store.showCategoryModal).toBe(false)
     expect(store.initialized).toBe(false)
     expect(store.categories).toEqual([])
-    expect(store.monthlyPlansCache).toEqual({})
-    expect(store.dailyPlansCache).toEqual({})
-    expect(store.monthlyMainGoals).toEqual({})
+    expect(store.goalMonthsCache).toEqual({})
+    expect(store.goalDaysCache).toEqual({})
+    expect(store.goalMonthsMap).toEqual({})
     expect(store.dailyTasks).toEqual({})
     expect(store.selectedDates).toEqual({})
     expect(store.batchInput).toBe('')
@@ -92,61 +94,61 @@ describe('directionStore', () => {
     const store = useDirectionStore()
     
     // Use Object.assign to modify reactive in place
-    Object.assign(store.dailyPlansCache, {
+    Object.assign(store.goalDaysCache, {
       mp1: [{ id: 'dp1' }],
       mp2: [{ id: 'dp2' }],
       mp3: [{ id: 'dp3' }]
     })
     
-    store.clearDailyPlansCache('mp2')
+    store.clearGoalDaysCache('mp2')
     
-    expect(store.dailyPlansCache.mp2).toEqual([{ id: 'dp2' }])
-    expect(store.dailyPlansCache.mp1).toBeUndefined()
-    expect(store.dailyPlansCache.mp3).toBeUndefined()
+    expect(store.goalDaysCache.mp2).toEqual([{ id: 'dp2' }])
+    expect(store.goalDaysCache.mp1).toBeUndefined()
+    expect(store.goalDaysCache.mp3).toBeUndefined()
   })
 
   it('clears all daily plans cache when no keepId provided', () => {
     const store = useDirectionStore()
     
-    Object.assign(store.dailyPlansCache, {
+    Object.assign(store.goalDaysCache, {
       mp1: [{ id: 'dp1' }],
       mp2: [{ id: 'dp2' }]
     })
     
-    store.clearDailyPlansCache()
+    store.clearGoalDaysCache()
     
-    expect(Object.keys(store.dailyPlansCache)).toHaveLength(0)
+    expect(Object.keys(store.goalDaysCache)).toHaveLength(0)
   })
 
   it('syncs monthly plans cache to flat list', () => {
     const store = useDirectionStore()
     
-    Object.assign(store.monthlyPlansCache, {
+    Object.assign(store.goalMonthsCache, {
       p1: [
-        { id: 'mp1', plan_id: 'p1', month: '2026-04-01' },
-        { id: 'mp2', plan_id: 'p1', month: '2026-05-01' }
+        { id: 'mp1', goal_id: 'p1', month: '2026-04-01' },
+        { id: 'mp2', goal_id: 'p1', month: '2026-05-01' }
       ]
     })
-    store.monthlyPlans = [
-      { id: 'mp-old', plan_id: 'p2', month: '2026-03-01' }
+    store.goalMonths = [
+      { id: 'mp-old', goal_id: 'p2', month: '2026-03-01' }
     ]
     
-    store.syncMonthlyPlansToFlatList('p1')
+    store.syncGoalMonthsToFlatList('p1')
     
-    expect(store.monthlyPlans.find(mp => mp.id === 'mp-old')).toBeDefined()
-    expect(store.monthlyPlans.find(mp => mp.id === 'mp1')).toBeDefined()
-    expect(store.monthlyPlans.find(mp => mp.id === 'mp2')).toBeDefined()
+    expect(store.goalMonths.find(mp => mp.id === 'mp-old')).toBeDefined()
+    expect(store.goalMonths.find(mp => mp.id === 'mp1')).toBeDefined()
+    expect(store.goalMonths.find(mp => mp.id === 'mp2')).toBeDefined()
   })
 
   it('gets monthly plans by plan id', () => {
     const store = useDirectionStore()
     
-    Object.assign(store.monthlyPlansCache, {
-      p1: [{ id: 'mp1', plan_id: 'p1', month: '2026-04-01' }],
-      p2: [{ id: 'mp2', plan_id: 'p2', month: '2026-05-01' }]
+    Object.assign(store.goalMonthsCache, {
+      p1: [{ id: 'mp1', goal_id: 'p1', month: '2026-04-01' }],
+      p2: [{ id: 'mp2', goal_id: 'p2', month: '2026-05-01' }]
     })
     
-    const result = store.getMonthlyPlansByPlanId('p1')
+    const result = store.getGoalMonthsByGoalId('p1')
     
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('mp1')
@@ -155,7 +157,7 @@ describe('directionStore', () => {
   it('gets empty array for unknown plan id', () => {
     const store = useDirectionStore()
     
-    const result = store.getMonthlyPlansByPlanId('unknown')
+    const result = store.getGoalMonthsByGoalId('unknown')
     
     expect(result).toEqual([])
   })

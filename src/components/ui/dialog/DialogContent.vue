@@ -11,14 +11,7 @@
  *
  * @see https://www.radix-vue.com/components/dialog.html
  */
-import { type HTMLAttributes, computed } from 'vue'
-// Radix Vue 提供的 Dialog 相关组件和 hooks
-// - DialogClose: 关闭按钮组件
-// - DialogContent: 对话框内容组件（核心）
-// - DialogContentEmits/DialogContentProps: 类型定义
-// - DialogOverlay: 遮罩层组件
-// - DialogPortal: 传送门组件，将内容渲染到 body 末尾
-// - useForwardPropsEmits: 组合式 hook，用于转发 props 和 emits
+import { type HTMLAttributes, computed, useId } from 'vue'
 import {
   DialogClose,
   DialogContent,
@@ -28,26 +21,20 @@ import {
   DialogPortal,
   useForwardPropsEmits,
 } from 'radix-vue'
-// Lucide 图标库中的 X 图标，用于关闭按钮
 import { X } from 'lucide-vue-next'
-// 项目内的 className 合并工具函数，类似于 clsx + tailwind-merge
 import { cn } from '@/lib/utils'
 
-// 定义组件接受的 props，组合了 DialogContentProps 和可选的 class 属性
 const props = defineProps<DialogContentProps & { class?: HTMLAttributes['class'] }>()
-// 定义组件发出的事件
 const emits = defineEmits<DialogContentEmits>()
 
-// 计算属性：分离 class 属性和其他 props
-// 这样可以将 class 单独传递给 cn() 处理，其余 props 转发给 Radix 组件
+const descriptionId = useId()
+
 const delegatedProps = computed(() => {
   const { class: _, ...delegated } = props
 
   return delegated
 })
 
-// 使用 Radix 提供的 hook 组合转发 props 和 emits
-// 这样 DialogContent 组件可以正确接收父组件传递的 v-model 等绑定
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
@@ -75,6 +62,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <!-- - data-[state=*]: 各种状态触发的动画 -->
     <DialogContent
       v-bind="forwarded"
+      :aria-describedby="descriptionId"
       :class="
         cn(
           'fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-98 data-[state=open]:zoom-in-98 sm:rounded-lg',
@@ -82,7 +70,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
         )
       "
     >
-      <!-- 默认插槽，用于放置对话框内容 -->
+      <span :id="descriptionId" class="sr-only">对话框内容</span>
       <slot />
 
       <!-- DialogClose: 内置关闭按钮，固定在右上角 -->

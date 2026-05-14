@@ -1,21 +1,3 @@
-/**
- * ============================================
- * 日期格式化工具 (utils/dateFormatter.js)
- * ============================================
- *
- * 【模块职责】
- * - 提供日期相关的格式化函数
- *
- * 【函数说明】
- * - getMonthName() → 将月份数字转换为中英文本
- */
-
-/**
- * 将月份数字转换为对应的中英文本
- * @param {number|string} monthNumber 1-12 的月份数字（注意不是 0-indexed）
- * @param {'zh'|'en'|'full'} format 'zh': 一月, 'en': JANUARY, 'full': 一月 (January)
- * @returns {string}
- */
 export const getMonthName = (monthNumber, format = 'zh') => {
     const num = parseInt(monthNumber, 10);
     if (isNaN(num) || num < 1 || num > 12) return '';
@@ -28,8 +10,34 @@ export const getMonthName = (monthNumber, format = 'zh') => {
     switch (format) {
         case 'en': return en[idx];
         case 'full': return full[idx];
-        case 'zh':
-        default:
-            return zh[idx];
+        default: return zh[idx];
     }
+}
+
+export function toDateOnly(date) {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+}
+
+export function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth()
+        && a.getDate() === b.getDate()
+}
+
+export function getDayRange(date) {
+    return {
+        start: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0),
+        end: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)
+    }
+}
+
+export function getDaysInMonth(year, month) {
+    return new Date(year, month, 0).getDate()
+}
+
+export function getFirstDayOffset(year, month) {
+    return (new Date(year, month - 1, 1).getDay() + 6) % 7
 }

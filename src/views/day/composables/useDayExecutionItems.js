@@ -16,7 +16,7 @@
  * | 字段           | 类型           | 说明                                      |
  * |----------------|----------------|-------------------------------------------|
  * | id             | string/number  | 唯一标识                                  |
- * | sourceLabel    | string         | 'task' | 'daily_plan' | 'habit' 来源标识     |
+ * | sourceLabel    | string         | 'task' | 'goal_day' | 'habit' 来源标识     |
  * | type           | string         | 同 sourceLabel，维持向后兼容              |
  * | original       | object         | 原始数据对象引用，便于反向查找            |
  * | startHour      | number|undefined | 开始小时（浮点数），如 9.5 表示 9:30      |
@@ -33,21 +33,15 @@
  * | 来源        | 时间来源          | 完成状态判断              | 分类标签  |
  * |-------------|-------------------|--------------------------|-----------|
  * | task        | start_time        | task.completed           | 个人任务  |
- * | daily_plan  | task_time 或继承   | isDailyPlanCompleted()   | 今日计划  |
+ * | goal_day  | task_time 或继承   | isGoalDayCompleted()   | 今日计划  |
  * | habit       | task_time         | habitLog 中是否存在      | 日常习惯  |
  *
  * @module useDayExecutionItems
  */
 
 import { formatDuration } from '@/utils/formatDuration'
-import { isDailyPlanCompleted } from '@/utils/dailyPlanStatus'
-
-const toDateOnly = (date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-}
+import { isGoalDayCompleted } from '@/utils/goalDayStatus'
+import { toDateOnly } from '@/utils/dateFormatter'
 
 const formatCarryOverLabel = (dateOnly) => {
     const [, month, day] = dateOnly.split('-').map(Number)
@@ -62,18 +56,18 @@ const formatCarryOverLabel = (dateOnly) => {
  *
  * 【处理流程】
  * 1. 遍历 tasks，将每个任务转换为执行项（sourceLabel: 'task'）
- * 2. 遍历 dailyPlans，将每个日计划转换为执行项（sourceLabel: 'daily_plan'）
+ * 2. 遍历 goalDays，将每个 goal_day 转换为执行项（sourceLabel: 'goal_day'）
  * 3. 遍历 habits，结合 habitLogs 判断完成状态后转换为执行项（sourceLabel: 'habit'）
  * 4. 按 startHour 从小到大排序，未安排时间（startHour 为 undefined）的排在最后
  *
  * 【时间计算规则】
  * - task: 直接从 start_time 和 end_time 计算
- * - daily_plan: 优先使用 task_time，若无则尝试继承 monthly_plans 中的时间
+ * - goal_day: 优先使用 task_time，若无则尝试继承 goal_months 中的时间
  * - habit: 直接从 task_time 读取，默认时长 30 分钟
  *
  * @param {Object} options - 构建选项
  * @param {Array} [options.tasks=[]] - 任务列表，每个任务应包含 id, title, description, start_time, end_time, completed 等字段
- * @param {Array} [options.dailyPlans=[]] - 日计划列表，每个计划应包含 id, title, description, task_time, duration, status 等字段
+ * @param {Array} [options.goalDays=[]] - goal_days 列表，每项包含 id, title, description, task_time, duration, status 等字段
  * @param {Array} [options.habits=[]] - 习惯列表，每个习惯应包含 id, title, task_time, duration, target_value 等字段
  * @param {Array} [options.habitLogs=[]] - 习惯日志列表，用于判断习惯是否已完成，每个日志应包含 habit_id 字段
  * @returns {Array<DayExecutionItem>} 执行项数组，按 startHour 升序排列
@@ -81,12 +75,12 @@ const formatCarryOverLabel = (dateOnly) => {
  * @example
  * const items = buildDayExecutionItems({
  *   tasks: [{ id: 1, title: '会议', start_time: '2024-01-01T09:00:00', end_time: '2024-01-01T10:00:00' }],
- *   dailyPlans: [],
+ *   goalDays: [],
  *   habits: [],
  *   habitLogs: []
  * })
  */
-export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPlans = [], habits = [], habitLogs = [] }) {
+export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays = [], habits = [], habitLogs = [] }) {
     /** @type {Array} 执行项数组 */
     const schedule = []
     const targetDateStr = targetDate ? toDateOnly(targetDate) : null
@@ -134,20 +128,20 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPla
     })
 
     // ============================================
-    // 阶段二：处理日计划（sourceLabel: 'daily_plan'）
+    // 阶段二：处理 goal_day（sourceLabel: 'goal_day'）
     // ============================================
     /**
      * 遍历日计划列表，构建日计划执行项
-     * 时间来源：优先使用 task_time，继承自 monthly_plans.task_time 或 plans.task_time
-     * 完成状态：isDailyPlanCompleted(plan.status) 判断
+     * 时间来源：优先使用 task_time，继承自 goal_months.task_time 或 goal.task_time
+     * 完成状态：isGoalDayCompleted(plan.status) 判断
      */
-    dailyPlans.forEach(plan => {
+    goalDays.forEach(plan => {
         let startHourVal, startTimeStr, durationHours, durationStr
 
         // 计算继承的时间和时长
-        // 优先级：plan.task_time > monthly_plans.task_time > monthly_plans.plans.task_time
+        // 优先级：plan.task_time > goal_months.task_time > goal_months.goal.task_time
         const inheritedTime = plan.task_time || plan.goal_months?.task_time || plan.goal_months?.goal?.task_time
-        // 优先级：plan.duration > monthly_plans.duration > monthly_plans.plans.duration > 30
+        // 优先级：plan.duration > goal_months.duration > goal_months.goal.duration > 30
         const inheritedDuration = plan.duration || plan.goal_months?.duration || plan.goal_months?.goal?.duration || 30
 
         if (inheritedTime) {
@@ -172,13 +166,13 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPla
             targetDateStr &&
             plan.day &&
             plan.day < targetDateStr &&
-            !isDailyPlanCompleted(plan.status)
+            !isGoalDayCompleted(plan.status)
         )
 
         schedule.push({
             id: plan.id,
-            sourceLabel: 'daily_plan',
-            type: 'daily_plan',
+            sourceLabel: 'goal_day',
+            type: 'goal_day',
             original: plan,
             startHour: startHourVal,
             durationHours,
@@ -188,7 +182,7 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPla
             category: '今日计划',
             title: plan.title,
             description: plan.description || '',
-            completed: isDailyPlanCompleted(plan.status),
+            completed: isGoalDayCompleted(plan.status),
             isCarryOver,
             carryOverSourceDate: isCarryOver ? plan.day : null,
             carryOverLabel: isCarryOver ? formatCarryOverLabel(plan.day) : ''
@@ -278,7 +272,7 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], dailyPla
  * @example
  * // 在 Vue 组件中使用
  * const { buildDayExecutionItems } = useDayExecutionItems()
- * const items = buildDayExecutionItems({ tasks, dailyPlans, habits, habitLogs })
+ * const items = buildDayExecutionItems({ tasks, goalDays, habits, habitLogs })
  */
 export function useDayExecutionItems() {
     return {
