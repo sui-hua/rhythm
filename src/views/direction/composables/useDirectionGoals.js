@@ -143,7 +143,7 @@ export function useDirectionGoals() {
       for (const m of targetMonths) {
         if (!existingMonths.includes(m)) {
           createPromises.push(db.goalMonths.create({
-            plan_id: planId,
+            goal_id: planId,
             user_id: authStore.userId,
             title: currentTitle,
             description: goalToUpdate.description || '',
@@ -249,7 +249,7 @@ export function useDirectionGoals() {
       const promises = []
       for (let m = startM; m <= endM; m++) {
         const monthlyPlanData = {
-          plan_id: createdPlan.id,
+          goal_id: createdPlan.id,
           user_id: authStore.userId,
           title: newGoal.title,
           description: newGoal.description || '',

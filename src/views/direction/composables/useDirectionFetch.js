@@ -64,7 +64,7 @@ export function useDirectionFetch() {
   const categorizedGoals = computed(() => {
     const map = new Map()
     for (const plan of plans.value) {
-      const categoryName = plan.plans_category?.name || '未分类'
+      const categoryName = plan.goal_categories?.name || '未分类'
       if (!map.has(categoryName)) map.set(categoryName, [])
 
       map.get(categoryName).push({
@@ -112,7 +112,7 @@ export function useDirectionFetch() {
     if (!monthDate) return
 
     const month = monthDate.getMonth() + 1
-    const prefix = `plan-${mp.plan_id}-${month}-`
+    const prefix = `plan-${mp.goal_id}-${month}-`
     for (const key of Object.keys(dailyTasks)) {
       if (key.startsWith(prefix)) delete dailyTasks[key]
     }
@@ -122,7 +122,7 @@ export function useDirectionFetch() {
       if (!dayDate) continue
 
       const day = dayDate.getDate()
-      dailyTasks[`plan-${mp.plan_id}-${month}-${day}`] = dp
+      dailyTasks[`plan-${mp.goal_id}-${month}-${day}`] = dp
     }
   }
 

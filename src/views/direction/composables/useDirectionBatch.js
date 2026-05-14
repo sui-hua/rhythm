@@ -87,7 +87,7 @@ export function useDirectionBatch() {
     for (const day of daysToUpdate) {
       const existingDailyPlan = existingDailyPlanMap.get(day)
       const payload = {
-        monthly_plan_id: currentMp.id,
+        goal_month_id: currentMp.id,
         user_id: authStore.userId,
         day: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
         title: batchInput.value,

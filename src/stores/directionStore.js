@@ -139,7 +139,7 @@ export const useDirectionStore = defineStore('direction', () => {
    */
   const syncMonthlyPlansToFlatList = (planId) => {
     const cached = monthlyPlansCache[planId] || []
-    const others = monthlyPlans.value.filter(item => item.plan_id !== planId)
+    const others = monthlyPlans.value.filter(item => item.goal_id !== planId)
     monthlyPlans.value = [...others, ...cached]
   }
 

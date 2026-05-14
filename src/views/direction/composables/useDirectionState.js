@@ -57,7 +57,7 @@ export const clearDailyPlansCache = (keepMonthlyPlanId = null) => {
 // 同步缓存到扁平兼容镜像
 export const syncMonthlyPlansToFlatList = (planId) => {
   const cached = monthlyPlansCache[planId] || []
-  const others = monthlyPlans.value.filter(item => item.plan_id !== planId)
+  const others = monthlyPlans.value.filter(item => item.goal_id !== planId)
   monthlyPlans.value = [...others, ...cached]
 }
 
