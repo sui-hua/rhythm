@@ -185,5 +185,4 @@ const { form, isHabit, errors, isValid, submit, handleDelete, isSubmitting, touc
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 </style>

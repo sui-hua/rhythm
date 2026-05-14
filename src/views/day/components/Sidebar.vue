@@ -388,5 +388,4 @@ defineEmits(['scrollToTask', 'add-event', 'edit-task', 'close'])
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 </style>

@@ -167,7 +167,6 @@ defineEmits(['edit-task', 'select-task'])
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 
 /* timeline-wrapper 使用 CSS 自定义属性 --timeline-left 控制日程卡片
    在不同屏幕尺寸下的左边距，与背景刻度线的缩进保持对齐。

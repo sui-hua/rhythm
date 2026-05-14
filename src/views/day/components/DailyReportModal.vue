@@ -86,7 +86,6 @@ defineEmits(['close', 'confirm', 'confirm-carryover'])
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 
 .daily-report-backdrop {
   animation: daily-report-fade 200ms ease-out;

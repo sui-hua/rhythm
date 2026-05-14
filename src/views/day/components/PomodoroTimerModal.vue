@@ -164,7 +164,4 @@ const handleComplete = async () => {
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
-
-/* 增加一些毛玻璃或光影效果的样式微调 */
 </style>
