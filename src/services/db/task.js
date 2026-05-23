@@ -27,7 +27,7 @@
  * Tasks 模块导出
  * @namespace tasks
  */
-import client from '@/config/supabase'
+import client from '@/services/supabase'
 import { TABLES } from './tables'
 
 const supabase = client.createBase(TABLES.TASK)

@@ -1,4 +1,4 @@
-import client from '@/config/supabase'
+import client from '@/services/supabase'
 import { TABLES } from './tables'
 
 const supabase = client.createBase(TABLES.DAILY_REPORT_LOG)

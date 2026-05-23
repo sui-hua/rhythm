@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockRpc = vi.fn()
 
-vi.mock('@/config/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   default: {
     rpc: mockRpc,
     createBase: vi.fn(() => ({

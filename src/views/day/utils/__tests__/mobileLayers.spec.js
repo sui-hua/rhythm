@@ -4,7 +4,7 @@ import {
   getMobileSidebarShellClass,
   getSidebarMotionClass,
   getSidebarPanelClass
-} from '@/views/day/composables/mobileLayers'
+} from '@/views/day/utils/mobileLayers'
 
 describe('getSidebarPanelClass', () => {
   it('keeps the mobile sidebar content shell simple to avoid a separate paint layer', () => {

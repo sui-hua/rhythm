@@ -21,7 +21,7 @@ vi.mock('@/stores/dateStore', () => ({
 
 vi.mock('@/services/database', () => ({
   db: {
-    habits: {
+    habit: {
       list: vi.fn(),
       listLogsByYear: vi.fn()
     }

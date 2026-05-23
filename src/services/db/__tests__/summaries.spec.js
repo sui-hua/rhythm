@@ -7,7 +7,7 @@ const deleteFn = vi.fn()
 const from = vi.fn()
 const client = { from }
 
-vi.mock('@/config/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   default: client
 }))
 
@@ -57,7 +57,7 @@ beforeEach(() => {
 
 describe('summaries service', () => {
   it('saves a summary without legacy scope bridging', async () => {
-    const { summaries } = await import('@/services/db/summaries')
+    const { summary: summaries } = await import('@/services/db/summary')
 
     await summaries.save({
       kind: 'daily',

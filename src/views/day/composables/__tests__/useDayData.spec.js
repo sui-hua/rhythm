@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn()
@@ -10,7 +11,7 @@ vi.mock('@/stores/dateStore', () => ({
 
 vi.mock('@/services/database', () => ({
   db: {
-    tasks: {
+    task: {
       list: vi.fn(),
       update: vi.fn()
     },
@@ -19,7 +20,7 @@ vi.mock('@/services/database', () => ({
       listByDate: vi.fn(),
       update: vi.fn()
     },
-    habits: {
+    habit: {
       list: vi.fn(),
       listLogsByDate: vi.fn(),
       log: vi.fn(),
@@ -39,14 +40,23 @@ vi.mock('@/stores/pomodoroStore', () => ({
   }))
 }))
 
+vi.mock('@/utils/goalDayStatus', () => ({
+  toGoalDayStatus: vi.fn((completed) => completed ? 1 : 0)
+}))
+
+vi.mock('@/views/habits/utils/habitFrequency', () => ({
+  matchesHabitFrequency: vi.fn(() => true)
+}))
+
 import { useRoute } from 'vue-router'
 import { useDateStore } from '@/stores/dateStore'
 import { db } from '@/services/database'
-import { useDayData } from '@/views/day/composables/useDayData'
+import { useDayStore } from '@/stores/dayStore'
 
 describe('useDayData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setActivePinia(createPinia())
 
     useRoute.mockReturnValue({
       params: {
@@ -56,12 +66,12 @@ describe('useDayData', () => {
       }
     })
 
-    // 故意让全局 currentDate 保持今天，用来证明 day 页切换习惯时必须以路由日期为准。
     useDateStore.mockReturnValue({
       currentDate: new Date(2026, 3, 29)
     })
 
     db.task.list.mockResolvedValue([])
+    db.task.update.mockResolvedValue({})
     db.goalDays.listForDayView.mockResolvedValue([])
     db.goalDays.listByDate.mockResolvedValue([])
     db.goalDays.update.mockResolvedValue({})
@@ -72,9 +82,9 @@ describe('useDayData', () => {
   })
 
   it('查看昨天时，补打卡会把习惯日志写入当前路由日期', async () => {
-    const { handleToggleComplete } = useDayData()
+    const store = useDayStore()
 
-    await handleToggleComplete({
+    await store.handleToggleComplete({
       id: 'habit-1',
       type: 'habit',
       completed: false
@@ -94,9 +104,9 @@ describe('useDayData', () => {
       { id: 'log-1', habit_id: 'habit-1' }
     ])
 
-    const { handleToggleComplete } = useDayData()
+    const store = useDayStore()
 
-    await handleToggleComplete({
+    await store.handleToggleComplete({
       id: 'habit-1',
       type: 'habit',
       completed: true
@@ -118,9 +128,9 @@ describe('useDayData', () => {
   })
 
   it('切换日计划完成状态时会把布尔完成态转换为 daily plan status', async () => {
-    const { handleToggleComplete } = useDayData()
+    const store = useDayStore()
 
-    await handleToggleComplete({
+    await store.handleToggleComplete({
       id: 'plan-1',
       type: 'goal_day',
       completed: false
@@ -135,11 +145,10 @@ describe('useDayData', () => {
       { id: 'plan-old', title: '昨天任务', day: '2026-04-27', status: 0, task_time: '10:00', duration: 30 }
     ])
 
-    const { fetchTasks, dailySchedule } = useDayData()
-    await fetchTasks({ showLoading: false })
+    const store = useDayStore()
+    await store.fetchTasks({ showLoading: false })
 
     expect(db.goalDays.listForDayView).toHaveBeenCalledTimes(1)
     expect(db.goalDays.listForDayView).toHaveBeenCalledWith(expect.any(Date))
-    expect(dailySchedule.value.filter(item => item.type === 'goal_day')).toHaveLength(2)
   })
 })

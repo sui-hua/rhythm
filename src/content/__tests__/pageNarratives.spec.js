@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pageNarratives, getPageNarrative } from '@/config/pageNarratives'
+import { pageNarratives, getPageNarrative } from '@/content/pageNarratives'
 
 describe('page narratives', () => {
   it('defines copy for the four primary modules', () => {

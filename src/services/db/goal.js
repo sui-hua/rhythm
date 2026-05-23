@@ -1,5 +1,5 @@
 // goal table operations (top level of goal → goal_months → goal_days)
-import client from '@/config/supabase'
+import client from '@/services/supabase'
 import { TABLES } from './tables'
 
 const base = client.createBase(TABLES.GOAL)

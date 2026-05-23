@@ -28,7 +28,7 @@ vi.mock('@/views/day/composables/useDailyReport', () => ({
   useDailyReport: vi.fn()
 }))
 
-vi.mock('@/views/day/composables/getInitialScrollTarget', () => ({
+vi.mock('@/views/day/utils/getInitialScrollTarget', () => ({
   getInitialScrollTarget: vi.fn()
 }))
 
@@ -37,7 +37,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDateStore } from '@/stores/dateStore'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
-import { getInitialScrollTarget } from '@/views/day/composables/getInitialScrollTarget'
+import { getInitialScrollTarget } from '@/views/day/utils/getInitialScrollTarget'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 
 describe('useDayNavigation', () => {

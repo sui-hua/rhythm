@@ -20,7 +20,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import supabase from '@/config/supabase'
+import supabase from '@/services/supabase'
 
 export const useLoginForm = () => {
   const router = useRouter()

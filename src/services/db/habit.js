@@ -1,28 +1,23 @@
-import client from '@/config/supabase'
-import { trackGlobalLoading } from '@/composables/useGlobalLoading'
+import client from '@/services/supabase'
 import { TABLES } from './tables'
 
-const supabase = client.createBase(TABLES.HABIT)
+const habitsBase = client.createBase(TABLES.HABIT)
+const habitLogsBase = client.createBase(TABLES.HABIT_LOGS)
 
 export const habit = {
     async list() {
-        return await supabase.query(q => q
+        return await habitsBase.query(q => q
             .select('*')
             .order('created_at', { ascending: true })
         )
     },
 
     async listLogsByDate(startDate, endDate) {
-        return await trackGlobalLoading(async () => {
-            const { data, error } = await client
-                .from(TABLES.HABIT_LOGS)
-                .select('*')
-                .gte('completed_at', startDate.toISOString())
-                .lte('completed_at', endDate.toISOString())
-
-            if (error) throw error
-            return data
-        })
+        return await habitLogsBase.query(q => q
+            .select('*')
+            .gte('completed_at', startDate.toISOString())
+            .lte('completed_at', endDate.toISOString())
+        )
     },
 
     /**
@@ -31,16 +26,11 @@ export const habit = {
      * @returns {Promise<Array>} 打卡记录列表，按完成时间升序排列
      */
     async listLogsByHabit(habitId) {
-        return await trackGlobalLoading(async () => {
-            const { data, error } = await client
-                .from(TABLES.HABIT_LOGS)
-                .select('*')
-                .eq('habit_id', habitId)
-                .order('completed_at', { ascending: true })
-
-            if (error) throw error
-            return data
-        })
+        return await habitLogsBase.query(q => q
+            .select('*')
+            .eq('habit_id', habitId)
+            .order('completed_at', { ascending: true })
+        )
     },
 
     /**
@@ -49,19 +39,14 @@ export const habit = {
      * @returns {Promise<Array>} 打卡记录列表，按完成时间升序排列
      */
     async listLogsByYear(year) {
-        return await trackGlobalLoading(async () => {
-            const startDate = new Date(year, 0, 1).toISOString()
-            const endDate = new Date(year, 11, 31, 23, 59, 59).toISOString()
-            const { data, error } = await client
-                .from(TABLES.HABIT_LOGS)
-                .select('*')
-                .gte('completed_at', startDate)
-                .lte('completed_at', endDate)
-                .order('completed_at', { ascending: true })
-
-            if (error) throw error
-            return data
-        })
+        const startDate = new Date(year, 0, 1).toISOString()
+        const endDate = new Date(year, 11, 31, 23, 59, 59).toISOString()
+        return await habitLogsBase.query(q => q
+            .select('*')
+            .gte('completed_at', startDate)
+            .lte('completed_at', endDate)
+            .order('completed_at', { ascending: true })
+        )
     },
 
     /**
@@ -70,7 +55,7 @@ export const habit = {
      * @returns {Promise<Object>} 创建成功的习惯记录
      */
     async create(habit) {
-        return await supabase.create(habit)
+        return await habitsBase.create(habit)
     },
 
     /**
@@ -80,7 +65,7 @@ export const habit = {
      * @returns {Promise<Object>} 更新后的习惯记录
      */
     async update(id, updates) {
-        return await supabase.update(id, updates)
+        return await habitsBase.update(id, updates)
     },
 
     /**
@@ -89,7 +74,7 @@ export const habit = {
      * @returns {Promise<void>}
      */
     async delete(id) {
-        return await supabase.delete(id)
+        return await habitsBase.delete(id)
     },
 
     /**
@@ -100,18 +85,14 @@ export const habit = {
      * @returns {Promise<Object>} 创建的打卡记录
      */
     async log(habitId, log = '', completedAt = null) {
-        return await trackGlobalLoading(async () => {
-            const payload = {
-                habit_id: habitId,
-                log
-            }
-            if (completedAt) {
-                payload.completed_at = completedAt
-            }
-            const { data, error } = await client.from(TABLES.HABIT_LOGS).insert(payload).select().single()
-            if (error) throw error
-            return data
-        })
+        const payload = {
+            habit_id: habitId,
+            log
+        }
+        if (completedAt) {
+            payload.completed_at = completedAt
+        }
+        return await habitLogsBase.create(payload)
     },
 
     /**
@@ -120,9 +101,6 @@ export const habit = {
      * @returns {Promise<void>}
      */
     async deleteLog(logId) {
-        return await trackGlobalLoading(async () => {
-            const { error } = await client.from(TABLES.HABIT_LOGS).delete().eq('id', logId)
-            if (error) throw error
-        })
+        return await habitLogsBase.delete(logId)
     }
 }

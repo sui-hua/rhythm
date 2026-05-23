@@ -181,7 +181,7 @@ import {
   getMobileSidebarShellClass,
   getSidebarMotionClass,
   MOBILE_SIDEBAR_WIDTH
-} from '@/views/day/composables/mobileLayers'
+} from '@/views/day/utils/mobileLayers'
 import { useNotifications } from '@/composables/useNotifications'
 
 const AddEventModal = defineAsyncComponent(() => import('@/views/day/components/AddEventModal.vue'))

@@ -1,4 +1,4 @@
-import client from '@/config/supabase'
+import client from '@/services/supabase'
 import { goal } from './db/goal'
 import { goalMonths } from './db/goalMonths'
 import { goalDays } from './db/goalDays'

@@ -8,7 +8,7 @@
  * @see {@link https://supabase.com/docs} Supabase 文档
  */
 
-import client from '@/config/supabase'
+import client from '@/services/supabase'
 import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 import { mapSummaryRowToRecord } from '@/views/summary/utils/summaryAdapters'
 import { TABLES } from './tables'

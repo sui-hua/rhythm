@@ -159,7 +159,7 @@ import { useHabitData } from './composables/useHabitData'
 import { useHabitStats } from './composables/useHabitStats'
 import { useHabitLogs } from './composables/useHabitLogs'
 import PageIntroBanner from '@/components/PageIntroBanner.vue'
-import { getPageNarrative } from '@/config/pageNarratives'
+import { getPageNarrative } from '@/content/pageNarratives'
 
 const narrative = getPageNarrative('habits')
 

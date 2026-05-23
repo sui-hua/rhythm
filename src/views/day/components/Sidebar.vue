@@ -320,8 +320,8 @@ import { useResizable } from '@/composables/useResizable'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { useDayData } from '@/views/day/composables/useDayData'
-import { getSidebarPanelClass } from '@/views/day/composables/mobileLayers'
-import { buildSidebarSections } from '@/views/day/composables/sidebarSections'
+import { getSidebarPanelClass } from '@/views/day/utils/mobileLayers'
+import { buildSidebarSections } from '@/views/day/utils/sidebarSections'
 import { useSwipeToComplete } from '@/views/day/composables/useSwipeToComplete'
 
 /**

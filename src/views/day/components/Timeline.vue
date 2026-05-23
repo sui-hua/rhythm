@@ -105,7 +105,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import TaskItem from '@/views/day/components/TaskItem.vue'
 import TimelineMarker from '@/views/day/components/TimelineMarker.vue'
 import { useDayData } from '@/views/day/composables/useDayData'
-import { buildTimelineDisplaySchedule } from '@/views/day/composables/timelineLayout'
+import { buildTimelineDisplaySchedule } from '@/views/day/utils/timelineLayout'
 
 // ── Props ─────────────────────────────────────────────────────────────────
 const props = defineProps({

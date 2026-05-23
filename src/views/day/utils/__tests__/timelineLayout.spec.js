@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildTimelineDisplaySchedule } from '@/views/day/composables/timelineLayout'
+import { buildTimelineDisplaySchedule } from '@/views/day/utils/timelineLayout'
 
 describe('buildTimelineDisplaySchedule', () => {
   it('stacks carry-over items that share the same time slot', () => {

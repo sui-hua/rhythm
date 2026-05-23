@@ -4,7 +4,7 @@ import { useDayData } from './useDayData'
 import { useDateStore } from '@/stores/dateStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { buildDayPath, getRouteDateContext } from '@/views/day/utils/routeDateContext'
-import { getInitialScrollTarget } from '@/views/day/composables/getInitialScrollTarget'
+import { getInitialScrollTarget } from '@/views/day/utils/getInitialScrollTarget'
 import { isSameDay } from '@/utils/dateFormatter'
 
 export function useDayNavigation() {

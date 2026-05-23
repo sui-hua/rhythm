@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getInitialScrollTarget } from '@/views/day/composables/getInitialScrollTarget'
+import { getInitialScrollTarget } from '@/views/day/utils/getInitialScrollTarget'
 
 describe('getInitialScrollTarget', () => {
   const today = new Date(2026, 3, 19)

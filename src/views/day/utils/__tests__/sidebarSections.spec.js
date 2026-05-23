@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSidebarSections } from '@/views/day/composables/sidebarSections'
+import { buildSidebarSections } from '@/views/day/utils/sidebarSections'
 
 describe('buildSidebarSections', () => {
   it('groups carry-over items into a dedicated collapsible section', () => {
