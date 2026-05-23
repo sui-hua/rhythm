@@ -10,7 +10,7 @@
     - 认证状态初始化
   -->
   <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
-    <Toaster position="top-center" />
+    <Toaster position="top-right" />
     <GlobalLoadingBar />
     <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />
     <RouterView v-slot="{ Component }">
