@@ -79,7 +79,7 @@
            _col / _numCols / _originalIndex 等布局元数据，由 TaskItem 负责消费。
            key 使用 _originalIndex 保证 Vue diff 的稳定性。 -->
       <template v-for="item in displaySchedule" :key="item._originalIndex">
-        <TaskItem
+        <TaskItemWrapper
           :task="item"
           :index="item._originalIndex"
           @select="$emit('select-task', $event)"
@@ -102,7 +102,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import TaskItem from '@/views/day/components/TaskItem.vue'
+import TaskItemWrapper from '@/views/day/components/TaskItemWrapper.vue'
 import TimelineMarker from '@/views/day/components/TimelineMarker.vue'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { buildTimelineDisplaySchedule } from '@/views/day/utils/timelineLayout'

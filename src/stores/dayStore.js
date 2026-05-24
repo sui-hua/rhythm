@@ -210,6 +210,31 @@ export const useDayStore = defineStore('day', () => {
         }
     }
 
+    /**
+     * 更新任务的开始/结束时间（拖拽编排使用）
+     */
+    const updateTaskTime = async (task, newStartHour, newEndHour) => {
+        if (!task || task.type !== 'task') return
+        const { year, month, day } = routeDateContext.value
+        const baseDate = new Date(year, month - 1, day)
+
+        const startTime = new Date(baseDate)
+        startTime.setHours(Math.floor(newStartHour), Math.round((newStartHour % 1) * 60))
+
+        const endTime = new Date(baseDate)
+        endTime.setHours(Math.floor(newEndHour), Math.round((newEndHour % 1) * 60))
+
+        try {
+            await db.task.update(task.id, {
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString()
+            })
+            await fetchTasks({ showLoading: false })
+        } catch (e) {
+            console.error('更新任务时间失败:', e)
+        }
+    }
+
     return {
         isLoading,
         setLoading,
@@ -220,6 +245,7 @@ export const useDayStore = defineStore('day', () => {
         fetchTasks,
         carryOverUncompletedTasksTo,
         handleToggleComplete,
-        handleStartTask
+        handleStartTask,
+        updateTaskTime
     }
 })
