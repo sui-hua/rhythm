@@ -35,6 +35,13 @@ describe('useDragSnap', () => {
       expect(result.newEnd).toBe(11)
     })
 
+    it('snaps drag preview to the nearest 5-minute boundary', () => {
+      const task = { startHour: 9, durationHours: 1 }
+      const result = calcDragResult(task, 46)
+      expect(result.newStart).toBe(9.25)
+      expect(result.newEnd).toBe(10.25)
+    })
+
     it('clamps start to 0 when dragging above midnight', () => {
       const task = { startHour: 0.5, durationHours: 1 }
       const result = calcDragResult(task, -360)
@@ -56,6 +63,13 @@ describe('useDragSnap', () => {
       const result = calcResizeResult(task, 270)
       expect(result.newStart).toBe(9)
       expect(result.newEnd).toBe(10.5)
+    })
+
+    it('snaps resize preview to the nearest 5-minute boundary', () => {
+      const task = { startHour: 9, durationHours: 1 }
+      const result = calcResizeResult(task, 223)
+      expect(result.newStart).toBe(9)
+      expect(result.newEnd).toBe(10.25)
     })
 
     it('enforces minimum duration of 5 minutes', () => {

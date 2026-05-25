@@ -8,51 +8,46 @@
     @edit="$emit('edit', $event)"
   />
 
-  <!-- 可拖拽的任务包裹 VDR -->
-  <div v-else ref="wrapperRef" class="absolute" :style="wrapperStyle">
-    <VueDraggableResizable
-      :x="0"
-      :y="hourToPx(task.startHour)"
-      :w="cardWidth"
-      :h="hourToPx(task.durationHours)"
-      :minHeight="SNAP_PX"
-      :snap="{ x: 0, y: SNAP_PX }"
-      :axis="'y'"
-      :parent="true"
-      :draggable="true"
-      :resizable="true"
-      :active="false"
-      class="absolute"
-      :class="dragClass"
-      @dragging="onDragging"
-      @drag-end="onDragEnd"
-      @resizing="onResizing"
-      @resize-end="onResizeEnd"
+  <!-- 可拖拽的任务：原生 mousedown 实现拖拽/缩放 -->
+  <div
+    v-else
+    ref="wrapperRef"
+    class="absolute group/vdr"
+    :style="wrapperStyle"
+  >
+    <div
+      class="w-full h-full transition-shadow duration-200"
+      :class="[
+        isDragging ? 'opacity-80 z-50 cursor-grabbing' : 'cursor-grab',
+        isResizing ? 'opacity-80 z-50 cursor-ns-resize' : ''
+      ]"
+      @mousedown.prevent="onDragStart"
     >
       <TaskItem
         :task="task"
         :index="index"
+        :embedded="true"
         @select="$emit('select', $event)"
         @edit="$emit('edit', $event)"
       />
-    </VueDraggableResizable>
+    </div>
 
     <DragTimeTooltip
       :currentHour="tooltipHour"
       :durationHours="tooltipDuration"
-      :visible="isDragging"
-      :cardElement="cardRef"
+      :visible="isActive"
+      :cardElement="wrapperRef"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { VueDraggableResizable } from 'vue3-draggable-resizable'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import TaskItem from '@/views/day/components/TaskItem.vue'
 import DragTimeTooltip from '@/views/day/components/DragTimeTooltip.vue'
-import { hourToPx, pxToHour, SNAP_PX, calcDragResult, calcResizeResult } from '@/views/day/composables/useDragSnap'
 import { useDayData } from '@/views/day/composables/useDayData'
+import { useTimelineDragSession } from '@/views/day/composables/useTimelineDragSession'
+import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'
 
 const props = defineProps({
   task: { type: Object, required: true },
@@ -63,89 +58,57 @@ const emit = defineEmits(['select', 'edit'])
 
 const { updateTaskTime } = useDayData()
 
-// 是否可拖拽：仅未完成的普通任务
 const canDrag = computed(() => !props.task.completed && props.task.type === 'task')
 
-// 拖拽状态
-const isDragging = ref(false)
-const isResizing = ref(false)
-const tooltipHour = ref(props.task.startHour)
-const tooltipDuration = ref(props.task.durationHours)
-
-// DOM 引用
 const wrapperRef = ref(null)
-const cardRef = ref(null)
-
-onMounted(() => {
-  cardRef.value = wrapperRef.value
+const session = useTimelineDragSession({
+  getTask: () => props.task,
+  onCommit: ({ newStartHour, newEndHour }) => updateTaskTime(props.task, newStartHour, newEndHour)
 })
 
-// 拖拽中的视觉反馈 class
-const dragClass = computed(() => {
-  if (isDragging.value || isResizing.value) {
-    return 'opacity-70 shadow-lg scale-[1.02] z-50'
-  }
-  return ''
-})
+const isDragging = computed(() => session.isDragging.value)
+const isResizing = computed(() => session.isResizing.value)
+const isActive = computed(() => session.isActive.value)
+const tooltipHour = computed(() => session.tooltipHour.value)
+const tooltipDuration = computed(() => session.tooltipDuration.value)
+const displayStartHour = computed(() => session.draftStartHour.value ?? props.task.startHour)
+const displayDurationHours = computed(() => session.draftDurationHours.value ?? (props.task.durationHours || 1))
 
-// VDR 宽度：沿用 TaskItem 原有的宽度计算逻辑
-// 使用 CSS 变量 --timeline-left 和列布局
-const cardWidth = computed(() => {
-  const col = props.task._col || 0
-  const numCols = props.task._numCols || 1
-  if (numCols > 1) {
-    return `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`
-  }
-  return -1 // -1 = 100%
-})
-
-// VDR 的 left 定位
+// 卡片定位样式
 const wrapperStyle = computed(() => {
-  const col = props.task._col || 0
-  const numCols = props.task._numCols || 1
-  if (numCols > 1) {
-    return {
-      left: `calc(var(--timeline-left) + ((100% - var(--timeline-left)) / ${numCols}) * ${col})`,
-      width: `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`,
-      height: hourToPx(props.task.durationHours) + 'px'
-    }
-  }
   return {
-    left: 'var(--timeline-left)',
-    right: 0,
-    height: hourToPx(props.task.durationHours) + 'px'
+    top: `calc(${displayStartHour.value} * var(--hour-height))`,
+    height: `calc(${displayDurationHours.value} * var(--hour-height))`,
+    ...buildTaskHorizontalLayoutStyle(props.task)
   }
 })
 
-// ── 拖拽事件处理 ──────────────────────────────────────────────────────────
-
-const onDragging = ({ y }) => {
-  isDragging.value = true
-  tooltipHour.value = pxToHour(y)
+function handleMouseMove(event) {
+  session.updateFromMouse(event)
 }
 
-const onDragEnd = async ({ y }) => {
-  isDragging.value = false
-  const { newStart, newEnd } = calcDragResult(props.task, y - hourToPx(props.task.startHour))
-  if (newStart !== props.task.startHour) {
-    await updateTaskTime(props.task, newStart, newEnd)
-  }
+function handleMouseUp() {
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
+  session.finish()
 }
 
-const onResizing = ({ h }) => {
-  isResizing.value = true
-  const duration = pxToHour(h)
-  tooltipHour.value = props.task.startHour
-  tooltipDuration.value = duration
+function bindDocumentSession() {
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
 }
 
-const onResizeEnd = async ({ h }) => {
-  isResizing.value = false
-  const { newStart, newEnd } = calcResizeResult(props.task, h)
-  if (newEnd !== props.task.startHour + props.task.durationHours) {
-    await updateTaskTime(props.task, newStart, newEnd)
-  }
+function onDragStart(event) {
+  session.startDrag(event)
+  bindDocumentSession()
 }
+
+// 组件卸载时清理全局事件监听
+onBeforeUnmount(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
+  session.cancel()
+})
 </script>
 
 <style scoped>

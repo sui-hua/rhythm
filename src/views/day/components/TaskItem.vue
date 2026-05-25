@@ -1,7 +1,8 @@
 <template>
   <div
     :id="'task-' + index"
-    class="absolute transition-all duration-700 cursor-pointer select-none group"
+    class="transition-all duration-700 cursor-pointer select-none group"
+    :class="embedded ? 'w-full h-full' : 'absolute'"
     :style="computedStyle"
     @click="$emit('select', index)"
     @dblclick="$emit('edit', index)"
@@ -150,13 +151,15 @@ import { Button } from '@/components/ui/button'
 import { Play, CheckCircle, Timer, Maximize2 } from 'lucide-vue-next'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
+import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'
 
 // ============ Props & Emits ============
 // props.task: 任务对象，包含 title、durationHours、startHour、completed 等字段
 // props.index: 任务在当日任务列表中的索引，用于唯一标识和 emit 事件传参
 const props = defineProps({
   task: Object,
-  index: Number
+  index: Number,
+  embedded: { type: Boolean, default: false }
 })
 
 // emit('select', index): 单击卡片时触发，用于选中该任务
@@ -170,48 +173,15 @@ const emit = defineEmits(['select', 'edit'])
 // - left/width: 当多列并行任务时，计算每列的宽度和左侧偏移
 // - zIndex: 确保同一时间段的多个任务正确层叠显示
 const computedStyle = computed(() => {
-  // _col: 任务所在的列索引（用于多任务并行显示）
-  // _numCols: 当前时间段的总列数
-  const col = props.task._col || 0
-  const numCols = props.task._numCols || 1
-  const isStackedCarryOver = Boolean(props.task._isStackedCarryOver)
+  // embedded 模式下由 wrapper 负责定位，TaskItem 只需填满容器
+  if (props.embedded) return {}
 
   const style = {
     // 使用 CSS 变量 --hour-height 计算实际像素位置
     top: `calc(${props.task.startHour} * var(--hour-height))`,
     // 使用 CSS 变量 --hour-height 计算实际像素高度
     height: `calc(${props.task.durationHours || 1} * var(--hour-height))`,
-    zIndex: col + 10
-  }
-
-  if (isStackedCarryOver) {
-    const visibleStackIndex = Math.min(props.task._stackIndex || 0, 4)
-    const baseOffsetX = visibleStackIndex * 14
-    const baseOffsetY = visibleStackIndex * 8
-
-    // carry-over 项的语义不是“同一时段并行安排了很多任务”，而是“历史积压堆到今天”。
-    // 所以这里不沿用横向平铺，而是把它们压在同一列里，通过轻微位移露出后层边缘。
-    style.left = numCols > 1
-      ? `calc(var(--timeline-left) + ((100% - var(--timeline-left)) / ${numCols}) * ${col})`
-      : 'var(--timeline-left)'
-    style.width = numCols > 1
-      ? `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`
-      : 'min(360px, calc(100% - var(--timeline-left) - 12px))'
-    style.transform = `translate(${baseOffsetX}px, ${baseOffsetY}px)`
-    style.zIndex = 40 + ((props.task._stackSize || 1) - visibleStackIndex)
-    return style
-  }
-
-  // 多列布局：并行任务需要分割宽度
-  if (numCols > 1) {
-    // 宽度 = (总宽度 - 时间轴左侧宽度) / 列数 - 间距
-    style.width = `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`
-    // 左侧 = 时间轴宽度 + (每列宽度 * 列索引)
-    style.left = `calc(var(--timeline-left) + ((100% - var(--timeline-left)) / ${numCols}) * ${col})`
-  } else {
-    // 单列布局：左对齐到时间轴
-    style.left = `var(--timeline-left)`
-    style.right = `0`
+    ...buildTaskHorizontalLayoutStyle(props.task)
   }
 
   return style
