@@ -1,23 +1,3 @@
-<!--
-  ============================================
-  Summary 视图 - 总结模块主页面 (views/summary/index.vue)
-  ============================================
-
-  【模块职责】
-  - 日/周/月/年总结管理
-  - 支持创建、编辑、删除总结
-  - 左侧列表 + 右侧表单布局
-
-  【布局结构】
-  - SummarySidebar → 左侧总结列表（按日/周/月/年分类）
-  - DailySummaryForm → 日总结表单
-  - GenericSummaryForm → 周/月/年总结表单（通用）
-
-  【视图状态】
-  - currentView === 'empty' → 空状态提示
-  - currentView === 'form' → 新增/编辑表单
-  - currentView === 'detail-or-edit' → 查看或编辑
--->
 <template>
   <div class="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden font-sans text-foreground relative selection:bg-foreground selection:text-background">
     <!-- Sidebar -->
@@ -81,52 +61,6 @@
     </main>
   </div>
 </template>
-
-/**
- * ============================================
- * Summary 视图 - 总结模块主页面
- * ============================================
- *
- * 【模块概述】
- * Summary 模块负责管理用户的日/周/月/年总结记录，提供创建、编辑、删除和查看功能。
- * 采用左侧边栏 + 右侧主内容区的经典布局模式。
- *
- * 【组件结构】
- * - SummarySidebar：左侧导航栏，展示各类型总结的列表，支持 Tab 切换（日/周/月/年）
- * - DailySummaryForm：日总结专用表单，包含日期、一句话总结、关键收获、明日计划等字段
- * - GenericSummaryForm：周/月/年总结通用表单，包含时间段、总结内容、反思等字段
- * - Card/*：shadcn-vue UI 组件，用于表单容器展示
- *
- * 【视图状态机】
- * currentView 有三种状态，通过 useSummaryManager 管理：
- * - 'empty'：无选中总结时显示的空状态引导界面
- * - 'form'：新建总结时的表单界面
- * - 'detail-or-edit'：查看或编辑已有总结时的表单界面
- *
- * 【数据流】
- * 1. useSummaryManager 提供所有状态和方法，是唯一的业务逻辑入口
- * 2. 组件通过解构获取状态（activeTab/summaries/loading/selectedSummary 等）
- * 3. 组件通过解构获取方法句柄（handleTabChange/handleSelect/handleCreate 等）
- * 4. 子组件通过 emit 调用父组件方法，实现数据操作
- *
- * 【Props/Emits 概览】
- * - SummarySidebar 接收：activeTab, summaries, selectedSummary-id
- * - SummarySidebar 触发：update:activeTab, select, create
- * - DailySummaryForm 接收：initial-data
- * - DailySummaryForm 触发：save, cancel, delete
- * - GenericSummaryForm 接收：type, initial-data
- * - GenericSummaryForm 触发：save, cancel, delete
- *
- * 【样式说明】
- * - 使用 Tailwind CSS 4 进行样式控制
- * - 响应式布局：移动端 stacked 布局，桌面端 flex-row 布局
- * - 主题变量通过 @/assets/tw-theme.css 定义
- *
- * @see useSummaryManager - 核心业务逻辑 composable
- * @see SummarySidebar - 侧边栏组件
- * @see DailySummaryForm - 日总结表单组件
- * @see GenericSummaryForm - 周/月/年总结表单组件
- */
 
 <script setup>
 import { useSummaryManager } from '@/views/summary/composables/useSummaryManager'

@@ -54,32 +54,11 @@
   </aside>
 </template>
 
-<!--
-DirectionSidebar.vue - 所向目标侧边栏组件
-
-功能说明：
-- 展示用户的长期目标列表，按类别分组显示
-- 支持拖拽调整侧边栏宽度
-- 显示选中目标的月度进度
-- 支持添加和编辑目标操作
-
-数据流：
-1. 使用 useDirectionFetch 获取分类后的目标列表 (categorizedGoals)
-2. 使用 useDirectionSelection 管理选中目标状态
-3. 使用 useDirectionGoals 处理添加/编辑目标的业务逻辑
-4. systemLoad 计算选中目标当前月份的完成进度
-
-组件结构：
-- header: 侧边栏标题 "所向目标"
-- scroll area: 按类别分组的目标列表
-- footer: 月度进度展示 + 添加目标按钮
--->
 <script setup>
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { goalMonths, dailyTasks, getGoalMonthsByGoalId } from '@/views/direction/composables/useDirectionState'
-import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
+import { useDirectionStore } from '@/stores/directionStore'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -89,6 +68,7 @@ import { useResizable } from '@/composables/useResizable'
 import { isGoalDayCompleted } from '@/utils/goalDayStatus'
 import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
+const store = useDirectionStore()
 const { categorizedGoals } = useDirectionFetch()
 const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
 const { handleAddClick, handleEditGoal } = useDirectionGoals()
@@ -102,7 +82,7 @@ const systemLoad = computed(() => {
   const month = selectedMonth.value
 
   return getDirectionMonthlyProgress({
-    dailyTasks,
+    dailyTasks: store.dailyTasks,
     goalId,
     month,
     isGoalDayCompleted

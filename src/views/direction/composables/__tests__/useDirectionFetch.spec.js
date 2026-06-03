@@ -1,18 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
 import { parseDateOnly, useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
-import {
-  goalDaysCache,
-  dailyTasks,
-  editingGoal,
-  initialized,
-  goalMonthsMap,
-  goalMonths,
-  goalMonthsCache,
-  goals,
-  selectedGoal,
-  selectedMonth,
-  showAddModal
-} from '@/views/direction/composables/useDirectionState'
+import { useDirectionStore } from '@/stores/directionStore'
 import { db } from '@/services/database'
 
 vi.mock('vue', async () => {
@@ -39,32 +28,13 @@ vi.mock('@/services/database', () => ({
   }
 }))
 
+let store
+
 beforeEach(() => {
   vi.clearAllMocks()
-
-  goals.value = []
-  goalMonths.value = []
-  selectedGoal.value = null
-  selectedMonth.value = null
-  editingGoal.value = null
-  initialized.value = false
-  showAddModal.value = false
-
-  for (const key of Object.keys(goalMonthsCache)) {
-    delete goalMonthsCache[key]
-  }
-
-  for (const key of Object.keys(goalDaysCache)) {
-    delete goalDaysCache[key]
-  }
-
-  for (const key of Object.keys(goalMonthsMap)) {
-    delete goalMonthsMap[key]
-  }
-
-  for (const key of Object.keys(dailyTasks)) {
-    delete dailyTasks[key]
-  }
+  setActivePinia(createPinia())
+  store = useDirectionStore()
+  store.reset()
 })
 
 describe('useDirectionFetch', () => {
@@ -92,12 +62,12 @@ describe('useDirectionFetch', () => {
 
     await fetchData()
 
-    expect(goalMonthsMap['goal-p1-4']).toEqual({
+    expect(store.goalMonthsMap['goal-p1-4']).toEqual({
       id: 'mp1',
       goal_id: 'p1',
       month: '2026-04-01'
     })
-    expect(dailyTasks['goal-p1-4-30']).toEqual({
+    expect(store.dailyTasks['goal-p1-4-30']).toEqual({
       id: 'dp1',
       monthly_goal_id: 'mp1',
       day: '2026-04-30'
@@ -163,7 +133,7 @@ describe('useDirectionFetch', () => {
 
     await fetchData()
 
-    expect(selectedMonth.value).toBe(currentMonth)
+    expect(store.selectedMonth).toBe(currentMonth)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-current')
   })
 
@@ -187,7 +157,7 @@ describe('useDirectionFetch', () => {
 
     await fetchData()
 
-    expect(selectedMonth.value).toBe(firstMonth)
+    expect(store.selectedMonth).toBe(firstMonth)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-first')
   })
 })

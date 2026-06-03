@@ -1,26 +1,13 @@
 <script setup>
-/**
- * 归档项组件 (ArchiveItem.vue)
- * 显示单个日期的任务信息，支持内联编辑。
- */
 defineProps({
-  /**
-   * 日期数字
-   */
   day: {
     type: Number,
     required: true
   },
-  /**
-   * 任务数据
-   */
   task: {
     type: Object,
     default: null
   },
-  /**
-   * 日期任务键名
-   */
   taskKey: {
     type: String,
     required: true

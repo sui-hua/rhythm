@@ -2,14 +2,14 @@ import { ref, reactive, watch, computed } from 'vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { useDateStore } from '@/stores/dateStore'
-import { useDayData } from './useDayData'
+import { useDayStore } from '@/stores/dayStore'
 import { useActionFeedback } from './useActionFeedback'
 import { withLoadingLock } from '@/utils/throttle'
 
 export function useAddEventForm(props, emit) {
     const authStore = useAuthStore()
     const dateStore = useDateStore()
-    const { fetchTasks } = useDayData()
+    const dayStore = useDayStore()
     const { success, error } = useActionFeedback()
 
     /**
@@ -195,7 +195,7 @@ export function useAddEventForm(props, emit) {
                     completed: false,
                 })
             }
-            await fetchTasks({ showLoading: false })
+            await dayStore.fetchTasks({ showLoading: false })
             emit('update:show', false)
             success(props.initialData ? '更新成功' : '创建成功')
         } catch (e) {
@@ -214,7 +214,7 @@ export function useAddEventForm(props, emit) {
                 } else {
                     await db.task.delete(props.initialData.id)
                 }
-                await fetchTasks({ showLoading: false })
+                await dayStore.fetchTasks({ showLoading: false })
                 emit('update:show', false)
                 success('删除成功')
             } catch (e) {

@@ -1,68 +1,8 @@
-/**
- * ============================================
- * 习惯打卡与日志管理 (views/habits/composables/useHabitLogs.js)
- * ============================================
- *
- * 【模块职责】
- * 本模块提供两个 Composable 用于习惯打卡功能：
- * - useHabitLogsFormatter → 格式化打卡日志展示
- * - useHabitLogs → 处理打卡/取消打卡操作
- *
- * 【打卡日志格式化 - useHabitLogsFormatter】
- * - 将 completed_at 时间戳转换为 MM/DD 格式日期字符串
- * - 按时间降序排列（最近优先）
- * - 提取 id、month、day、logText 等字段供组件直接使用
- *
- * 【打卡操作 - useHabitLogs】
- * - toggleComplete(day) → 点击日历日期切换打卡状态（有则删除，无则新增）
- * - handleQuickLog(note) → 快速添加今日打卡（支持用户输入备注文字）
- *
- * 【防抖处理】
- * - isSubmitting 状态锁防止重复提交
- * - 操作进行中时禁用按钮，避免数据库并发写入
- *
- * 【依赖说明】
- * - db: database.js 导出的数据库服务实例，提供 habits.log / habits.deleteLog 方法
- * - dateStore: 日期状态仓库，用于获取当前选中日期
- *
- * @see {@link https://github.com/rhythm/rhythm | 项目源码}
- * @module habits/composables/useHabitLogs
- */
 import { computed, ref } from 'vue'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 
-/**
- * 格式化习惯打卡日志 (Composable)
- *
- * 将原始打卡日志数组转换为组件所需的展示格式，包括：
- * - 将时间戳拆分为 month（月份 1-12）和 day（日期 1-31）
- * - 生成 MM/DD 格式的 date 字符串用于显示
- * - 保留原始 id、completed_at、logText 字段
- * - 按 completed_at 降序排列（最近打卡优先展示）
- *
- * @param {Array<Object>} logs - 原始打卡日志数组，每项应包含 id、completed_at、log 等字段
- * @returns {{ formattedLogs: ComputedRef<Array> }} formattedLogs - 格式化后的日志计算属性
- *
- * @example
- * const logs = [
- *   { id: 1, completed_at: '2026-04-20T10:00:00Z', log: '晨跑完成' },
- *   { id: 2, completed_at: '2026-04-19T09:00:00Z', log: '' }
- * ]
- * const { formattedLogs } = useHabitLogsFormatter(logs)
- * // formattedLogs.value[0].date === '04/20'
- */
 export function useHabitLogsFormatter(logs) {
-  /**
-   * 格式化后的日志数据源
-   *
-   * 对原始日志数据进行转换处理：
-   * 1. 遍历每条日志，从 completed_at 时间戳中提取月份和日期
-   * 2. 生成两位数补零的 MM/DD 格式日期字符串
-   * 3. 按打卡时间降序排列（最新的排在前面）
-   *
-   * @type {ComputedRef<Array<{id: number, month: number, day: number, completedAt: string, date: string, logText: string}>>}
-   */
   const formattedLogs = computed(() => {
     return (logs || [])
       .map(log => {
@@ -87,57 +27,13 @@ export function useHabitLogsFormatter(logs) {
   return { formattedLogs }
 }
 
-/**
- * 习惯打卡与日志记录提交逻辑 (Composable)
- *
- * 封装所有与习惯打卡相关的数据库写入操作：
- * - 新增打卡记录（toggleComplete 创建新记录）
- * - 撤销打卡记录（toggleComplete 删除已有记录）
- * - 快速打卡并附带用户备注（handleQuickLog）
- *
- * 该 Composable 负责与 db.habit 进行交互，完成后调用 fetchHabits 刷新界面数据。
- *
- * @param {Ref<Object>} selectedHabit - 当前选中的习惯对象，包含 id 和 monthlyLogs 等属性
- * @param {Ref<number>} viewYear - 日历视图所在的年份（用于确定新建打卡记录的日期）
- * @param {Ref<number>} viewMonth - 日历视图所在的月份（0-11，与 JS Date 一致）
- * @param {Function} fetchHabits - 打卡操作成功后调用的回调，用于刷新习惯列表数据
- * @returns {{ toggleComplete: Function, handleQuickLog: Function, isSubmitting: Ref<boolean> }}
- *
- * @example
- * const habit = ref({ id: 1, monthlyLogs: [] })
- * const { toggleComplete, handleQuickLog, isSubmitting } = useHabitLogs(habit, year, month, fetchHabits)
- */
 export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
-    /** 日期状态仓库，用于获取日历视窗中选中的日期信息 */
     const dateStore = useDateStore()
 
-    /**
-     * 写操作按钮 loading 状态
-     * 防止用户快速点击导致重复提交。当 isSubmitting 为 true 时，所有写操作都会提前返回
-     * @type {Ref<boolean>}
-     */
+    // 写操作按钮 loading 状态，防止重复提交
     const isSubmitting = ref(false)
 
-    /**
-     * 切换指定日期的打卡状态（新增或删除）
-     *
-     * 该方法是习惯打卡的核心操作，实现了" Toggle "语义：
-     * - 如果该日期已有打卡记录 → 删除该记录（取消打卡）
-     * - 如果该日期没有打卡记录 → 创建新记录（完成打卡）
-     *
-     * 操作流程：
-     * 1. 前置检查：确保已选中习惯且当前没有提交操作进行中
-     * 2. 查找该日期是否已有打卡记录（通过对比日期数字）
-     * 3. 根据是否存在记录执行删除或新增操作
-     * 4. 成功后调用 fetchHabits 刷新界面
-     *
-     * @param {number} day - 要切换打卡的日期（1-31）
-     * @returns {Promise<void>}
-     *
-     * @example
-     * // 用户点击日历上的第 15 天
-     * await toggleComplete(15)
-     */
+    // 切换指定日期的打卡状态：已有则删除，没有则新增
     const toggleComplete = async (day) => {
         // 前置检查：必须选中一个习惯，且当前没有提交操作进行中
         if (!selectedHabit.value || isSubmitting.value) return
@@ -176,26 +72,7 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
         }
     }
 
-    /**
-     * 快速添加今日打卡（支持用户输入备注文字）
-     *
-     * 这是一个便捷方法，专门用于"今日打卡"场景，与 toggleComplete 的区别在于：
-     * 1. 固定使用系统当前日期（不受日历视图月份影响）
-     * 2. 支持用户输入的备注文字
-     * 3. 仅当日历视窗中的"今天"尚未打卡时才创建记录
-     *
-     * 典型使用场景：用户通过卡片底部的快速输入框提交今日打卡
-     *
-     * @param {string} note - 用户输入的打卡备注/心情文字
-     * @returns {Promise<boolean>} 返回 true 表示提交成功，false 表示失败或未执行
-     *
-     * @example
-     * const success = await handleQuickLog('今天的晨跑感觉特别棒！')
-     * if (success) {
-     *   // 清空输入框
-     *   input.value = ''
-     * }
-     */
+    // 快速添加今日打卡（使用系统真实日期，支持备注文字）
     const handleQuickLog = async (note) => {
         // 前置检查：必须选中习惯、备注不能为空、当前没有提交操作进行中
         if (!selectedHabit.value || !note.trim() || isSubmitting.value) {
@@ -246,18 +123,9 @@ export function useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits) {
         }
     }
 
-    /**
-     * 导出的公共接口
-     * @type {{ toggleComplete: Function, handleQuickLog: Function, isSubmitting: Ref<boolean> }}
-     */
     return {
-        /** 切换指定日期的打卡状态（新增/删除） @type {Function} */
         toggleComplete,
-        /** 快速添加今日打卡（支持备注） @type {Function} */
         handleQuickLog,
-        /** 提交状态锁，防止重复提交 @type {Ref<boolean>} */
         isSubmitting
     }
 }
-
-

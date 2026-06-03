@@ -2,24 +2,15 @@ import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
-import {
-  months,
-  goalMonths,
-  goalMonthsCache,
-  goalMonthsMap,
-  selectedGoal,
-  editingGoal,
-  selectedMonth,
-  activePicker,
-  showAddModal,
-  showCategoryModal,
-  getGoalMonthsByGoalId
-} from '@/views/direction/composables/useDirectionState'
+import { months, useDirectionStore } from '@/stores/directionStore'
+import { storeToRefs } from 'pinia'
 
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionGoals() {
   const authStore = useAuthStore()
+  const store = useDirectionStore()
+  const { goalMonths, selectedGoal, editingGoal, selectedMonth, activePicker, showAddModal, showCategoryModal } = storeToRefs(store)
   const { fetchData, loadGoalMonths } = useDirectionFetch()
 
   // 写操作按钮 loading 状态
@@ -32,7 +23,7 @@ export function useDirectionGoals() {
 
   const activeMonthRange = computed(() => {
     if (!selectedGoal.value) return []
-    const cached = goalMonthsCache[selectedGoal.value.goal_id] || []
+    const cached = store.goalMonthsCache[selectedGoal.value.goal_id] || []
     if (cached.length === 0) return []
 
     const months = cached
@@ -54,10 +45,10 @@ export function useDirectionGoals() {
   }
 
   const handleEditGoal = async (goal) => {
-    if (!goalMonthsCache[goal.goal_id]) {
+    if (!store.goalMonthsCache[goal.goal_id]) {
       await loadGoalMonths(goal.goal_id)
     }
-    const relatedGoalMonths = getGoalMonthsByGoalId(goal.goal_id)
+    const relatedGoalMonths = store.getGoalMonthsByGoalId(goal.goal_id)
 
     let minMonth = 12
     let maxMonth = 1
@@ -129,7 +120,7 @@ export function useDirectionGoals() {
         goalToUpdate
       )
 
-      const existingGoalMonths = getGoalMonthsByGoalId(goalId)
+      const existingGoalMonths = store.getGoalMonthsByGoalId(goalId)
       const existingMonths = existingGoalMonths
         .map(mp => getDateOnlyMonth(mp.month))
         .filter(m => m !== null)
@@ -204,7 +195,7 @@ export function useDirectionGoals() {
   }
 
   const saveMonthlyPlan = async (m, payload) => {
-    const currentMp = getGoalMonthsByGoalId(selectedGoal.value.goal_id).find(
+    const currentMp = store.getGoalMonthsByGoalId(selectedGoal.value.goal_id).find(
       mp => getDateOnlyMonth(mp.month) === m
     )
     if (currentMp) {
@@ -281,7 +272,7 @@ export function useDirectionGoals() {
       const goalId = editingGoal.value.goal_id
       if (!goalId) return
 
-      const relatedGoalMonths = getGoalMonthsByGoalId(goalId)
+      const relatedGoalMonths = store.getGoalMonthsByGoalId(goalId)
 
       // 靠数据库级联删除，只需删 goalMonths
       await Promise.all(relatedGoalMonths.map(mp => db.goalMonths.delete(mp.id)))
@@ -321,7 +312,7 @@ export function useDirectionGoals() {
     activePicker,
     showAddModal,
     showCategoryModal,
-    goalMonthsMap,
+    goalMonthsMap: store.goalMonthsMap,
 
     activeMonthRange,
     handleAddClick,

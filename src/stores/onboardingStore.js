@@ -1,19 +1,3 @@
-/**
- * Onboarding Store
- *
- * Manages the new user onboarding flow for the Rhythm app.
- * Tracks completed steps and controls the onboarding modal visibility.
- *
- * Steps (in order):
- * 1. open-day      - Welcome / open the day
- * 2. create-first-habit  - Create first habit
- * 3. create-first-goal   - Create first goal/direction
- * 4. write-first-summary - Write first summary
- *
- * Persists completedSteps to localStorage so progress survives refreshes.
- * Use start() to show the onboarding modal, completeStep() to advance,
- * and finish() to close it.
- */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 

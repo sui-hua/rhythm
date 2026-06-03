@@ -1,15 +1,15 @@
 import { ref, computed } from 'vue'
-import { useDayData } from './useDayData'
+import { useDayStore } from '@/stores/dayStore'
 
 export function useDayModal() {
-    const { dailySchedule } = useDayData()
+    const dayStore = useDayStore()
 
     const showAddModal = ref(false)
     const editingTaskId = ref(null)
 
     const editingTask = computed(() => {
-        if (editingTaskId.value !== null && dailySchedule.value) {
-            return dailySchedule.value.find(t => t.id === editingTaskId.value) || null
+        if (editingTaskId.value !== null && dayStore.dailySchedule) {
+            return dayStore.dailySchedule.find(t => t.id === editingTaskId.value) || null
         }
         return null
     })

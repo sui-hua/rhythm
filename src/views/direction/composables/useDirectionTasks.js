@@ -1,7 +1,9 @@
 import { db } from '@/services/database'
-import { dailyTasks } from '@/views/direction/composables/useDirectionState'
+import { useDirectionStore } from '@/stores/directionStore'
 
 export function useDirectionTasks() {
+  const store = useDirectionStore()
+
   // 二元签名：handleUpdateTask(task, payload)
   const handleUpdateTask = async (task, payload) => {
     if (!task || !task.id) return
@@ -13,9 +15,9 @@ export function useDirectionTasks() {
       })
 
       // 同步兼容层：遍历找 id 匹配项并更新
-      for (const [k, v] of Object.entries(dailyTasks)) {
+      for (const [k, v] of Object.entries(store.dailyTasks)) {
         if (v.id === task.id) {
-          dailyTasks[k] = { ...v, ...payload }
+          store.dailyTasks[k] = { ...v, ...payload }
           break
         }
       }

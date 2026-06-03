@@ -51,7 +51,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
-import { showCategoryModal, categories } from '@/views/direction/composables/useDirectionState'
+import { useDirectionStore } from '@/stores/directionStore'
+import { storeToRefs } from 'pinia'
+
+const store = useDirectionStore()
+const { showCategoryModal, categories } = storeToRefs(store)
 const newCategoryName = ref('')
 const loading = ref(false)
 const authStore = useAuthStore()

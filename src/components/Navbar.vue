@@ -172,44 +172,6 @@
 </template>
 
 <script setup>
-/**
- * Navbar.vue - 全局导航栏组件
- * 
- * 功能概述:
- * - 桌面端: 顶部悬停触发的隐藏式导航栏，鼠标悬停时从顶部滑出显示
- * - 移动端: 固定在底部的导航栏，始终可见
- * - 支持上下文导航: 在月视图和日视图页面显示面包屑和翻页控件
- * - 退出登录功能
- * 
- * 导航结构:
- * - 时序 (/day): 每日时间轴，支持年/月/日三级路由
- * - 习惯 (/habits): 周期行为追踪
- * - 所向 (/direction): 长期目标管理
- * - 总结 (/summary): 日/周/月/年总结
- * 
- * 桌面端交互逻辑:
- * - 顶部 10px 透明热区 (h-10) 作为触发区域，pointer-events-auto 捕获鼠标事件
- * - 外层 div 使用 group 包裹，悬停热区时触发 group-hover 状态
- * - nav 面板默认 -translate-y-[150%] + opacity-0，悬停时 translate-y-0 + opacity-100
- * - 登出按钮默认 opacity-0 scale-95，悬停时显示
- * 
- * 移动端交互逻辑:
- * - 底部固定导航栏，始终显示
- * - 上下文导航 pill 固定在顶部居中
- * - 登出按钮固定在右上角
- * 
- * 上下文导航 (contextInfo):
- * - 月视图 (/month/:year/:month): 显示年份 + 返回年视图按钮
- * - 日视图 (`/day` 与 `/day/:year/:month/:day`): 显示月份名 + 左右翻日按钮 + 返回月视图按钮
- * 
- * 依赖:
- * - vue-router: 路由导航
- * - pinia (dateStore): 日期状态管理
- * - lucide-vue-next: 图标组件
- * - @/components/ui/button: 按钮组件
- * - @/lib/utils: 工具函数 (cn)
- * - @/config/supabase: Supabase 认证
- */
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
@@ -232,18 +194,13 @@ const navItems = computed(() => [
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
 ])
 
-// 判断导航项是否激活
-// 特殊情况处理：因为时序拥有多层级(年、月、日)，如果处在其中任何一层，都算“时序”处于激活状态
+// 判断导航项是否激活（时序拥有多层级路由，处在任何一层都算激活）
 const isActive = (item) => {
-  // 时序拥有多层级(年、月、日)，处在任何一层都算激活
   if (item.base === '/day' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path.startsWith('/year'))) return true
   return route.path === item.path || route.path.startsWith(item.base)
 }
 
-/**
- * contextInfo: 结合 current route 计算导航栏左侧的面包屑辅助控件状态
- * 用于指示目前正在查看的具体是哪一年、哪一月，并提供左右翻页及上层返回按钮
- */
+// 根据当前路由计算导航栏左侧的面包屑辅助控件状态
 const contextInfo = computed(() => {
   const path = route.path
   const { year: currentYear, month, date: currentDate } = getRouteDateContext(route.params, dateStore.currentDate)

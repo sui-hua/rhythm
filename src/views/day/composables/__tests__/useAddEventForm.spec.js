@@ -16,8 +16,8 @@ vi.mock('@/stores/dateStore', () => ({
   useDateStore: vi.fn(() => ({ currentDate: new Date(2026, 4, 8) }))
 }))
 
-vi.mock('@/views/day/composables/useDayData', () => ({
-  useDayData: vi.fn(() => ({ fetchTasks: vi.fn() }))
+vi.mock('@/stores/dayStore', () => ({
+  useDayStore: vi.fn(() => ({ fetchTasks: vi.fn() }))
 }))
 
 vi.mock('@/views/day/composables/useActionFeedback', () => ({

@@ -43,35 +43,6 @@
   </div>
 </template>
 
-<!--
-/**
- * GenericSummaryForm.vue - 通用总结表单组件
- *
- * @description
- * 提供统一的周/月/年总结编辑界面，包含标题、内容两个字段。
- * 该组件是一个纯展示层组件，核心业务逻辑通过 useGenericSummaryForm composable 处理。
- *
- * @props
- * - initialData: Object  - 初始数据（编辑模式时传入，包含 id, title, content 等）
- * - type: String         - 总结类型，用于区分 'week' | 'month' | 'year'
- *
- * @emits
- * - save:    提交表单时触发，携带 buildPayload() 构建的 payload 对象
- * - cancel:  点击取消按钮时触发
- * - delete:  点击删除按钮时触发（仅在编辑模式 initialData?.id 存在时显示）
- *
- * @usage
- * <GenericSummaryForm
- *   :initial-data="someSummaryData"
- *   type="week"
- *   @save="handleSave"
- *   @cancel="handleCancel"
- *   @delete="handleDelete"
- * />
- *
- * @see useGenericSummaryForm - 核心逻辑 composable
- */
--->
 <script setup>
 import { useGenericSummaryForm } from '@/views/summary/composables/useGenericSummaryForm'
 import { Button } from '@/components/ui/button'

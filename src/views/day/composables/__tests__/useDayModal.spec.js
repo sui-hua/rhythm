@@ -9,9 +9,9 @@ vi.mock('vue', async () => {
   }
 })
 
-vi.mock('@/views/day/composables/useDayData', () => ({
-  useDayData: vi.fn(() => ({
-    dailySchedule: { value: [] }
+vi.mock('@/stores/dayStore', () => ({
+  useDayStore: vi.fn(() => ({
+    dailySchedule: []
   }))
 }))
 

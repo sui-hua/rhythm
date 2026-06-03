@@ -1,18 +1,12 @@
 import { computed } from 'vue'
 import { getDateOnlyDay, getDateOnlyMonth, getDateOnlyYear } from '@/views/direction/utils/dateOnly'
-import {
-  selectedGoal,
-  selectedMonth,
-  selectedDates,
-  dailyTasks,
-  isSelecting,
-  activePicker,
-  goalMonthsCache,
-  goalDaysCache,
-  archiveVersion
-} from '@/views/direction/composables/useDirectionState'
+import { useDirectionStore } from '@/stores/directionStore'
+import { storeToRefs } from 'pinia'
 
 export function useDirectionSelection() {
+  const store = useDirectionStore()
+  const { selectedGoal, selectedMonth, isSelecting, activePicker, archiveVersion } = storeToRefs(store)
+
   const goalKey = (m) => {
     if (!selectedGoal.value) return `undefined-${m}`
     return `goal-${selectedGoal.value.goal_id}-${m}`
@@ -20,11 +14,11 @@ export function useDirectionSelection() {
 
   const dayTaskKey = (day) => `${goalKey(selectedMonth.value)}-${day}`
 
-  const isSelected = (m, day) => selectedDates[m]?.includes(day)
-  const hasTask = (m, day) => !!(dailyTasks[`${goalKey(m)}-${day}`]?.title)
+  const isSelected = (m, day) => store.selectedDates[m]?.includes(day)
+  const hasTask = (m, day) => !!(store.dailyTasks[`${goalKey(m)}-${day}`]?.title)
 
   const canSelect = (m, day) => {
-    const current = selectedDates[m]
+    const current = store.selectedDates[m]
     if (!current || current.length === 0) return true
 
     const firstDay = current[0]
@@ -37,14 +31,14 @@ export function useDirectionSelection() {
   const startSelection = (day) => {
     const m = selectedMonth.value
 
-    const isCurrentlySelected = selectedDates[m]?.includes(day)
+    const isCurrentlySelected = store.selectedDates[m]?.includes(day)
     if (!isCurrentlySelected && !canSelect(m, day)) return
 
     isSelecting.value = true
-    if (!selectedDates[m]) selectedDates[m] = []
+    if (!store.selectedDates[m]) store.selectedDates[m] = []
 
-    const idx = selectedDates[m].indexOf(day)
-    idx > -1 ? selectedDates[m].splice(idx, 1) : selectedDates[m].push(day)
+    const idx = store.selectedDates[m].indexOf(day)
+    idx > -1 ? store.selectedDates[m].splice(idx, 1) : store.selectedDates[m].push(day)
   }
 
   const handleMouseEnter = (day) => {
@@ -52,24 +46,20 @@ export function useDirectionSelection() {
       const m = selectedMonth.value
       if (!canSelect(m, day)) return
 
-      if (!selectedDates[m].includes(day)) selectedDates[m].push(day)
+      if (!store.selectedDates[m].includes(day)) store.selectedDates[m].push(day)
     }
   }
 
   const endSelection = () => { isSelecting.value = false }
 
-  const deselectAllInMonth = () => { selectedDates[selectedMonth.value] = [] }
+  const deselectAllInMonth = () => { store.selectedDates[selectedMonth.value] = [] }
 
-/**
- * 获取指定月份的偏移量（该月第一天是星期几）
- * @param {number} month - 月份（1-12）
- */
 const getMonthOffset = (month) => {
   if (!selectedGoal.value) {
     return new Date(new Date().getFullYear(), month - 1, 1).getDay()
   }
 
-  const cached = goalMonthsCache[selectedGoal.value.goal_id] || []
+  const cached = store.goalMonthsCache[selectedGoal.value.goal_id] || []
   const mp = cached.find(item => getDateOnlyMonth(item.month) === month)
   if (!mp) {
     return new Date(new Date().getFullYear(), month - 1, 1).getDay()
@@ -79,11 +69,6 @@ const getMonthOffset = (month) => {
   return new Date(year, month - 1, 1).getDay()
 }
 
-/**
- * 按星期索引选择该月所有对应的日期
- * @param {number} month - 月份（1-12）
- * @param {number} weekIndex - 星期索引（0=周日, 1=周一, ..., 6=周六）
- */
 const selectWeekDay = (month, weekIndex) => {
   const year = new Date().getFullYear()
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -96,7 +81,7 @@ const selectWeekDay = (month, weekIndex) => {
     }
   }
 
-  const currentSelection = selectedDates[month] || []
+  const currentSelection = store.selectedDates[month] || []
   const isAllSelected = targetDays.every(d => currentSelection.includes(d))
 
   let newSelection
@@ -106,22 +91,18 @@ const selectWeekDay = (month, weekIndex) => {
     newSelection = [...new Set([...currentSelection, ...targetDays])]
   }
 
-  selectedDates[month] = newSelection.sort((a, b) => a - b)
+  store.selectedDates[month] = newSelection.sort((a, b) => a - b)
 }
 
-/**
- * 判断指定月份的所有选中日期是否都有任务
- * @param {number} month - 月份（1-12）
- */
 const isAllSelectedDatesHaveTask = (month) => {
-  const dates = selectedDates[month] || []
+  const dates = store.selectedDates[month] || []
   if (dates.length === 0) return false
   return dates.every(day => hasTask(month, day))
 }
 
   const toggleMonth = (m) => {
     selectedMonth.value = selectedMonth.value === m ? null : m
-    if (selectedMonth.value && !selectedDates[m]) selectedDates[m] = []
+    if (selectedMonth.value && !store.selectedDates[m]) store.selectedDates[m] = []
   }
 
   const datesWithTasks = computed(() => {
@@ -129,13 +110,13 @@ const isAllSelectedDatesHaveTask = (month) => {
   const goalId = selectedGoal.value?.goal_id
   if (!goalId || selectedMonth.value == null) return []
 
-  const goalMonthsOfGoal = goalMonthsCache[goalId] || []
+  const goalMonthsOfGoal = store.goalMonthsCache[goalId] || []
   const mp = goalMonthsOfGoal.find(
     item => getDateOnlyMonth(item.month) === selectedMonth.value
   )
   if (!mp) return []
 
-  return (goalDaysCache[mp.id] || [])
+  return (store.goalDaysCache[mp.id] || [])
     .filter(dp => dp.title)
     .map(dp => getDateOnlyDay(dp.day))
     .filter(day => day !== null)
@@ -151,8 +132,8 @@ const isAllSelectedDatesHaveTask = (month) => {
   return {
     selectedGoal,
     selectedMonth,
-    selectedDates,
-    dailyTasks,
+    selectedDates: store.selectedDates,
+    dailyTasks: store.dailyTasks,
     datesWithTasks,
     goalKey,
     dayTaskKey,

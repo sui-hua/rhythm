@@ -160,12 +160,13 @@ import CategoryManagementModal from './CategoryManagementModal.vue'
 import { Settings2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
 
-import { months } from '@/views/direction/composables/useDirectionState'
+import { months, useDirectionStore } from '@/stores/directionStore'
+import { storeToRefs } from 'pinia'
 import { withLoadingLock } from '@/utils/throttle'
 
+const store = useDirectionStore()
+const { categories } = storeToRefs(store)
 const { showAddModal, showCategoryModal, editingGoal, handleAddGoal, handleUpdateGoal, handleDeleteGoal } = useDirectionGoals()
-
-import { categories } from '@/views/direction/composables/useDirectionState'
 
 const fetchCategories = async (force = false) => {
   if (!force && categories.value?.length > 0) return  // 已有数据则跳过，避免重复请求

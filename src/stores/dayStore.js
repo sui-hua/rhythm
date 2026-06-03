@@ -212,9 +212,6 @@ export const useDayStore = defineStore('day', () => {
         }
     }
 
-    /**
-     * 更新任务的开始/结束时间（拖拽编排使用）
-     */
     const updateTaskTime = async (task, newStartHour, newEndHour) => {
         if (!task || task.type !== 'task') return
         const { year, month, day } = routeDateContext.value

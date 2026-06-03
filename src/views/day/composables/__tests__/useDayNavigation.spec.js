@@ -20,8 +20,8 @@ vi.mock('@/stores/dateStore', () => ({
   useDateStore: vi.fn()
 }))
 
-vi.mock('@/views/day/composables/useDayData', () => ({
-  useDayData: vi.fn()
+vi.mock('@/stores/dayStore', () => ({
+  useDayStore: vi.fn()
 }))
 
 vi.mock('@/views/day/composables/useDailyReport', () => ({
@@ -35,7 +35,7 @@ vi.mock('@/views/day/utils/getInitialScrollTarget', () => ({
 import { nextTick, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDateStore } from '@/stores/dateStore'
-import { useDayData } from '@/views/day/composables/useDayData'
+import { useDayStore } from '@/stores/dayStore'
 import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { getInitialScrollTarget } from '@/views/day/utils/getInitialScrollTarget'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
@@ -65,10 +65,10 @@ describe('useDayNavigation', () => {
     useRoute.mockReturnValue(route)
     useRouter.mockReturnValue(router)
     useDateStore.mockReturnValue(dateStore)
-    useDayData.mockReturnValue({
-      dailySchedule: { value: [] },
+    useDayStore.mockReturnValue({
+      dailySchedule: [],
       fetchTasks: vi.fn(),
-      isLoading: { value: false }
+      isLoading: false
     })
     useDailyReport.mockReturnValue({
       openIfNeeded: vi.fn()
@@ -113,14 +113,12 @@ describe('useDayNavigation', () => {
       day: '19'
     }
 
-    useDayData.mockReturnValue({
-      dailySchedule: {
-        value: [
-          { startHour: 9, durationHours: 1, completed: false }
-        ]
-      },
+    useDayStore.mockReturnValue({
+      dailySchedule: [
+        { startHour: 9, durationHours: 1, completed: false }
+      ],
       fetchTasks,
-      isLoading: { value: false }
+      isLoading: false
     })
     useDailyReport.mockReturnValue({
       openIfNeeded

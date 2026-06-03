@@ -1,13 +1,4 @@
-/**
- * Page State Store
- *
- * Manages transient UI state for various views/pages in the application.
- * Each view has its own state namespace (day, summary, direction) containing
- * flags like drawers, modals, and editing states that don't need persistence.
- *
- * This store is NOT persisted - state resets on page refresh.
- */
-
+// 瞬态 UI 状态，不持久化，刷新页面后重置
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
 

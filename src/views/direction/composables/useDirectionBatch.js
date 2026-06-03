@@ -1,42 +1,20 @@
-/**
- * ============================================
- * Direction 批量操作层 (views/direction/composables/useDirectionBatch.js)
- * ============================================
- *
- * 【模块职责】
- * - 处理 goal_days 的批量创建、批量删除
- * - 通过 RPC 实现高性能批量操作
- *
- * 【RPC 调用】
- * - batch_upsert_daily_plans → 批量新增/更新每日任务
- * - batch_delete_daily_plans → 批量删除指定日期的任务
- *
- * 【批量操作流程】
- * 1. applyBatchTask() → 批量添加/更新日计划
- * 2. handleBatchDelete() → 批量删除日计划
- */
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
-import {
-  goalMonthsCache,
-  goalDaysCache,
-  selectedGoal,
-  selectedMonth,
-  selectedDates,
-  batchInput,
-  archiveVersion
-} from '@/views/direction/composables/useDirectionState'
+import { useDirectionStore } from '@/stores/directionStore'
+import { storeToRefs } from 'pinia'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 
 export function useDirectionBatch() {
   const authStore = useAuthStore()
+  const store = useDirectionStore()
+  const { selectedGoal, selectedMonth, batchInput, archiveVersion } = storeToRefs(store)
   const { hasTask } = useDirectionSelection()
   const { loadGoalDays } = useDirectionFetch()
 
   const getCurrentMonthlyPlan = (goalId, month) => {
-    const cachedGoalMonths = goalMonthsCache[goalId] || []
+    const cachedGoalMonths = store.goalMonthsCache[goalId] || []
     return cachedGoalMonths.find(mp => getDateOnlyMonth(mp.month) === month) || null
   }
 
@@ -46,11 +24,11 @@ export function useDirectionBatch() {
   })
 
   const getExistingDailyPlanMap = async (monthPlanId) => {
-    if (!goalDaysCache[monthPlanId]) {
+    if (!store.goalDaysCache[monthPlanId]) {
       await loadGoalDays(monthPlanId, { force: true })
     }
 
-    const existingDailyPlans = goalDaysCache[monthPlanId] || []
+    const existingDailyPlans = store.goalDaysCache[monthPlanId] || []
     const planMap = new Map()
 
     for (const plan of existingDailyPlans) {
@@ -76,7 +54,7 @@ export function useDirectionBatch() {
     const year = monthDate.getFullYear()
     const currentTiming = resolveDailyTiming(currentMp, selectedGoal.value)
 
-    const currentSelectedDates = selectedDates[m] || []
+    const currentSelectedDates = store.selectedDates[m] || []
     let daysToUpdate = currentSelectedDates.filter(day => hasTask(m, day))
     if (daysToUpdate.length === 0) {
       daysToUpdate = [...currentSelectedDates]
@@ -109,12 +87,12 @@ export function useDirectionBatch() {
     await loadGoalDays(currentMp.id, { force: true })
     archiveVersion.value++
     batchInput.value = ''
-    selectedDates[m] = []
+    store.selectedDates[m] = []
   }
 
   const handleBatchDelete = async () => {
     const m = selectedMonth.value
-    const currentSelectedDates = selectedDates[m] || []
+    const currentSelectedDates = store.selectedDates[m] || []
     if (!m || currentSelectedDates.length === 0) return
 
     const currentMp = getCurrentMonthlyPlan(selectedGoal.value.goal_id, m)
@@ -136,7 +114,7 @@ export function useDirectionBatch() {
 
     await loadGoalDays(currentMp.id, { force: true })
     archiveVersion.value++
-    selectedDates[m] = []
+    store.selectedDates[m] = []
     batchInput.value = ''
   }
 

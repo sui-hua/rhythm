@@ -45,7 +45,7 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import TaskItem from '@/views/day/components/TaskItem.vue'
 import DragTimeTooltip from '@/views/day/components/DragTimeTooltip.vue'
-import { useDayData } from '@/views/day/composables/useDayData'
+import { useDayStore } from '@/stores/dayStore'
 import { useTimelineDragSession } from '@/views/day/composables/useTimelineDragSession'
 import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'
 
@@ -56,14 +56,14 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'edit'])
 
-const { updateTaskTime } = useDayData()
+const dayStore = useDayStore()
 
 const canDrag = computed(() => !props.task.completed && props.task.type === 'task')
 
 const wrapperRef = ref(null)
 const session = useTimelineDragSession({
   getTask: () => props.task,
-  onCommit: ({ newStartHour, newEndHour }) => updateTaskTime(props.task, newStartHour, newEndHour)
+  onCommit: ({ newStartHour, newEndHour }) => dayStore.updateTaskTime(props.task, newStartHour, newEndHour)
 })
 
 const isDragging = computed(() => session.isDragging.value)

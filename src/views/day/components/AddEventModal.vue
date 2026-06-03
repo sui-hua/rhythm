@@ -121,60 +121,13 @@
   </Dialog>
 </template>
 <script setup>
-/**
- * AddEventModal.vue
- * ==================
- * 每日任务/习惯新增/编辑弹窗组件
- *
- * 功能说明：
- * - 支持创建新任务或编辑已有任务
- * - 支持创建新习惯或编辑已有习惯（习惯无分类和描述字段）
- * - 根据 initialData 是否存在判断是新增还是编辑模式
- * - 表单验证依赖 useAddEventForm composable
- * - 支持的任务分类：工作、个人、会议、设计、其他
- *
- * Props：
- * - show: Boolean，控制弹窗显示/隐藏（配合 v-model:show 使用）
- * - initialData: Object，待编辑的任务/习惯数据，为 null 时表示新增模式
- * - categories: Array，预定义分类标签列表，默认 ['工作', '个人', '会议', '设计', '其他']
- *
- * Emits：
- * - close: 关闭弹窗事件（旧版，直接通知父组件）
- * - refresh: 刷新数据事件，提交成功或删除后通知父组件刷新列表
- * - update:show: 弹窗显示状态变更，用于 v-model:show 双向绑定
- *
- * 依赖组件：
- * - Dialog/DialogContent/DialogTitle/DialogDescription（shadcn-vue）
- * - Input（shadcn-vue）
- * - Button（shadcn-vue）
- * - TimePicker，时间选择器
- * - DurationPicker，时长选择器
- *
- * 依赖 Composable：
- * - useAddEventForm，管理表单状态、验证、提交、删除逻辑
- */
-/**
- * 组件依赖的 UI 组件（来自 shadcn-vue）
- */
-// Dialog 系列：弹窗容器及其内容、标题、描述
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-// Input：文本输入框
 import { Input } from '@/components/ui/input'
-// Button：按钮组件
 import { Button } from '@/components/ui/button'
-// TimePicker：时间选择器（自定义组件）
 import TimePicker from '@/components/ui/TimePicker.vue'
-// DurationPicker：时长选择器，支持快速选择时长并触发提交（自定义组件）
 import DurationPicker from '@/components/ui/DurationPicker.vue'
-// useAddEventForm：表单逻辑 Composable，集中管理表单数据、验证、提交、删除
 import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
 
-/**
- * Props 定义
- * show: 控制弹窗显示/隐藏，布尔值
- * initialData: 待编辑的任务/习惯数据对象，null 表示新增模式
- * categories: 分类标签数组，默认提供工作、个人、会议、设计、其他五个选项
- */
 const props = defineProps({
   show: Boolean,
   initialData: {
@@ -187,23 +140,8 @@ const props = defineProps({
   }
 })
 
-/**
- * Emits 定义
- * close: 通知父组件关闭弹窗（旧版事件）
- * refresh: 通知父组件刷新数据列表
- * update:show: 弹窗显示状态变更，支持 v-model:show 双向绑定
- */
 const emit = defineEmits(['close', 'refresh', 'update:show'])
 
-/**
- * 从 useAddEventForm 获取表单相关状态和操作方法
- * form: 表单数据对象（title, time, duration, description, category）
- * isHabit: 当前表单模式，true 表示习惯模式，false 表示任务模式
- * errors: 表单验证错误信息对象
- * isValid: 表单是否通过验证，布尔值
- * submit: 提交表单处理函数
- * handleDelete: 删除任务处理函数
- */
 const { form, isHabit, errors, isValid, submit, handleDelete, touchField } = useAddEventForm(props, emit)
 </script>
 

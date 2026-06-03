@@ -41,28 +41,6 @@
   </Teleport>
 </template>
 <script setup>
-/**
- * DailyReportModal.vue - 每日日报弹窗组件
- *
- * 功能说明：
- * - 每日日报弹窗，用于展示前一天的复盘数据和当日任务概况
- * - 使用 Teleport 将弹窗渲染到 body 层级，避免层级嵌套问题
- * - 包含两项统计数据展示区和两个操作按钮
- *
- * 统计数据内容：
- * - 昨天已完成：昨日标记为已完成的任务数量
- * - 昨天未完成：昨日未完成且顺延到今天的任务数量
- * - 今日任务数：当日计划的任务总数
- * - 顺延到今天：从昨日顺延过来的未完成任务数
- *
- * 交互说明：
- * - 点击遮罩层或关闭按钮触发 close 事件关闭弹窗
- * - "确认转移到今天"按钮将未完成任务顺延到今日计划
- * - "知道了"按钮仅关闭弹窗，不执行任何数据操作
- *
- * 使用示例：
- * // 传入 show 和 stats 参数，通过事件处理关闭和确认操作
- */
 const props = defineProps({
   show: Boolean,
   stats: {
@@ -76,12 +54,6 @@ const props = defineProps({
   }
 })
 
-/**
- * 组件事件定义
- * @event close - 点击遮罩或关闭按钮时触发，用于关闭弹窗
- * @event confirm - 点击"知道了"按钮时触发，仅关闭弹窗
- * @event confirm-carryover - 点击"确认转移到今天"按钮时触发，执行任务顺延逻辑
- */
 defineEmits(['close', 'confirm', 'confirm-carryover'])
 </script>
 

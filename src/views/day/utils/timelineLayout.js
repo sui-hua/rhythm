@@ -1,16 +1,3 @@
-/**
- * buildTimelineDisplaySchedule
- *
- * 负责给时间轴项目注入布局元数据：
- * - 普通任务继续沿用原来的横向分栏算法
- * - carry-over 项不再被横向摊开，而是压成同一列中的错层堆叠
- *
- * 这里刻意把算法抽成纯函数，避免布局规则散落在组件里，
- * 后续无论是单测还是继续调整堆叠策略，都不需要先 mount 整个时间轴。
- *
- * @param {Array} items
- * @returns {Array}
- */
 export function buildTimelineDisplaySchedule(items = []) {
   const tasks = items
     .map((task, index) => ({ ...task, _originalIndex: index }))
@@ -41,19 +28,7 @@ export function buildTimelineDisplaySchedule(items = []) {
   return tasks
 }
 
-/**
- * applyClusterLayout
- *
- * cluster 代表一个时间上互相有重叠关系的区间。
- * 在这个区间里：
- * - regular tasks 继续做贪心分栏
- * - carry-over tasks 收拢成一个 stack lane
- *
- * 这样既能保留普通任务的原有并排关系，
- * 也能让“历史积压的一堆”被视觉上识别成同一摞内容。
- *
- * @param {Array} cluster
- */
+// cluster：时间重叠区间，普通任务贪心分栏，carry-over 任务收拢堆叠
 function applyClusterLayout(cluster) {
   const regularTasks = cluster.filter(task => !task.isCarryOver)
   const carryOverTasks = cluster.filter(task => task.isCarryOver)
@@ -84,15 +59,6 @@ function applyClusterLayout(cluster) {
   })
 }
 
-/**
- * buildRegularColumns
- *
- * 普通任务沿用既有贪心列分配：
- * 每列内部保证前一项结束后，后一项才会进入该列。
- *
- * @param {Array} tasks
- * @returns {Array<Array>}
- */
 function buildRegularColumns(tasks) {
   const columns = []
 

@@ -1,33 +1,17 @@
 <script setup>
-/**
- * 归档头部组件 (ArchiveHeader.vue)
- * 显示月份标题和周期密度统计。
- */
 defineProps({
-  /**
-   * 月份完整名称
-   */
   monthName: {
     type: String,
     default: '无内容'
   },
-  /**
-   * 有任务的天数
-   */
   taskCount: {
     type: Number,
     default: 0
   },
-  /**
-   * 月份数据
-   */
   months: {
     type: Array,
     required: true
   },
-  /**
-   * 当前选中的月份
-   */
   selectedMonth: {
     type: Number,
     default: null

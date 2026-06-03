@@ -1,17 +1,3 @@
-<!--
-  ============================================
-  Habits 桌面端页面 (HabitsDesktopPage.vue)
-  ============================================
-
-  【模块职责】
-  - 桌面端布局：三栏结构
-  - HabitSidebar → 左侧习惯列表导航
-  - 右侧主内容区 → HabitHeader + HabitStats + HabitCalendar + HabitTodayCard + HabitLogs
-
-  【弹窗】
-  - AddHabitModal → 添加新习惯
-  - EditHabitModal → 编辑习惯
--->
 <template>
   <div class="habits-desktop-root">
     <!-- 左侧导航：习惯列表 -->
@@ -101,44 +87,6 @@
   </div>
 </template>
 
-/**
- * @file HabitsDesktopPage.vue
- * @description 习惯追踪模块的桌面端主页面，采用三栏布局：
- *               左侧为习惯列表导航（HabitSidebar），右侧主内容区展示习惯详情
- *               （HabitHeader + HabitStats + HabitCalendar + HabitTodayCard + HabitLogs）
- *
- * @module habits
- *
- * @composables
- * - useHabitData: 习惯列表数据管理，包含习惯 CRUD、选中状态、日历视图月份切换
- * - useHabitStats: 习惯统计数据计算（今日完成率、周期统计等）
- * - useHabitLogs: 习惯打卡状态切换与日志记录
- *
- * @components
- * - HabitSidebar: 左侧导航栏，展示习惯列表与归档习惯，支持添加/编辑/选择习惯
- * - HabitHeader: 习惯标题展示
- * - HabitStats: 习惯统计数据卡片
- * - HabitCalendar: 习惯完成热力图日历，支持按月切换与打卡操作
- * - HabitTodayCard: 今日打卡快捷操作卡片
- * - HabitLogs: 习惯日志记录列表
- * - AddHabitModal: 添加新习惯弹窗（异步加载）
- * - EditHabitModal: 编辑习惯弹窗（异步加载）
- *
- * @state
- * - showAddModal: 控制添加习惯弹窗显示
- * - showEditModal: 控制编辑习惯弹窗显示
- * - selectedHabit: 当前选中的习惯对象（来自 useHabitData）
- * - habits: 习惯列表（来自 useHabitData）
- * - archivedHabits: 归档习惯列表（来自 useHabitData）
- * - viewYear/viewMonth: 日历当前视图年月（来自 useHabitData）
- * - todayCompletionRate: 今日所有习惯完成率（来自 useHabitStats）
- * - habitStats: 当前选中习惯的统计数据（来自 useHabitStats）
- *
- * @lifecycle
- * - onMounted: 初始化时调用 fetchHabits 拉取习惯列表
- * - watch(selectedHabit): 切换选中习惯时自动加载对应日志
- */
-
 <script setup>
 import { ref, watch, onMounted, defineAsyncComponent } from 'vue'
 import { Plus } from 'lucide-vue-next'
@@ -163,7 +111,6 @@ import { getPageNarrative } from '@/content/pageNarratives'
 
 const narrative = getPageNarrative('habits')
 
-// 1. 获取核心数据层面能力支撑
 const {
   habits,
   archivedHabits,
@@ -176,19 +123,16 @@ const {
   isPageLoading
 } = useHabitData()
 
-// 2. 统计计算层面能力支撑
 const {
   todayCompletionRate,
   habitStats
 } = useHabitStats(habits, selectedHabit)
 
-// 3. 执行打卡和简易文字日志的支撑
 const {
   toggleComplete,
   handleQuickLog: performQuickLog
 } = useHabitLogs(selectedHabit, viewYear, viewMonth, fetchHabits)
 
-// 控制首屏立刻请求初始化拉取数据列表
 onMounted(fetchHabits)
 
 // 监听选中习惯的变化，加载对应日志
@@ -198,30 +142,19 @@ watch(selectedHabit, (newHabit) => {
   }
 }, { immediate: true })
 
-// --- 页面 UI 自身专有的局部状态和操控方法 ---
-
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 
-/**
- * 响应来自左侧边栏触发的编辑命令
- */
 const handleSidebarEdit = (habit) => {
   selectedHabit.value = habit
   showEditModal.value = true
 }
 
-/**
- * 简易日期格式化工具方法
- */
 const getCurrentDate = () => {
   const now = new Date()
   return `${now.getMonth() + 1}月${now.getDate()}日`
 }
 
-/**
- * 将绑定的文本传递给底层的日志创建 hook，执行打卡后清空文字框本身。
- */
 const handleQuickLog = async (note) => {
   await performQuickLog(note)
 }
