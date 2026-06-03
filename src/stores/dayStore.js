@@ -18,9 +18,11 @@ export const useDayStore = defineStore('day', () => {
     const habitLogs = ref([])
     const isLoading = ref(false)
 
-    const route = useRoute()
     const dateStore = useDateStore()
-    const routeDateContext = computed(() => getRouteDateContext(route.params, dateStore.currentDate))
+    const routeDateContext = computed(() => {
+        const route = useRoute()
+        return getRouteDateContext(route.params, dateStore.currentDate)
+    })
 
     const getCurrentDayRange = () => {
         const { year, month, day } = routeDateContext.value

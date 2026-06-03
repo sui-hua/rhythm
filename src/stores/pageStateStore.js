@@ -27,7 +27,7 @@ export const usePageStateStore = defineStore('pageState', () => {
   }
 
   return {
-    ...state,
+    state,
     resetAll
   }
 })

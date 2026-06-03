@@ -152,9 +152,13 @@ watch(durationUnit, async (newUnit, oldUnit) => {
 //       需要根据新值大小重新判断默认单位
 watch(() => props.modelValue, (newVal, oldVal) => {
   if (switchingUnit) return
-  // 仅在初始加载时（oldVal 为 undefined 或 0）自动调整单位
+  // 初始加载或值跨越阈值时自动切换单位
   if (oldVal === undefined || oldVal === 0) {
     durationUnit.value = newVal > 1 ? 'hour' : 'minute'
+  } else if (newVal > 1 && durationUnit.value === 'minute') {
+    durationUnit.value = 'hour'
+  } else if (newVal <= 1 && durationUnit.value === 'hour') {
+    durationUnit.value = 'minute'
   }
 })
 </script>

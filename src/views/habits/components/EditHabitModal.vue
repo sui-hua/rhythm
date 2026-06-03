@@ -170,7 +170,7 @@
  * - 均通过 withLoadingLock 包装防止重复提交
  */
 import { computed, reactive, watch } from 'vue'
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import TimePicker from '@/components/ui/TimePicker.vue'
@@ -181,6 +181,7 @@ import {
   createDefaultHabitFrequency,
   normalizeHabitFrequency
 } from '@/views/habits/utils/habitFrequency'
+import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
 const props = defineProps({
   /** 控制弹窗的显示与隐藏状态 */
@@ -202,18 +203,6 @@ const emit = defineEmits([
   'update:show' // 支持双向绑定的更新显示状态
 ])
 
-const WEEKDAY_OPTIONS = [
-  { label: '一', value: 1 },
-  { label: '二', value: 2 },
-  { label: '三', value: 3 },
-  { label: '四', value: 4 },
-  { label: '五', value: 5 },
-  { label: '六', value: 6 },
-  { label: '日', value: 7 }
-]
-
-const MONTH_DAY_OPTIONS = Array.from({ length: 31 }, (_, index) => index + 1)
-
 // 弹窗内的可编辑表单数据
 const form = reactive({
   title: '', // 习惯名称
@@ -224,11 +213,14 @@ const form = reactive({
   monthDays: []
 })
 
-const canSubmitFrequency = computed(() => {
-  if (form.frequencyType === 'weekly') return form.weekdays.length > 0
-  if (form.frequencyType === 'monthly') return form.monthDays.length > 0
-  return true
-})
+const {
+  WEEKDAY_OPTIONS,
+  MONTH_DAY_OPTIONS,
+  canSubmitFrequency,
+  toggleWeekday,
+  toggleMonthDay,
+  buildFrequencyPayload
+} = useHabitFrequencyForm(form)
 
 // 监听传入的 habitData 对象，一旦变化立即重新赋值到表单状态
 watch(() => props.habitData, (newVal) => {
@@ -243,36 +235,6 @@ watch(() => props.habitData, (newVal) => {
     form.monthDays = frequency.type === 'monthly' ? [...frequency.monthDays] : []
   }
 }, { immediate: true })
-
-const toggleWeekday = (weekday) => {
-  form.weekdays = form.weekdays.includes(weekday)
-    ? form.weekdays.filter((item) => item !== weekday)
-    : [...form.weekdays, weekday].sort((a, b) => a - b)
-}
-
-const toggleMonthDay = (day) => {
-  form.monthDays = form.monthDays.includes(day)
-    ? form.monthDays.filter((item) => item !== day)
-    : [...form.monthDays, day].sort((a, b) => a - b)
-}
-
-const buildFrequencyPayload = () => {
-  if (form.frequencyType === 'weekly') {
-    return normalizeHabitFrequency({
-      type: 'weekly',
-      weekdays: form.weekdays
-    })
-  }
-
-  if (form.frequencyType === 'monthly') {
-    return normalizeHabitFrequency({
-      type: 'monthly',
-      monthDays: form.monthDays
-    })
-  }
-
-  return createDefaultHabitFrequency()
-}
 
 /**
  * 提交并保存更改的方法

@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      
+      "Bash(Get-ChildItem -Recurse -Depth 1 \"D:\\\\司占锋\\\\demo\\\\rhythm\\\\src\")",
+      "Bash(Select-Object FullName)"
     ]
+  },
+  "skillOverrides": {
+    "review": "off"
   }
 }

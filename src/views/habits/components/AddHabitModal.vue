@@ -142,10 +142,7 @@ import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { withLoadingLock } from '@/utils/throttle'
-import {
-  createDefaultHabitFrequency,
-  normalizeHabitFrequency
-} from '@/views/habits/utils/habitFrequency'
+import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
 const props = defineProps({
   /** 控制弹窗的显示与隐藏状态 */
@@ -153,18 +150,6 @@ const props = defineProps({
 })
 
 const authStore = useAuthStore()
-
-const WEEKDAY_OPTIONS = [
-  { label: '一', value: 1 },
-  { label: '二', value: 2 },
-  { label: '三', value: 3 },
-  { label: '四', value: 4 },
-  { label: '五', value: 5 },
-  { label: '六', value: 6 },
-  { label: '日', value: 7 }
-]
-
-const MONTH_DAY_OPTIONS = Array.from({ length: 31 }, (_, index) => index + 1)
 
 const emit = defineEmits([
   'close', // 关闭弹窗事件 (暂未使用该单独事件)
@@ -183,41 +168,14 @@ const form = reactive({
   monthDays: []
 })
 
-const canSubmitFrequency = computed(() => {
-  if (form.frequencyType === 'weekly') return form.weekdays.length > 0
-  if (form.frequencyType === 'monthly') return form.monthDays.length > 0
-  return true
-})
-
-const toggleWeekday = (weekday) => {
-  form.weekdays = form.weekdays.includes(weekday)
-    ? form.weekdays.filter((item) => item !== weekday)
-    : [...form.weekdays, weekday].sort((a, b) => a - b)
-}
-
-const toggleMonthDay = (day) => {
-  form.monthDays = form.monthDays.includes(day)
-    ? form.monthDays.filter((item) => item !== day)
-    : [...form.monthDays, day].sort((a, b) => a - b)
-}
-
-const buildFrequencyPayload = () => {
-  if (form.frequencyType === 'weekly') {
-    return normalizeHabitFrequency({
-      type: 'weekly',
-      weekdays: form.weekdays
-    })
-  }
-
-  if (form.frequencyType === 'monthly') {
-    return normalizeHabitFrequency({
-      type: 'monthly',
-      monthDays: form.monthDays
-    })
-  }
-
-  return createDefaultHabitFrequency()
-}
+const {
+  WEEKDAY_OPTIONS,
+  MONTH_DAY_OPTIONS,
+  canSubmitFrequency,
+  toggleWeekday,
+  toggleMonthDay,
+  buildFrequencyPayload
+} = useHabitFrequencyForm(form)
 
 /**
  * 提交表单创建新习惯记录

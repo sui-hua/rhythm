@@ -101,13 +101,6 @@ const systemLoad = computed(() => {
   const goalId = selectedGoal.value.goal_id
   const month = selectedMonth.value
 
-  // 找到该目标当前月份的月度计划
-  const monthPlan = getGoalMonthsByGoalId(goalId).find(
-    mp => getDateOnlyMonth(mp.month) === month
-  )
-
-  if (!monthPlan) return 0
-
   return getDirectionMonthlyProgress({
     dailyTasks,
     goalId,

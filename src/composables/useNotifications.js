@@ -33,6 +33,7 @@ import { playSuccessSound } from '@/utils/audio'
  * @description 提供通知权限管理、任务检查与提醒功能
  * @returns {Object} 通知相关的方法与状态
  */
+// 全局单例：所有组件共享同一份通知历史，clearNotifiedHistory() 会清空全部
 const notifiedTaskIds = ref(new Set())
 let checkInterval = null
 let swRegistration = null
@@ -221,6 +222,9 @@ export function useNotifications() {
      * @description 初始化 Service Worker 并开始 30 秒轮询，组件卸载时自动停止
      */
     const startListening = (getScheduleItems) => {
+        // 重入保护：已有轮询则跳过
+        if (checkInterval) return
+
         stopListening()
 
         if (swRegistration) {
@@ -276,9 +280,7 @@ export function useNotifications() {
 
     /**
      * 清除已通知历史记录
-     * @function clearNotifiedHistory
-     * @returns {void}
-     * @description 清空已通知任务 ID 集合，允许任务重新触发通知
+     * 注意：此操作影响全局，所有组件共享的通知历史都会被清空
      */
     const clearNotifiedHistory = () => {
         notifiedTaskIds.value.clear()

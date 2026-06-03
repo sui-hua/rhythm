@@ -5,28 +5,28 @@ export function useDayModal() {
     const { dailySchedule } = useDayData()
 
     const showAddModal = ref(false)
-    const editingTaskIndex = ref(null)
+    const editingTaskId = ref(null)
 
     const editingTask = computed(() => {
-        if (editingTaskIndex.value !== null && dailySchedule.value) {
-            return dailySchedule.value[editingTaskIndex.value]
+        if (editingTaskId.value !== null && dailySchedule.value) {
+            return dailySchedule.value.find(t => t.id === editingTaskId.value) || null
         }
         return null
     })
 
     const openAddModal = () => {
-        editingTaskIndex.value = null
+        editingTaskId.value = null
         showAddModal.value = true
     }
 
-    const openEditModal = (index) => {
-        editingTaskIndex.value = index
+    const openEditModal = (id) => {
+        editingTaskId.value = id
         showAddModal.value = true
     }
 
     return {
         showAddModal,
-        editingTaskIndex,
+        editingTaskId,
         editingTask,
         openAddModal,
         openEditModal

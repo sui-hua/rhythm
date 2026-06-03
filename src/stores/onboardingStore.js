@@ -27,7 +27,9 @@ const defaultSteps = [
 export const useOnboardingStore = defineStore('onboarding', () => {
   const visible = ref(false)
   const completedSteps = ref([])
-  const activeStep = ref(defaultSteps[0])
+  const activeStep = ref(
+    defaultSteps.find((step) => !completedSteps.value.includes(step)) || defaultSteps[defaultSteps.length - 1]
+  )
 
   function start() {
     visible.value = true

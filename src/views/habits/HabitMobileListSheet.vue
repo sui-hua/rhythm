@@ -222,12 +222,11 @@ const activeTab = ref('active')
 
 /**
  * 检查习惯今天是否已完成
+ * completedDays 存储的是日期数字（1-31），用 getDate() 比较
  */
 const isTodayCompleted = (habit) => {
   if (!habit.completedDays || !Array.isArray(habit.completedDays)) return false
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  return habit.completedDays.includes(todayStr)
+  return habit.completedDays.includes(new Date().getDate())
 }
 </script>
 

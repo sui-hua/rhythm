@@ -135,7 +135,6 @@ import SummarySidebar from '@/views/summary/components/SummarySidebar.vue'
 import DailySummaryForm from '@/views/summary/components/DailySummaryForm.vue'
 import GenericSummaryForm from '@/views/summary/components/GenericSummaryForm.vue'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import PageIntroBanner from '@/components/PageIntroBanner.vue'
 import { getPageNarrative } from '@/content/pageNarratives'
 
 const narrative = getPageNarrative('summary')

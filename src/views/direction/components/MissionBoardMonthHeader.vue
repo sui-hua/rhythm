@@ -1,7 +1,7 @@
 <template>
   <div class="month-header" @click="toggleMonth(month)">
     <div class="month-header-left">
-      <span class="month-label">0{{ month }}月</span>
+      <span class="month-label">{{ month < 10 ? '0' + month : month }}月</span>
 
       <div class="month-title-area">
         <div v-if="selectedMonth === month" class="month-edit" @click.stop>

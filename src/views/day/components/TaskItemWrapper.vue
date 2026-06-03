@@ -87,13 +87,18 @@ function handleMouseMove(event) {
   session.updateFromMouse(event)
 }
 
+let listenersBound = false
+
 function handleMouseUp() {
   document.removeEventListener('mousemove', handleMouseMove)
   document.removeEventListener('mouseup', handleMouseUp)
+  listenersBound = false
   session.finish()
 }
 
 function bindDocumentSession() {
+  if (listenersBound) return
+  listenersBound = true
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', handleMouseUp)
 }

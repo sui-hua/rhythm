@@ -4,11 +4,11 @@
     <Popover v-model:open="openTimePopover">
       <PopoverAnchor as-child>
         <div class="relative" ref="triggerContainer" @pointerdown.stop>
-          <Input 
+          <Input
             :id="id"
             :name="id"
             :model-value="displayValue"
-            @update:model-value="$emit('update:modelValue', $event)"
+            @update:model-value="handleInput"
             :placeholder="placeholder"
             class="h-9 font-mono pr-8"
             @click="openTimePopover = true"
@@ -202,5 +202,16 @@ watch(openTimePopover, (open) => {
 const selectTime = (t) => {
   emit('update:modelValue', t)
   openTimePopover.value = false
+}
+
+// 输入校验：仅允许 HH:mm 格式透传
+const handleInput = (val) => {
+  if (!val) {
+    emit('update:modelValue', '')
+    return
+  }
+  if (/^\d{0,2}:?\d{0,2}$/.test(val) && val.length <= 5) {
+    emit('update:modelValue', val)
+  }
 }
 </script>

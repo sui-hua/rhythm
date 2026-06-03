@@ -224,18 +224,13 @@ const dateStore = useDateStore()
 const router = useRouter()
 const route = useRoute()
 
-// 动态获取当天的路由路径，用于进入“时序”时默认跳转
-const getTodayPath = () => {
-  return buildDayPath(new Date())
-}
-
-// 导航栏菜单配置
-const navItems = [
-  { name: '时序 ', path: getTodayPath(), icon: LayoutGrid, base: '/day' },
+// 导航栏菜单配置（computed 确保跨午夜后路径自动更新）
+const navItems = computed(() => [
+  { name: '时序 ', path: buildDayPath(new Date()), icon: LayoutGrid, base: '/day' },
   { name: '习惯', path: '/habits', icon: CheckCircle2, base: '/habits' },
   { name: '所向 ', path: '/direction', icon: Compass, base: '/direction' },
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
-]
+])
 
 // 判断导航项是否激活
 // 特殊情况处理：因为时序拥有多层级(年、月、日)，如果处在其中任何一层，都算“时序”处于激活状态

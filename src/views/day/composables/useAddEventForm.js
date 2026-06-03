@@ -129,7 +129,16 @@ export function useAddEventForm(props, emit) {
         }
 
         isSubmitting.value = true
-        const [hours, minutes] = form.time.split(':').map(Number)
+
+        // 校验时间格式是否合法
+        const timeParts = form.time.split(':')
+        const hours = parseInt(timeParts[0], 10)
+        const minutes = parseInt(timeParts[1], 10)
+        if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+            error('时间格式无效')
+            isSubmitting.value = false
+            return
+        }
         const durationValue = parseFloat(form.duration)
 
         try {

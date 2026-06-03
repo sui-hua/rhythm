@@ -163,7 +163,6 @@
  * - 支持习惯(Task) 和普通任务(Habit) 两种模式
  */
 import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
-import { formatDuration } from '@/utils/formatDuration'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
 

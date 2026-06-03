@@ -18,12 +18,16 @@ import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY
 
-// 验证必需的环境变量
+// 验证必需的环境变量，缺失则抛出错误阻止应用启动
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase 环境变量缺失:', {
+  const maskedKey = supabaseAnonKey
+    ? supabaseAnonKey.slice(0, 4) + '***'
+    : undefined
+  console.error('Supabase 环境变量缺失:', {
     url: supabaseUrl,
-    key: supabaseAnonKey
+    key: maskedKey
   })
+  throw new Error('Supabase 环境变量缺失，应用无法启动')
 }
 
 // 创建 Supabase 客户端实例

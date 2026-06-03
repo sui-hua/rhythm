@@ -216,11 +216,22 @@ function useGlobalLoading() {
   }
 }
 
+function cleanup() {
+  clearTimeout(showTimer)
+  clearTimeout(hideTimer)
+  showTimer = null
+  hideTimer = null
+  pendingCount.value = 0
+  visible.value = false
+  NProgress.done()
+}
+
 export {
   beginGlobalLoading,
   beginRouteLoading,
   endGlobalLoading,
   endRouteLoading,
   trackGlobalLoading,
-  useGlobalLoading
+  useGlobalLoading,
+  cleanup
 }

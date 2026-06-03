@@ -126,6 +126,10 @@ export function useResizable(initialWidth = 420, minWidth = 300, maxWidth = 600)
      * 通常绑定到可拖拽手柄元素的 @mousedown 事件
      */
     const startResize = (e) => {
+        // 先移除可能残留的旧监听器，防止快速 mousedown 叠加
+        document.removeEventListener('mousemove', handleResize)
+        document.removeEventListener('mouseup', stopResize)
+
         isResizing.value = true
         document.addEventListener('mousemove', handleResize)
         document.addEventListener('mouseup', stopResize)

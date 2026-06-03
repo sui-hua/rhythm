@@ -39,7 +39,7 @@
                     stroke-width="4"
                     stroke-linecap="round"
                     class="text-primary transition-all duration-1000 ease-linear"
-                    :stroke-dasharray="290"
+                    :stroke-dasharray="2 * Math.PI * 46"
                     :stroke-dashoffset="progressOffset"
                 />
             </svg>
@@ -103,7 +103,6 @@
 import { computed } from 'vue'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { CheckCircle } from 'lucide-vue-next'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { useDayData } from '@/views/day/composables/useDayData'

@@ -58,19 +58,19 @@
 
           <template v-if="section.type === 'item'">
             <div
-              @click="$emit('scrollToTask', section.item._originalIndex)"
-              @dblclick="$emit('edit-task', section.item._originalIndex)"
-              @touchstart="handleTouchStart($event, section.item._originalIndex)"
-              @touchmove="handleTouchMove($event, section.item._originalIndex)"
-              @touchend="handleTouchEnd($event, section.item._originalIndex)"
+              @click="$emit('scrollToTask', section.item.id)"
+              @dblclick="$emit('edit-task', section.item.id)"
+              @touchstart="handleTouchStart($event, section.item)"
+              @touchmove="handleTouchMove($event, section.item)"
+              @touchend="handleTouchEnd($event, section.item)"
               class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
               :class="section.item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
-              :style="{ transform: `translateX(-${getSwipeOffset(section.item._originalIndex)}px)`, transition: swipeState.activeId === section.item._originalIndex ? 'none' : 'transform 0.3s ease' }"
+              :style="{ transform: `translateX(-${getSwipeOffset(section.item.id)}px)`, transition: swipeState.activeId === section.item.id ? 'none' : 'transform 0.3s ease' }"
             >
               <div
-                v-if="getSwipeOffset(section.item._originalIndex) > 0"
+                v-if="getSwipeOffset(section.item.id) > 0"
                 class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
-                :style="{ width: `${getSwipeOffset(section.item._originalIndex)}px` }"
+                :style="{ width: `${getSwipeOffset(section.item.id)}px` }"
               >
                 <Check class="w-5 h-5 text-white" />
               </div>
@@ -92,7 +92,7 @@
                   </h4>
                   <button
                     class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
-                    @click.stop="$emit('edit-task', section.item._originalIndex)"
+                    @click.stop="$emit('edit-task', section.item.id)"
                     aria-label="编辑任务"
                   >
                     <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
@@ -108,20 +108,20 @@
           >
             <div
               v-for="item in section.items"
-              :key="`mobile-carry-${item._originalIndex}`"
-              @click="$emit('scrollToTask', item._originalIndex)"
-              @dblclick="$emit('edit-task', item._originalIndex)"
-              @touchstart="handleTouchStart($event, item._originalIndex)"
-              @touchmove="handleTouchMove($event, item._originalIndex)"
-              @touchend="handleTouchEnd($event, item._originalIndex, item)"
+              :key="`mobile-carry-${item.id}`"
+              @click="$emit('scrollToTask', item.id)"
+              @dblclick="$emit('edit-task', item.id)"
+              @touchstart="handleTouchStart($event, item)"
+              @touchmove="handleTouchMove($event, item)"
+              @touchend="handleTouchEnd($event, item)"
               class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group relative overflow-hidden"
               :class="item.completed ? 'opacity-50' : 'hover:bg-zinc-50/80'"
-              :style="{ transform: `translateX(-${getSwipeOffset(item._originalIndex)}px)`, transition: swipeState.activeId === item._originalIndex ? 'none' : 'transform 0.3s ease' }"
+              :style="{ transform: `translateX(-${getSwipeOffset(item.id)}px)`, transition: swipeState.activeId === item.id ? 'none' : 'transform 0.3s ease' }"
             >
               <div
-                v-if="getSwipeOffset(item._originalIndex) > 0"
+                v-if="getSwipeOffset(item.id) > 0"
                 class="absolute left-0 top-0 bottom-0 bg-green-500 flex items-center justify-end pr-4"
-                :style="{ width: `${getSwipeOffset(item._originalIndex)}px` }"
+                :style="{ width: `${getSwipeOffset(item.id)}px` }"
               >
                 <Check class="w-5 h-5 text-white" />
               </div>
@@ -143,7 +143,7 @@
                   </h4>
                   <button
                     class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
-                    @click.stop="$emit('edit-task', item._originalIndex)"
+                    @click.stop="$emit('edit-task', item.id)"
                     aria-label="编辑任务"
                   >
                     <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
@@ -163,8 +163,8 @@
         <template v-for="(section, sectionIndex) in sidebarSections" :key="`desktop-${sectionIndex}`">
           <div
             v-if="section.type === 'item'"
-            @click="$emit('scrollToTask', section.item._originalIndex)"
-            @dblclick="$emit('edit-task', section.item._originalIndex)"
+            @click="$emit('scrollToTask', section.item.id)"
+            @dblclick="$emit('edit-task', section.item.id)"
             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
             :class="section.item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
           >
@@ -185,7 +185,7 @@
                 </h4>
                 <button
                   class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
-                  @click.stop="$emit('edit-task', section.item._originalIndex)"
+                  @click.stop="$emit('edit-task', section.item.id)"
                   aria-label="编辑任务"
                 >
                   <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
@@ -210,9 +210,9 @@
             <div v-if="isCarryOverExpanded" class="flex flex-col gap-1 border-l border-border/50 pl-3">
               <div
                 v-for="item in section.items"
-                :key="`desktop-carry-${item._originalIndex}`"
-                @click="$emit('scrollToTask', item._originalIndex)"
-                @dblclick="$emit('edit-task', item._originalIndex)"
+                :key="`desktop-carry-${item.id}`"
+                @click="$emit('scrollToTask', item.id)"
+                @dblclick="$emit('edit-task', item.id)"
                 class="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer group"
                 :class="item.completed ? 'opacity-50' : 'hover:bg-white/90'"
               >
@@ -233,7 +233,7 @@
                     </h4>
                     <button
                       class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
-                      @click.stop="$emit('edit-task', item._originalIndex)"
+                      @click.stop="$emit('edit-task', item.id)"
                       aria-label="编辑任务"
                     >
                       <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
@@ -374,13 +374,13 @@ const toggleCarryOverGroup = () => {
 // ==================== 移动端左滑完成功能 ====================
 const { swipeState, getOffset: getSwipeOffset, handleTouchStart: swipeStart, handleTouchMove: swipeMove, handleTouchEnd: swipeEnd } = useSwipeToComplete(async (activeId) => {
   if (activeId === null) return
-  const item = dailySchedule.value[activeId]
+  const item = dailySchedule.value.find(t => t.id === activeId)
   if (item) await handleToggleComplete(item)
 })
 
-const handleTouchStart = (e, index) => swipeStart(e, index)
-const handleTouchMove = (e, index) => swipeMove(e, index)
-const handleTouchEnd = (e, index) => swipeEnd(index)
+const handleTouchStart = (e, item) => swipeStart(e, item.id)
+const handleTouchMove = (e, item) => swipeMove(e, item.id)
+const handleTouchEnd = (e, item) => swipeEnd(item.id)
 
 // ==================== 事件定义 ====================
 // 向父组件暴露的事件

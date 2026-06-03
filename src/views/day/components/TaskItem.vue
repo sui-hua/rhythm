@@ -148,7 +148,7 @@
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Play, CheckCircle, Timer, Maximize2 } from 'lucide-vue-next'
+import { Play, Timer, Maximize2 } from 'lucide-vue-next'
 import { useDayData } from '@/views/day/composables/useDayData'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'

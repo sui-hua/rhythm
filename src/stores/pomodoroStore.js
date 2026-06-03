@@ -191,6 +191,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
         closeModal,
         openModal,
         startTimer,
-        stopTimer
+        stopTimer,
+        stop: stopTimer
     }
 })

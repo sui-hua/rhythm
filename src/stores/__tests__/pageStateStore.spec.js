@@ -9,19 +9,19 @@ describe('pageStateStore', () => {
 
   it('resets page-level transient states in one call', () => {
     const store = usePageStateStore()
-    store.day.showAddDrawer = true
-    store.summary.isCreating = true
+    store.state.day.showAddDrawer = true
+    store.state.summary.isCreating = true
     store.resetAll()
 
-    expect(store.day.showAddDrawer).toBe(false)
-    expect(store.summary.isCreating).toBe(false)
+    expect(store.state.day.showAddDrawer).toBe(false)
+    expect(store.state.summary.isCreating).toBe(false)
   })
 
   it('has correct initial state', () => {
     const store = usePageStateStore()
-    expect(store.day.showAddDrawer).toBe(false)
-    expect(store.day.editingTaskIndex).toBe(null)
-    expect(store.summary.isCreating).toBe(false)
-    expect(store.direction.showCategoryModal).toBe(false)
+    expect(store.state.day.showAddDrawer).toBe(false)
+    expect(store.state.day.editingTaskIndex).toBe(null)
+    expect(store.state.summary.isCreating).toBe(false)
+    expect(store.state.direction.showCategoryModal).toBe(false)
   })
 })
