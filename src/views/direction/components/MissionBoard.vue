@@ -6,7 +6,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import MissionBoardMonth from '@/views/direction/components/MissionBoardMonth.vue'

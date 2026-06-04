@@ -4,9 +4,9 @@
     <HabitSidebar
       :habits="habits"
       :archived-habits="archivedHabits"
-      :selected-habit-id="selectedHabit?.id"
+      :selected-habit-id="selectedHabit?.id != null ? String(selectedHabit.id) : undefined"
       :today-completion-rate="todayCompletionRate"
-      @select-habit="selectedHabit = $event"
+      @select-habit="setSelectedHabit($event)"
       @edit-habit="handleSidebarEdit"
       @add-habit="showAddModal = true"
     />
@@ -36,7 +36,7 @@
               :subtitle="narrative.subtitle"
             />
 
-            <HabitHeader :title="selectedHabit.title" />
+            <HabitHeader :title="selectedHabit.title || selectedHabit.name || ''" />
 
             <HabitStats :stats="habitStats" />
 
@@ -80,14 +80,14 @@
     <!-- 弹窗：编辑习惯 -->
     <EditHabitModal
       v-model:show="showEditModal"
-      :habit-data="selectedHabit"
+      :habit-data="selectedHabit ?? undefined"
       @refresh="fetchHabits"
-      @deleted="selectedHabit = null"
+      @deleted="setSelectedHabit(null)"
     />
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, watch, onMounted, defineAsyncComponent } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -106,6 +106,7 @@ const EditHabitModal = defineAsyncComponent(() => import('./components/EditHabit
 import { useHabitData } from './composables/useHabitData'
 import { useHabitStats } from './composables/useHabitStats'
 import { useHabitLogs } from './composables/useHabitLogs'
+import type { AugmentedHabit } from '@/types/models'
 import PageIntroBanner from '@/components/PageIntroBanner.vue'
 import { getPageNarrative } from '@/content/pageNarratives'
 
@@ -115,6 +116,7 @@ const {
   habits,
   archivedHabits,
   selectedHabit,
+  setSelectedHabit,
   viewYear,
   viewMonth,
   handleMonthChange,
@@ -145,8 +147,8 @@ watch(selectedHabit, (newHabit) => {
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 
-const handleSidebarEdit = (habit) => {
-  selectedHabit.value = habit
+const handleSidebarEdit = (habit: AugmentedHabit) => {
+  setSelectedHabit(habit)
   showEditModal.value = true
 }
 
@@ -155,7 +157,7 @@ const getCurrentDate = () => {
   return `${now.getMonth() + 1}月${now.getDate()}日`
 }
 
-const handleQuickLog = async (note) => {
+const handleQuickLog = async (note: string) => {
   await performQuickLog(note)
 }
 </script>

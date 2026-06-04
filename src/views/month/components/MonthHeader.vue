@@ -14,7 +14,7 @@
   </header>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * MonthHeader.vue - 月度视图顶部导航栏组件
  * 

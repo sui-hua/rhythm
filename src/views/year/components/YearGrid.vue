@@ -28,12 +28,20 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import MonthCell from '@/views/year/components/MonthCell.vue'
 
-defineProps({
-  yearData: Array
-})
+/** 月份数据结构，与 MonthCell props 保持一致 */
+interface MonthData {
+  name: string
+  days: number
+  firstDayOffset: number
+  completedDays?: number[]
+}
+
+defineProps<{
+  yearData: MonthData[]
+}>()
 
 defineEmits(['enterMonth'])
 </script>

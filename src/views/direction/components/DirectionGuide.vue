@@ -45,7 +45,7 @@
   </Teleport>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { Button } from '@/components/ui/button'
 
 // 控制引导弹窗是否显示

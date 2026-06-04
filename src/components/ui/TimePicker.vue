@@ -61,7 +61,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * TimePicker 时间选择器组件
  *
@@ -129,18 +129,18 @@ const openTimePopover = ref(false)
 /**
  * 触发器容器引用，用于检测点击是否在触发器区域内
  */
-const triggerContainer = ref(null)
+const triggerContainer = ref<HTMLElement | null>(null)
 
 /**
  * 时间列表容器引用，用于滚动定位
  */
-const timeListRef = ref(null)
+const timeListRef = ref<HTMLElement | null>(null)
 
 /**
  * 时间选项数组，包含 24 小时内每 30 分钟一个时间点
  * 共 48 个选项，格式为 HH:mm
  */
-const timeOptions = []
+const timeOptions: string[] = []
 for (let i = 0; i < 24; i++) {
   const h = String(i).padStart(2, '0')
   timeOptions.push(`${h}:00`)
@@ -152,11 +152,11 @@ for (let i = 0; i < 24; i++) {
  * 如果点击发生在触发器容器内，则阻止 Popover 关闭
  * 这样可以防止用户点击输入框时意外关闭已打开的选择面板
  *
- * @param {CustomEvent} event - Radix Vue 的 interact-outside 事件
+ * @param event - Radix Vue 的 interact-outside 事件
  */
-const handleInteractOutside = (event) => {
+const handleInteractOutside = (event: Event) => {
   const target = event.target
-  const actualTarget = event.detail?.originalEvent?.target || target
+  const actualTarget = (event as any).detail?.originalEvent?.target || target
   if (triggerContainer.value && triggerContainer.value.contains(actualTarget)) {
     event.preventDefault()
   }
@@ -166,9 +166,9 @@ const handleInteractOutside = (event) => {
  * 滚动时间列表到指定时间位置
  * 使用 smooth 滚动行为，使列表平滑滚动到目标时间选项
  *
- * @param {string} timeStr - 目标时间字符串，格式为 HH:mm
+ * @param timeStr - 目标时间字符串，格式为 HH:mm
  */
-const scrollToTime = (timeStr) => {
+const scrollToTime = (timeStr: string) => {
   if (!timeListRef.value) return
   const target = timeListRef.value.querySelector(`[data-time="${timeStr}"]`)
   if (target) {
@@ -197,21 +197,22 @@ watch(openTimePopover, (open) => {
  * 选择指定时间
  * 发射 update:modelValue 事件更新绑定值，并关闭 Popover
  *
- * @param {string} t - 选中的时间字符串，格式为 HH:mm
+ * @param t - 选中的时间字符串，格式为 HH:mm
  */
-const selectTime = (t) => {
+const selectTime = (t: string) => {
   emit('update:modelValue', t)
   openTimePopover.value = false
 }
 
 // 输入校验：仅允许 HH:mm 格式透传
-const handleInput = (val) => {
-  if (!val) {
+const handleInput = (val: string | number) => {
+  const strVal = String(val)
+  if (!strVal) {
     emit('update:modelValue', '')
     return
   }
-  if (/^\d{0,2}:?\d{0,2}$/.test(val) && val.length <= 5) {
-    emit('update:modelValue', val)
+  if (/^\d{0,2}:?\d{0,2}$/.test(strVal) && strVal.length <= 5) {
+    emit('update:modelValue', strVal)
   }
 }
 </script>

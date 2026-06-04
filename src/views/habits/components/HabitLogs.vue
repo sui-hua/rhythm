@@ -28,7 +28,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * HabitLogs.vue - 习惯打卡日志组件
  * 
@@ -51,6 +51,7 @@
  */
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
+import type { HabitLog } from '@/services/db/habit'
 import { useHabitLogsFormatter } from '@/views/habits/composables/useHabitLogs'
 
 const props = defineProps({
@@ -58,7 +59,7 @@ const props = defineProps({
    * 包含所有打卡记录数据节点的原始数据库返回数组
    */
   logs: {
-    type: Array,
+    type: Array as () => HabitLog[],
     default: () => []
   }
 })

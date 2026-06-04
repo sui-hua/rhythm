@@ -123,7 +123,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * @file AddHabitModal.vue
  * @description 添加习惯弹窗组件，提供一个全屏居中的模态对话框，
@@ -146,6 +146,7 @@ import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { withLoadingLock } from '@/utils/throttle'
+import type { FrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
 const props = defineProps({
@@ -163,13 +164,13 @@ const emit = defineEmits([
 
 // 弹窗内的表单响应式数据
 // 用于收集用户输入的习惯名称、时间、时长等信息
-const form = reactive({
+const form: FrequencyForm & { title: string; task_time: string; duration: number } = reactive({
   title: '', // 习惯名称，用于显示在习惯列表和日历热力图中
   task_time: '08:00', // 习惯指定的执行时间，格式为 HH:mm，用于在日历上显示时间
   duration: 10 / 60, // 习惯预估的持续时长，UI 表现层使用小时为单位（如 10 分钟存为 10/60）
   frequencyType: 'daily',
-  weekdays: [],
-  monthDays: []
+  weekdays: [] as number[],
+  monthDays: [] as number[]
 })
 
 // 表单验证错误信息，用于在 UI 上展示各字段的校验提示
@@ -229,10 +230,10 @@ const submit = withLoadingLock(async () => {
       title: form.title,
       task_time: form.task_time || null, // 时间为空时存储 null
       duration: Math.round((Number(form.duration) || 0) * 60) || 10, // 转换小时为分钟，默认 10 分钟
-      frequency: buildFrequencyPayload(),
+      frequency: JSON.stringify(buildFrequencyPayload()),
       target_value: 1, // 目标完成值默认为 1
       is_archived: false // 新习惯默认未归档
-    })
+    } as any)
 
     emit('refresh') // 通知父组件刷新习惯列表
     // 重置表单为初始状态

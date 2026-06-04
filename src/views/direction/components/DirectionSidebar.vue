@@ -54,7 +54,7 @@
   </aside>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
@@ -82,10 +82,10 @@ const systemLoad = computed(() => {
   const month = selectedMonth.value
 
   return getDirectionMonthlyProgress({
-    dailyTasks: store.dailyTasks,
+    dailyTasks: store.dailyTasks as any,
     goalId,
     month,
-    isGoalDayCompleted
+    isGoalDayCompleted: isGoalDayCompleted as any
   })
 })
 

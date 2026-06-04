@@ -35,7 +35,7 @@
     <!-- List -->
     <ScrollArea class="flex-1 px-4 relative z-10 no-scrollbar">
       <div class="flex flex-col gap-2 pb-24 pt-2">
-        <div v-if="summaries.length === 0" class="text-muted-foreground text-xs py-8 text-center bg-zinc-50/50 rounded-lg border border-dashed">
+        <div v-if="!summaries?.length" class="text-muted-foreground text-xs py-8 text-center bg-zinc-50/50 rounded-lg border border-dashed">
           暂无总结记录
         </div>
 
@@ -72,18 +72,18 @@
   </aside>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useSummarySidebar } from '@/views/summary/composables/useSummarySidebar'
 import { useResizable } from '@/composables/useResizable'
 import { Plus } from 'lucide-vue-next'
-import { toRef } from 'vue'
+import { computed, toRef } from 'vue'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 // Props：父组件传入当前激活的 Tab、总结列表、当前选中项 ID
 const props = defineProps({
   activeTab: String,           // 当前激活的 tab id（如 'day' | 'week' | 'month' | 'year'）
-  summaries: Array,             // 总结记录列表，每项包含 id、日期、标题等字段
+  summaries: Array as () => Record<string, any>[],  // 总结记录列表，每项包含 id、日期、标题等字段
   selectedSummaryId: String    // 当前选中的总结 ID，用于高亮展示
 })
 
@@ -93,8 +93,11 @@ const emit = defineEmits(['update:activeTab', 'select', 'create'])
 // useResizable：侧边栏宽度拖拽调整
 const { width, startResize, isResizing } = useResizable()
 
+// 安全转换：toRef 返回 Ref<string | undefined>，composable 要求 Ref<string>
+const activeTabRef = computed<string>(() => props.activeTab ?? '')
+
 // useSummarySidebar：业务逻辑层，提供 Tab 配置、日期格式化、标题提取
-const { tabs, formatDate, getSummaryTitle } = useSummarySidebar(toRef(props, 'activeTab'))
+const { tabs, formatDate, getSummaryTitle } = useSummarySidebar(activeTabRef)
 </script>
 
 <style scoped>

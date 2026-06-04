@@ -41,8 +41,8 @@
           >
             <div @click.stop @dblclick.stop>
               <Checkbox
-                :checked="section.item.completed"
-                @update:checked="dayStore.handleToggleComplete(section.item)"
+                :checked="(section.item as any).completed"
+                @update:checked="dayStore.handleToggleComplete(section.item as any)"
                 class="shrink-0 w-5 h-5 rounded-md"
               />
             </div>
@@ -89,8 +89,8 @@
               >
                 <div @click.stop @dblclick.stop>
                   <Checkbox
-                    :checked="item.completed"
-                    @update:checked="dayStore.handleToggleComplete(item)"
+                    :checked="(item as any).completed"
+                    @update:checked="dayStore.handleToggleComplete(item as any)"
                     class="shrink-0 w-5 h-5 rounded-md"
                   />
                 </div>
@@ -153,7 +153,7 @@
   </aside>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { ChevronDown, Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'

@@ -36,21 +36,22 @@
       :currentHour="tooltipHour"
       :durationHours="tooltipDuration"
       :visible="isActive"
-      :cardElement="wrapperRef"
+      :cardElement="wrapperRef as any"
     />
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
 import TaskItem from '@/views/day/components/TaskItem.vue'
 import DragTimeTooltip from '@/views/day/components/DragTimeTooltip.vue'
 import { useDayStore } from '@/stores/dayStore'
 import { useTimelineDragSession } from '@/views/day/composables/useTimelineDragSession'
 import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'
+import type { DailyScheduleItem } from '@/types/models'
 
 const props = defineProps({
-  task: { type: Object, required: true },
+  task: { type: Object as () => DailyScheduleItem, required: true },
   index: { type: Number, required: true }
 })
 
@@ -60,10 +61,11 @@ const dayStore = useDayStore()
 
 const canDrag = computed(() => !props.task.completed && props.task.type === 'task')
 
-const wrapperRef = ref(null)
+const wrapperRef = ref<HTMLElement | null>(null)
 const session = useTimelineDragSession({
-  getTask: () => props.task,
-  onCommit: ({ newStartHour, newEndHour }) => dayStore.updateTaskTime(props.task, newStartHour, newEndHour)
+  task: props.task as any,
+  getTask: () => props.task as any,
+  onCommit: ({ newStartHour, newEndHour }: { newStartHour: number; newEndHour: number }) => dayStore.updateTaskTime(props.task as any, newStartHour, newEndHour)
 })
 
 const isDragging = computed(() => session.isDragging.value)
@@ -79,11 +81,11 @@ const wrapperStyle = computed(() => {
   return {
     top: `calc(${displayStartHour.value} * var(--hour-height))`,
     height: `calc(${displayDurationHours.value} * var(--hour-height))`,
-    ...buildTaskHorizontalLayoutStyle(props.task)
+    ...buildTaskHorizontalLayoutStyle(props.task as any)
   }
 })
 
-function handleMouseMove(event) {
+function handleMouseMove(event: MouseEvent) {
   session.updateFromMouse(event)
 }
 
@@ -103,7 +105,7 @@ function bindDocumentSession() {
   document.addEventListener('mouseup', handleMouseUp)
 }
 
-function onDragStart(event) {
+function onDragStart(event: MouseEvent) {
   session.startDrag(event)
   bindDocumentSession()
 }

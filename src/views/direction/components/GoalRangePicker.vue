@@ -11,9 +11,9 @@
           <div class="picker-range">
             <span class="picker-range-label">执行时轴</span>
             <div class="picker-range-value">
-              <span class="picker-month">{{ months[startMonth - 1].label }}</span>
+              <span class="picker-month">{{ months[startMonth - 1]?.label }}</span>
               <span class="picker-sep">到</span>
-              <span class="picker-month">{{ months[endMonth - 1].label }}</span>
+              <span class="picker-month">{{ months[endMonth - 1]?.label }}</span>
             </div>
           </div>
 
@@ -68,7 +68,7 @@
   </header>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionStore } from '@/stores/directionStore'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
@@ -122,15 +122,15 @@ const hasChanges = computed(() => {
   return localStart.value !== monthRange.value.start || localEnd.value !== monthRange.value.end
 })
 
-const isMonthActive = (m) => localStart.value === m || localEnd.value === m
-const isWithinRange = (m) => m >= localStart.value && m <= localEnd.value
+const isMonthActive = (m: number) => localStart.value === m || localEnd.value === m
+const isWithinRange = (m: number) => m >= localStart.value && m <= localEnd.value
 
 const rangeStyle = computed(() => ({
   left: `${((localStart.value - 1) / 11) * 100}%`,
   width: `${((localEnd.value - localStart.value) / 11) * 100}%`
 }))
 
-const selectMonth = (m) => {
+const selectMonth = (m: number) => {
   if (activePicker.value === 'start') {
     if (m > localEnd.value) localEnd.value = m
     localStart.value = m

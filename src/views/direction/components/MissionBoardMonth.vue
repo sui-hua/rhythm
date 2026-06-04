@@ -5,7 +5,7 @@
   </Card>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import MissionBoardMonthHeader from '@/views/direction/components/MissionBoardMonthHeader.vue'
 import MissionBoardMonthBody from '@/views/direction/components/MissionBoardMonthBody.vue'

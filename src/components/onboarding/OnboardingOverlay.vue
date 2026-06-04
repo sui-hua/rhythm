@@ -71,7 +71,7 @@
   </Teleport>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * 组件属性定义
  * 

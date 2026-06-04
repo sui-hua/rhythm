@@ -9,7 +9,7 @@
             :model-value="goalMonthsMap[goalKey(month)]?.title || ''"
             class="month-input"
             placeholder="点此分配本月主要任务..."
-            @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)].title = val }"
+            @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)]!.title = String(val) }"
             @blur="() => saveMonthlyPlan(month, { title: goalMonthsMap[goalKey(month)]?.title })"
             @keyup.enter="() => saveMonthlyPlan(month, { title: goalMonthsMap[goalKey(month)]?.title })"
           />
@@ -21,7 +21,7 @@
                 type="time"
                 class="month-time-input"
                 :model-value="goalMonthsMap[goalKey(month)]?.task_time || ''"
-                @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)].task_time = val || null }"
+                @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)]!.task_time = val ? String(val) : null }"
                 @blur="() => saveMonthlyPlan(month, { task_time: goalMonthsMap[goalKey(month)]?.task_time || null })"
                 @keyup.enter="() => saveMonthlyPlan(month, { task_time: goalMonthsMap[goalKey(month)]?.task_time || null })"
               />
@@ -32,7 +32,7 @@
                 min="1"
                 class="month-duration-input"
                 :model-value="goalMonthsMap[goalKey(month)]?.duration || ''"
-                @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)].duration = val ? parseInt(val) : null }"
+                @update:model-value="val => { if (goalMonthsMap[goalKey(month)]) goalMonthsMap[goalKey(month)]!.duration = val ? parseInt(String(val)) : null }"
                 @blur="() => saveMonthlyPlan(month, { duration: goalMonthsMap[goalKey(month)]?.duration || null })"
                 @keyup.enter="() => saveMonthlyPlan(month, { duration: goalMonthsMap[goalKey(month)]?.duration || null })"
               />
@@ -46,7 +46,7 @@
             {{ goalMonthsMap[goalKey(month)]?.title || '暂无计划' }}
           </h3>
           <span v-if="goalMonthsMap[goalKey(month)]?.task_time" class="month-time">
-            {{ goalMonthsMap[goalKey(month)]?.task_time.slice(0, 5) }}
+            {{ goalMonthsMap[goalKey(month)]?.task_time?.slice(0, 5) }}
             <span v-if="goalMonthsMap[goalKey(month)]?.duration" class="month-time-duration">
               {{ goalMonthsMap[goalKey(month)]?.duration }} 分
             </span>
@@ -61,7 +61,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { ChevronDown, Clock3, Timer } from 'lucide-vue-next'

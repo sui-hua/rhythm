@@ -39,7 +39,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { computed, defineAsyncComponent } from 'vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import DirectionSidebar from '@/views/direction/components/DirectionSidebar.vue'

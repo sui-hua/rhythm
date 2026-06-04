@@ -1,7 +1,9 @@
-<script setup>
+<script lang="ts" setup>
+import type { StatItem } from '@/views/habits/composables/useHabitStats'
+
 defineProps({
   stats: {
-    type: Array,
+    type: Array as () => StatItem[],
     required: true
   }
 })

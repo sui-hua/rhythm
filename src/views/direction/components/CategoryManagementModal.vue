@@ -42,7 +42,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -89,10 +89,10 @@ const handleAddCategory = async () => {
   }
 }
 
-const handleDeleteCategory = async (id) => {
+const handleDeleteCategory = async (id: string | number) => {
   if (!confirm('确定要删除这个类型吗？')) return
   try {
-    await db.goalCategories.delete(id)
+    await db.goalCategories.delete(String(id))
     await fetchCategories()
     emit('updated')
   } catch (e) {

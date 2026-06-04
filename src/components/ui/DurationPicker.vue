@@ -24,7 +24,7 @@
     </div>
   </div>
 </template>
-<script setup>
+<script lang="ts" setup>
 /**
  * DurationPicker.vue - 时长选择器组件
  *
@@ -88,13 +88,13 @@ const displayDuration = computed({
     // 小时模式：直接返回，保留两位小数精度
     return Math.round(props.modelValue * 100) / 100
   },
-  set(val) {
+  set(val: string | number) {
     // 空值处理
     if (val === '' || val === null) {
       emit('update:modelValue', 0)
       return
     }
-    const num = parseFloat(val) || 0
+    const num = parseFloat(String(val)) || 0
     if (durationUnit.value === 'minute') {
       // 分钟模式：转换为小时
       emit('update:modelValue', num / 60)

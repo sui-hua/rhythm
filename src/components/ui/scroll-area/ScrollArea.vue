@@ -39,7 +39,7 @@ const delegatedProps = computed(() => {
   return delegated
 })
 
-const viewport = ref(null)
+const viewport = ref<InstanceType<typeof ScrollAreaViewport> | null>(null)
 
 defineExpose({
   viewportElement: computed(() => viewport.value?.$el)

@@ -31,13 +31,13 @@
     </div>
 
     <Transition name="popover">
-      <div v-if="selectedDates[month]?.length > 0" class="bg-white text-foreground rounded-xl p-3 flex items-center gap-3 shadow-xl border border-zinc-100 ring-1 ring-black/5">
-        <div class="px-4 border-r border-zinc-100 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap text-muted-foreground">{{ selectedDates[month].length }} 天选中</div>
+      <div v-if="(selectedDates[month]?.length ?? 0) > 0" class="bg-white text-foreground rounded-xl p-3 flex items-center gap-3 shadow-xl border border-zinc-100 ring-1 ring-black/5">
+        <div class="px-4 border-r border-zinc-100 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap text-muted-foreground">{{ selectedDates[month]?.length }} 天选中</div>
         <Input
           class="flex-1 bg-zinc-50 border-transparent focus-visible:bg-white transition-all text-foreground h-9 shadow-sm"
           :model-value="batchInput"
           placeholder="批量输入任务内容..."
-          @update:model-value="batchInput = $event"
+          @update:model-value="batchInput = String($event)"
           @keyup.enter="applyBatchTask"
         />
 
@@ -61,7 +61,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionBatch } from '@/views/direction/composables/useDirectionBatch'
 import { Button } from '@/components/ui/button'

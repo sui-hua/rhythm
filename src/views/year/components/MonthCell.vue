@@ -33,7 +33,7 @@
     </div>
   </div>
 </template>
-<script setup>
+<script lang="ts" setup>
 /**
  * MonthCell.vue - 年度视图月份单元格组件
  *
@@ -43,7 +43,7 @@
  * - 支持悬停交互动画和点击进入月份详情
  *
  * 接收的 props：
- * - month: Object - 包含以下属性的月份数据对象
+ * - month: MonthData - 包含以下属性的月份数据对象
  *   - name: string - 月份英文名称
  *   - days: number - 该月的总天数
  *   - firstDayOffset: number - 该月第一天的星期偏移
@@ -62,9 +62,21 @@
  */
 import { ArrowUpRight } from 'lucide-vue-next'
 
-defineProps({
-  month: Object
-})
+/** 月份数据结构 */
+interface MonthData {
+  /** 月份英文名称 */
+  name: string
+  /** 该月的总天数 */
+  days: number
+  /** 该月第一天的星期偏移 */
+  firstDayOffset: number
+  /** 有完成记录的天数数组（可选） */
+  completedDays?: number[]
+}
+
+defineProps<{
+  month: MonthData
+}>()
 
 defineEmits(['enterMonth'])
 </script>

@@ -14,7 +14,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * SkeletonTask - 任务项骨架屏组件
  *

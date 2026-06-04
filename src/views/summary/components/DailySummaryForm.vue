@@ -79,11 +79,12 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDailySummaryForm } from '@/views/summary/composables/useDailySummaryForm'
 import { fetchTodayDataOverview } from '@/views/summary/composables/useSummaryPrefill'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import type { TodayDataOverview } from '@/views/summary/composables/useSummaryPrefill'
 import { toRef, ref, onMounted } from 'vue'
 
 const props = defineProps({
@@ -98,7 +99,7 @@ const emit = defineEmits(['save', 'cancel', 'delete'])
 const { formData, buildPayload } = useDailySummaryForm(toRef(props, 'initialData'))
 
 // 今日数据概览，加载失败不影响表单使用
-const dataOverview = ref(null)
+const dataOverview = ref<TodayDataOverview | null>(null)
 
 onMounted(async () => {
   try {

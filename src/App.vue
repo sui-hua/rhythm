@@ -21,7 +21,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * 认证初始化流程：
  * 1. 检查现有 session

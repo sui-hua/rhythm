@@ -126,7 +126,7 @@
     </div>
   </div>
 </template>
-<script setup>
+<script lang="ts" setup>
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -134,9 +134,13 @@ import { Play, Timer, Maximize2 } from 'lucide-vue-next'
 import { useDayStore } from '@/stores/dayStore'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'
+import type { DailyScheduleItem } from '@/types/models'
 
 const props = defineProps({
-  task: Object,
+  task: {
+    type: Object as () => DailyScheduleItem,
+    required: true
+  },
   index: Number,
   embedded: { type: Boolean, default: false }
 })
@@ -148,9 +152,9 @@ const computedStyle = computed(() => {
   if (props.embedded) return {}
 
   return {
-    top: `calc(${props.task.startHour} * var(--hour-height))`,
+    top: `calc(${props.task.startHour || 0} * var(--hour-height))`,
     height: `calc(${props.task.durationHours || 1} * var(--hour-height))`,
-    ...buildTaskHorizontalLayoutStyle(props.task)
+    ...buildTaskHorizontalLayoutStyle(props.task as any)
   }
 })
 
@@ -163,7 +167,7 @@ const displayTime = computed(() => isStoreActive.value ? store.formattedTime : '
 
 const isOvertime = computed(() => {
     if (!isRunning.value) return false
-    const scheduledMins = props.task.original?.duration || props.task.duration || 30
+    const scheduledMins = (props.task as any).original?.duration || (props.task as any).duration || 30
     const elapsed = isStoreActive.value ? store.elapsedSeconds : 0
     return elapsed > scheduledMins * 60
 })

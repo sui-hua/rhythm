@@ -7,7 +7,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useYearView } from '@/views/year/composables/useYearView'
 import YearGrid from '@/views/year/components/YearGrid.vue'
 

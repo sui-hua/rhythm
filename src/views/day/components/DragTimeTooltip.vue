@@ -20,7 +20,7 @@
   </Teleport>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -35,7 +35,7 @@ const props = defineProps({
 })
 
 /** 格式化小时为 HH:mm */
-const formatTime = (hour) => {
+const formatTime = (hour: number) => {
   const h = Math.floor(hour)
   const m = Math.round((hour - h) * 60)
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`

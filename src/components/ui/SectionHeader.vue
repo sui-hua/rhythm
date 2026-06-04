@@ -5,7 +5,7 @@
     <p v-if="description" class="text-sm leading-6 text-muted-foreground">{{ description }}</p>
   </header>
 </template>
-<script setup>
+<script lang="ts" setup>
 /**
  * SectionHeader - 页面/区块标题组件
  *
@@ -28,6 +28,8 @@
  * - eyebrow letterSpacing: 取自 uiGrammar.section.eyebrowTracking
  * - 暗色模式下 text-muted-foreground 颜色自动适配
  */
+
+import { uiGrammar } from '@/config/uiGrammar'
 
 defineProps({
   eyebrow: String,

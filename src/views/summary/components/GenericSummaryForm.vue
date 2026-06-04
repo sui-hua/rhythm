@@ -43,7 +43,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useGenericSummaryForm } from '@/views/summary/composables/useGenericSummaryForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'

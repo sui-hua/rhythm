@@ -139,7 +139,7 @@
   <CategoryManagementModal @updated="() => fetchCategories(true)" />
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { computed, onMounted, reactive, watch } from 'vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -208,7 +208,7 @@ watch(() => showAddModal.value, (newVal) => {
       form.title = editingGoal.value.name || editingGoal.value.title
       form.startMonth = (editingGoal.value.startMonth || new Date().getMonth() + 1).toString()
       form.endMonth = (editingGoal.value.endMonth || editingGoal.value.startMonth || new Date().getMonth() + 1).toString()
-      form.category_id = editingGoal.value.category_id || 'none'
+      form.category_id = String(editingGoal.value.category_id || 'none')
       form.task_time = editingGoal.value.task_time || '09:00'
       form.duration = editingGoal.value.duration ? editingGoal.value.duration / 60 : 0.5
       form.carryOverEnabled = Number(editingGoal.value.carry_over_lookback_days || 0) > 0

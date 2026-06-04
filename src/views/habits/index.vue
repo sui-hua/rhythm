@@ -2,7 +2,7 @@
   <HabitsDesktopPage />
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import HabitsDesktopPage from '@/views/habits/HabitsDesktopPage.vue'
 </script>
 

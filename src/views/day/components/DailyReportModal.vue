@@ -42,7 +42,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * DailyReportModal - 每日日报弹窗
  *
@@ -70,7 +70,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'confirm', 'confirm-carryover', 'update:open'])
 
 // Dialog open 状态变化时，同步触发 close 事件以兼容父组件现有监听
-const handleOpenChange = (open) => {
+const handleOpenChange = (open: boolean) => {
   emit('update:open', open)
   if (!open) {
     emit('close')

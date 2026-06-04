@@ -57,7 +57,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useLoginForm } from '@/views/login/composables/useLoginForm'
 import WelcomeChecklist from '@/views/login/components/WelcomeChecklist.vue'
 

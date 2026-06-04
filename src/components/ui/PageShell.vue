@@ -12,7 +12,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * @file PageShell.vue
  * @description 页面外壳组件 - 为所有页面提供统一布局容器

@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useMonthView } from '@/views/month/composables/useMonthView'
 import MonthGrid from '@/views/month/components/MonthGrid.vue'
 

@@ -4,7 +4,7 @@
     <SummarySidebar
       :active-tab="activeTab"
       :summaries="summaries"
-      :selected-summary-id="selectedSummary?.id"
+      :selected-summary-id="selectedSummary?.id != null ? String(selectedSummary.id) : undefined"
       @update:activeTab="handleTabChange"
       @select="handleSelect"
       @create="handleCreate"
@@ -38,19 +38,19 @@
           </CardHeader>
           <CardContent class="space-y-6">
             <!-- Daily Form -->
-            <DailySummaryForm 
-              v-if="activeTab === 'day'" 
-              :initial-data="selectedSummary"
+            <DailySummaryForm
+              v-if="activeTab === 'day'"
+              :initial-data="selectedSummary ?? undefined"
               @save="handleSave"
               @cancel="handleCancel"
               @delete="selectedSummary?.id && handleDelete(selectedSummary.id)"
             />
 
             <!-- Generic Form -->
-            <GenericSummaryForm 
-              v-else 
+            <GenericSummaryForm
+              v-else
               :type="activeTab"
-              :initial-data="selectedSummary"
+              :initial-data="selectedSummary ?? undefined"
               @save="handleSave"
               @cancel="handleCancel"
               @delete="selectedSummary?.id && handleDelete(selectedSummary.id)"
@@ -62,7 +62,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useSummaryManager } from '@/views/summary/composables/useSummaryManager'
 import { ChevronRight } from 'lucide-vue-next'
 import SummarySidebar from '@/views/summary/components/SummarySidebar.vue'

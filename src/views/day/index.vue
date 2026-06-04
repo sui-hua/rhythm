@@ -37,7 +37,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { defineAsyncComponent, watch, onBeforeUnmount, onMounted } from 'vue'
 import Sidebar from '@/views/day/components/Sidebar.vue'
 import Timeline from '@/views/day/components/Timeline.vue'
@@ -62,7 +62,7 @@ const { startListening, stopListening, clearNotifiedHistory, requestPermission }
 
 onMounted(async () => {
   await requestPermission()
-  startListening(() => dayStore.dailySchedule)
+  startListening(() => dayStore.dailySchedule as any)
 })
 
 watch(() => dateStore.currentDate, () => {

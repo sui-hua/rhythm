@@ -72,7 +72,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { computed } from 'vue'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -104,7 +104,7 @@ const isOvertime = computed(() => {
 
 const handleComplete = async () => {
     if (store.activeTask) {
-        await dayStore.handleToggleComplete(store.activeTask)
+        await dayStore.handleToggleComplete(store.activeTask as any)
         store.reset()
     }
 }

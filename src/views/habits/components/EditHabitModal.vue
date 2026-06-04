@@ -145,7 +145,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * EditHabitModal.vue - 修改习惯弹窗组件
  *
@@ -185,6 +185,7 @@ import {
   createDefaultHabitFrequency,
   normalizeHabitFrequency
 } from '@/views/habits/utils/habitFrequency'
+import type { FrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
 const props = defineProps({
@@ -208,13 +209,13 @@ const emit = defineEmits([
 ])
 
 // 弹窗内的可编辑表单数据
-const form = reactive({
+const form: FrequencyForm & { title: string; task_time: string; duration: number } = reactive({
   title: '', // 习惯名称
   task_time: '', // 计划执行时间 (HH:mm)
   duration: 10 / 60, // 预估时长 (转换为以小时为基数的数字)
   frequencyType: 'daily',
-  weekdays: [],
-  monthDays: []
+  weekdays: [] as number[],
+  monthDays: [] as number[]
 })
 
 // 表单验证错误信息，用于在 UI 上展示各字段的校验提示
@@ -270,8 +271,8 @@ const submit = withLoadingLock(async () => {
       title: form.title,
       task_time: form.task_time || null,
       duration: Math.round((Number(form.duration) || 0) * 60) || 10,
-      frequency: buildFrequencyPayload()
-    })
+      frequency: JSON.stringify(buildFrequencyPayload())
+    } as any)
     emit('refresh')
     emit('update:show', false)
   } catch (e) {
@@ -297,7 +298,7 @@ const handleDelete = withLoadingLock(async () => {
 /**
  * 归档 / 取消归档当前习惯
  */
-const handleArchive = withLoadingLock(async (isArchived) => {
+const handleArchive = withLoadingLock(async (isArchived: boolean) => {
   if (!props.habitData?.id) return
   try {
     await db.habit.update(props.habitData.id, {

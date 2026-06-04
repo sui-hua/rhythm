@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 /**
  * 习惯页面头部组件 (HabitHeader.vue)
  *

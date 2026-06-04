@@ -36,10 +36,10 @@
       </div>
 
       <!-- 渲染具体日程项目（虚拟滚动：仅渲染可见时间范围内的任务） -->
-      <template v-for="item in visibleSchedule" :key="item._originalIndex">
+      <template v-for="item in visibleSchedule" :key="(item as any)._originalIndex">
         <TaskItemWrapper
-          :task="item"
-          :index="item._originalIndex"
+          :task="item as any"
+          :index="(item as any)._originalIndex"
           @select="$emit('select-task', $event)"
           @edit="$emit('edit-task', $event)"
         />
@@ -51,7 +51,7 @@
   </ScrollArea>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -71,12 +71,12 @@ const dayStore = useDayStore()
 
 // 贪心列分配：处理重叠日程的并排布局
 const displaySchedule = computed(() => {
-  return buildTimelineDisplaySchedule(dayStore.dailySchedule)
+  return buildTimelineDisplaySchedule(dayStore.dailySchedule as any)
 })
 
 // ── Refs ──
-const timelineContainerRef = ref(null)
-const scrollElement = ref(null)
+const timelineContainerRef = ref<any>(null)
+const scrollElement = ref<HTMLElement | null>(null)
 
 // ── 虚拟滚动：用 24 行（每行对应 1 小时）计算可见时间窗口 ──
 // --hour-height 是响应式 CSS 值 max(25vh, 180px)，需要在运行时动态计算实际像素
@@ -122,7 +122,7 @@ defineExpose({
 defineEmits(['edit-task', 'select-task'])
 
 // ── 生命周期：监听滚动元素挂载，绑定 resize 观测 ──
-let resizeObserver = null
+let resizeObserver: ResizeObserver | null = null
 
 // ScrollArea 挂载后获取 viewport 元素引用，用于虚拟滚动和高度测量
 watch(timelineContainerRef, (ref) => {

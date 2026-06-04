@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * EmptyState - 空状态展示组件
  *

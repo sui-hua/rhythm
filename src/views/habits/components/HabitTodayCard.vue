@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 /**
  * 今日打卡卡片组件 (HabitTodayCard.vue)
  *

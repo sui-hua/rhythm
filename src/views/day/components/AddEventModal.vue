@@ -120,22 +120,22 @@
     </DialogContent>
   </Dialog>
 </template>
-<script setup>
+<script lang="ts" setup>
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
-import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
+import { useAddEventForm, type InitialEventData } from '@/views/day/composables/useAddEventForm'
 
 const props = defineProps({
   show: Boolean,
   initialData: {
-    type: Object,
+    type: Object as () => InitialEventData | null,
     default: null
   },
   categories: {
-    type: Array,
+    type: Array as () => string[],
     default: () => ['工作', '个人', '会议', '设计', '其他']
   }
 })

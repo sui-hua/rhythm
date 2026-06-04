@@ -6,7 +6,7 @@
   </section>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 defineProps({
   eyebrow: { type: String, default: '当前页面' },
   title: { type: String, required: true },

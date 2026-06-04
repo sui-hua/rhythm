@@ -1,9 +1,9 @@
 <template>
   <div class="flex-1 bg-card flex flex-col overflow-hidden">
     <ArchiveHeader
-      :month-name="selectedMonth ? months[selectedMonth - 1].full : '无内容'"
+      :month-name="selectedMonth ? months[selectedMonth - 1]?.full : '无内容'"
       :task-count="datesWithTasks.length"
-      :selected-month="selectedMonth"
+      :selected-month="selectedMonth ?? undefined"
       :months="months"
     />
 
@@ -16,9 +16,9 @@
             v-for="day in datesWithTasks"
             :key="day"
             :day="day"
-            :task="dailyTasks[dayTaskKey(day)]"
+            :task="(dailyTasks as any)[dayTaskKey(day)] ?? {}"
             :task-key="dayTaskKey(day)"
-            @update-task="(task, payload) => handleUpdateTask(task, payload)"
+            @update-task="(task: any, payload: any) => handleUpdateTask(task, payload)"
           />
         </TransitionGroup>
       </div>
@@ -30,7 +30,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionTasks } from '@/views/direction/composables/useDirectionTasks'

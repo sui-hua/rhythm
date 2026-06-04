@@ -48,7 +48,7 @@
     </CardContent>
   </Card>
 </template>
-<script setup>
+<script lang="ts" setup>
 /**
  * 习惯日历展示组件 (HabitCalendar.vue)
  *
@@ -116,7 +116,7 @@ const {
 } = useHabitCalendar(emit)
 
 // 点击日期格子时触发打卡/取消打卡，并显示 toast 反馈
-const handleToggleComplete = (day) => {
+const handleToggleComplete = (day: number) => {
   const wasCompleted = props.completedDays.includes(day)
   emit('toggle-complete', day)
   // 根据操作前状态显示不同提示

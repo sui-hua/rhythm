@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 defineProps({
   day: {
     type: Number,
@@ -17,7 +17,7 @@ defineProps({
 const emit = defineEmits(['update-task'])
 
 // 二元签名：handleUpdateTask(task, payload)
-const handleUpdateTask = (task, payload) => {
+const handleUpdateTask = (task: any, payload: any) => {
   emit('update-task', task, payload)
 }
 </script>
@@ -32,7 +32,7 @@ const handleUpdateTask = (task, payload) => {
         <input
           class="font-medium bg-transparent border-none outline-none w-full"
           :value="task.title"
-          @change="(e) => handleUpdateTask(task, { title: e.target.value })"
+          @change="(e) => handleUpdateTask(task, { title: (e.target as HTMLInputElement).value })"
         />
 
         <div class="flex items-center gap-4 border-t border-zinc-50 pt-2">
@@ -42,7 +42,7 @@ const handleUpdateTask = (task, payload) => {
               type="time"
               class="text-xs bg-transparent border-none outline-none text-muted-foreground font-mono w-[60px]"
               :value="task.task_time ? task.task_time.slice(0, 5) : ''"
-              @change="(e) => handleUpdateTask(task, { task_time: e.target.value || null })"
+              @change="(e) => handleUpdateTask(task, { task_time: (e.target as HTMLInputElement).value || null })"
             />
           </div>
           <div class="flex items-center gap-2">
@@ -52,7 +52,7 @@ const handleUpdateTask = (task, payload) => {
                 type="number"
                 class="text-xs bg-transparent border-none outline-none text-muted-foreground font-mono w-[40px] text-right"
                 :value="task.duration"
-                @change="(e) => handleUpdateTask(task, { duration: e.target.value ? parseInt(e.target.value) : null })"
+                @change="(e) => handleUpdateTask(task, { duration: (e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : null })"
               />
               <span class="text-xs text-muted-foreground font-mono ml-1">m</span>
             </div>

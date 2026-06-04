@@ -90,7 +90,7 @@
   </aside>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 /**
  * HabitSidebar.vue — 习惯模块侧边导航栏组件
  *
@@ -127,27 +127,28 @@ import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import type { AugmentedHabit } from '@/types/models'
 
 defineProps({
   /**
    * 全部可用习惯的对象数组，用以循环渲染左侧的习惯选择卡片。
    */
   habits: {
-    type: Array,
+    type: Array as () => AugmentedHabit[],
     required: true
   },
   /**
    * 已归档的习惯，用于展示下方的归档项目列表。
    */
   archivedHabits: {
-    type: Array,
+    type: Array as () => AugmentedHabit[],
     default: () => []
   },
   /**
    * 用于接收指示当前哪一项才是“被选中的”标识，以在左侧赋予阴影高亮。
    */
   selectedHabitId: {
-    type: String,
+    type: [String, Number] as unknown as () => string | number | null,
     default: null
   },
   /**
