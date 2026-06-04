@@ -48,8 +48,8 @@
           >
             <div @click.stop @dblclick.stop>
               <Checkbox
-                :checked="section.item.completed"
-                @update:checked="dayStore.handleToggleComplete(section.item)"
+                :model-value="section.item.completed"
+                @update:model-value="dayStore.handleToggleComplete(section.item)"
                 class="shrink-0 w-5 h-5 rounded-md"
               />
             </div>
@@ -96,8 +96,8 @@
               >
                 <div @click.stop @dblclick.stop>
                   <Checkbox
-                    :checked="item.completed"
-                    @update:checked="dayStore.handleToggleComplete(item)"
+                    :model-value="item.completed"
+                    @update:model-value="dayStore.handleToggleComplete(item)"
                     class="shrink-0 w-5 h-5 rounded-md"
                   />
                 </div>

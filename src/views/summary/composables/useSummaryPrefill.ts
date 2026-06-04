@@ -63,7 +63,7 @@ export async function fetchTodayDataOverview(): Promise<TodayDataOverview> {
     db.habit.listLogsByDate(startOfDay, endOfDay)
   ])
 
-  const completedTasks = (tasks || []).filter(t => t.status === 'completed')
+  const completedTasks = (tasks || []).filter(t => t.completed)
   const totalTasks = (tasks || []).length
 
   return {
