@@ -175,7 +175,7 @@ const computedStyle = computed(() => {
   return {
     top: `calc(${props.task.startHour || 0} * var(--hour-height))`,
     height: `calc(${props.task.durationHours || 1} * var(--hour-height))`,
-    ...buildTaskHorizontalLayoutStyle(props.task as any)
+    ...buildTaskHorizontalLayoutStyle(props.task)
   }
 })
 
@@ -191,7 +191,9 @@ const displayTime = computed(() => isStoreActive.value ? store.formattedTime : '
 // 是否超时：已用时间超过计划时长时返回 true，用于显示超时警告
 const isOvertime = computed(() => {
     if (!isRunning.value) return false
-    const scheduledMins = (props.task as any).original?.duration || (props.task as any).duration || 30
+    // 优先取习惯原始时长（分钟），其次用 rawDuration（小时→分钟），最后默认 30 分钟
+    const originalDuration = props.task.type === 'habit' ? props.task.original?.duration : undefined
+    const scheduledMins = originalDuration || props.task.rawDuration * 60 || 30
     const elapsed = isStoreActive.value ? store.elapsedSeconds : 0
     return elapsed > scheduledMins * 60
 })

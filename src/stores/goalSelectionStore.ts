@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Goal } from '@/types/models'
+import type { GoalWithMeta } from '@/views/direction/types'
 
 /**
  * 目标选择状态管理
@@ -12,9 +12,9 @@ import type { Goal } from '@/types/models'
 export const useGoalSelectionStore = defineStore('goalSelection', () => {
   // ── 状态 ──
   // 当前选中的目标，用于右侧详情面板展示
-  const selectedGoal = ref<Goal | null>(null)
+  const selectedGoal = ref<GoalWithMeta | null>(null)
   // 正在编辑的目标，编辑弹窗打开时设置
-  const editingGoal = ref<Goal | null>(null)
+  const editingGoal = ref<GoalWithMeta | null>(null)
   // 当前选中的月份（1-12），用于月度计划视图切换
   const selectedMonth = ref<number | null>(null)
   // 日期选择器激活面板，'start' 为开始日期，'end' 为结束日期

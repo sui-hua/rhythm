@@ -107,7 +107,7 @@ export function useDayNavigation() {
      */
     const scrollToInitialTarget = (targetDate: Date) => {
         const initialTarget = getInitialScrollTarget({
-            schedule: dayStore.dailySchedule as any[],
+            schedule: dayStore.dailySchedule,
             targetDate,
             now: new Date()
         })

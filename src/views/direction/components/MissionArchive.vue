@@ -25,7 +25,7 @@
             v-for="day in datesWithTasks"
             :key="day"
             :day="day"
-            :task="(dailyTasks as any)[dayTaskKey(day)] ?? {}"
+            :task="dailyTasks[dayTaskKey(day)] ?? {}"
             :task-key="dayTaskKey(day)"
             @update-task="(task: any, payload: any) => handleUpdateTask(task, payload)"
           />

@@ -197,7 +197,7 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
                         name: eventForm.title,
                         task_time: taskTimeStr,
                         duration: Math.round(durationValue * 60) || 10  // 转换为分钟存储
-                    } as any)
+                    })
                 } else {
                     // 普通任务：更新任务表（完整时间范围、描述）
                     const year = dateStore.currentDate.getFullYear()
@@ -211,7 +211,7 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
                         description: eventForm.description,
                         start_time: startTime.toISOString(),
                         end_time: endTime.toISOString()
-                    } as any)
+                    })
                 }
             } else {
                 // ========================================
@@ -237,7 +237,7 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
                     start_time: startTime.toISOString(),
                     end_time: endTime.toISOString(),
                     completed: false,
-                } as any)
+                })
             }
             await dayStore.fetchTasks({ showLoading: false })
             emit('update:show', false)

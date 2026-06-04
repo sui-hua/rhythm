@@ -62,7 +62,7 @@
                 </div>
                 <!-- 超时提示：仅在超出预定时长后显示 -->
                 <div v-if="isOvertime" class="absolute -bottom-6 text-[9px] font-black text-destructive mt-2 flex items-center gap-1 uppercase tracking-widest animate-pulse whitespace-nowrap">
-                   OVERTIME • {{ store.activeTask?.original?.duration || 30 }}m limit
+                   OVERTIME • {{ scheduledMinutes }}m limit
                 </div>
             </div>
         </div>
@@ -103,11 +103,19 @@ const store = usePomodoroStore()
 const dayStore = useDayStore()
 
 // ── 计算属性 ──
+// 从任务的 start_time/end_time 计算预定时长（分钟），默认 30 分钟
+const scheduledMinutes = computed(() => {
+    const task = store.activeTask?.original
+    if (!task?.start_time || !task?.end_time) return 30
+    const start = new Date(task.start_time)
+    const end = new Date(task.end_time)
+    return Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000))
+})
+
 // 已用时间占预定时长的百分比，上限 100
 const progressPercent = computed(() => {
     if (!store.activeTask) return 0
-    const scheduledMins = store.activeTask.original?.duration || 30
-    const totalSecs = scheduledMins * 60
+    const totalSecs = scheduledMinutes.value * 60
     return Math.min(100, (store.elapsedSeconds / totalSecs) * 100)
 })
 
@@ -120,15 +128,31 @@ const progressOffset = computed(() => {
 // 是否已超时：用于触发 UI 变红和超时提示
 const isOvertime = computed(() => {
     if (!store.activeTask) return false
-    const scheduledMins = store.activeTask.original?.duration || 30
-    return store.elapsedSeconds > scheduledMins * 60
+    return store.elapsedSeconds > scheduledMinutes.value * 60
 })
 
 // ── 方法 ──
 // 完成专注：将任务标记为已完成并重置番茄钟状态
 const handleComplete = async () => {
     if (store.activeTask) {
-        await dayStore.handleToggleComplete(store.activeTask as any)
+        const active = store.activeTask
+        // 构造 DailyScheduleItem 用于 toggleComplete 分发
+        await dayStore.handleToggleComplete({
+            id: active.id,
+            type: 'task',
+            sourceLabel: 'task',
+            original: active.original!,
+            title: active.title,
+            completed: active.completed,
+            durationHours: scheduledMinutes.value / 60,
+            rawDuration: scheduledMinutes.value / 60,
+            time: '',
+            duration: '',
+            category: '个人任务',
+            description: '',
+            actual_start_time: active.actual_start_time,
+            actual_end_time: active.actual_end_time
+        })
         store.reset()
     }
 }

@@ -1,18 +1,11 @@
 import { ref, onUnmounted, type Ref } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
+import type { DailyScheduleItem } from '@/types/models'
 
-interface ScheduleItem {
-  id: string
-  completed: boolean
-  time: string
-  type: string
-  title: string
-  description?: string
-  startHour?: number
-  original?: {
-    day?: string
-    start_time?: string
-  }
+// 通知序列化使用的原始数据形状（从 DailyScheduleItem.original 提取日期字段）
+interface ScheduleOriginal {
+  day?: string
+  start_time?: string
 }
 
 interface SerializedTask {
@@ -46,8 +39,8 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null
   }
 }
 
-// 从 schedule items 中提取 Service Worker 需要的可序列化字段
-const serializeTasksForSw = (items: ScheduleItem[]): SerializedTask[] => {
+// 从日程列表中提取 Service Worker 需要的可序列化字段
+const serializeTasksForSw = (items: DailyScheduleItem[]): SerializedTask[] => {
   return items.map(item => ({
     id: item.id,
     completed: item.completed,
@@ -57,12 +50,12 @@ const serializeTasksForSw = (items: ScheduleItem[]): SerializedTask[] => {
     description: item.description,
     startHour: item.startHour,
     // 只提取 original 中 Service Worker 需要的日期字段，避免传递整个 reactive proxy 对象
-    originalDay: item.original?.day || null,
-    originalStartTime: item.original?.start_time || null
+    originalDay: (item.original as ScheduleOriginal)?.day || null,
+    originalStartTime: (item.original as ScheduleOriginal)?.start_time || null
   }))
 }
 
-const syncTasksToSw = (items: ScheduleItem[]): void => {
+const syncTasksToSw = (items: DailyScheduleItem[]): void => {
   if (swRegistration?.active) {
     swRegistration.active.postMessage({
       type: 'UPDATE_TASKS',
@@ -91,7 +84,7 @@ interface UseNotificationsReturn {
   hasAskedPermission: Ref<boolean>
   requestPermission: () => Promise<boolean>
   showNotification: (title: string, options?: ShowNotificationOptions) => void
-  startListening: (getScheduleItems: () => ScheduleItem[]) => void
+  startListening: (getScheduleItems: () => DailyScheduleItem[]) => void
   stopListening: () => void
   clearNotifiedHistory: () => void
   getPermissionStatus: () => string
@@ -153,7 +146,7 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }
 
-  const checkAndNotify = (items: ScheduleItem[]): void => {
+  const checkAndNotify = (items: DailyScheduleItem[]): void => {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
@@ -166,11 +159,12 @@ export function useNotifications(): UseNotificationsReturn {
 
       const [hours, minutes] = item.time.split(':').map(Number)
 
+      const original = item.original as ScheduleOriginal
       let itemDateStr: string | undefined
-      if (item.original?.day) {
-        itemDateStr = new Date(item.original.day).toISOString().split('T')[0]
-      } else if (item.original?.start_time) {
-        itemDateStr = new Date(item.original.start_time).toISOString().split('T')[0]
+      if (original?.day) {
+        itemDateStr = new Date(original.day).toISOString().split('T')[0]
+      } else if (original?.start_time) {
+        itemDateStr = new Date(original.start_time).toISOString().split('T')[0]
       } else {
         return
       }
@@ -196,7 +190,7 @@ export function useNotifications(): UseNotificationsReturn {
   }
 
   // 重入保护：已有轮询则跳过
-  const startListening = (getScheduleItems: () => ScheduleItem[]): void => {
+  const startListening = (getScheduleItems: () => DailyScheduleItem[]): void => {
     if (checkInterval) return
 
     stopListening()
@@ -207,8 +201,10 @@ export function useNotifications(): UseNotificationsReturn {
         syncTasksToSw(items)
       }
 
+      // periodicSync 是实验性 API，TypeScript 类型定义尚未包含，需保留 as any
       if ('periodicSync' in swRegistration) {
-        (swRegistration as any).periodicSync.register('check-tasks', {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(swRegistration as any).periodicSync.register('check-tasks', {
           minInterval: 60000
         }).catch(console.warn)
       }
@@ -250,8 +246,10 @@ export function useNotifications(): UseNotificationsReturn {
       checkInterval = null
     }
 
+    // periodicSync 是实验性 API，TypeScript 类型定义尚未包含，需保留 as any
     if (swRegistration && 'periodicSync' in swRegistration) {
-      (swRegistration as any).periodicSync.unregister('check-tasks').catch(console.warn)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(swRegistration as any).periodicSync.unregister('check-tasks').catch(console.warn)
     }
   }
 

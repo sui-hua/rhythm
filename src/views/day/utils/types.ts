@@ -8,9 +8,11 @@
  * - 包含时间轴任务、侧边栏条目、布局属性等数据结构
  */
 
+import type { DailyScheduleItem } from '@/types/models'
+
 // 时间轴任务基础字段：时间定位与完成状态
 export interface TimelineTaskBase {
-  startHour: number
+  startHour?: number
   durationHours?: number
   completed?: boolean
   isCarryOver?: boolean
@@ -32,13 +34,11 @@ export interface TimelineLayoutProps {
   _stackSize?: number
 }
 
-// 完整的时间轴任务（基础字段 + 布局属性）
-export type TimelineTask = TimelineTaskBase & TimelineLayoutProps & Record<string, unknown>
+// 完整的时间轴任务：DailyScheduleItem 与布局属性的交叉类型
+export type TimelineTask = DailyScheduleItem & TimelineLayoutProps
 
-// 侧边栏条目：至少携带 isCarryOver 标记
-export type SidebarItem = {
-  isCarryOver?: boolean
-} & Record<string, unknown>
+// 侧边栏条目：直接复用 DailyScheduleItem，去除开放索引签名
+export type SidebarItem = DailyScheduleItem
 
 // 侧边栏区段：普通条目组或 carry-over 折叠组
 export type SidebarSection =

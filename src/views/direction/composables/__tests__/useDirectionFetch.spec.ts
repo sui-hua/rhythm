@@ -286,7 +286,7 @@ describe('selectedGoal watcher', () => {
     ])
 
     // 模拟用户切换目标
-    selectionStore.selectedGoal = { goal_id: 'p2', title: '目标 2' }
+    selectionStore.selectedGoal = { id: 'p2', goal_id: 'p2', title: '目标 2', name: '目标 2', category_name: '未分类' }
     await flushWatchers()
 
     // 应加载新目标的月度计划
@@ -300,7 +300,7 @@ describe('showAddModal watcher', () => {
     ;(db.goalMonths.list as Mock).mockResolvedValue([])
     ;(db.goalDays.list as Mock).mockResolvedValue([])
 
-    selectionStore.editingGoal = { id: 'g1', title: '编辑中' }
+    selectionStore.editingGoal = { id: 'g1', goal_id: 'g1', title: '编辑中', name: '编辑中', category_name: '未分类' }
 
     useDirectionFetch()
     await drainFetchData()
@@ -322,7 +322,7 @@ describe('showAddModal watcher', () => {
     ;(db.goalMonths.list as Mock).mockResolvedValue([])
     ;(db.goalDays.list as Mock).mockResolvedValue([])
 
-    selectionStore.editingGoal = { id: 'g1', title: '编辑中' }
+    selectionStore.editingGoal = { id: 'g1', goal_id: 'g1', title: '编辑中', name: '编辑中', category_name: '未分类' }
 
     useDirectionFetch()
     await drainFetchData()

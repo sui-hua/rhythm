@@ -23,8 +23,8 @@ export function useDirectionTasks(): DirectionTasksReturn {
         duration: payload.duration ?? task.duration
       })
 
-      // 同步兼容层：遍历找 id 匹配项并更新
-      const tasks = batchStore.dailyTasks as unknown as Record<string, GoalDay>
+      // 同步到 store 的 dailyTasks 映射表
+      const tasks = batchStore.dailyTasks
       for (const [k, v] of Object.entries(tasks)) {
         if (v.id === task.id) {
           tasks[k] = { ...v, ...payload }

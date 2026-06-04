@@ -224,7 +224,7 @@ const submit = withLoadingLock(async () => {
   }
 
   try {
-    // 创建习惯记录，frequency 固定为 daily（每日习惯）
+    // 创建习惯记录
     await db.habit.create({
       user_id: userId,
       title: form.title,
@@ -233,7 +233,7 @@ const submit = withLoadingLock(async () => {
       frequency: JSON.stringify(buildFrequencyPayload()),
       target_value: 1, // 目标完成值默认为 1
       is_archived: false // 新习惯默认未归档
-    } as any)
+    })
 
     emit('refresh') // 通知父组件刷新习惯列表
     // 重置表单为初始状态

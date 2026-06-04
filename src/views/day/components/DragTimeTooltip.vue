@@ -31,7 +31,7 @@ const props = defineProps({
   /** 是否显示 */
   visible: { type: Boolean, default: false },
   /** 卡片 DOM 元素（用于定位） */
-  cardElement: { type: Object, default: null }
+  cardElement: { type: Object as () => HTMLElement | null, default: null }
 })
 
 /** 格式化小时为 HH:mm */

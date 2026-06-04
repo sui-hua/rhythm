@@ -20,8 +20,8 @@ export interface Task {
   completed?: boolean
   start_time?: string
   end_time?: string
-  actual_start_time?: string
-  actual_end_time?: string
+  actual_start_time?: string | null
+  actual_end_time?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -29,6 +29,9 @@ export interface Task {
 // Task 创建参数
 export interface CreateTaskPayload {
   title: string
+  user_id?: string
+  description?: string
+  completed?: boolean
   status?: 'inbox' | 'pending' | 'completed'
   start_time?: string
   end_time?: string
@@ -37,9 +40,12 @@ export interface CreateTaskPayload {
 // Task 更新参数
 export interface UpdateTaskPayload {
   title?: string
+  description?: string
   status?: 'inbox' | 'pending' | 'completed'
   start_time?: string
   end_time?: string
+  actual_start_time?: string | null
+  actual_end_time?: string | null
 }
 
 const supabase = client.createBase<Task>(TABLES.TASK)
@@ -85,6 +91,15 @@ export const task = {
    */
   async delete(id: string | number): Promise<void> {
     return await supabase.delete(id)
+  },
+
+  /**
+   * 根据 ID 查询单个任务
+   * @param id - 任务 ID
+   * @returns 单个任务对象
+   */
+  async getById(id: string | number): Promise<Task> {
+    return await supabase.getById(id)
   },
 
   /**

@@ -127,6 +127,7 @@ import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import type { PropType } from 'vue'
 import type { AugmentedHabit } from '@/types/models'
 
 defineProps({
@@ -148,7 +149,7 @@ defineProps({
    * 用于接收指示当前哪一项才是“被选中的”标识，以在左侧赋予阴影高亮。
    */
   selectedHabitId: {
-    type: [String, Number] as unknown as () => string | number | null,
+    type: [String, Number] as PropType<string | number | null>,
     default: null
   },
   /**

@@ -43,10 +43,10 @@
       <!-- 背景刻度线结束 -->
 
       <!-- 日程项列表：虚拟滚动，仅渲染可见时间范围内的任务 -->
-      <template v-for="item in visibleSchedule" :key="(item as any)._originalIndex">
+      <template v-for="item in visibleSchedule" :key="item._originalIndex">
         <TaskItemWrapper
-          :task="item as any"
-          :index="(item as any)._originalIndex"
+          :task="item"
+          :index="item._originalIndex ?? 0"
           @select="$emit('select-task', $event)"
           @edit="$emit('edit-task', $event)"
         />
@@ -88,12 +88,12 @@ const dayStore = useDayStore()
 // ── 计算属性 ──
 // 贪心列分配：处理重叠日程的并排布局，返回带列位置信息的日程列表
 const displaySchedule = computed(() => {
-  return buildTimelineDisplaySchedule(dayStore.dailySchedule as any)
+  return buildTimelineDisplaySchedule(dayStore.dailySchedule)
 })
 
 // ── Refs ──
 // timelineContainerRef: ScrollArea 组件引用，用于获取 viewport DOM
-const timelineContainerRef = ref<any>(null)
+const timelineContainerRef = ref<InstanceType<typeof ScrollArea> | null>(null)
 // scrollElement: 实际滚动容器元素，供虚拟化器使用
 const scrollElement = ref<HTMLElement | null>(null)
 
@@ -126,8 +126,10 @@ const visibleEndHour = computed(() => Math.min(24, (virtualRange.value?.endIndex
 // 仅渲染落入可见时间窗口的任务（含跨越窗口的重叠项）
 const visibleSchedule = computed(() => {
   return displaySchedule.value.filter(item => {
-    const itemEnd = item.startHour + (item.durationHours || 1)
-    return item.startHour < visibleEndHour.value && itemEnd > visibleStartHour.value
+    // buildTimelineDisplaySchedule 已过滤无 startHour 的条目，此处可安全断言
+    const start = item.startHour!
+    const itemEnd = start + (item.durationHours || 1)
+    return start < visibleEndHour.value && itemEnd > visibleStartHour.value
   })
 })
 

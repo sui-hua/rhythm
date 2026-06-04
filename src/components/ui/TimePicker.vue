@@ -132,10 +132,15 @@ for (let i = 0; i < 24; i++) {
 // ── 方法 ──
 // 处理 Popover 外部点击：点击发生在触发器容器内时阻止关闭
 // 防止用户点击输入框时意外关闭已打开的选择面板
+// Radix Vue 的 interact-outside 事件会将原始 DOM 事件包装在 detail.originalEvent 中
+interface InteractOutsideEvent extends Event {
+  detail?: { originalEvent?: Event }
+}
 const handleInteractOutside = (event: Event) => {
   const target = event.target
-  const actualTarget = (event as any).detail?.originalEvent?.target || target
-  if (triggerContainer.value && triggerContainer.value.contains(actualTarget)) {
+  const detail = (event as InteractOutsideEvent).detail
+  const actualTarget = detail?.originalEvent?.target || target
+  if (triggerContainer.value && triggerContainer.value.contains(actualTarget as Node)) {
     event.preventDefault()
   }
 }

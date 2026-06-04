@@ -25,14 +25,10 @@ export function useDirectionBatch(): DirectionBatchReturn {
   const { batchInput } = storeToRefs(batchStore)
   const { archiveVersion } = storeToRefs(dataStore)
 
-  // 将 store 引用断言为具体类型
-  const selectedGoalTyped = selectedGoal as unknown as { value: GoalWithMeta | null }
-  const selectedMonthTyped = selectedMonth as unknown as { value: number | null }
-
-  // 将 store 缓存断言为具体类型
-  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
-  const goalDaysCache = dataStore.goalDaysCache as unknown as Record<string, GoalDay[]>
-  const selectedDates = batchStore.selectedDates as unknown as Record<number, number[]>
+  // store 缓存引用，类型已在 store 定义中对齐
+  const goalMonthsCache = dataStore.goalMonthsCache
+  const goalDaysCache = dataStore.goalDaysCache
+  const selectedDates = batchStore.selectedDates
 
   const { hasTask } = useDirectionSelection()
   const { loadGoalDays } = useDirectionFetch()
@@ -70,17 +66,17 @@ export function useDirectionBatch(): DirectionBatchReturn {
 
   /** 批量创建/更新日计划：对选中日期执行 upsert 操作 */
   const applyBatchTask = async (): Promise<void> => {
-    const m = selectedMonthTyped.value
+    const m = selectedMonth.value
     if (!m || !batchInput.value.trim()) return
 
-    const currentMp = getCurrentMonthlyPlan(selectedGoalTyped.value!.goal_id, m)
+    const currentMp = getCurrentMonthlyPlan(selectedGoal.value!.goal_id, m)
     if (!currentMp) return
 
     const monthDate = parseDateOnly(currentMp.month)
     if (!monthDate) return
 
     const year = monthDate.getFullYear()
-    const currentTiming = resolveDailyTiming(currentMp, selectedGoalTyped.value)
+    const currentTiming = resolveDailyTiming(currentMp, selectedGoal.value)
 
     const currentSelectedDates = selectedDates[m] || []
     let daysToUpdate = currentSelectedDates.filter(day => hasTask(m, day))
@@ -120,11 +116,11 @@ export function useDirectionBatch(): DirectionBatchReturn {
 
   /** 批量删除选中日期的日计划 */
   const handleBatchDelete = async (): Promise<void> => {
-    const m = selectedMonthTyped.value
+    const m = selectedMonth.value
     const currentSelectedDates = selectedDates[m!] || []
     if (!m || currentSelectedDates.length === 0) return
 
-    const currentMp = getCurrentMonthlyPlan(selectedGoalTyped.value!.goal_id, m)
+    const currentMp = getCurrentMonthlyPlan(selectedGoal.value!.goal_id, m)
     if (!currentMp) return
 
     const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)

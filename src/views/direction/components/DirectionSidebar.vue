@@ -115,10 +115,10 @@ const systemLoad = computed(() => {
   const month = selectedMonth.value
 
   return getDirectionMonthlyProgress({
-    dailyTasks: batchStore.dailyTasks as any,
+    dailyTasks: batchStore.dailyTasks,
     goalId,
     month,
-    isGoalDayCompleted: isGoalDayCompleted as any
+    isGoalDayCompleted
   })
 })
 

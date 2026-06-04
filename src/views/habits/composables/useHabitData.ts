@@ -43,11 +43,10 @@ export function useHabitData(): UseHabitDataReturn {
     const isPageLoading: Ref<boolean> = ref(false)
 
     // 活跃习惯列表（已过滤归档项）
-    // habitStore 是 JS 文件，类型推断为 never[]，需断言为具体类型
-    const habits: ComputedRef<AugmentedHabit[]> = computed(() => habitStore.habits as unknown as AugmentedHabit[])
+    const habits: ComputedRef<AugmentedHabit[]> = computed(() => habitStore.habits)
 
     // 已归档习惯列表，从 habitStore 响应式读取
-    const archivedHabits: ComputedRef<AugmentedHabit[]> = computed(() => habitStore.archivedHabits as unknown as AugmentedHabit[])
+    const archivedHabits: ComputedRef<AugmentedHabit[]> = computed(() => habitStore.archivedHabits)
 
     // 当前选中习惯的全量日志，独立于 habitStore 存储，避免交叉污染
     const currentHabitLogs: Ref<DbHabitLog[]> = ref([])
@@ -57,7 +56,7 @@ export function useHabitData(): UseHabitDataReturn {
     const viewMonth: Ref<number> = ref(dateStore.currentDate.getMonth())
 
     // 当前选中的习惯对象，从 habitStore 响应式读取
-    const selectedHabit: ComputedRef<AugmentedHabit | null> = computed(() => habitStore.selectedHabit as unknown as AugmentedHabit | null)
+    const selectedHabit: ComputedRef<AugmentedHabit | null> = computed(() => habitStore.selectedHabit)
 
     // 设置当前选中的习惯，null 表示取消选中
     const setSelectedHabit = (habit: AugmentedHabit | null): void => {
@@ -80,11 +79,11 @@ export function useHabitData(): UseHabitDataReturn {
 
             const completedDays = monthlyLogs.map((log) => new Date(log.completed_at!).getDate())
 
-            // patchHabit 期望 Partial<Habit>，但需要传递扩展字段（monthlyLogs 等），故用 as any 桥接
+            // patchHabit 接受 Partial<AugmentedHabit>，支持日志统计字段的局部更新
             habitStore.patchHabit(String(selectedHabit.value.id), {
                 monthlyLogs,
                 completedDays
-            } as any)
+            })
         }
     }
 
@@ -131,9 +130,8 @@ export function useHabitData(): UseHabitDataReturn {
             await habitStore.fetchHabits()
 
             // 为每个习惯补充日志相关字段的默认值，防止后续计算中访问 undefined
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const all = habitStore.allHabits as any[]
-            all.forEach((h: any, index: number) => {
+            const all = habitStore.allHabits
+            all.forEach((h, index) => {
                 all[index] = {
                     ...h,
                     completedDays: h.completedDays || [],
@@ -147,7 +145,7 @@ export function useHabitData(): UseHabitDataReturn {
 
             // 刷新后维持选中状态：优先选中之前选中的习惯，否则选中列表第一个
             if (selectedHabit.value) {
-                const updated = all.find((h: any) => h.id === selectedHabit.value!.id)
+                const updated = all.find(h => h.id === selectedHabit.value!.id)
                 if (updated) habitStore.setSelectedHabitId(String(updated.id))
                 else habitStore.setSelectedHabitId(String(habitStore.habits[0]?.id || habitStore.archivedHabits[0]?.id || ''))
             } else if (habitStore.habits.length > 0) {
@@ -173,8 +171,7 @@ export function useHabitData(): UseHabitDataReturn {
             const logs = await db.habit.listLogsByHabit(habitId)
             currentHabitLogs.value = logs
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const habit = (habitStore.allHabits as any[]).find((h: any) => h.id === habitId)
+            const habit = habitStore.allHabits.find(h => h.id === habitId)
             if (habit) {
                 const viewYearVal = viewYear.value
                 const viewMonthVal = viewMonth.value
@@ -187,7 +184,7 @@ export function useHabitData(): UseHabitDataReturn {
 
                 const completedDays = monthlyLogs.map((log) => new Date(log.completed_at!).getDate())
 
-                // patchHabit 期望 Partial<Habit>，需要传递扩展字段，用 as any 桥接
+                // patchHabit 接受 Partial<AugmentedHabit>，支持日志统计字段的局部更新
                 habitStore.patchHabit(String(habitId), {
                     logs,
                     monthlyLogs,
@@ -195,7 +192,7 @@ export function useHabitData(): UseHabitDataReturn {
                     total: logs.length,
                     completionRate: Math.round((logs.length / 30) * 100),
                     streak: calculateStreak(logs)
-                } as any)
+                })
             }
         } catch (e) {
             console.error('Fetch logs for habit failed', e)

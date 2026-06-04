@@ -6,11 +6,11 @@ import type { GoalMonth } from '@/services/db/goalMonths'
 import type { GoalDay } from '@/services/db/goalDays'
 
 /** goal-month 映射表类型：key 为 goal-{goalId}-{month} */
-type GoalMonthsMap = Record<string, GoalMonth[]>
+type GoalMonthsMap = Record<string, GoalMonth>
 /** 日任务映射表类型：key 为 goal-{goalId}-{month}-{day} */
-type DailyTasksMap = Record<string, GoalDay[]>
+type DailyTasksMap = Record<string, GoalDay>
 /** 批量选中日期类型：key 为月份字符串，value 为日期数组 */
-type SelectedDatesMap = Record<string, string[]>
+type SelectedDatesMap = Record<string, number[]>
 
 /**
  * 批量编辑状态管理

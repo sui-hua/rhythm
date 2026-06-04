@@ -13,7 +13,8 @@ import { matchesHabitFrequency } from '@/views/habits/utils/habitFrequency'
 import type { Task } from '@/services/db/task'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { Habit, HabitLog } from '@/services/db/habit'
-import type { DailyScheduleItem, ActiveTask } from '@/types/models'
+import type { DailyScheduleItem, ActiveTask, TaskScheduleItem } from '@/types/models'
+import type { UpdateTaskPayload } from '@/services/db/task'
 
 /** fetchTasks 的选项 */
 interface FetchTasksOptions {
@@ -93,7 +94,7 @@ export const useDayStore = defineStore('day', () => {
       goalDays: goalDays.value,
       habits: habits.value,
       habitLogs: habitLogs.value
-    }) as unknown as DailyScheduleItem[]
+    })
   })
 
   // 已完成数量，用于进度展示
@@ -101,14 +102,14 @@ export const useDayStore = defineStore('day', () => {
 
   // ── 私有方法 ──
   // 切换任务完成状态，通过 status 字段控制（pending ↔ completed）
-  const toggleTaskCompletion = async (task: DailyScheduleItem): Promise<void> => {
+  const toggleTaskCompletion = async (task: TaskScheduleItem): Promise<void> => {
     const newStatus = task.completed ? 'pending' : 'completed'
-    const updates: Record<string, unknown> = { status: newStatus }
+    const updates: UpdateTaskPayload = { status: newStatus }
     // 完成时记录实际结束时间，用于统计任务耗时
     if (!task.completed) {
       updates.actual_end_time = new Date().toISOString()
     }
-    await db.task.update(task.id, updates as any)
+    await db.task.update(task.id, updates)
   }
 
   // 切换习惯完成状态：已完成则删除日志，未完成则添加日志
@@ -128,17 +129,16 @@ export const useDayStore = defineStore('day', () => {
   }
 
   // 切换日计划完成状态，使用 toGoalDayStatus 转换为数据库枚举值
+  // task.completed 已在调用前被乐观更新翻转，直接传入即可
   const toggleDailyPlanCompletion = async (task: DailyScheduleItem): Promise<void> => {
-    const newStatus = toGoalDayStatus(!task.completed)
-    await db.goalDays.update(task.id, { status: newStatus } as any)
+    const newStatus = toGoalDayStatus(task.completed)
+    await db.goalDays.update(task.id, { status: newStatus })
   }
 
-  // 单条任务同步：只拉取指定任务的最新状态，避免全量刷新带来的性能开销
+  // 单条任务同步：通过 ID 精确查询，避免全量拉取的性能开销
   const fetchTaskUpdate = async (taskId: string): Promise<void> => {
     try {
-      // task 服务没有 getById，使用 list 全量拉取后按 ID 过滤
-      const results = await db.task.list()
-      const updated = results.find(t => String(t.id) === String(taskId))
+      const updated = await db.task.getById(taskId)
       if (!updated) return
       const index = tasks.value.findIndex(t => String(t.id) === String(taskId))
       if (index !== -1) {
@@ -180,9 +180,16 @@ export const useDayStore = defineStore('day', () => {
         const pomodoroStore = usePomodoroStore()
         if (!pomodoroStore.activeTask) {
           pomodoroStore.setActiveTask({
-            ...runningTask,
-            type: 'task'
-          } as unknown as ActiveTask)
+            id: String(runningTask.id),
+            title: runningTask.title,
+            type: 'task',
+            completed: runningTask.completed ?? false,
+            start_time: runningTask.start_time,
+            end_time: runningTask.end_time,
+            actual_start_time: runningTask.actual_start_time,
+            actual_end_time: runningTask.actual_end_time,
+            original: runningTask
+          })
         }
       }
       goalDays.value = fetchedPlans
@@ -242,7 +249,7 @@ export const useDayStore = defineStore('day', () => {
           return db.task.update(task.id, {
             start_time: newStart.toISOString(),
             end_time: newEnd.toISOString()
-          } as any)
+          } as UpdateTaskPayload)
         })
       )
     } catch (e) {
@@ -295,14 +302,20 @@ export const useDayStore = defineStore('day', () => {
       await db.task.update(task.id, {
         start_time: startTime,
         status: 'pending'
-      } as any)
+      } as UpdateTaskPayload)
       await fetchTaskUpdate(task.id)
       // 同步到番茄钟，使计时器立即启动
       pomodoroStore.setActiveTask({
-        ...task,
+        id: task.id,
+        title: task.title,
         type: 'task',
-        actual_start_time: startTime
-      } as unknown as ActiveTask)
+        completed: task.completed,
+        start_time: task.original.start_time,
+        end_time: task.original.end_time,
+        actual_start_time: startTime,
+        actual_end_time: null,
+        original: task.original
+      })
     } catch (e) {
       // 回滚：清除乐观更新的值
       task.actual_start_time = null
@@ -324,21 +337,19 @@ export const useDayStore = defineStore('day', () => {
     endTime.setHours(Math.floor(newEndHour), Math.round((newEndHour % 1) * 60))
 
     // 保存原始值用于回滚
-    const previousStart = task.start_time
-    const previousEnd = task.end_time
-    task.start_time = startTime.toISOString()
-    task.end_time = endTime.toISOString()
+    const previousStart = task.original.start_time
+    const previousEnd = task.original.end_time
 
     try {
       await db.task.update(task.id, {
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString()
-      } as any)
+      } as UpdateTaskPayload)
       await fetchTaskUpdate(task.id)
     } catch (e) {
       // 回滚：恢复原始时间
-      task.start_time = previousStart
-      task.end_time = previousEnd
+      task.original.start_time = previousStart
+      task.original.end_time = previousEnd
       console.error('更新任务时间失败:', e)
     }
   }

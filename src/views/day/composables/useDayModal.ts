@@ -1,12 +1,7 @@
 import { ref, computed } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import { useDayStore } from '@/stores/dayStore'
-
-/** 日程项（来自 dayStore.dailySchedule 的元素） */
-export interface ScheduleItem {
-    id: string
-    [key: string]: unknown
-}
+import type { DailyScheduleItem } from '@/types/models'
 
 /**
  * 日程编辑弹窗管理 Composable
@@ -26,11 +21,9 @@ export function useDayModal() {
      * 根据 editingTaskId 从 dailySchedule 中查找对应任务
      * 当 editingTaskId 为 null 时表示新建模式，返回 null
      */
-    const editingTask: ComputedRef<ScheduleItem | null> = computed(() => {
+    const editingTask: ComputedRef<DailyScheduleItem | null> = computed(() => {
         if (editingTaskId.value !== null && dayStore.dailySchedule) {
-            return (dayStore.dailySchedule as ScheduleItem[]).find(
-                t => t.id === editingTaskId.value
-            ) || null
+            return dayStore.dailySchedule.find(t => t.id === editingTaskId.value) || null
         }
         return null
     })

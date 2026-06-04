@@ -27,11 +27,11 @@ describe('habitFrequency', () => {
   })
 
   it('每周重复规则在过滤后为空时回退到每日', () => {
-    // 传入非法值测试回退逻辑
+    // 传入非法值测试回退逻辑，normalizeHabitFrequency 接受 unknown 类型无需断言
     expect(normalizeHabitFrequency({
       type: 'weekly',
       weekdays: [0, 9, 'x']
-    } as unknown as WeeklyFrequency)).toEqual({ type: 'daily' })
+    })).toEqual({ type: 'daily' })
   })
 
   it('每周重复规则只在命中的星期显示', () => {

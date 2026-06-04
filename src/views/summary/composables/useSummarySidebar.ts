@@ -26,9 +26,8 @@ export interface SummaryItem {
   title?: string | null
   period_start?: string
   period_end?: string
-  content?: Record<string, unknown>
+  content?: Record<string, string>
   created_at?: string
-  [key: string]: unknown
 }
 
 // composable 返回值接口

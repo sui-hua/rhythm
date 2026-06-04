@@ -42,15 +42,15 @@ import { useDailyReport } from '@/views/day/composables/useDailyReport'
 import { getInitialScrollTarget } from '@/views/day/utils/getInitialScrollTarget'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 
-// 将 mock 后的模块函数断言为 Mock 类型
-const mockOnMounted = onMounted as unknown as Mock
-const mockWatch = watch as unknown as Mock
-const mockUseRoute = useRoute as unknown as Mock
-const mockUseRouter = useRouter as unknown as Mock
-const mockUseDateStore = useDateStore as unknown as Mock
-const mockUseDayStore = useDayStore as unknown as Mock
-const mockUseDailyReport = useDailyReport as unknown as Mock
-const mockGetInitialScrollTarget = getInitialScrollTarget as unknown as Mock
+// 使用 vi.mocked 获取类型安全的 mock 引用
+const mockOnMounted = vi.mocked(onMounted)
+const mockWatch = vi.mocked(watch)
+const mockUseRoute = vi.mocked(useRoute)
+const mockUseRouter = vi.mocked(useRouter)
+const mockUseDateStore = vi.mocked(useDateStore)
+const mockUseDayStore = vi.mocked(useDayStore)
+const mockUseDailyReport = vi.mocked(useDailyReport)
+const mockGetInitialScrollTarget = vi.mocked(getInitialScrollTarget)
 
 describe('useDayNavigation', () => {
   const route: { params: Record<string, string> } = {

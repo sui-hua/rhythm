@@ -65,7 +65,7 @@ describe('useDirectionBatch', () => {
     dataStore.goalDaysCache['mp-1'] = [
       { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
     ]
-    selectionStore.selectedGoal = { goal_id: 'p1' }
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
     selectionStore.selectedMonth = 4
     batchStore.selectedDates[4] = [1]
     batchStore.batchInput = '新标题'
@@ -91,7 +91,7 @@ describe('useDirectionBatch', () => {
     dataStore.goalMonthsCache.p1 = [
       { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: '10:15', duration: 50 }
     ]
-    selectionStore.selectedGoal = { goal_id: 'p1' }
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
     selectionStore.selectedMonth = 4
     batchStore.selectedDates[4] = [1, 2]
     batchStore.batchInput = '批量新增'
@@ -125,7 +125,7 @@ describe('useDirectionBatch', () => {
     dataStore.goalMonthsCache.p1 = [
       { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: null, duration: null }
     ]
-    selectionStore.selectedGoal = { goal_id: 'p1', task_time: '06:30', duration: 40 }
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类', task_time: '06:30', duration: 40 }
     selectionStore.selectedMonth = 4
     batchStore.selectedDates[4] = [3]
     batchStore.batchInput = '晨读'
@@ -151,7 +151,7 @@ describe('useDirectionBatch', () => {
       { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' },
       { id: 'dp-2', monthly_plan_id: 'mp-1', day: '2026-04-02' }
     ]
-    selectionStore.selectedGoal = { goal_id: 'p1' }
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
     selectionStore.selectedMonth = 4
     batchStore.selectedDates[4] = [1, 2]
 

@@ -54,9 +54,9 @@ import { useDateStore } from '@/stores/dateStore'
 import { db } from '@/services/database'
 import { useDayStore } from '@/stores/dayStore'
 
-// 将 mock 后的模块函数断言为 Mock 类型，以便调用 mockReturnValue 等方法
-const mockUseRoute = useRoute as unknown as Mock
-const mockUseDateStore = useDateStore as unknown as Mock
+// 使用 vi.mocked 获取类型安全的 mock 引用
+const mockUseRoute = vi.mocked(useRoute)
+const mockUseDateStore = vi.mocked(useDateStore)
 
 describe('useDayData', () => {
   beforeEach(() => {
@@ -72,7 +72,7 @@ describe('useDayData', () => {
     })
 
     mockUseDateStore.mockReturnValue({
-      currentDate: new Date(2026, 3, 29)
+      currentDate: new Date(2026, 3, 28)
     })
 
     ;(db.task.list as Mock).mockResolvedValue([])
@@ -89,17 +89,18 @@ describe('useDayData', () => {
   it('查看昨天时，补打卡会把习惯日志写入当前路由日期', async () => {
     const store = useDayStore()
 
+    // completed: true 表示当前未完成（habit 完成态反转），翻转后变为 false → 添加日志
     await store.handleToggleComplete({
       id: 'habit-1',
       type: 'habit',
-      completed: false
+      completed: true
     })
 
     expect(db.habit.log).toHaveBeenCalledTimes(1)
-    expect(db.habit.log).toHaveBeenCalledWith('habit-1', '', expect.any(String))
+    expect(db.habit.log).toHaveBeenCalledWith('habit-1', '', expect.any(Date))
 
     const logMock = db.habit.log as Mock
-    const completedAt = new Date(logMock.mock.calls[0][2] as string)
+    const completedAt = logMock.mock.calls[0][2] as Date
     expect(completedAt.getFullYear()).toBe(2026)
     expect(completedAt.getMonth()).toBe(3)
     expect(completedAt.getDate()).toBe(28)
@@ -112,13 +113,14 @@ describe('useDayData', () => {
 
     const store = useDayStore()
 
+    // completed: false 表示当前已完成，翻转后变为 true → 删除日志
     await store.handleToggleComplete({
       id: 'habit-1',
       type: 'habit',
-      completed: true
+      completed: false
     })
 
-    expect(db.habit.listLogsByDate).toHaveBeenCalledTimes(2)
+    expect(db.habit.listLogsByDate).toHaveBeenCalledTimes(1)
 
     const listLogsMock = db.habit.listLogsByDate as Mock
     const [startOfDay, endOfDay] = listLogsMock.mock.calls[0] as [Date, Date]

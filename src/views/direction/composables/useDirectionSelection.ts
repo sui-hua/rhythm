@@ -9,7 +9,7 @@ import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
-import type { GoalDay, GoalMonth, GoalWithMeta, DirectionSelectionReturn } from '@/views/direction/types'
+import type { GoalWithMeta, DirectionSelectionReturn } from '@/views/direction/types'
 
 export function useDirectionSelection(): DirectionSelectionReturn {
   const dataStore = useGoalDataStore()
@@ -18,17 +18,16 @@ export function useDirectionSelection(): DirectionSelectionReturn {
   const { selectedGoal, selectedMonth, isSelecting, activePicker } = storeToRefs(selectionStore)
   const { archiveVersion } = storeToRefs(dataStore)
 
-  // 将 store 的 reactive 属性断言为具体类型
-  const selectedDates = batchStore.selectedDates as unknown as Record<number, number[]>
-  const dailyTasks = batchStore.dailyTasks as unknown as Record<string, GoalDay>
-  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
-  const goalDaysCache = dataStore.goalDaysCache as unknown as Record<string, GoalDay[]>
+  // store 缓存引用，类型已在 store 定义中对齐
+  const selectedDates = batchStore.selectedDates
+  const dailyTasks = batchStore.dailyTasks
+  const goalMonthsCache = dataStore.goalMonthsCache
+  const goalDaysCache = dataStore.goalDaysCache
 
   /** 生成 goal-month 复合 key，用于匹配缓存中的条目 */
   const goalKey = (m: number): string => {
-    const goal = selectedGoal.value as unknown as GoalWithMeta | null
-    if (!goal) return `undefined-${m}`
-    return `goal-${goal.goal_id}-${m}`
+    if (!selectedGoal.value) return `undefined-${m}`
+    return `goal-${selectedGoal.value.goal_id}-${m}`
   }
 
   /** 生成 goal-month-day 复合 key，用于匹配 dailyTasks 中的条目 */
@@ -91,12 +90,11 @@ export function useDirectionSelection(): DirectionSelectionReturn {
 
   /** 计算指定月份第一天是星期几（考虑目标的实际年份） */
   const getMonthOffset = (month: number): number => {
-    const goal = selectedGoal.value as unknown as GoalWithMeta | null
-    if (!goal) {
+    if (!selectedGoal.value) {
       return new Date(new Date().getFullYear(), month - 1, 1).getDay()
     }
 
-    const cached = goalMonthsCache[String(goal.goal_id)] || []
+    const cached = goalMonthsCache[String(selectedGoal.value.goal_id)] || []
     const mp = cached.find(item => getDateOnlyMonth(item.month) === month)
     if (!mp) {
       return new Date(new Date().getFullYear(), month - 1, 1).getDay()
@@ -148,8 +146,7 @@ export function useDirectionSelection(): DirectionSelectionReturn {
   /** 计算当前选中月份中有任务的日期列表（用于日历标记） */
   const datesWithTasks = computed((): number[] => {
     archiveVersion.value
-    const goal = selectedGoal.value as unknown as GoalWithMeta | null
-    const goalId = goal?.goal_id
+    const goalId = selectedGoal.value?.goal_id
     if (!goalId || selectedMonth.value == null) return []
 
     const goalMonthsOfGoal = goalMonthsCache[String(goalId)] || []
@@ -167,14 +164,14 @@ export function useDirectionSelection(): DirectionSelectionReturn {
 
   /** 选中目标并重置月份和选择器状态 */
   const selectGoal = (g: GoalWithMeta): void => {
-    selectedGoal.value = g as unknown as typeof selectedGoal.value
+    selectedGoal.value = g
     selectedMonth.value = null
     activePicker.value = 'start'
   }
 
   return {
-    selectedGoal: selectedGoal as unknown as DirectionSelectionReturn['selectedGoal'],
-    selectedMonth: selectedMonth as unknown as DirectionSelectionReturn['selectedMonth'],
+    selectedGoal,
+    selectedMonth,
     selectedDates,
     dailyTasks,
     datesWithTasks,

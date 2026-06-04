@@ -16,8 +16,8 @@ export const SNAP_PX = (SNAP_MINUTES / 60) * HOUR_HEIGHT
 
 /** 拖拽/缩放计算的输入任务快照 */
 export interface DragTaskInput {
-    startHour: number
-    durationHours: number
+    startHour?: number
+    durationHours?: number
 }
 
 /** 拖拽/缩放计算结果 */
@@ -51,10 +51,12 @@ export function hourToPx(hour: number): number {
  */
 export function calcDragResult(task: DragTaskInput, deltaY: number): DragResult {
     const deltaHours = pxToHour(deltaY)
+    const duration = task.durationHours ?? 1
+    const start = task.startHour ?? 0
     // 最大起始时间 = 24h - 任务时长，防止任务溢出到次日
-    const maxStart = Math.max(0, 24 - task.durationHours)
-    const newStart = Math.max(0, Math.min(maxStart, task.startHour + deltaHours))
-    return { newStart, newEnd: newStart + task.durationHours }
+    const maxStart = Math.max(0, 24 - duration)
+    const newStart = Math.max(0, Math.min(maxStart, start + deltaHours))
+    return { newStart, newEnd: newStart + duration }
 }
 
 /**
@@ -63,9 +65,10 @@ export function calcDragResult(task: DragTaskInput, deltaY: number): DragResult 
  * 最小持续时间 5 分钟，最大不超过 24h 减去起始时间
  */
 export function calcResizeResult(task: DragTaskInput, newHeight: number): DragResult {
+    const start = task.startHour ?? 0
     // 最小 5 分钟，避免任务被缩放到不可见
     const minDuration = SNAP_MINUTES / 60
-    const maxDuration = 24 - task.startHour
+    const maxDuration = 24 - start
     const newDuration = Math.max(minDuration, Math.min(maxDuration, pxToHour(newHeight)))
-    return { newStart: task.startHour, newEnd: task.startHour + newDuration }
+    return { newStart: start, newEnd: start + newDuration }
 }

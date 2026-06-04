@@ -44,7 +44,7 @@
       :currentHour="tooltipHour"
       :durationHours="tooltipDuration"
       :visible="isActive"
-      :cardElement="wrapperRef as any"
+      :cardElement="wrapperRef"
     />
   </div>
   <!-- 可拖拽任务容器结束 -->
@@ -90,9 +90,9 @@ const wrapperRef = ref<HTMLElement | null>(null)
 
 // 拖拽状态机：管理拖拽/缩放的完整生命周期，提交时调用 dayStore 更新时间
 const session = useTimelineDragSession({
-  task: props.task as any,
-  getTask: () => props.task as any,
-  onCommit: ({ newStartHour, newEndHour }: { newStartHour: number; newEndHour: number }) => dayStore.updateTaskTime(props.task as any, newStartHour, newEndHour)
+  task: props.task,
+  getTask: () => props.task,
+  onCommit: ({ newStartHour, newEndHour }: { newStartHour: number; newEndHour: number }) => dayStore.updateTaskTime(props.task, newStartHour, newEndHour)
 })
 
 // 拖拽状态：isDragging 拖拽中 | isResizing 缩放中 | isActive 拖拽或缩放进行中
@@ -113,7 +113,7 @@ const wrapperStyle = computed(() => {
   return {
     top: `calc(${displayStartHour.value} * var(--hour-height))`,
     height: `calc(${displayDurationHours.value} * var(--hour-height))`,
-    ...buildTaskHorizontalLayoutStyle(props.task as any)
+    ...buildTaskHorizontalLayoutStyle(props.task)
   }
 })
 

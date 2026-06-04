@@ -12,9 +12,10 @@ export interface DragCommitPayload {
     newEndHour: number
 }
 
-/** 可拖拽的任务对象，扩展 DragTaskInput 以支持任意额外字段 */
-export interface DraggableTask extends DragTaskInput {
-    [key: string]: unknown
+/** 可拖拽的任务对象，至少包含时间定位字段 */
+export interface DraggableTask {
+    startHour?: number
+    durationHours?: number
 }
 
 /** useTimelineDragSession 的输入参数 */
@@ -45,10 +46,10 @@ export function useTimelineDragSession({ task, getTask, onCommit }: TimelineDrag
     const dragMode: Ref<DragMode> = ref('idle')
     // 鼠标按下时的 Y 坐标，作为拖拽偏移量的基准点
     const startClientY: Ref<number> = ref(0)
-    // 拖拽开始时的任务起始小时，用于计算偏移量
-    const baseStartHour: Ref<number> = ref(initialTask.startHour)
+    // 拖拽开始时的任务起始小时，用于计算偏移量（拖拽仅作用于有 startHour 的任务）
+    const baseStartHour: Ref<number> = ref(initialTask.startHour ?? 0)
     // 拖拽开始时的任务持续时长，用于拖拽移动时保持时长不变
-    const baseDurationHours: Ref<number> = ref(initialTask.durationHours || 1)
+    const baseDurationHours: Ref<number> = ref(initialTask.durationHours ?? 1)
     // 拖拽中的草稿起始小时，null 表示尚未开始拖拽
     const draftStartHour: Ref<number | null> = ref(null)
     // 拖拽中的草稿持续时长，null 表示尚未开始拖拽
@@ -78,8 +79,8 @@ export function useTimelineDragSession({ task, getTask, onCommit }: TimelineDrag
         pendingDragMode.value = nextMode
         dragMode.value = 'idle'
         startClientY.value = clientY
-        baseStartHour.value = currentTask.startHour
-        baseDurationHours.value = currentTask.durationHours || 1
+        baseStartHour.value = currentTask.startHour ?? 0
+        baseDurationHours.value = currentTask.durationHours ?? 1
         draftStartHour.value = null
         draftDurationHours.value = null
         lastError.value = null

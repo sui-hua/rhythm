@@ -27,7 +27,6 @@ export interface SummaryRow {
   content?: string | ContentObject | null
   created_at?: string
   updated_at?: string | null
-  [key: string]: unknown
 }
 
 // 前端记录格式接口
@@ -38,7 +37,7 @@ export interface SummaryRecord {
   period_start?: string
   period_end?: string
   title?: string | null
-  content?: Record<string, any>
+  content?: ContentObject
   created_at?: string
   updated_at?: string
 }
@@ -49,7 +48,7 @@ export interface BuildSummaryPayloadParams {
   userId: string
   period: Period
   formData: Record<string, string>
-  existingRecord?: { id?: string | number; [key: string]: unknown } | null
+  existingRecord?: { id?: string | number } | null
 }
 
 // buildSummaryPayload 返回的数据库载荷接口

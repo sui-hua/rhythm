@@ -11,7 +11,7 @@ export interface Habit {
   is_archived?: boolean
   task_time?: string | null
   duration?: number
-  target_value?: string
+  target_value?: string | number
   created_at?: string
   updated_at?: string
 }
@@ -26,9 +26,15 @@ export interface HabitLog {
 
 // Habit 创建参数
 export interface CreateHabitPayload {
-  name: string
+  name?: string
+  title?: string
   description?: string
   frequency?: string
+  user_id?: string
+  task_time?: string | null
+  duration?: number
+  target_value?: string | number
+  is_archived?: boolean
 }
 
 // Habit 更新参数

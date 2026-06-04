@@ -272,7 +272,7 @@ const submit = withLoadingLock(async () => {
       task_time: form.task_time || null,
       duration: Math.round((Number(form.duration) || 0) * 60) || 10,
       frequency: JSON.stringify(buildFrequencyPayload())
-    } as any)
+    })
     emit('refresh')
     emit('update:show', false)
   } catch (e) {

@@ -4,6 +4,7 @@ import { toDateOnly } from '@/utils/dateFormatter'
 import type { Task } from '@/services/db/task'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { Habit, HabitLog } from '@/services/db/habit'
+import type { DailyScheduleItem, TaskScheduleItem, GoalDayScheduleItem, HabitScheduleItem } from '@/types/models'
 
 /** 构建日程表的输入参数 */
 export interface DayExecutionItemsInput {
@@ -12,28 +13,6 @@ export interface DayExecutionItemsInput {
     goalDays?: GoalDay[]
     habits?: Habit[]
     habitLogs?: HabitLog[]
-}
-
-/** 构建后的日程项 */
-export interface DayExecutionItem {
-    id: string | number
-    sourceLabel: 'task' | 'goal_day' | 'habit'
-    type: 'task' | 'goal_day' | 'habit'
-    original: Task | GoalDay | Habit
-    startHour: number | undefined
-    durationHours: number
-    rawDuration: number
-    time: string
-    duration: string
-    category: string
-    title: string
-    description: string
-    completed: boolean
-    actual_start_time?: string
-    actual_end_time?: string
-    isCarryOver?: boolean
-    carryOverSourceDate?: string | null
-    carryOverLabel?: string
 }
 
 /**
@@ -55,8 +34,8 @@ export function buildDayExecutionItems({
     goalDays = [],
     habits = [],
     habitLogs = []
-}: DayExecutionItemsInput): DayExecutionItem[] {
-    const schedule: DayExecutionItem[] = []
+}: DayExecutionItemsInput): DailyScheduleItem[] {
+    const schedule: DailyScheduleItem[] = []
     const targetDateStr = targetDate ? toDateOnly(targetDate) : null
 
     // 阶段一：处理任务（sourceLabel: 'task'）
@@ -69,7 +48,7 @@ export function buildDayExecutionItems({
         const startTimeString = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
 
         schedule.push({
-            id: task.id,
+            id: String(task.id),
             sourceLabel: 'task',
             type: 'task',
             original: task,
@@ -84,7 +63,7 @@ export function buildDayExecutionItems({
             completed: task.completed ?? false,
             actual_start_time: task.actual_start_time,
             actual_end_time: task.actual_end_time
-        })
+        } satisfies TaskScheduleItem)
     })
 
     // ============================================
@@ -140,7 +119,7 @@ export function buildDayExecutionItems({
             isCarryOver,
             carryOverSourceDate: isCarryOver ? plan.day : null,
             carryOverLabel: isCarryOver ? formatCarryOverLabel(plan.day!) : ''
-        })
+        } satisfies GoalDayScheduleItem)
     })
 
     // ============================================
@@ -174,7 +153,7 @@ export function buildDayExecutionItems({
         const isCompleted = habitLogIds.has(habit.id)
 
         schedule.push({
-            id: habit.id,
+            id: String(habit.id),
             sourceLabel: 'habit',
             type: 'habit',
             original: habit,
@@ -187,7 +166,7 @@ export function buildDayExecutionItems({
             title: habit.title || habit.name || '',
             description: habit.target_value ? `目标: ${habit.target_value}` : '',
             completed: isCompleted
-        })
+        } satisfies HabitScheduleItem)
     })
 
     // ============================================
@@ -201,7 +180,5 @@ export function buildDayExecutionItems({
 }
 
 export function useDayExecutionItems() {
-    return {
-        buildDayExecutionItems
-    }
+    return { buildDayExecutionItems }
 }

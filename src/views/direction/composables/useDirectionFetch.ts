@@ -8,9 +8,7 @@ import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
-import type { Goal } from '@/services/db/goal'
 import type { GoalMonth } from '@/services/db/goalMonths'
-import type { GoalDay } from '@/services/db/goalDays'
 import type { GoalWithMeta, CategorizedGoalGroup, DirectionFetchReturn } from '@/views/direction/types'
 
 // 模块级守卫：watchers 全局只注册一次，避免多个调用点产生重复 watcher
@@ -61,18 +59,11 @@ export function useDirectionFetch(): DirectionFetchReturn {
     selectedGoal, editingGoal, selectedMonth
   } = storeToRefs(selectionStore)
 
-  // store 返回的 Ref 泛型与实际数据结构不匹配，需要断言为具体类型
-  const goalsTyped = goals as unknown as { value: Goal[] }
-  const goalMonthsTyped = goalMonths as unknown as { value: GoalMonth[] }
-  const selectedGoalTyped = selectedGoal as unknown as { value: GoalWithMeta | null }
-  const editingGoalTyped = editingGoal as unknown as { value: GoalWithMeta | null }
-  const selectedMonthTyped = selectedMonth as unknown as { value: number | null }
-
-  // store 缓存的类型同上，断言后可在 watcher 中直接读写
-  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
-  const goalDaysCache = dataStore.goalDaysCache as unknown as Record<string, GoalDay[]>
-  const goalMonthsMap = batchStore.goalMonthsMap as unknown as Record<string, GoalMonth>
-  const dailyTasks = batchStore.dailyTasks as unknown as Record<string, GoalDay>
+  // store 缓存引用，类型已在 store 定义中对齐
+  const goalMonthsCache = dataStore.goalMonthsCache
+  const goalDaysCache = dataStore.goalDaysCache
+  const goalMonthsMap = batchStore.goalMonthsMap
+  const dailyTasks = batchStore.dailyTasks
 
   // 初始化锁：仅在 fetchData 执行期间为 true，阻止 watcher 触发冗余请求
   let isInitializing = false
@@ -82,7 +73,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
   // 按分类分组目标列表，用于侧边栏分组展示
   const categorizedGoals = computed((): CategorizedGoalGroup[] => {
     const map = new Map<string, GoalWithMeta[]>()
-    for (const goal of goalsTyped.value) {
+    for (const goal of goals.value) {
       const categoryName = goal.goal_categories?.name || '未分类'
       if (!map.has(categoryName)) map.set(categoryName, [])
 
@@ -91,14 +82,14 @@ export function useDirectionFetch(): DirectionFetchReturn {
         name: goal.title,
         goal_id: goal.id,
         category_name: categoryName
-      } as GoalWithMeta)
+      })
     }
     return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
   })
 
   // 重新加载目标列表，供外部手动刷新使用
   const loadGoals = async (): Promise<void> => {
-    goalsTyped.value = await db.goal.list()
+    goals.value = await db.goal.list()
   }
 
   // 加载指定目标的月度计划，有缓存时跳过网络请求
@@ -155,23 +146,23 @@ export function useDirectionFetch(): DirectionFetchReturn {
     isPageLoading.value = true
     isInitializing = true
     try {
-      goalsTyped.value = await db.goal.list()
+      goals.value = await db.goal.list()
 
-      if (goalsTyped.value.length > 0) {
-        selectedGoalTyped.value = categorizedGoals.value[0]?.items[0] || null
+      if (goals.value.length > 0) {
+        selectedGoal.value = categorizedGoals.value[0]?.items[0] || null
       }
 
-      if (selectedGoalTyped.value) {
-        await loadGoalMonths(String(selectedGoalTyped.value.goal_id))
-        goalMonthsTyped.value = goalMonthsCache[String(selectedGoalTyped.value.goal_id)] || []
+      if (selectedGoal.value) {
+        await loadGoalMonths(String(selectedGoal.value.goal_id))
+        goalMonths.value = goalMonthsCache[String(selectedGoal.value.goal_id)] || []
       }
 
-      if (selectedGoalTyped.value && goalMonthsTyped.value.length > 0) {
-        const targetGm = resolveDefaultGoalMonth(goalMonthsTyped.value)
+      if (selectedGoal.value && goalMonths.value.length > 0) {
+        const targetGm = resolveDefaultGoalMonth(goalMonths.value)
         const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
 
         if (targetGm && targetMonth) {
-          selectedMonthTyped.value = targetMonth
+          selectedMonth.value = targetMonth
           await loadGoalDays(targetGm.id, { force: true })
         }
       }
@@ -191,7 +182,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
     watch(showAddModal, (val: boolean) => {
       if (!val) {
         if (showAddModalTimer) clearTimeout(showAddModalTimer)
-        showAddModalTimer = setTimeout(() => { editingGoalTyped.value = null }, 300)
+        showAddModalTimer = setTimeout(() => { editingGoal.value = null }, 300)
       }
     })
 
@@ -199,9 +190,9 @@ export function useDirectionFetch(): DirectionFetchReturn {
     watch(selectedMonth, async (newMonth: number | null, oldMonth: number | null) => {
       if (isInitializing) return
       if (!newMonth || newMonth === oldMonth) return
-      if (!selectedGoalTyped.value) return
+      if (!selectedGoal.value) return
 
-      const goalId = String(selectedGoalTyped.value.goal_id)
+      const goalId = String(selectedGoal.value.goal_id)
       if (!goalId) return
 
       const cached = goalMonthsCache[goalId] || []
@@ -217,19 +208,18 @@ export function useDirectionFetch(): DirectionFetchReturn {
       if (isInitializing) return
       if (!newGoal || newGoal === oldGoal) return
 
-      const goal = newGoal as unknown as GoalWithMeta
-      const goalId = String(goal.goal_id)
+      const goalId = String(newGoal.goal_id)
       if (!goalId) return
 
       await loadGoalMonths(goalId)
-      goalMonthsTyped.value = goalMonthsCache[goalId] || []
+      goalMonths.value = goalMonthsCache[goalId] || []
 
-      if (goalMonthsTyped.value.length > 0) {
-        const targetGm = resolveDefaultGoalMonth(goalMonthsTyped.value)
+      if (goalMonths.value.length > 0) {
+        const targetGm = resolveDefaultGoalMonth(goalMonths.value)
         const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
 
         if (targetGm && targetMonth) {
-          selectedMonthTyped.value = targetMonth
+          selectedMonth.value = targetMonth
           await loadGoalDays(targetGm.id, { force: true })
         }
       }

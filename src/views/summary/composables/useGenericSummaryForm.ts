@@ -15,8 +15,7 @@ export interface GenericSummaryFormData {
 // 初始数据接口（来自数据库记录）
 interface InitialSummaryData {
   title?: string
-  content?: string | Record<string, unknown>
-  [key: string]: unknown
+  content?: string | Record<string, string>
 }
 
 // composable 返回值接口

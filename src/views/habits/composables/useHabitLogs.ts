@@ -114,9 +114,9 @@ export function useHabitLogs(
             habitStore.patchHabit(String(habit.id), {
                 logs: updatedLogs,
                 monthlyLogs: updatedMonthlyLogs,
-                completedDays: updatedMonthlyLogs.map((l: DbHabitLog) => new Date(l.completed_at!).getDate()),
+                completedDays: updatedMonthlyLogs.map((l) => new Date(l.completed_at!).getDate()),
                 total: updatedLogs.length
-            } as any)
+            })
 
             try {
                 await db.habit.deleteLog(existingLog.id)
@@ -145,7 +145,7 @@ export function useHabitLogs(
                 monthlyLogs: patched.monthlyLogs,
                 completedDays: patched.completedDays,
                 total: patched.total
-            } as any)
+            })
 
             try {
                 await db.habit.log(habit.id, '', date)
@@ -203,7 +203,7 @@ export function useHabitLogs(
             monthlyLogs: patched.monthlyLogs,
             completedDays: patched.completedDays,
             total: patched.total
-        } as any)
+        })
 
         try {
             await db.habit.log(habit.id, note.trim(), date)

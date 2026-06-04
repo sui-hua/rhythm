@@ -9,6 +9,8 @@ export type { GoalCategory } from '@/services/db/goalCategories'
 
 // 从 habit 服务导入类型（用于扩展）
 import type { Habit as BaseHabit, HabitLog as BaseHabitLog } from '@/services/db/habit'
+import type { Task } from '@/services/db/task'
+import type { GoalDay } from '@/services/db/goalDays'
 export type { BaseHabit as Habit, BaseHabitLog as HabitLog }
 
 /** 带日志与统计数据的扩展习惯对象（由 habitStore + composable 补充字段） */
@@ -28,12 +30,11 @@ export interface HabitFrequency {
   monthDays?: number[]
 }
 
-/** 日程安排项（由 buildDayExecutionItems 生成） */
-export interface DailyScheduleItem {
+// ── 日程安排项（判别联合） ──
+
+/** 日程安排项基础字段 */
+interface DailyScheduleItemBase {
   id: string
-  sourceLabel: 'task' | 'goal_day' | 'habit'
-  type: 'task' | 'goal_day' | 'habit'
-  original: unknown
   startHour?: number
   durationHours: number
   rawDuration: number
@@ -48,8 +49,31 @@ export interface DailyScheduleItem {
   isCarryOver?: boolean
   carryOverSourceDate?: string | null
   carryOverLabel?: string
-  [key: string]: unknown
 }
+
+/** 任务来源的日程项 */
+export interface TaskScheduleItem extends DailyScheduleItemBase {
+  type: 'task'
+  sourceLabel: 'task'
+  original: Task
+}
+
+/** 目标计划来源的日程项 */
+export interface GoalDayScheduleItem extends DailyScheduleItemBase {
+  type: 'goal_day'
+  sourceLabel: 'goal_day'
+  original: GoalDay
+}
+
+/** 习惯来源的日程项 */
+export interface HabitScheduleItem extends DailyScheduleItemBase {
+  type: 'habit'
+  sourceLabel: 'habit'
+  original: BaseHabit
+}
+
+/** 日程安排项（判别联合，通过 type 字段区分来源） */
+export type DailyScheduleItem = TaskScheduleItem | GoalDayScheduleItem | HabitScheduleItem
 
 /** 番茄钟活跃任务 */
 export interface ActiveTask {
@@ -61,9 +85,5 @@ export interface ActiveTask {
   completed: boolean
   start_time?: string
   end_time?: string
-  original?: {
-    duration?: number
-    [key: string]: unknown
-  }
-  [key: string]: unknown
+  original?: Task
 }

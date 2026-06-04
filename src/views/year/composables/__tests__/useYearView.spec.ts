@@ -58,12 +58,12 @@ describe('useYearView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // 通过 vi.mocked 获取类型安全的 mock 引用
-    vi.mocked(useRoute).mockReturnValue(route as any)
-    vi.mocked(useRouter).mockReturnValue(router as any)
-    vi.mocked(useDateStore).mockReturnValue(dateStore as any)
-    vi.mocked(db.habit.list).mockResolvedValue([] as any)
-    vi.mocked(db.habit.listLogsByYear).mockResolvedValue([] as any)
+    // mockReturnValue 需要完整类型，测试只需 params 等部分字段
+    vi.mocked(useRoute).mockReturnValue(route as ReturnType<typeof useRoute>)
+    vi.mocked(useRouter).mockReturnValue(router as ReturnType<typeof useRouter>)
+    vi.mocked(useDateStore).mockReturnValue(dateStore as ReturnType<typeof useDateStore>)
+    vi.mocked(db.habit.list).mockResolvedValue([])
+    vi.mocked(db.habit.listLogsByYear).mockResolvedValue([])
   })
 
   it('0-99 的 year 路由会先规范化到 1900 年代，再继续年视图同步', async () => {

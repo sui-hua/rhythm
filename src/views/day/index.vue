@@ -86,7 +86,7 @@ const { startListening, stopListening, clearNotifiedHistory, requestPermission }
 // 页面挂载后请求通知权限并启动日程监听
 onMounted(async () => {
   await requestPermission()
-  startListening(() => dayStore.dailySchedule as any)
+  startListening(() => dayStore.dailySchedule)
 })
 
 // 日期切换时清除已通知历史，避免跨日期重复通知

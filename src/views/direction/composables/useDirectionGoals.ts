@@ -23,14 +23,8 @@ export function useDirectionGoals(): DirectionGoalsReturn {
   const { goalMonths, showAddModal, showCategoryModal } = storeToRefs(dataStore)
   const { selectedGoal, editingGoal, selectedMonth, activePicker } = storeToRefs(selectionStore)
 
-  // 将 store 引用断言为具体类型
-  const goalMonthsTyped = goalMonths as unknown as { value: GoalMonth[] }
-  const selectedGoalTyped = selectedGoal as unknown as { value: GoalWithMeta | null }
-  const editingGoalTyped = editingGoal as unknown as { value: GoalWithMeta | null }
-  const selectedMonthTyped = selectedMonth as unknown as { value: number | null }
-
-  // 将 store 缓存断言为具体类型
-  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
+  // store 缓存引用，类型已在 store 定义中对齐
+  const goalMonthsCache = dataStore.goalMonthsCache
 
   const { fetchData, loadGoalMonths } = useDirectionFetch()
 
@@ -45,8 +39,8 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 当前目标已有的月度计划覆盖的月份范围 */
   const activeMonthRange = computed((): number[] => {
-    if (!selectedGoalTyped.value) return []
-    const cached = goalMonthsCache[String(selectedGoalTyped.value.goal_id)] || []
+    if (!selectedGoal.value) return []
+    const cached = goalMonthsCache[String(selectedGoal.value.goal_id)] || []
     if (cached.length === 0) return []
 
     const monthValues = cached
@@ -64,7 +58,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 打开新增弹窗 */
   const handleAddClick = (): void => {
-    editingGoalTyped.value = null
+    editingGoal.value = null
     showAddModal.value = true
   }
 
@@ -73,7 +67,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
     if (!goalMonthsCache[String(goal.goal_id)]) {
       await loadGoalMonths(String(goal.goal_id))
     }
-    const relatedGoalMonths = dataStore.getGoalMonthsByGoalId(String(goal.goal_id)) as GoalMonth[]
+    const relatedGoalMonths = dataStore.getGoalMonthsByGoalId(String(goal.goal_id))
 
     let minMonth = 12
     let maxMonth = 1
@@ -95,7 +89,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
       maxMonth = goal.endMonth ?? 12
     }
 
-    editingGoalTyped.value = {
+    editingGoal.value = {
       ...goal,
       startMonth: minMonth,
       endMonth: maxMonth
@@ -146,7 +140,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
         goalToUpdate
       )
 
-      const existingGoalMonths = dataStore.getGoalMonthsByGoalId(String(goalId)) as GoalMonth[]
+      const existingGoalMonths = dataStore.getGoalMonthsByGoalId(String(goalId))
       const existingMonths = existingGoalMonths
         .map(mp => getDateOnlyMonth(mp.month))
         .filter((m): m is number => m !== null)
@@ -205,11 +199,11 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 处理编辑弹窗的更新提交 */
   const handleUpdateGoal = async (updatedGoal: GoalFormData): Promise<void> => {
-    if (!editingGoalTyped.value || isSubmitting.value) return
+    if (!editingGoal.value || isSubmitting.value) return
 
     isSubmitting.value = true
     const success = await updateGoalData(
-      editingGoalTyped.value,
+      editingGoal.value,
       updatedGoal.title,
       updatedGoal.category_id ?? undefined,
       updatedGoal.task_time,
@@ -227,7 +221,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 保存月度计划的详细信息（标题、时间等） */
   const saveMonthlyPlan = async (m: number, payload: UpdateGoalMonthPayload): Promise<void> => {
-    const currentMp = (dataStore.getGoalMonthsByGoalId(String(selectedGoalTyped.value!.goal_id)) as GoalMonth[]).find(
+    const currentMp = dataStore.getGoalMonthsByGoalId(String(selectedGoal.value!.goal_id)).find(
       mp => getDateOnlyMonth(mp.month) === m
     )
     if (currentMp) {
@@ -299,23 +293,23 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 删除目标：先删关联的月度计划，再删 goal 记录 */
   const handleDeleteGoal = async (): Promise<void> => {
-    if (!editingGoalTyped.value || isSubmitting.value) return
+    if (!editingGoal.value || isSubmitting.value) return
 
     isSubmitting.value = true
     try {
-      const goalId = editingGoalTyped.value.goal_id
+      const goalId = editingGoal.value.goal_id
       if (!goalId) return
 
-      const relatedGoalMonths = dataStore.getGoalMonthsByGoalId(String(goalId)) as GoalMonth[]
+      const relatedGoalMonths = dataStore.getGoalMonthsByGoalId(String(goalId))
 
       // 靠数据库级联删除，只需删 goalMonths
       await Promise.all(relatedGoalMonths.map(mp => db.goalMonths.delete(mp.id)))
 
       await db.goal.delete(String(goalId))
 
-      if (selectedGoalTyped.value && selectedGoalTyped.value.goal_id === goalId) {
-        selectedGoalTyped.value = null
-        selectedMonthTyped.value = null
+      if (selectedGoal.value && selectedGoal.value.goal_id === goalId) {
+        selectedGoal.value = null
+        selectedMonth.value = null
       }
 
       await fetchData()
@@ -329,10 +323,10 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 确认月份范围变更：更新目标的起止月份 */
   const handleConfirmRange = async ({ start, end }: DateRange): Promise<void> => {
-    if (!selectedGoalTyped.value) return
+    if (!selectedGoal.value) return
 
     const goalToUpdate: GoalWithMeta = {
-      ...selectedGoalTyped.value,
+      ...selectedGoal.value,
       startMonth: start,
       endMonth: end
     }
@@ -342,12 +336,12 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   return {
     months,
-    selectedGoal: selectedGoalTyped as unknown as DirectionGoalsReturn['selectedGoal'],
-    editingGoal: editingGoalTyped as unknown as DirectionGoalsReturn['editingGoal'],
+    selectedGoal,
+    editingGoal,
     activePicker,
     showAddModal,
     showCategoryModal,
-    goalMonthsMap: batchStore.goalMonthsMap as unknown as Record<string, GoalMonth>,
+    goalMonthsMap: batchStore.goalMonthsMap,
 
     activeMonthRange,
     handleAddClick,

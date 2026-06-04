@@ -97,7 +97,7 @@ export interface DirectionGoalsReturn {
 export interface DirectionSelectionReturn {
   selectedGoal: Ref<GoalWithMeta | null>
   selectedMonth: Ref<number | null>
-  selectedDates: Record<number, number[]>
+  selectedDates: Record<string, number[]>
   dailyTasks: Record<string, GoalDay>
   datesWithTasks: ComputedRef<number[]>
   goalKey: (month: number) => string
@@ -126,5 +126,5 @@ export interface MonthlyProgressParams {
   dailyTasks: Record<string, GoalDay>
   goalId: string | number | null | undefined
   month: number | null | undefined
-  isGoalDayCompleted: (status: unknown) => boolean
+  isGoalDayCompleted: (status: number) => boolean
 }
