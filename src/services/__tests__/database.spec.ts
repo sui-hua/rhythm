@@ -21,9 +21,6 @@ vi.mock('@/services/supabase', () => ({
   }
 }))
 
-vi.mock('@/composables/useGlobalLoading', () => ({
-  trackGlobalLoading: (fn: () => void) => fn()
-}))
 
 describe('database service', () => {
   beforeEach(() => {

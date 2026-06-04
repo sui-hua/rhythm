@@ -167,7 +167,6 @@ export const useDayStore = defineStore('day', () => {
   }
 
   // 当日日程安排（由 buildDayExecutionItems 聚合生成）
-  // buildDayExecutionItems 内部有自己的类型定义，这里使用 any 绕过类型差异
   const dailySchedule = computed<DailyScheduleItem[]>(() => {
     return buildDayExecutionItems({
       targetDate: new Date(
@@ -175,10 +174,10 @@ export const useDayStore = defineStore('day', () => {
         routeDateContext.value.month - 1,
         routeDateContext.value.day
       ),
-      tasks: tasks.value as any,
-      goalDays: goalDays.value as any,
-      habits: habits.value as any,
-      habitLogs: habitLogs.value as any
+      tasks: tasks.value,
+      goalDays: goalDays.value,
+      habits: habits.value,
+      habitLogs: habitLogs.value
     }) as unknown as DailyScheduleItem[]
   })
 

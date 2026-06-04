@@ -15,9 +15,13 @@ import { TABLES } from './tables'
 export interface Task {
   id: string | number
   title: string
+  description?: string | null
   status?: 'inbox' | 'pending' | 'completed'
+  completed?: boolean
   start_time?: string
   end_time?: string
+  actual_start_time?: string
+  actual_end_time?: string
   created_at?: string
   updated_at?: string
 }

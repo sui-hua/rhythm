@@ -9,6 +9,9 @@ export interface Habit {
   description?: string
   frequency?: string
   is_archived?: boolean
+  task_time?: string | null
+  duration?: number
+  target_value?: string
   created_at?: string
   updated_at?: string
 }

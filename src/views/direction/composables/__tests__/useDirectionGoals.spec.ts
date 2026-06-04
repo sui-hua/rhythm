@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { db } from '@/services/database'
 import type { Mock } from 'vitest'
 
@@ -34,16 +36,22 @@ vi.mock('@/services/database', () => ({
   }
 }))
 
-let store: ReturnType<typeof useDirectionStore>
+let dataStore: ReturnType<typeof useGoalDataStore>
+let selectionStore: ReturnType<typeof useGoalSelectionStore>
+let batchStore: ReturnType<typeof useGoalBatchStore>
 
 beforeEach(() => {
   vi.clearAllMocks()
   setActivePinia(createPinia())
-  store = useDirectionStore()
+  dataStore = useGoalDataStore()
+  selectionStore = useGoalSelectionStore()
+  batchStore = useGoalBatchStore()
   ;(db.goal.create as Mock).mockResolvedValue({ id: 'p-new' })
   ;(db.goalMonths.create as Mock).mockResolvedValue({})
   ;(db.goalMonths.update as Mock).mockResolvedValue({})
-  store.reset()
+  dataStore.reset()
+  selectionStore.reset()
+  batchStore.reset()
 })
 
 describe('useDirectionGoals', () => {
@@ -61,7 +69,7 @@ describe('useDirectionGoals', () => {
   })
 
   it('derives editable month bounds from date-only monthly plan strings', async () => {
-    store.goalMonthsCache.p1 = [
+    dataStore.goalMonthsCache.p1 = [
       { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' },
       { id: 'mp-2', goal_id: 'p1', month: '2026-07-01' }
     ]
@@ -75,18 +83,18 @@ describe('useDirectionGoals', () => {
       endMonth: 12
     })
 
-    expect(store.editingGoal.startMonth).toBe(4)
-    expect(store.editingGoal.endMonth).toBe(7)
+    expect(selectionStore.editingGoal.startMonth).toBe(4)
+    expect(selectionStore.editingGoal.endMonth).toBe(7)
   })
 
   it('uses date-only month values when saving monthly plans', async () => {
     ;(db.goalMonths.update as Mock).mockResolvedValue({})
 
-    store.goalMonthsCache.p1 = [
+    dataStore.goalMonthsCache.p1 = [
       { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' }
     ]
-    store.selectedGoal = { goal_id: 'p1' }
-    store.selectedMonth = 4
+    selectionStore.selectedGoal = { goal_id: 'p1' }
+    selectionStore.selectedMonth = 4
 
     const { saveMonthlyPlan } = useDirectionGoals()
     await saveMonthlyPlan(4, { title: '更新标题' })
@@ -163,10 +171,10 @@ describe('useDirectionGoals', () => {
   })
 
   it('writes goal time into missing monthly plans when expanding a goal range', async () => {
-    store.goalMonthsCache.p1 = [
+    dataStore.goalMonthsCache.p1 = [
       { id: 'mp-4', goal_id: 'p1', month: '2026-04-01', task_time: '08:00', duration: 30 }
     ]
-    store.selectedGoal = {
+    selectionStore.selectedGoal = {
       goal_id: 'p1',
       title: '读书',
       task_time: '08:00',
@@ -188,7 +196,7 @@ describe('useDirectionGoals', () => {
   })
 
   it('writes carry-over lookback days into updated plans when editing a goal', async () => {
-    store.editingGoal = {
+    selectionStore.editingGoal = {
       goal_id: 'p1',
       title: '目标',
       carry_over_lookback_days: 0

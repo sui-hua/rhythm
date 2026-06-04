@@ -12,7 +12,6 @@
  * - VITE_SUPABASE_KEY    → Supabase Anon Key
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 
 // 从环境变量获取 Supabase 配置
 const supabaseUrl: string | undefined = import.meta.env.VITE_SUPABASE_URL
@@ -59,95 +58,81 @@ interface BaseService<T = any> {
 function createBase<T = any>(tableName: string): BaseService<T> {
   return {
     async list(options: ListOptions = {}) {
-      return await trackGlobalLoading(async () => {
-        const {
-          orderField = 'created_at',
-          ascending = false,
-          selectFields = '*'
-        } = options
+      const {
+        orderField = 'created_at',
+        ascending = false,
+        selectFields = '*'
+      } = options
 
-        const { data, error } = await supabase
-          .from(tableName)
-          .select(selectFields)
-          .order(orderField, { ascending })
+      const { data, error } = await supabase
+        .from(tableName)
+        .select(selectFields)
+        .order(orderField, { ascending })
 
-        if (error) throw error
-        return data as T[]
-      })
+      if (error) throw error
+      return data as T[]
     },
 
     async getById(id: string | number) {
-      return await trackGlobalLoading(async () => {
-        const { data, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .eq('id', id)
-          .single()
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('id', id)
+        .single()
 
-        if (error) throw error
-        return data as T
-      })
+      if (error) throw error
+      return data as T
     },
 
     async create<U = T>(payload: any) {
-      return await trackGlobalLoading(async () => {
-        const { data, error } = await supabase
-          .from(tableName)
-          .insert(payload)
-          .select()
-          .single()
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert(payload)
+        .select()
+        .single()
 
-        if (error) throw error
-        return data as U
-      })
+      if (error) throw error
+      return data as U
     },
 
     async createMany<U = T>(payloadArray: any[]) {
-      return await trackGlobalLoading(async () => {
-        const { data, error } = await supabase
-          .from(tableName)
-          .insert(payloadArray)
-          .select()
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert(payloadArray)
+        .select()
 
-        if (error) throw error
-        return data as U[]
-      })
+      if (error) throw error
+      return data as U[]
     },
 
     async update<U = T>(id: string | number, updates: any) {
-      return await trackGlobalLoading(async () => {
-        const { data, error } = await supabase
-          .from(tableName)
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single()
+      const { data, error } = await supabase
+        .from(tableName)
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
 
-        if (error) throw error
-        return data as U
-      })
+      if (error) throw error
+      return data as U
     },
 
     async query<U = T>(queryFn: (query: any) => any) {
-      return await trackGlobalLoading(async () => {
-        if (typeof queryFn !== 'function') {
-          throw new Error('queryFn 必须是一个函数')
-        }
-        const { data, error } = await queryFn(supabase.from(tableName))
-        if (error) throw error
-        return data as U[]
-      })
+      if (typeof queryFn !== 'function') {
+        throw new Error('queryFn 必须是一个函数')
+      }
+      const { data, error } = await queryFn(supabase.from(tableName))
+      if (error) throw error
+      return data as U[]
     },
 
     async delete(id: string | number) {
-      return await trackGlobalLoading(async () => {
-        const { error } = await supabase
-          .from(tableName)
-          .delete()
-          .eq('id', id)
+      const { error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('id', id)
 
-        if (error) throw error
-      })
+      if (error) throw error
     }
   }
 }

@@ -4,11 +4,11 @@
  */
 
 import { db } from '@/services/database'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import type { GoalDay, DirectionTasksReturn } from '@/views/direction/types'
 
 export function useDirectionTasks(): DirectionTasksReturn {
-  const store = useDirectionStore()
+  const batchStore = useGoalBatchStore()
 
   /**
    * 更新单个日计划任务。
@@ -24,7 +24,7 @@ export function useDirectionTasks(): DirectionTasksReturn {
       })
 
       // 同步兼容层：遍历找 id 匹配项并更新
-      const tasks = store.dailyTasks as unknown as Record<string, GoalDay>
+      const tasks = batchStore.dailyTasks as unknown as Record<string, GoalDay>
       for (const [k, v] of Object.entries(tasks)) {
         if (v.id === task.id) {
           tasks[k] = { ...v, ...payload }

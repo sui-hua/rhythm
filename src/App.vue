@@ -37,14 +37,18 @@ import { Toaster } from '@/components/ui/sonner'
 import supabase from './services/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
-const directionStore = useDirectionStore()
+const goalDataStore = useGoalDataStore()
+const goalSelectionStore = useGoalSelectionStore()
+const goalBatchStore = useGoalBatchStore()
 const { requestPermission } = useNotifications()
 
 // 根据路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
@@ -85,7 +89,9 @@ onMounted(async () => {
         authStore.setUser(session.user)
       } else {
         authStore.clearAuth()
-        directionStore.reset()
+        goalDataStore.reset()
+        goalSelectionStore.reset()
+        goalBatchStore.reset()
         router.push('/login')
       }
     })

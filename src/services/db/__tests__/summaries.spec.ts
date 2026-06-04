@@ -12,9 +12,6 @@ vi.mock('@/services/supabase', () => ({
   default: client
 }))
 
-vi.mock('@/composables/useGlobalLoading', () => ({
-  trackGlobalLoading: (fn: () => void) => fn()
-}))
 
 vi.mock('@/views/summary/utils/summaryAdapters', () => ({
   mapSummaryRowToRecord: (row: unknown) => row

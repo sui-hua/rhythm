@@ -160,11 +160,11 @@ import CategoryManagementModal from './CategoryManagementModal.vue'
 import { Settings2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
 
-import { months, useDirectionStore } from '@/stores/directionStore'
+import { months, useGoalDataStore } from '@/stores/goalDataStore'
 import { storeToRefs } from 'pinia'
 import { withLoadingLock } from '@/utils/throttle'
 
-const store = useDirectionStore()
+const store = useGoalDataStore()
 const { categories } = storeToRefs(store)
 const { showAddModal, showCategoryModal, editingGoal, handleAddGoal, handleUpdateGoal, handleDeleteGoal } = useDirectionGoals()
 

@@ -5,19 +5,24 @@
 
 import { computed } from 'vue'
 import { getDateOnlyDay, getDateOnlyMonth, getDateOnlyYear } from '@/views/direction/utils/dateOnly'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
 import type { GoalDay, GoalMonth, GoalWithMeta, DirectionSelectionReturn } from '@/views/direction/types'
 
 export function useDirectionSelection(): DirectionSelectionReturn {
-  const store = useDirectionStore()
-  const { selectedGoal, selectedMonth, isSelecting, activePicker, archiveVersion } = storeToRefs(store)
+  const dataStore = useGoalDataStore()
+  const selectionStore = useGoalSelectionStore()
+  const batchStore = useGoalBatchStore()
+  const { selectedGoal, selectedMonth, isSelecting, activePicker } = storeToRefs(selectionStore)
+  const { archiveVersion } = storeToRefs(dataStore)
 
   // 将 store 的 reactive 属性断言为具体类型
-  const selectedDates = store.selectedDates as unknown as Record<number, number[]>
-  const dailyTasks = store.dailyTasks as unknown as Record<string, GoalDay>
-  const goalMonthsCache = store.goalMonthsCache as unknown as Record<string, GoalMonth[]>
-  const goalDaysCache = store.goalDaysCache as unknown as Record<string, GoalDay[]>
+  const selectedDates = batchStore.selectedDates as unknown as Record<number, number[]>
+  const dailyTasks = batchStore.dailyTasks as unknown as Record<string, GoalDay>
+  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
+  const goalDaysCache = dataStore.goalDaysCache as unknown as Record<string, GoalDay[]>
 
   /** 生成 goal-month 复合 key，用于匹配缓存中的条目 */
   const goalKey = (m: number): string => {

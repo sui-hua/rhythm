@@ -1,65 +1,17 @@
 import { formatDuration } from '@/utils/formatDuration'
 import { isGoalDayCompleted } from '@/utils/goalDayStatus'
 import { toDateOnly } from '@/utils/dateFormatter'
-
-/** 任务原始数据 */
-export interface TaskRecord {
-    id: string | number
-    start_time?: string
-    end_time?: string
-    title: string
-    description?: string | null
-    completed?: boolean
-    status?: string
-    actual_start_time?: string
-    actual_end_time?: string
-    [key: string]: unknown
-}
-
-/** goal_day 原始数据 */
-export interface GoalDayRecord {
-    id: string
-    title: string
-    description?: string | null
-    status: number
-    day?: string
-    task_time?: string
-    duration?: number
-    goal_months?: {
-        task_time?: string
-        duration?: number
-        goal?: {
-            task_time?: string
-            duration?: number
-        }
-    }
-    [key: string]: unknown
-}
-
-/** 习惯原始数据 */
-export interface HabitRecord {
-    id: string | number
-    title?: string
-    name?: string
-    task_time?: string
-    duration?: number
-    target_value?: string
-    [key: string]: unknown
-}
-
-/** 习惯日志原始数据 */
-export interface HabitLogRecord {
-    habit_id: string | number
-    [key: string]: unknown
-}
+import type { Task } from '@/services/db/task'
+import type { GoalDay } from '@/services/db/goalDays'
+import type { Habit, HabitLog } from '@/services/db/habit'
 
 /** 构建日程表的输入参数 */
 export interface DayExecutionItemsInput {
     targetDate?: Date | null
-    tasks?: TaskRecord[]
-    goalDays?: GoalDayRecord[]
-    habits?: HabitRecord[]
-    habitLogs?: HabitLogRecord[]
+    tasks?: Task[]
+    goalDays?: GoalDay[]
+    habits?: Habit[]
+    habitLogs?: HabitLog[]
 }
 
 /** 构建后的日程项 */
@@ -67,7 +19,7 @@ export interface DayExecutionItem {
     id: string | number
     sourceLabel: 'task' | 'goal_day' | 'habit'
     type: 'task' | 'goal_day' | 'habit'
-    original: TaskRecord | GoalDayRecord | HabitRecord
+    original: Task | GoalDay | Habit
     startHour: number | undefined
     durationHours: number
     rawDuration: number

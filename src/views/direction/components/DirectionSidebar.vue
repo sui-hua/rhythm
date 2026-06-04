@@ -58,7 +58,7 @@
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { computed } from 'vue'
 import { Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -68,7 +68,7 @@ import { useResizable } from '@/composables/useResizable'
 import { isGoalDayCompleted } from '@/utils/goalDayStatus'
 import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 
-const store = useDirectionStore()
+const batchStore = useGoalBatchStore()
 const { categorizedGoals } = useDirectionFetch()
 const { selectedGoal, selectGoal, selectedMonth } = useDirectionSelection()
 const { handleAddClick, handleEditGoal } = useDirectionGoals()
@@ -82,7 +82,7 @@ const systemLoad = computed(() => {
   const month = selectedMonth.value
 
   return getDirectionMonthlyProgress({
-    dailyTasks: store.dailyTasks as any,
+    dailyTasks: batchStore.dailyTasks as any,
     goalId,
     month,
     isGoalDayCompleted: isGoalDayCompleted as any

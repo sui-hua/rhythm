@@ -4,13 +4,12 @@
  * 并注册模块级 watcher 响应目标/月份切换。
  */
 
-import { computed, watch, ref, toRefs } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { db } from '@/services/database'
 import { parseDateOnly, getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
-import { usePageStateStore } from '@/stores/pageStateStore'
 import { storeToRefs } from 'pinia'
 import type { Goal } from '@/services/db/goal'
 import type { GoalMonth } from '@/services/db/goalMonths'
@@ -49,15 +48,13 @@ export function useDirectionFetch(): DirectionFetchReturn {
   const dataStore = useGoalDataStore()
   const selectionStore = useGoalSelectionStore()
   const batchStore = useGoalBatchStore()
-  const pageStateStore = usePageStateStore()
 
   const {
-    goals, goalMonths, initialized
+    goals, goalMonths, initialized, showAddModal
   } = storeToRefs(dataStore)
   const {
     selectedGoal, editingGoal, selectedMonth
   } = storeToRefs(selectionStore)
-  const { showAddModal } = toRefs(pageStateStore.state.direction)
 
   // 将 store 引用断言为具体类型
   const goalsTyped = goals as unknown as { value: Goal[] }

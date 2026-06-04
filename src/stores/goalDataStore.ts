@@ -1,10 +1,25 @@
 // 目标数据状态：goals、月度计划缓存、日计划缓存、分类、归档版本
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
+import { getMonthName } from '@/utils/dateFormatter'
 import type { Goal } from '@/services/db/goal'
 import type { GoalMonth } from '@/services/db/goalMonths'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { GoalCategory } from '@/types/models'
+
+/** 月份常量项 */
+interface MonthItem {
+  label: string
+  value: number
+  full: string
+}
+
+// 月份常量，供 direction 模块使用
+export const months: MonthItem[] = Array.from({ length: 12 }, (_, i) => ({
+  label: getMonthName(i + 1, 'zh'),
+  value: i + 1,
+  full: getMonthName(i + 1, 'full')
+}))
 
 /** 按 goalId 缓存的月度计划映射 */
 type GoalMonthsCache = Record<string, GoalMonth[]>
@@ -26,6 +41,9 @@ export const useGoalDataStore = defineStore('goalData', () => {
   const categories = ref<GoalCategory[]>([])
   // 页面是否已初始化
   const initialized = ref<boolean>(false)
+  // 方向模块 UI 状态
+  const showAddModal = ref<boolean>(false)
+  const showCategoryModal = ref<boolean>(false)
 
   // 按 goalId 获取缓存的月度计划
   const getGoalMonthsByGoalId = (goalId: string): GoalMonth[] => goalMonthsCache[goalId] || []
@@ -59,13 +77,15 @@ export const useGoalDataStore = defineStore('goalData', () => {
     initialized.value = false
     categories.value = []
     archiveVersion.value = 0
+    showAddModal.value = false
+    showCategoryModal.value = false
     Object.keys(goalMonthsCache).forEach(key => delete goalMonthsCache[key])
     Object.keys(goalDaysCache).forEach(key => delete goalDaysCache[key])
   }
 
   return {
     goals, goalMonths, goalMonthsCache, goalDaysCache, archiveVersion,
-    categories, initialized,
+    categories, initialized, showAddModal, showCategoryModal,
     getGoalMonthsByGoalId, clearGoalDaysCache, syncGoalMonthsToFlatList, reset
   }
 })

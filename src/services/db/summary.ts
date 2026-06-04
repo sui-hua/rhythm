@@ -6,7 +6,6 @@
  */
 
 import client from '@/services/supabase'
-import { trackGlobalLoading } from '@/composables/useGlobalLoading'
 import { mapSummaryRowToRecord } from '@/views/summary/utils/summaryAdapters'
 import { TABLES } from './tables'
 
@@ -55,16 +54,14 @@ export const summary = {
    * @returns 总结记录数组
    */
   async listByKind(kind: Summary['kind']): Promise<Summary[]> {
-    return await trackGlobalLoading(async () => {
-      const { data, error } = await client
-        .from(table)
-        .select('*')
-        .eq('kind', kind)
-        .order('period_start', { ascending: false })
+    const { data, error } = await client
+      .from(table)
+      .select('*')
+      .eq('kind', kind)
+      .order('period_start', { ascending: false })
 
-      if (error) throw error
-      return (data || []).map(mapSummaryRowToRecord)
-    })
+    if (error) throw error
+    return (data || []).map(mapSummaryRowToRecord)
   },
 
   /**
@@ -73,7 +70,7 @@ export const summary = {
    * @returns 保存后的记录
    */
   async save(payload: SummaryPayload): Promise<Summary> {
-    return await trackGlobalLoading(async () => persistSummary(payload))
+    return await persistSummary(payload)
   },
 
   /**
@@ -81,9 +78,7 @@ export const summary = {
    * @param id - 要删除的记录 ID
    */
   async remove(id: string | number): Promise<void> {
-    return await trackGlobalLoading(async () => {
-      const { error } = await client.from(table).delete().eq('id', id)
-      if (error) throw error
-    })
+    const { error } = await client.from(table).delete().eq('id', id)
+    if (error) throw error
   }
 }

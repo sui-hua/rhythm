@@ -6,7 +6,9 @@
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
@@ -16,17 +18,21 @@ import type { GoalWithMeta, DirectionBatchReturn } from '@/views/direction/types
 
 export function useDirectionBatch(): DirectionBatchReturn {
   const authStore = useAuthStore()
-  const store = useDirectionStore()
-  const { selectedGoal, selectedMonth, batchInput, archiveVersion } = storeToRefs(store)
+  const dataStore = useGoalDataStore()
+  const selectionStore = useGoalSelectionStore()
+  const batchStore = useGoalBatchStore()
+  const { selectedGoal, selectedMonth } = storeToRefs(selectionStore)
+  const { batchInput } = storeToRefs(batchStore)
+  const { archiveVersion } = storeToRefs(dataStore)
 
   // 将 store 引用断言为具体类型
   const selectedGoalTyped = selectedGoal as unknown as { value: GoalWithMeta | null }
   const selectedMonthTyped = selectedMonth as unknown as { value: number | null }
 
   // 将 store 缓存断言为具体类型
-  const goalMonthsCache = store.goalMonthsCache as unknown as Record<string, GoalMonth[]>
-  const goalDaysCache = store.goalDaysCache as unknown as Record<string, GoalDay[]>
-  const selectedDates = store.selectedDates as unknown as Record<number, number[]>
+  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
+  const goalDaysCache = dataStore.goalDaysCache as unknown as Record<string, GoalDay[]>
+  const selectedDates = batchStore.selectedDates as unknown as Record<number, number[]>
 
   const { hasTask } = useDirectionSelection()
   const { loadGoalDays } = useDirectionFetch()

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { db } from '@/services/database'
 import type { Mock } from 'vitest'
 import type { DirectionFetchReturn } from '@/views/direction/types'
@@ -29,7 +31,9 @@ vi.mock('@/services/database', () => ({
   }
 }))
 
-let store: ReturnType<typeof useDirectionStore>
+let dataStore: ReturnType<typeof useGoalDataStore>
+let selectionStore: ReturnType<typeof useGoalSelectionStore>
+let batchStore: ReturnType<typeof useGoalBatchStore>
 let useDirectionFetch: () => DirectionFetchReturn
 let parseDateOnly: (dateStr: string) => Date | null
 
@@ -38,8 +42,12 @@ beforeEach(async () => {
   vi.useFakeTimers()
   vi.clearAllMocks()
   setActivePinia(createPinia())
-  store = useDirectionStore()
-  store.reset()
+  dataStore = useGoalDataStore()
+  selectionStore = useGoalSelectionStore()
+  batchStore = useGoalBatchStore()
+  dataStore.reset()
+  selectionStore.reset()
+  batchStore.reset()
 
   // 重新导入模块，重置模块级变量
   vi.resetModules()
@@ -98,12 +106,12 @@ describe('useDirectionFetch', () => {
     useDirectionFetch()
     await drainFetchData()
 
-    expect(store.goalMonthsMap['goal-p1-4']).toEqual({
+    expect(batchStore.goalMonthsMap['goal-p1-4']).toEqual({
       id: 'mp1',
       goal_id: 'p1',
       month: '2026-04-01'
     })
-    expect(store.dailyTasks['goal-p1-4-30']).toEqual({
+    expect(batchStore.dailyTasks['goal-p1-4-30']).toEqual({
       id: 'dp1',
       monthly_goal_id: 'mp1',
       day: '2026-04-30'
@@ -168,7 +176,7 @@ describe('useDirectionFetch', () => {
     useDirectionFetch()
     await drainFetchData()
 
-    expect(store.selectedMonth).toBe(currentMonth)
+    expect(selectionStore.selectedMonth).toBe(currentMonth)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-current')
   })
 
@@ -191,7 +199,7 @@ describe('useDirectionFetch', () => {
     useDirectionFetch()
     await drainFetchData()
 
-    expect(store.selectedMonth).toBe(firstMonth)
+    expect(selectionStore.selectedMonth).toBe(firstMonth)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-first')
   })
 })
@@ -221,7 +229,7 @@ describe('watcher registration guard', () => {
 
     // 切换到缓存中已有的另一个月份（与 fetchData 选中的不同）
     // fetchData 会选择当前月或第一个排序月（4月），切换到 5 月触发 watcher
-    store.selectedMonth = 5
+    selectionStore.selectedMonth = 5
     await flushWatchers()
 
     // loadGoalDays 只应被调用一次（watcher 只注册一次），而非两次
@@ -247,12 +255,12 @@ describe('selectedMonth watcher', () => {
     ;(db.goalDays.list as Mock).mockClear()
 
     // 模拟用户切换月份（从初始月份切换到 5 月）
-    store.selectedMonth = 5
+    selectionStore.selectedMonth = 5
     await flushWatchers()
 
     // 应清除旧缓存并加载新月份的日计划
     // 注意：{ force: true } 是 loadGoalDays 的选项，不会透传给 db.goalDays.list
-    expect(store.goalDaysCache).not.toHaveProperty('mp1')
+    expect(dataStore.goalDaysCache).not.toHaveProperty('mp1')
     expect(db.goalDays.list).toHaveBeenCalledWith('mp2')
   })
 })
@@ -278,7 +286,7 @@ describe('selectedGoal watcher', () => {
     ])
 
     // 模拟用户切换目标
-    store.selectedGoal = { goal_id: 'p2', title: '目标 2' }
+    selectionStore.selectedGoal = { goal_id: 'p2', title: '目标 2' }
     await flushWatchers()
 
     // 应加载新目标的月度计划
@@ -292,21 +300,21 @@ describe('showAddModal watcher', () => {
     ;(db.goalMonths.list as Mock).mockResolvedValue([])
     ;(db.goalDays.list as Mock).mockResolvedValue([])
 
-    store.editingGoal = { id: 'g1', title: '编辑中' }
+    selectionStore.editingGoal = { id: 'g1', title: '编辑中' }
 
     useDirectionFetch()
     await drainFetchData()
 
     // 先设为 true，等待 watcher 处理后再设为 false
     // Vue 3 会合并同步更新，必须用 nextTick 分开两次赋值
-    store.showAddModal = true
+    dataStore.showAddModal = true
     await nextTick()
-    store.showAddModal = false
+    dataStore.showAddModal = false
     await nextTick()
 
     // 延迟后应清空编辑状态
     await vi.advanceTimersByTimeAsync(300)
-    expect(store.editingGoal).toBeNull()
+    expect(selectionStore.editingGoal).toBeNull()
   })
 
   it('cancels previous timer when modal toggles false multiple times quickly', async () => {
@@ -314,29 +322,29 @@ describe('showAddModal watcher', () => {
     ;(db.goalMonths.list as Mock).mockResolvedValue([])
     ;(db.goalDays.list as Mock).mockResolvedValue([])
 
-    store.editingGoal = { id: 'g1', title: '编辑中' }
+    selectionStore.editingGoal = { id: 'g1', title: '编辑中' }
 
     useDirectionFetch()
     await drainFetchData()
 
     // 第一次关闭弹窗
-    store.showAddModal = true
+    dataStore.showAddModal = true
     await nextTick()
-    store.showAddModal = false
+    dataStore.showAddModal = false
     await nextTick()
 
     // 100ms 时前一个定时器尚未触发，编辑状态仍保留
     await vi.advanceTimersByTimeAsync(100)
-    expect(store.editingGoal).not.toBeNull()
+    expect(selectionStore.editingGoal).not.toBeNull()
 
     // 第二次关闭弹窗（重置定时器）
-    store.showAddModal = true
+    dataStore.showAddModal = true
     await nextTick()
-    store.showAddModal = false
+    dataStore.showAddModal = false
     await nextTick()
 
     // 推进 300ms，只有最后一个定时器生效
     await vi.advanceTimersByTimeAsync(300)
-    expect(store.editingGoal).toBeNull()
+    expect(selectionStore.editingGoal).toBeNull()
   })
 })

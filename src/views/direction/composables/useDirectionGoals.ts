@@ -7,7 +7,9 @@ import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
-import { months, useDirectionStore } from '@/stores/directionStore'
+import { months, useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import type { GoalMonth, CreateGoalMonthPayload, UpdateGoalMonthPayload } from '@/services/db/goalMonths'
@@ -15,8 +17,11 @@ import type { GoalWithMeta, GoalFormData, DateRange, DirectionGoalsReturn } from
 
 export function useDirectionGoals(): DirectionGoalsReturn {
   const authStore = useAuthStore()
-  const store = useDirectionStore()
-  const { goalMonths, selectedGoal, editingGoal, selectedMonth, activePicker, showAddModal, showCategoryModal } = storeToRefs(store)
+  const dataStore = useGoalDataStore()
+  const selectionStore = useGoalSelectionStore()
+  const batchStore = useGoalBatchStore()
+  const { goalMonths, showAddModal, showCategoryModal } = storeToRefs(dataStore)
+  const { selectedGoal, editingGoal, selectedMonth, activePicker } = storeToRefs(selectionStore)
 
   // 将 store 引用断言为具体类型
   const goalMonthsTyped = goalMonths as unknown as { value: GoalMonth[] }
@@ -25,7 +30,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
   const selectedMonthTyped = selectedMonth as unknown as { value: number | null }
 
   // 将 store 缓存断言为具体类型
-  const goalMonthsCache = store.goalMonthsCache as unknown as Record<string, GoalMonth[]>
+  const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
 
   const { fetchData, loadGoalMonths } = useDirectionFetch()
 
@@ -68,7 +73,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
     if (!goalMonthsCache[String(goal.goal_id)]) {
       await loadGoalMonths(String(goal.goal_id))
     }
-    const relatedGoalMonths = store.getGoalMonthsByGoalId(String(goal.goal_id)) as GoalMonth[]
+    const relatedGoalMonths = dataStore.getGoalMonthsByGoalId(String(goal.goal_id)) as GoalMonth[]
 
     let minMonth = 12
     let maxMonth = 1
@@ -141,7 +146,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
         goalToUpdate
       )
 
-      const existingGoalMonths = store.getGoalMonthsByGoalId(String(goalId)) as GoalMonth[]
+      const existingGoalMonths = dataStore.getGoalMonthsByGoalId(String(goalId)) as GoalMonth[]
       const existingMonths = existingGoalMonths
         .map(mp => getDateOnlyMonth(mp.month))
         .filter((m): m is number => m !== null)
@@ -222,7 +227,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
 
   /** 保存月度计划的详细信息（标题、时间等） */
   const saveMonthlyPlan = async (m: number, payload: UpdateGoalMonthPayload): Promise<void> => {
-    const currentMp = (store.getGoalMonthsByGoalId(String(selectedGoalTyped.value!.goal_id)) as GoalMonth[]).find(
+    const currentMp = (dataStore.getGoalMonthsByGoalId(String(selectedGoalTyped.value!.goal_id)) as GoalMonth[]).find(
       mp => getDateOnlyMonth(mp.month) === m
     )
     if (currentMp) {
@@ -301,7 +306,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
       const goalId = editingGoalTyped.value.goal_id
       if (!goalId) return
 
-      const relatedGoalMonths = store.getGoalMonthsByGoalId(String(goalId)) as GoalMonth[]
+      const relatedGoalMonths = dataStore.getGoalMonthsByGoalId(String(goalId)) as GoalMonth[]
 
       // 靠数据库级联删除，只需删 goalMonths
       await Promise.all(relatedGoalMonths.map(mp => db.goalMonths.delete(mp.id)))
@@ -342,7 +347,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
     activePicker,
     showAddModal,
     showCategoryModal,
-    goalMonthsMap: store.goalMonthsMap as unknown as Record<string, GoalMonth>,
+    goalMonthsMap: batchStore.goalMonthsMap as unknown as Record<string, GoalMonth>,
 
     activeMonthRange,
     handleAddClick,

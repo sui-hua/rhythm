@@ -70,19 +70,19 @@
 
 <script lang="ts" setup>
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
-import { useDirectionStore } from '@/stores/directionStore'
+import { useGoalDataStore } from '@/stores/goalDataStore'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { computed, ref, watch } from 'vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Check } from 'lucide-vue-next'
 
-const store = useDirectionStore()
+const dataStore = useGoalDataStore()
 const { selectedGoal, months, activePicker, handleConfirmRange } = useDirectionGoals()
 
 // 计算属性：从 goalMonthsCache 获取开始/结束月份
 const monthRange = computed(() => {
   if (!selectedGoal.value) return { start: 1, end: 1 }
-  const cached = store.goalMonthsCache[selectedGoal.value.goal_id] || []
+  const cached = dataStore.goalMonthsCache[selectedGoal.value.goal_id] || []
   if (cached.length === 0) return { start: 1, end: 1 }
 
   const monthNums = cached
