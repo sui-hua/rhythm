@@ -1,13 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { playSuccessSound } from '@/utils/audio'
 import { toGoalDayStatus } from '@/utils/goalDayStatus'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
-import { getRouteDateContext } from '@/views/day/utils/routeDateContext'
 import { buildDayExecutionItems } from '@/views/day/composables/useDayExecutionItems'
 import { matchesHabitFrequency } from '@/views/habits/utils/habitFrequency'
 
@@ -19,9 +17,16 @@ export const useDayStore = defineStore('day', () => {
     const isLoading = ref(false)
 
     const dateStore = useDateStore()
+
+    // 从 dateStore.currentDate 派生年月日，不再依赖 useRoute()
+    // 路由参数由 useDayNavigation 同步到 dateStore，store 只读 dateStore
     const routeDateContext = computed(() => {
-        const route = useRoute()
-        return getRouteDateContext(route.params, dateStore.currentDate)
+        const d = dateStore.currentDate
+        return {
+            year: d.getFullYear(),
+            month: d.getMonth() + 1,
+            day: d.getDate()
+        }
     })
 
     const getCurrentDayRange = () => {

@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-[300] bg-black/40 backdrop-blur-sm daily-report-backdrop" @click="$emit('close')"></div>
-    <div v-if="show" class="fixed inset-0 z-[301] flex items-center justify-center px-4">
+    <div v-if="show" class="fixed inset-0 z-300 bg-black/40 backdrop-blur-sm daily-report-backdrop" @click="$emit('close')"></div>
+    <div v-if="show" class="fixed inset-0 z-300 flex items-center justify-center px-4">
       <div class="w-full max-w-md rounded-2xl bg-background border border-border shadow-2xl p-6 daily-report-panel">
         <div class="flex items-center justify-between mb-4">
           <div>

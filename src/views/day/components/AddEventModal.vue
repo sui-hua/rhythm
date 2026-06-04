@@ -28,10 +28,10 @@
             </label>
             <Input
               id="title"
-              v-model="form.title"
+              v-model="eventForm.title"
               placeholder="例如：周会 / 健身"
               class="h-9"
-              @blur="touchField('title')"
+              @blur="markFieldTouched('title')"
             />
             <!-- 错误提示：当 title 验证失败时显示 -->
             <p v-if="errors.title" class="text-xs text-rose-500">{{ errors.title }}</p>
@@ -41,13 +41,13 @@
           <div class="grid grid-cols-2 gap-4">
             <!-- TimePicker：时间选择器 -->
             <TimePicker
-              v-model="form.time"
+              v-model="eventForm.time"
               label="任务时间"
               id="time"
             />
             <!-- DurationPicker：时长选择器，支持直接提交 -->
             <DurationPicker
-              v-model="form.duration"
+              v-model="eventForm.duration"
               label="任务时长"
               id="duration"
               @submit="submit"
@@ -59,7 +59,7 @@
             <label for="description" class="text-sm font-medium leading-none">任务描述</label>
             <Input 
               id="description"
-              v-model="form.description"
+              v-model="eventForm.description"
               placeholder="可选详情..."
               class="h-9"
             />
@@ -76,9 +76,9 @@
                 type="button"
                 variant="outline"
                 size="sm"
-                @click="form.category = cat"
+                @click="eventForm.category = cat"
                 class="rounded-md text-[10px] font-bold h-7 px-3 transition-all"
-                :class="form.category === cat 
+                :class="eventForm.category === cat 
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                   : 'text-muted-foreground'"
               >
@@ -142,7 +142,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'refresh', 'update:show'])
 
-const { form, isHabit, errors, isValid, submit, handleDelete, touchField } = useAddEventForm(props, emit)
+const { eventForm, isHabit, errors, isValid, submit, handleDelete, markFieldTouched } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>

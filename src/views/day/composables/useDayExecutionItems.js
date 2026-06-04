@@ -15,21 +15,21 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays
     tasks.forEach(task => {
         const startDate = new Date(task.start_time)
         const endDate = new Date(task.end_time)
-        const startHourVal = startDate.getHours() + startDate.getMinutes() / 60
-        const endHourVal = endDate.getHours() + endDate.getMinutes() / 60
-        const durationHours = endHourVal - startHourVal
-        const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
+        const startHourValue = startDate.getHours() + startDate.getMinutes() / 60
+        const endHourValue = endDate.getHours() + endDate.getMinutes() / 60
+        const durationInHours = endHourValue - startHourValue
+        const startTimeString = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
 
         schedule.push({
             id: task.id,
             sourceLabel: 'task',
             type: 'task',
             original: task,
-            startHour: startHourVal,
-            durationHours,
-            rawDuration: durationHours,
-            time: startTimeStr,
-            duration: formatDuration(durationHours),
+            startHour: startHourValue,
+            durationHours: durationInHours,
+            rawDuration: durationInHours,
+            time: startTimeString,
+            duration: formatDuration(durationInHours),
             category: '个人任务',
             title: task.title,
             description: task.description,
@@ -42,7 +42,7 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays
     // ============================================
     // 阶段二：处理 goal_day（sourceLabel: 'goal_day'）
     goalDays.forEach(plan => {
-        let startHourVal, startTimeStr, durationHours, durationStr
+        let startHourValue, startTimeString, durationInHours, durationString
 
         // 时间继承优先级：plan.task_time > goal_months.task_time > goal_months.goal.task_time
         const inheritedTime = plan.task_time || plan.goal_months?.task_time || plan.goal_months?.goal?.task_time
@@ -50,19 +50,19 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays
 
         if (inheritedTime) {
             const [hours, minutes] = inheritedTime.split(':').map(Number)
-            startHourVal = hours + minutes / 60
-            startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-            durationHours = inheritedDuration / 60
-            durationStr = formatDuration(durationHours)
+            startHourValue = hours + minutes / 60
+            startTimeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+            durationInHours = inheritedDuration / 60
+            durationString = formatDuration(durationInHours)
         } else {
-            startHourVal = undefined
-            startTimeStr = '未安排'
-            durationHours = 0
-            durationStr = '-'
+            startHourValue = undefined
+            startTimeString = '未安排'
+            durationInHours = 0
+            durationString = '-'
         }
 
         // 这里不改变原始 day，只在展示层标记它是历史未完成补查项，
-        // 这样 Sidebar 和 Timeline 都能用同一份语义提示用户“这不是改了日期”。
+        // 这样 Sidebar 和 Timeline 都能用同一份语义提示用户”这不是改了日期”。
         const isCarryOver = Boolean(
             targetDateStr &&
             plan.day &&
@@ -75,11 +75,11 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays
             sourceLabel: 'goal_day',
             type: 'goal_day',
             original: plan,
-            startHour: startHourVal,
-            durationHours,
-            rawDuration: durationHours,
-            time: startTimeStr,
-            duration: durationStr,
+            startHour: startHourValue,
+            durationHours: durationInHours,
+            rawDuration: durationInHours,
+            time: startTimeString,
+            duration: durationString,
             category: '今日计划',
             title: plan.title,
             description: plan.description || '',
@@ -95,21 +95,21 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays
     const habitLogIds = new Set(habitLogs.map(log => log.habit_id))
 
     habits.forEach(habit => {
-        let startHourVal, startTimeStr, durationHours, durationStr
+        let startHourValue, startTimeString, durationInHours, durationString
 
         if (habit.task_time) {
             const [hours, minutes] = habit.task_time.split(':').map(Number)
-            startHourVal = hours + minutes / 60
-            startTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+            startHourValue = hours + minutes / 60
+            startTimeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 
-            const durationMins = habit.duration || 30
-            durationHours = durationMins / 60
-            durationStr = formatDuration(durationHours)
+            const durationMinutes = habit.duration || 30
+            durationInHours = durationMinutes / 60
+            durationString = formatDuration(durationInHours)
         } else {
-            startHourVal = undefined
-            startTimeStr = '未安排'
-            durationHours = 0
-            durationStr = '-'
+            startHourValue = undefined
+            startTimeString = '未安排'
+            durationInHours = 0
+            durationString = '-'
         }
 
         // 判断习惯是否已完成（当日是否有日志记录）
@@ -120,11 +120,11 @@ export function buildDayExecutionItems({ targetDate = null, tasks = [], goalDays
             sourceLabel: 'habit',
             type: 'habit',
             original: habit,
-            startHour: startHourVal,
-            durationHours,
-            rawDuration: durationHours,
-            time: startTimeStr,
-            duration: durationStr,
+            startHour: startHourValue,
+            durationHours: durationInHours,
+            rawDuration: durationInHours,
+            time: startTimeString,
+            duration: durationString,
             category: '日常习惯',
             title: habit.title,
             description: habit.target_value ? `目标: ${habit.target_value}` : '',

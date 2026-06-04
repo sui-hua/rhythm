@@ -30,7 +30,7 @@
     <!-- 侧边栏任务列表，可滚动 -->
     <ScrollArea class="flex-1 px-4 relative z-10">
       <!-- 任务列表 -->
-      <div v-if="dayStore.dayStore.dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
+      <div v-if="dayStore.dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
         <template v-for="(section, sectionIndex) in sidebarSections" :key="`desktop-${sectionIndex}`">
           <div
             v-if="section.type === 'item'"

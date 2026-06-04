@@ -5,8 +5,8 @@ export function useTimelineDragSession({ task, getTask, onCommit }) {
   const ACTIVATION_THRESHOLD_PX = 6
   const resolveTask = () => getTask?.() ?? task
   const initialTask = resolveTask()
-  const pendingMode = ref('idle')
-  const mode = ref('idle')
+  const pendingDragMode = ref('idle')
+  const dragMode = ref('idle')
   const startClientY = ref(0)
   const baseStartHour = ref(initialTask.startHour)
   const baseDurationHours = ref(initialTask.durationHours || 1)
@@ -15,16 +15,16 @@ export function useTimelineDragSession({ task, getTask, onCommit }) {
   const isSaving = ref(false)
   const lastError = ref(null)
 
-  const isActive = computed(() => mode.value !== 'idle')
-  const isDragging = computed(() => mode.value === 'drag')
-  const isResizing = computed(() => mode.value === 'resize')
+  const isActive = computed(() => dragMode.value !== 'idle')
+  const isDragging = computed(() => dragMode.value === 'drag')
+  const isResizing = computed(() => dragMode.value === 'resize')
   const tooltipHour = computed(() => draftStartHour.value ?? baseStartHour.value)
   const tooltipDuration = computed(() => draftDurationHours.value ?? baseDurationHours.value)
 
-  function startBase(clientY, nextMode) {
+  function initDragBase(clientY, nextMode) {
     const currentTask = resolveTask()
-    pendingMode.value = nextMode
-    mode.value = 'idle'
+    pendingDragMode.value = nextMode
+    dragMode.value = 'idle'
     startClientY.value = clientY
     baseStartHour.value = currentTask.startHour
     baseDurationHours.value = currentTask.durationHours || 1
@@ -34,23 +34,23 @@ export function useTimelineDragSession({ task, getTask, onCommit }) {
   }
 
   function startDrag(event) {
-    startBase(event.clientY, 'drag')
+    initDragBase(event.clientY, 'drag')
   }
 
   function startResize(event) {
-    startBase(event.clientY, 'resize')
+    initDragBase(event.clientY, 'resize')
   }
 
   function updateFromMouse(event) {
     const deltaY = event.clientY - startClientY.value
     const deltaPx = Math.abs(deltaY)
 
-    if (pendingMode.value === 'idle' && mode.value === 'idle') return
+    if (pendingDragMode.value === 'idle' && dragMode.value === 'idle') return
 
-    if (mode.value === 'idle') {
+    if (dragMode.value === 'idle') {
       if (deltaPx < ACTIVATION_THRESHOLD_PX) return
 
-      mode.value = pendingMode.value
+      dragMode.value = pendingDragMode.value
       draftStartHour.value = baseStartHour.value
       draftDurationHours.value = baseDurationHours.value
     }
@@ -60,14 +60,14 @@ export function useTimelineDragSession({ task, getTask, onCommit }) {
       durationHours: baseDurationHours.value
     }
 
-    if (mode.value === 'drag') {
+    if (dragMode.value === 'drag') {
       const result = calcDragResult(baseTask, deltaY)
       draftStartHour.value = result.newStart
       draftDurationHours.value = baseDurationHours.value
       return
     }
 
-    if (mode.value === 'resize') {
+    if (dragMode.value === 'resize') {
       const nextHeight = baseDurationHours.value * HOUR_HEIGHT + deltaY
       const result = calcResizeResult(baseTask, nextHeight)
       draftStartHour.value = result.newStart
@@ -76,7 +76,7 @@ export function useTimelineDragSession({ task, getTask, onCommit }) {
   }
 
   async function finish() {
-    if (mode.value === 'idle') {
+    if (dragMode.value === 'idle') {
       cancel()
       return
     }
@@ -109,8 +109,8 @@ export function useTimelineDragSession({ task, getTask, onCommit }) {
   }
 
   function cancel() {
-    pendingMode.value = 'idle'
-    mode.value = 'idle'
+    pendingDragMode.value = 'idle'
+    dragMode.value = 'idle'
     draftStartHour.value = null
     draftDurationHours.value = null
   }

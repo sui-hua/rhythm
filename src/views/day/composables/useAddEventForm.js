@@ -30,13 +30,13 @@ export function useAddEventForm(props, emit) {
      * 表单数据模型（响应式）
      * 用于绑定表单输入元素，支持双向数据绑定
      * @type {Object}
-     * @property {string} form.title - 事件标题
-     * @property {string} form.time - 开始时间（HH:mm 格式）
-     * @property {number} form.duration - 持续时长（小时，数值如 1.5）
-     * @property {string} form.category - 事件分类（如 '工作'、'学习'）
-     * @property {string} form.description - 事件详细描述
+     * @property {string} eventForm.title - 事件标题
+     * @property {string} eventForm.time - 开始时间（HH:mm 格式）
+     * @property {number} eventForm.duration - 持续时长（小时，数值如 1.5）
+     * @property {string} eventForm.category - 事件分类（如 '工作'、'学习'）
+     * @property {string} eventForm.description - 事件详细描述
      */
-    const form = reactive({
+    const eventForm = reactive({
         title: '',
         time: '',
         duration: 1.0,
@@ -44,37 +44,37 @@ export function useAddEventForm(props, emit) {
         description: ''
     })
 
-    const touched = reactive({
+    const touchedFields = reactive({
         title: false,
         time: false,
         duration: false
     })
 
-    const markAllTouched = () => {
-        Object.keys(touched).forEach((field) => {
-            touched[field] = true
+    const markAllFieldsTouched = () => {
+        Object.keys(touchedFields).forEach((field) => {
+            touchedFields[field] = true
         })
     }
 
-    const resetTouched = () => {
-        Object.keys(touched).forEach((field) => {
-            touched[field] = false
+    const resetTouchedFields = () => {
+        Object.keys(touchedFields).forEach((field) => {
+            touchedFields[field] = false
         })
     }
 
-    const touchField = (field) => {
-        if (field in touched) touched[field] = true
+    const markFieldTouched = (field) => {
+        if (field in touchedFields) touchedFields[field] = true
     }
 
-    let lastUsedTime = '08:00'
+    let lastUsedTimeSlot = '08:00'
 
     watch(() => props.show, (newShow) => {
         if (!newShow) return
-        resetTouched()
+        resetTouchedFields()
 
         if (props.initialData) {
-            form.title = props.initialData.title || ''
-            form.time = props.initialData.time || ''
+            eventForm.title = props.initialData.title || ''
+            eventForm.time = props.initialData.time || ''
 
             let durationVal
             if (props.initialData.rawDuration !== undefined) {
@@ -84,15 +84,15 @@ export function useAddEventForm(props, emit) {
                 durationVal = parseFloat(String(durationStr).replace('H', ''))
             }
 
-            form.duration = durationVal
-            form.category = props.initialData.category || '工作'
-            form.description = props.initialData.description || ''
+            eventForm.duration = durationVal
+            eventForm.category = props.initialData.category || '工作'
+            eventForm.description = props.initialData.description || ''
         } else {
-            form.title = ''
-            form.time = lastUsedTime
-            form.duration = 0.5
-            form.category = '工作'
-            form.description = ''
+            eventForm.title = ''
+            eventForm.time = lastUsedTimeSlot
+            eventForm.duration = 0.5
+            eventForm.category = '工作'
+            eventForm.description = ''
         }
     })
 
@@ -107,15 +107,15 @@ export function useAddEventForm(props, emit) {
     }
 
     const validationErrors = computed(() => ({
-        title: validationRules.title(form.title),
-        time: validationRules.time(form.time),
-        duration: validationRules.duration(form.duration)
+        title: validationRules.title(eventForm.title),
+        time: validationRules.time(eventForm.time),
+        duration: validationRules.duration(eventForm.duration)
     }))
 
     const errors = computed(() => ({
-        title: touched.title ? validationErrors.value.title : '',
-        time: touched.time ? validationErrors.value.time : '',
-        duration: touched.duration ? validationErrors.value.duration : ''
+        title: touchedFields.title ? validationErrors.value.title : '',
+        time: touchedFields.time ? validationErrors.value.time : '',
+        duration: touchedFields.duration ? validationErrors.value.duration : ''
     }))
 
     const isValid = computed(() => {
@@ -124,14 +124,14 @@ export function useAddEventForm(props, emit) {
 
     const submit = withLoadingLock(async () => {
         if (!isValid.value) {
-            markAllTouched()
+            markAllFieldsTouched()
             return
         }
 
         isSubmitting.value = true
 
         // 校验时间格式是否合法
-        const timeParts = form.time.split(':')
+        const timeParts = eventForm.time.split(':')
         const hours = parseInt(timeParts[0], 10)
         const minutes = parseInt(timeParts[1], 10)
         if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
@@ -139,7 +139,7 @@ export function useAddEventForm(props, emit) {
             isSubmitting.value = false
             return
         }
-        const durationValue = parseFloat(form.duration)
+        const durationValue = parseFloat(eventForm.duration)
 
         try {
             if (props.initialData) {
@@ -150,7 +150,7 @@ export function useAddEventForm(props, emit) {
                     // 习惯类型：更新习惯表（标题、时间、时长）
                     const taskTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
                     await db.habit.update(props.initialData.id, {
-                        title: form.title,
+                        title: eventForm.title,
                         task_time: taskTimeStr,
                         duration: Math.round(durationValue * 60) || 10  // 转换为分钟存储
                     })
@@ -163,8 +163,8 @@ export function useAddEventForm(props, emit) {
                     const endTime = new Date(startTime.getTime() + durationValue * 60 * 60 * 1000)
 
                     await db.task.update(props.initialData.id, {
-                        title: form.title,
-                        description: form.description,
+                        title: eventForm.title,
+                        description: eventForm.description,
                         start_time: startTime.toISOString(),
                         end_time: endTime.toISOString()
                     })
@@ -173,7 +173,7 @@ export function useAddEventForm(props, emit) {
                 // ========================================
                 // 新建模式：创建新数据
                 // ========================================
-                lastUsedTime = form.time  // 记住本次使用的时间
+                lastUsedTimeSlot = eventForm.time  // 记住本次使用的时间槽
                 const userId = authStore.userId
                 if (!userId) {
                     console.error('User not authenticated')
@@ -188,8 +188,8 @@ export function useAddEventForm(props, emit) {
 
                 await db.task.create({
                     user_id: userId,
-                    title: form.title,
-                    description: form.description,
+                    title: eventForm.title,
+                    description: eventForm.description,
                     start_time: startTime.toISOString(),
                     end_time: endTime.toISOString(),
                     completed: false,
@@ -226,13 +226,13 @@ export function useAddEventForm(props, emit) {
     })
 
     return {
-        form,
+        eventForm,
         isHabit,
         errors,
         isValid,
         submit,
         handleDelete,
         isSubmitting,
-        touchField
+        markFieldTouched
     }
 }
