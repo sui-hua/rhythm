@@ -32,7 +32,7 @@ import {
   ProgressIndicator,
   ProgressRoot,
   type ProgressRootProps,
-} from 'radix-vue'
+} from 'reka-ui'
 
 /** 引入工具函数：cn 用于合并 Tailwind CSS 类名 */
 import { cn } from '@/lib/utils'

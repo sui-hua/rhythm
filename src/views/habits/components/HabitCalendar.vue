@@ -30,7 +30,7 @@
                      ? 'border-primary shadow-sm hover:bg-primary/20 ring-1 ring-primary ring-offset-1'
                      : 'bg-accent/5 hover:bg-zinc-100 border-zinc-200/50 hover:border-primary/30'
                ]"
-               @click="$emit('toggle-complete', day)">
+               @click="handleToggleComplete(day)">
             <span class="text-[11px] font-bold transition-transform group-active:scale-90"
                   :class="[
                     completedDays.includes(day) 
@@ -80,6 +80,7 @@
  */
 import { onMounted } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { useToast } from '@/composables/useToast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHabitCalendar } from '@/views/habits/composables/useHabitCalendar'
@@ -100,6 +101,9 @@ const emit = defineEmits([
   'month-changed'    // 月份翻页动作触发时抛出，以便外部组件感知最新查阅的年月再拉取对应的记录
 ])
 
+// toast 通知实例，用于打卡操作后的即时反馈
+const { toast } = useToast()
+
 const {
   viewYear,
   viewMonth,
@@ -110,6 +114,18 @@ const {
   isToday,
   emitMonthChange
 } = useHabitCalendar(emit)
+
+// 点击日期格子时触发打卡/取消打卡，并显示 toast 反馈
+const handleToggleComplete = (day) => {
+  const wasCompleted = props.completedDays.includes(day)
+  emit('toggle-complete', day)
+  // 根据操作前状态显示不同提示
+  if (wasCompleted) {
+    toast.success('已取消打卡')
+  } else {
+    toast.success('已打卡')
+  }
+}
 
 onMounted(() => {
   // 组件初次挂载时将当前时间上报给父组件以备数据同步

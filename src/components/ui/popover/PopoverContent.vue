@@ -28,14 +28,14 @@ Props：
 Emits：
   - 继承自 PopoverContentEmits，由 Radix Vue 定义
 */
-import type { PopoverContentEmits, PopoverContentProps } from "radix-vue"
+import type { PopoverContentEmits, PopoverContentProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"
 import { reactiveOmit } from "@vueuse/core"
 import {
   PopoverContent,
   PopoverPortal,
   useForwardPropsEmits,
-} from "radix-vue"
+} from "reka-ui"
 import { cn } from "@/lib/utils"
 
 defineOptions({

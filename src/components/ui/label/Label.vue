@@ -15,7 +15,7 @@
 import { type HTMLAttributes, computed } from 'vue'
 
 // Radix Vue 的 Label 组件：提供无障碍的标签功能，支持键盘导航和屏幕阅读器
-import { Label, type LabelProps } from 'radix-vue'
+import { Label, type LabelProps } from 'reka-ui'
 
 // 工具函数：合并 Tailwind 类名，处理条件类名和冲突类名
 import { cn } from '@/lib/utils'

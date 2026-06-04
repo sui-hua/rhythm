@@ -25,14 +25,22 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     activeStep.value = defaultSteps.find((item) => !completedSteps.value.includes(item)) || null
   }
 
+  // 所向模块引导完成状态，用于控制方向模块首次引导弹窗
+  const directionGuideCompleted = ref(false)
+
+  // 标记所向模块引导已完成，后续进入不再显示
+  const completeDirectionGuide = () => {
+    directionGuideCompleted.value = true
+  }
+
   function finish() {
     visible.value = false
     activeStep.value = null
   }
 
-  return { visible, completedSteps, activeStep, start, completeStep, finish }
+  return { visible, completedSteps, activeStep, start, completeStep, finish, directionGuideCompleted, completeDirectionGuide }
 }, {
   persist: {
-    pick: ['completedSteps']
+    pick: ['completedSteps', 'directionGuideCompleted']
   }
 })

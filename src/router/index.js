@@ -19,7 +19,7 @@ const routes = [
   },
   {
     path: '/',
-    redirect: () => buildDayPath(new Date())
+    redirect: '/day'
   },
   {
     path: '/year',

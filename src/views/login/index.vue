@@ -43,11 +43,15 @@
 
       <WelcomeChecklist />
 
+      <!-- 演示账号入口 -->
       <div class="mt-8 text-center sm:mx-auto sm:w-full sm:max-w-sm">
-        <p class="text-sm text-zinc-500">
-          访客体验账号：<span class="font-medium text-foreground">123456@163.com</span><br>
-          密码：<span class="font-medium text-foreground">123456</span>
-        </p>
+        <button
+          type="button"
+          class="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+          @click="fillDemoAccount"
+        >
+          使用演示账号体验
+        </button>
       </div>
     </div>
   </div>
@@ -58,6 +62,12 @@ import { useLoginForm } from '@/views/login/composables/useLoginForm'
 import WelcomeChecklist from '@/views/login/components/WelcomeChecklist.vue'
 
 const { email, password, loading, error, handleLogin } = useLoginForm()
+
+// 一键填充演示账号，避免明文暴露凭据
+const fillDemoAccount = () => {
+  email.value = '123456@163.com'
+  password.value = '123456'
+}
 </script>
 
 <style scoped>

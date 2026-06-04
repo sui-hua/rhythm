@@ -1,16 +1,15 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { parseDateOnly, useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+import { nextTick } from 'vue'
 import { useDirectionStore } from '@/stores/directionStore'
 import { db } from '@/services/database'
 
+// 仅 mock onMounted，保留真实的 watch 以测试 watcher 回调行为
 vi.mock('vue', async () => {
   const actual = await vi.importActual('vue')
-
   return {
     ...actual,
-    onMounted: vi.fn(),
-    watch: vi.fn()
+    onMounted: vi.fn()
   }
 })
 
@@ -29,13 +28,48 @@ vi.mock('@/services/database', () => ({
 }))
 
 let store
+let useDirectionFetch
+let parseDateOnly
 
-beforeEach(() => {
+// 每次测试重置模块以清除模块级 watchersRegistered 守卫
+beforeEach(async () => {
+  vi.useFakeTimers()
   vi.clearAllMocks()
   setActivePinia(createPinia())
   store = useDirectionStore()
   store.reset()
+
+  // 重新导入模块，重置模块级变量
+  vi.resetModules()
+  const mod = await import('@/views/direction/composables/useDirectionFetch')
+  useDirectionFetch = mod.useDirectionFetch
+  parseDateOnly = mod.parseDateOnly
 })
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+/**
+ * 排空 fetchData 内部的多层 async 链路。
+ * fetchData 依次 await db.goal.list → loadGoalMonths → loadGoalDays，
+ * 每个 await 产生一个微任务，需要多次 nextTick 才能完全排空。
+ */
+const drainFetchData = async () => {
+  for (let i = 0; i < 10; i++) {
+    await nextTick()
+  }
+}
+
+/**
+ * 等待 watcher 异步回调完成。
+ * 1. nextTick 让 Vue watcher flush 生效
+ * 2. advanceTimersByTimeAsync(0) 处理 watcher 回调中产生的 Promise 链
+ */
+const flushWatchers = async () => {
+  await nextTick()
+  await vi.advanceTimersByTimeAsync(0)
+}
 
 describe('useDirectionFetch', () => {
   it('parses database date strings as local date-only values', () => {
@@ -58,9 +92,9 @@ describe('useDirectionFetch', () => {
       { id: 'dp1', monthly_goal_id: 'mp1', day: '2026-04-30' }
     ])
 
-    const { fetchData } = useDirectionFetch()
-
-    await fetchData()
+    // 不再显式调用 fetchData，composable 内部已自动触发
+    useDirectionFetch()
+    await drainFetchData()
 
     expect(store.goalMonthsMap['goal-p1-4']).toEqual({
       id: 'mp1',
@@ -84,8 +118,8 @@ describe('useDirectionFetch', () => {
     ])
     db.goalDays.list.mockResolvedValue([])
 
-    const { fetchData } = useDirectionFetch()
-    await fetchData()
+    useDirectionFetch()
+    await drainFetchData()
 
     expect(db.goalMonths.list).toHaveBeenCalledTimes(1)
     expect(db.goalMonths.list).toHaveBeenCalledWith('p1')
@@ -107,8 +141,8 @@ describe('useDirectionFetch', () => {
     ])
     db.goalDays.list.mockResolvedValue([])
 
-    const { fetchData } = useDirectionFetch()
-    await fetchData()
+    useDirectionFetch()
+    await drainFetchData()
 
     expect(db.goalDays.list).toHaveBeenCalledTimes(1)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-current')
@@ -129,9 +163,8 @@ describe('useDirectionFetch', () => {
     ])
     db.goalDays.list.mockResolvedValue([])
 
-    const { fetchData } = useDirectionFetch()
-
-    await fetchData()
+    useDirectionFetch()
+    await drainFetchData()
 
     expect(store.selectedMonth).toBe(currentMonth)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-current')
@@ -153,11 +186,155 @@ describe('useDirectionFetch', () => {
     ])
     db.goalDays.list.mockResolvedValue([])
 
-    const { fetchData } = useDirectionFetch()
-
-    await fetchData()
+    useDirectionFetch()
+    await drainFetchData()
 
     expect(store.selectedMonth).toBe(firstMonth)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp-first')
+  })
+})
+
+describe('watcher registration guard', () => {
+  it('registers watchers only once across multiple calls', async () => {
+    // 提供两个月度计划，fetchData 会选择当前月或第一个月，
+    // 测试中切换到另一个月来验证 watcher 只触发一次
+    db.goal.list.mockResolvedValue([
+      { id: 'p1', title: '目标 1' }
+    ])
+    db.goalMonths.list.mockResolvedValue([
+      { id: 'mp1', goal_id: 'p1', month: '2026-04-01' },
+      { id: 'mp2', goal_id: 'p1', month: '2026-05-01' }
+    ])
+    db.goalDays.list.mockResolvedValue([])
+
+    // 第一次调用：注册 watchers + 触发 fetchData
+    useDirectionFetch()
+    await drainFetchData()
+
+    // 第二次调用：不应注册重复 watchers
+    useDirectionFetch()
+
+    // 重置 mock 调用计数，隔离初始加载的影响
+    db.goalDays.list.mockClear()
+
+    // 切换到缓存中已有的另一个月份（与 fetchData 选中的不同）
+    // fetchData 会选择当前月或第一个排序月（4月），切换到 5 月触发 watcher
+    store.selectedMonth = 5
+    await flushWatchers()
+
+    // loadGoalDays 只应被调用一次（watcher 只注册一次），而非两次
+    expect(db.goalDays.list).toHaveBeenCalledTimes(1)
+    expect(db.goalDays.list).toHaveBeenCalledWith('mp2')
+  })
+})
+
+describe('selectedMonth watcher', () => {
+  it('reloads daily plans when selectedMonth changes', async () => {
+    db.goal.list.mockResolvedValue([
+      { id: 'p1', title: '目标 1' }
+    ])
+    db.goalMonths.list.mockResolvedValue([
+      { id: 'mp1', goal_id: 'p1', month: '2026-04-01' },
+      { id: 'mp2', goal_id: 'p1', month: '2026-05-01' }
+    ])
+    db.goalDays.list.mockResolvedValue([])
+
+    useDirectionFetch()
+    await drainFetchData()
+
+    db.goalDays.list.mockClear()
+
+    // 模拟用户切换月份（从初始月份切换到 5 月）
+    store.selectedMonth = 5
+    await flushWatchers()
+
+    // 应清除旧缓存并加载新月份的日计划
+    // 注意：{ force: true } 是 loadGoalDays 的选项，不会透传给 db.goalDays.list
+    expect(store.goalDaysCache).not.toHaveProperty('mp1')
+    expect(db.goalDays.list).toHaveBeenCalledWith('mp2')
+  })
+})
+
+describe('selectedGoal watcher', () => {
+  it('reloads monthly plans when selectedGoal changes', async () => {
+    db.goal.list.mockResolvedValue([
+      { id: 'p1', title: '目标 1' },
+      { id: 'p2', title: '目标 2' }
+    ])
+    db.goalMonths.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
+
+    useDirectionFetch()
+    await drainFetchData()
+
+    db.goalMonths.list.mockClear()
+    db.goalDays.list.mockClear()
+
+    // p2 的月度计划需要独立返回
+    db.goalMonths.list.mockResolvedValue([
+      { id: 'mp-p2', goal_id: 'p2', month: '2026-06-01' }
+    ])
+
+    // 模拟用户切换目标
+    store.selectedGoal = { goal_id: 'p2', title: '目标 2' }
+    await flushWatchers()
+
+    // 应加载新目标的月度计划
+    expect(db.goalMonths.list).toHaveBeenCalledWith('p2')
+  })
+})
+
+describe('showAddModal watcher', () => {
+  it('clears editingGoal after modal close delay', async () => {
+    db.goal.list.mockResolvedValue([])
+    db.goalMonths.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
+
+    store.editingGoal = { id: 'g1', title: '编辑中' }
+
+    useDirectionFetch()
+    await drainFetchData()
+
+    // 先设为 true，等待 watcher 处理后再设为 false
+    // Vue 3 会合并同步更新，必须用 nextTick 分开两次赋值
+    store.showAddModal = true
+    await nextTick()
+    store.showAddModal = false
+    await nextTick()
+
+    // 延迟后应清空编辑状态
+    await vi.advanceTimersByTimeAsync(300)
+    expect(store.editingGoal).toBeNull()
+  })
+
+  it('cancels previous timer when modal toggles false multiple times quickly', async () => {
+    db.goal.list.mockResolvedValue([])
+    db.goalMonths.list.mockResolvedValue([])
+    db.goalDays.list.mockResolvedValue([])
+
+    store.editingGoal = { id: 'g1', title: '编辑中' }
+
+    useDirectionFetch()
+    await drainFetchData()
+
+    // 第一次关闭弹窗
+    store.showAddModal = true
+    await nextTick()
+    store.showAddModal = false
+    await nextTick()
+
+    // 100ms 时前一个定时器尚未触发，编辑状态仍保留
+    await vi.advanceTimersByTimeAsync(100)
+    expect(store.editingGoal).not.toBeNull()
+
+    // 第二次关闭弹窗（重置定时器）
+    store.showAddModal = true
+    await nextTick()
+    store.showAddModal = false
+    await nextTick()
+
+    // 推进 300ms，只有最后一个定时器生效
+    await vi.advanceTimersByTimeAsync(300)
+    expect(store.editingGoal).toBeNull()
   })
 })

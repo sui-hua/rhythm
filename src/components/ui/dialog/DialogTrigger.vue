@@ -20,7 +20,7 @@
  * @see https://www.radix-vue.com/components/dialog.html#dialogtrigger
  */-->
 <script setup lang="ts">
-import { DialogTrigger, type DialogTriggerProps } from 'radix-vue'
+import { DialogTrigger, type DialogTriggerProps } from 'reka-ui'
 
 /**
  * 组件 Props - 透传 Radix DialogTrigger 的所有属性

@@ -9,7 +9,7 @@
     - 路由视图 + 转场动画
     - 认证状态初始化
   -->
-  <div class="h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative">
+  <div class="h-screen w-full bg-background flex overflow-hidden font-sans text-foreground selection:bg-foreground selection:text-background relative">
     <Toaster position="top-right" />
     <GlobalLoadingBar />
     <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />

@@ -9,13 +9,17 @@
         <div class="grid gap-6">
           <div class="grid gap-2">
             <label for="edit-habit-title" class="text-sm font-medium leading-none">习惯名称</label>
-            <Input 
+            <Input
               id="edit-habit-title"
               v-model="form.title"
               placeholder="例如：每日阅读 / 早起健身"
               class="h-9"
+              :class="errors.title ? 'border-destructive' : ''"
+              @blur="validateTitle"
               @keyup.enter="submit"
             />
+            <!-- 名称验证错误提示 -->
+            <p v-if="errors.title" class="text-xs text-destructive">{{ errors.title }}</p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -213,6 +217,23 @@ const form = reactive({
   monthDays: []
 })
 
+// 表单验证错误信息，用于在 UI 上展示各字段的校验提示
+const errors = reactive({
+  title: ''
+})
+
+/**
+ * 验证习惯名称字段
+ * 失去焦点或提交时调用，校验名称是否为空并设置对应的错误提示
+ */
+const validateTitle = () => {
+  if (!form.title.trim()) {
+    errors.title = '请输入习惯名称'
+  } else {
+    errors.title = ''
+  }
+}
+
 const {
   WEEKDAY_OPTIONS,
   MONTH_DAY_OPTIONS,
@@ -240,7 +261,9 @@ watch(() => props.habitData, (newVal) => {
  * 提交并保存更改的方法
  */
 const submit = withLoadingLock(async () => {
-  if (!form.title.trim() || !props.habitData?.id || !canSubmitFrequency.value) return
+  // 提交前执行验证，确保错误提示在 UI 上可见
+  validateTitle()
+  if (errors.title || !props.habitData?.id || !canSubmitFrequency.value) return
   
   try {
     await db.habit.update(props.habitData.id, {

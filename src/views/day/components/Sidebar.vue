@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="border-r border-zinc-100 flex flex-col h-full overflow-hidden group relative z-20 bg-background"
+    class="border-r border-border flex flex-col h-full overflow-hidden group relative z-20 bg-background"
     :style="{ width: width + 'px' }"
   >
     <div
@@ -85,7 +85,7 @@
                 @click="$emit('scrollToTask', item.id)"
                 @dblclick="$emit('edit-task', item.id)"
                 class="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer group"
-                :class="item.completed ? 'opacity-50' : 'hover:bg-white/90'"
+                :class="item.completed ? 'opacity-50' : 'hover:bg-background/90'"
               >
                 <div @click.stop @dblclick.stop>
                   <Checkbox

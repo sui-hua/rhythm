@@ -26,7 +26,7 @@
 import { type HTMLAttributes, computed } from 'vue'
 
 // Radix Vue：提供无障碍分隔线组件实现
-import { Separator, type SeparatorProps } from 'radix-vue'
+import { Separator, type SeparatorProps } from 'reka-ui'
 
 // 工具函数：合并 Tailwind 类名，处理冲突
 import { cn } from '@/lib/utils'

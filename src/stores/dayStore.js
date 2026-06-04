@@ -75,6 +75,20 @@ export const useDayStore = defineStore('day', () => {
 
     const selectedDay = computed(() => routeDateContext.value.day)
 
+    // 单条任务同步：只拉取指定任务的最新状态，避免全量刷新
+    const fetchTaskUpdate = async (taskId) => {
+        try {
+            const updated = await db.task.getById(taskId)
+            if (!updated) return
+            const index = tasks.value.findIndex(t => t.id === taskId)
+            if (index !== -1) {
+                tasks.value[index] = { ...tasks.value[index], ...updated }
+            }
+        } catch (e) {
+            console.error('同步单条任务失败:', e)
+        }
+    }
+
     const fetchTasks = async (options = {}) => {
         const { showLoading = true } = options
         try {
@@ -180,9 +194,15 @@ export const useDayStore = defineStore('day', () => {
 
     const handleToggleComplete = async (task) => {
         if (!task) return
+
+        // 乐观更新：先在本地修改状态
+        const previousState = task.completed
+        task.completed = !task.completed
+
         try {
             if (task.type === 'task') {
                 await toggleTaskCompletion(task)
+                await fetchTaskUpdate(task.id)
             }
             if (task.type === 'habit') {
                 await toggleHabitCompletion(task)
@@ -191,12 +211,12 @@ export const useDayStore = defineStore('day', () => {
                 await toggleDailyPlanCompletion(task)
             }
 
-            if (!task.completed) {
+            if (!previousState) {
                 playSuccessSound()
             }
-
-            await fetchTasks({ showLoading: false })
         } catch (e) {
+            // 回滚：恢复原始状态
+            task.completed = previousState
             console.error('切换完成状态失败', e)
         }
     }
@@ -204,15 +224,22 @@ export const useDayStore = defineStore('day', () => {
     const handleStartTask = async (task) => {
         if (!task || task.type !== 'task') return
         const pomodoroStore = usePomodoroStore()
+        const startTime = new Date().toISOString()
+
+        // 乐观更新
+        task.actual_start_time = startTime
+        task.actual_end_time = null
+
         try {
-            const startTime = new Date().toISOString()
             await db.task.update(task.id, {
                 actual_start_time: startTime,
                 actual_end_time: null
             })
-            await fetchTasks({ showLoading: false })
+            await fetchTaskUpdate(task.id)
             pomodoroStore.setActiveTask({ ...task, actual_start_time: startTime })
         } catch (e) {
+            // 回滚
+            task.actual_start_time = null
             console.error('开始计时失败', e)
         }
     }
@@ -228,13 +255,22 @@ export const useDayStore = defineStore('day', () => {
         const endTime = new Date(baseDate)
         endTime.setHours(Math.floor(newEndHour), Math.round((newEndHour % 1) * 60))
 
+        // 乐观更新
+        const previousStart = task.start_time
+        const previousEnd = task.end_time
+        task.start_time = startTime.toISOString()
+        task.end_time = endTime.toISOString()
+
         try {
             await db.task.update(task.id, {
                 start_time: startTime.toISOString(),
                 end_time: endTime.toISOString()
             })
-            await fetchTasks({ showLoading: false })
+            await fetchTaskUpdate(task.id)
         } catch (e) {
+            // 回滚
+            task.start_time = previousStart
+            task.end_time = previousEnd
             console.error('更新任务时间失败:', e)
         }
     }
@@ -247,6 +283,7 @@ export const useDayStore = defineStore('day', () => {
         dailySchedule,
         completedCount,
         fetchTasks,
+        fetchTaskUpdate,
         carryOverUncompletedTasksTo,
         handleToggleComplete,
         handleStartTask,

@@ -12,12 +12,12 @@
       - 悬停状态 (group-hover): translate-y-0 opacity-100 (往下滑出并显示)
       - pointer-events-auto: 恢复本身的鼠标交互，使得内部按钮可以点击，且鼠标悬停在它身上时面板不会消失
     -->
-    <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto">
+    <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-background/80 backdrop-blur-xl border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto">
     <!-- <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out translate-y-0opacity-100 pointer-events-auto"> -->
       <div class="flex items-center gap-1">
         <!-- 例如身处月或者日页面，显示左侧快捷返回及切换区域 -->
         <Transition name="nav-context">
-          <div v-if="contextInfo.show" class="flex items-center gap-2 px-4 pr-6 border-r border-zinc-100 mr-2 overflow-hidden">
+          <div v-if="contextInfo.show" class="flex items-center gap-2 px-4 pr-6 border-r border-border mr-2 overflow-hidden">
             <template v-if="contextInfo.mode === 'month'">
               <button 
                   @click="router.push(contextInfo.backPath)"
@@ -69,7 +69,7 @@
             'rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500',
             isActive(item) 
               ? 'bg-black text-white shadow-lg hover:bg-black hover:text-white' 
-              : 'text-zinc-400 hover:text-black hover:bg-zinc-50'
+              : 'text-zinc-400 hover:text-foreground hover:bg-muted'
           )"
         >
           <component :is="item.icon" class="w-3.5 h-3.5 mr-2" />
@@ -88,7 +88,7 @@
 
     <!-- Desktop logout (top-right, reveal with navbar) -->
     <button
-      class="fixed top-6 right-6 z-[210] w-11 h-11 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"
+      class="fixed top-6 right-6 z-[210] w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"
       @click="handleLogout"
     >
       <LogOut class="w-4 h-4" />
@@ -102,7 +102,7 @@
       v-if="contextInfo.show"
       class="fixed top-3 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto"
     >
-      <div class="flex items-center gap-2 px-3 py-2 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full shadow-2xl shadow-black/5">
+      <div class="flex items-center gap-2 px-3 py-2 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5">
         <template v-if="contextInfo.mode === 'month'">
           <button
             @click="router.push(contextInfo.backPath)"
@@ -142,7 +142,7 @@
     </div>
 
     <!-- Bottom nav -->
-    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-1 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full px-2 py-2 shadow-2xl shadow-black/5 pointer-events-auto">
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-1 bg-background/90 backdrop-blur-xl border border-border rounded-full px-2 py-2 shadow-2xl shadow-black/5 pointer-events-auto">
       <Button
         v-for="item in navItems"
         :key="item.path"
@@ -153,7 +153,7 @@
           'rounded-full w-11 h-11 transition-all duration-300',
           isActive(item)
             ? 'bg-black text-white shadow-lg hover:bg-black hover:text-white'
-            : 'text-zinc-400 hover:text-black hover:bg-zinc-50'
+            : 'text-zinc-400 hover:text-foreground hover:bg-muted'
         )"
       >
         <component :is="item.icon" class="w-4 h-4" />
@@ -163,7 +163,7 @@
 
     <!-- Mobile logout (top-right) -->
     <button
-      class="fixed top-3 right-3 z-[200] w-11 h-11 bg-white/90 backdrop-blur-xl border border-zinc-100 rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-auto"
+      class="fixed top-3 right-3 z-[200] w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-auto"
       @click="handleLogout"
     >
       <LogOut class="w-4 h-4" />

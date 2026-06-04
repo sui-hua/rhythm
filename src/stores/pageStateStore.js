@@ -5,7 +5,7 @@ import { reactive } from 'vue'
 const buildInitialState = () => ({
   day: { showAddDrawer: false, editingTaskIndex: null },
   summary: { isCreating: false },
-  direction: { showCategoryModal: false }
+  direction: { showCategoryModal: false, showAddModal: false }
 })
 
 export const usePageStateStore = defineStore('pageState', () => {

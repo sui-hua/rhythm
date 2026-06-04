@@ -70,12 +70,12 @@ async function checkAndNotify() {
         const [hours, minutes] = (task.time || '').split(':').map(Number)
         if (isNaN(hours) || isNaN(minutes)) continue
 
-        // 获取任务日期
+        // 获取任务日期（使用序列化后的字段）
         let itemDateStr
-        if (task.original?.day) {
-            itemDateStr = new Date(task.original.day).toISOString().split('T')[0]
-        } else if (task.original?.start_time) {
-            itemDateStr = new Date(task.original.start_time).toISOString().split('T')[0]
+        if (task.originalDay) {
+            itemDateStr = new Date(task.originalDay).toISOString().split('T')[0]
+        } else if (task.originalStartTime) {
+            itemDateStr = new Date(task.originalStartTime).toISOString().split('T')[0]
         } else {
             continue
         }

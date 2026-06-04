@@ -92,7 +92,7 @@ import { ref, watch, nextTick, computed } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Clock } from 'lucide-vue-next'
-import { PopoverAnchor } from 'radix-vue'
+import { PopoverAnchor } from 'reka-ui'
 import { Popover, PopoverContent } from '@/components/ui/popover'
 
 /**

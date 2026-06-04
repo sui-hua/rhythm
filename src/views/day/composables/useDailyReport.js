@@ -4,17 +4,18 @@ import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { toDateOnly, getDayRange } from '@/utils/dateFormatter'
 
-const reportVisible = ref(false)
-const reportStats = ref({
-  yesterdayCompleted: 0,
-  yesterdayUncompleted: 0,
-  todayTotal: 0,
-  carryoverToToday: 0
-})
-const isLoading = ref(false)
-
 export const useDailyReport = () => {
   const authStore = useAuthStore()
+
+  // 每次调用创建独立实例，避免多组件共享同一状态
+  const reportVisible = ref(false)
+  const reportStats = ref({
+    yesterdayCompleted: 0,
+    yesterdayUncompleted: 0,
+    todayTotal: 0,
+    carryoverToToday: 0
+  })
+  const isLoading = ref(false)
 
   const buildStats = async () => {
     const today = new Date()

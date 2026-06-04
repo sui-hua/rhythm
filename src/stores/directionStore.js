@@ -1,7 +1,13 @@
+// 聚合 store：向后兼容旧导入，内部委托给拆分后的子 store
 import { defineStore } from 'pinia'
-import { ref, reactive } from 'vue'
+import { computed } from 'vue'
 import { getMonthName } from '@/utils/dateFormatter'
+import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
+import { useGoalBatchStore } from '@/stores/goalBatchStore'
+import { usePageStateStore } from '@/stores/pageStateStore'
 
+// 月份常量，保持原导出路径不变
 export const months = Array.from({ length: 12 }, (_, i) => ({
   label: getMonthName(i + 1, 'zh'),
   value: i + 1,
@@ -9,91 +15,117 @@ export const months = Array.from({ length: 12 }, (_, i) => ({
 }))
 
 export const useDirectionStore = defineStore('direction', () => {
-  // 数据状态
-  const goals = ref([])
-  const goalMonths = ref([])
-  const goalMonthsCache = reactive({})
-  const goalDaysCache = reactive({})
-  const archiveVersion = ref(0)
+  // 获取子 store 实例
+  const dataStore = useGoalDataStore()
+  const selectionStore = useGoalSelectionStore()
+  const batchStore = useGoalBatchStore()
+  const pageStateStore = usePageStateStore()
 
-  // 选择状态
-  const selectedGoal = ref(null)
-  const editingGoal = ref(null)
-  const selectedMonth = ref(null)
-  const activePicker = ref('start')
-  const isSelecting = ref(false)
+  // ---- 数据状态（委托 goalDataStore）----
 
-  // UI 状态
-  const showAddModal = ref(false)
-  const showCategoryModal = ref(false)
+  const goals = computed({
+    get: () => dataStore.goals,
+    set: (v) => { dataStore.goals = v }
+  })
 
-  // 批量编辑状态
-  const goalMonthsMap = reactive({})
-  const dailyTasks = reactive({})
-  const selectedDates = reactive({})
-  const batchInput = ref('')
+  const goalMonths = computed({
+    get: () => dataStore.goalMonths,
+    set: (v) => { dataStore.goalMonths = v }
+  })
 
-  // 初始化状态
-  const initialized = ref(false)
+  const goalMonthsCache = computed(() => dataStore.goalMonthsCache)
+  const goalDaysCache = computed(() => dataStore.goalDaysCache)
 
-  // 分类数据
-  const categories = ref([])
+  const archiveVersion = computed({
+    get: () => dataStore.archiveVersion,
+    set: (v) => { dataStore.archiveVersion = v }
+  })
 
-  // 辅助方法：按 goalId 获取缓存的月度计划
-  const getGoalMonthsByGoalId = (goalId) => goalMonthsCache[goalId] || []
+  const categories = computed({
+    get: () => dataStore.categories,
+    set: (v) => { dataStore.categories = v }
+  })
 
-  // 清空日计划缓存（保留指定的 monthPlanId）
-  const clearGoalDaysCache = (keepMonthPlanId = null) => {
-    if (keepMonthPlanId && goalDaysCache[keepMonthPlanId]) {
-      const keepData = goalDaysCache[keepMonthPlanId]
-      Object.keys(goalDaysCache).forEach(key => {
-        delete goalDaysCache[key]
-      })
-      goalDaysCache[keepMonthPlanId] = keepData
-    } else {
-      Object.keys(goalDaysCache).forEach(key => {
-        delete goalDaysCache[key]
-      })
-    }
-  }
+  const initialized = computed({
+    get: () => dataStore.initialized,
+    set: (v) => { dataStore.initialized = v }
+  })
 
-  // 同步缓存到扁平兼容镜像
-  const syncGoalMonthsToFlatList = (goalId) => {
-    const cached = goalMonthsCache[goalId] || []
-    const others = goalMonths.value.filter(item => item.goal_id !== goalId)
-    goalMonths.value = [...others, ...cached]
-  }
+  // ---- 选择状态（委托 goalSelectionStore）----
 
-  // 重置所有状态
+  const selectedGoal = computed({
+    get: () => selectionStore.selectedGoal,
+    set: (v) => { selectionStore.selectedGoal = v }
+  })
+
+  const editingGoal = computed({
+    get: () => selectionStore.editingGoal,
+    set: (v) => { selectionStore.editingGoal = v }
+  })
+
+  const selectedMonth = computed({
+    get: () => selectionStore.selectedMonth,
+    set: (v) => { selectionStore.selectedMonth = v }
+  })
+
+  const activePicker = computed({
+    get: () => selectionStore.activePicker,
+    set: (v) => { selectionStore.activePicker = v }
+  })
+
+  const isSelecting = computed({
+    get: () => selectionStore.isSelecting,
+    set: (v) => { selectionStore.isSelecting = v }
+  })
+
+  // ---- UI 状态（委托 pageStateStore）----
+
+  const showAddModal = computed({
+    get: () => pageStateStore.state.direction.showAddModal,
+    set: (v) => { pageStateStore.state.direction.showAddModal = v }
+  })
+
+  const showCategoryModal = computed({
+    get: () => pageStateStore.state.direction.showCategoryModal,
+    set: (v) => { pageStateStore.state.direction.showCategoryModal = v }
+  })
+
+  // ---- 批量编辑状态（委托 goalBatchStore）----
+
+  const goalMonthsMap = computed(() => batchStore.goalMonthsMap)
+  const dailyTasks = computed(() => batchStore.dailyTasks)
+  const selectedDates = computed(() => batchStore.selectedDates)
+
+  const batchInput = computed({
+    get: () => batchStore.batchInput,
+    set: (v) => { batchStore.batchInput = v }
+  })
+
+  // ---- 辅助方法（委托 goalDataStore）----
+
+  const getGoalMonthsByGoalId = (goalId) => dataStore.getGoalMonthsByGoalId(goalId)
+  const clearGoalDaysCache = (keepMonthPlanId) => dataStore.clearGoalDaysCache(keepMonthPlanId)
+  const syncGoalMonthsToFlatList = (goalId) => dataStore.syncGoalMonthsToFlatList(goalId)
+
+  // 聚合重置：依次重置所有子 store
   const reset = () => {
-    goals.value = []
-    goalMonths.value = []
-    editingGoal.value = null
-    selectedGoal.value = null
-    selectedMonth.value = null
-    activePicker.value = 'start'
-    isSelecting.value = false
-    showAddModal.value = false
-    showCategoryModal.value = false
-    initialized.value = false
-    categories.value = []
-
-    Object.keys(goalMonthsCache).forEach(key => delete goalMonthsCache[key])
-    Object.keys(goalDaysCache).forEach(key => delete goalDaysCache[key])
-    Object.keys(goalMonthsMap).forEach(key => delete goalMonthsMap[key])
-    Object.keys(dailyTasks).forEach(key => delete dailyTasks[key])
-    Object.keys(selectedDates).forEach(key => delete selectedDates[key])
-    batchInput.value = ''
-    archiveVersion.value = 0
+    dataStore.reset()
+    selectionStore.reset()
+    batchStore.reset()
+    pageStateStore.resetAll()
   }
 
   return {
+    // 数据状态
     goals, goalMonths, goalMonthsCache, goalDaysCache, archiveVersion,
+    categories, initialized,
+    // 选择状态
     selectedGoal, editingGoal, selectedMonth, activePicker, isSelecting,
+    // UI 状态
     showAddModal, showCategoryModal,
+    // 批量编辑状态
     goalMonthsMap, dailyTasks, selectedDates, batchInput,
-    initialized,
-    categories,
+    // 辅助方法
     getGoalMonthsByGoalId, clearGoalDaysCache, syncGoalMonthsToFlatList, reset
   }
 })

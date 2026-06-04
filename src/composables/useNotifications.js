@@ -1,8 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
 
-// 全局单例：所有组件共享同一份通知历史，clearNotifiedHistory() 会清空全部
-const notifiedTaskIds = ref(new Set())
 let checkInterval = null
 let swRegistration = null
 
@@ -22,11 +20,27 @@ const registerServiceWorker = async () => {
     }
 }
 
+// 从 schedule items 中提取 Service Worker 需要的可序列化字段
+const serializeTasksForSw = (items) => {
+    return items.map(item => ({
+        id: item.id,
+        completed: item.completed,
+        time: item.time,
+        type: item.type,
+        title: item.title,
+        description: item.description,
+        startHour: item.startHour,
+        // 只提取 original 中 Service Worker 需要的日期字段，避免传递整个 reactive proxy 对象
+        originalDay: item.original?.day || null,
+        originalStartTime: item.original?.start_time || null
+    }))
+}
+
 const syncTasksToSw = (items) => {
     if (swRegistration?.active) {
         swRegistration.active.postMessage({
             type: 'UPDATE_TASKS',
-            tasks: items
+            tasks: serializeTasksForSw(items)
         })
     }
 }
@@ -40,6 +54,8 @@ const triggerSwCheck = () => {
 }
 
 export function useNotifications() {
+    // 每次调用创建独立实例，避免多组件共享同一份通知历史
+    const notifiedTaskIds = ref(new Set())
     const hasAskedPermission = ref(false)
     const notificationPermission = ref(
         typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
@@ -154,17 +170,26 @@ export function useNotifications() {
             }
         }
 
+        // 记录上次检查的分钟数，避免同一分钟内重复检查
+        let lastCheckedMinute = -1
+
         checkInterval = setInterval(() => {
             if (notificationPermission.value !== 'granted') {
                 return
             }
+
+            // 同一分钟内只检查一次，减少不必要的网络请求和计算
+            const now = new Date()
+            const currentMinute = now.getHours() * 60 + now.getMinutes()
+            if (currentMinute === lastCheckedMinute) return
+            lastCheckedMinute = currentMinute
 
             const items = getScheduleItems()
             if (items && items.length > 0) {
                 syncTasksToSw(items)
                 checkAndNotify(items)
             }
-        }, 30000)
+        }, 60000)
 
         if (notificationPermission.value === 'granted') {
             const items = getScheduleItems()
@@ -186,7 +211,7 @@ export function useNotifications() {
         }
     }
 
-    // 注意：此操作影响全局，所有组件共享的通知历史都会被清空
+    // 清空当前实例的通知历史
     const clearNotifiedHistory = () => {
         notifiedTaskIds.value.clear()
     }

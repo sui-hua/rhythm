@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, onScopeDispose } from 'vue'
 
 export const usePomodoroStore = defineStore('pomodoro', () => {
     const activeTask = ref(null)
@@ -33,6 +33,13 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
         timer.value = setInterval(() => {
             now.value = Date.now()
         }, 1000)
+        // 组件卸载时自动清理定时器，防止内存泄漏
+        onScopeDispose(() => {
+            if (timer.value) {
+                clearInterval(timer.value)
+                timer.value = null
+            }
+        })
     }
 
     const stopTimer = () => {

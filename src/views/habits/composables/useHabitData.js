@@ -1,30 +1,30 @@
 import { ref, computed } from 'vue'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
+import { useHabitStore } from '@/stores/habitStore'
 
 export function useHabitData() {
     const dateStore = useDateStore()
+    const habitStore = useHabitStore()
 
     // 页面级 loading 状态
     const isPageLoading = ref(false)
 
-    // 存储所有的习惯列表数据（包含已归档）
-    const allHabits = ref([])
+    // 活跃习惯（从 habitStore 读取，过滤掉已归档）
+    const habits = computed(() => habitStore.habits)
 
-    // 向外暴露的活跃习惯（过滤掉已归档）
-    const habits = computed(() => allHabits.value.filter(h => !h.is_archived))
-    // 向外暴露的已归档习惯
-    const archivedHabits = computed(() => allHabits.value.filter(h => h.is_archived))
-
-    // 存储当前用户在左侧列表选中的某项具体习惯对象
-    const selectedHabit = ref(null)
+    // 已归档习惯（从 habitStore 读取）
+    const archivedHabits = computed(() => habitStore.archivedHabits)
 
     // 存储当前选中习惯的日志
     const currentHabitLogs = ref([])
 
-    // 用于独立于全局真实时间，在日历上专门控制显示当前“查看的”年份和月份
+    // 用于独立于全局真实时间，在日历上专门控制显示当前"查看的"年份和月份
     const viewYear = ref(dateStore.currentDate.getFullYear())
     const viewMonth = ref(dateStore.currentDate.getMonth())
+
+    // 当前选中的习惯对象（从 habitStore 读取）
+    const selectedHabit = computed(() => habitStore.selectedHabit)
 
     const handleMonthChange = ({ year, month }) => {
         viewYear.value = year
@@ -42,11 +42,10 @@ export function useHabitData() {
 
             const completedDays = monthlyLogs.map((log) => new Date(log.completed_at).getDate())
 
-            selectedHabit.value = {
-                ...selectedHabit.value,
+            habitStore.patchHabit(selectedHabit.value.id, {
                 monthlyLogs,
                 completedDays
-            }
+            })
         }
     }
 
@@ -86,31 +85,34 @@ export function useHabitData() {
   return streak
 }
 
+    // 从 habitStore 拉取习惯列表，并为每项补充日志相关的占位字段
     const fetchHabits = async () => {
         isPageLoading.value = true
         try {
-            const rawHabits = await db.habit.list()
-            allHabits.value = rawHabits.map((h) => {
-                return {
+            await habitStore.fetchHabits()
+
+            // 为每个习惯补充日志相关的占位字段
+            habitStore.allHabits.forEach((h, index) => {
+                habitStore.allHabits[index] = {
                     ...h,
-                    completedDays: [],   // 等待日志加载后由 selectedHabit 计算
-                    logs: [],
-                    monthlyLogs: [],
-                    total: 0,
-                    completionRate: 0,
-                    streak: 0
+                    completedDays: h.completedDays || [],
+                    logs: h.logs || [],
+                    monthlyLogs: h.monthlyLogs || [],
+                    total: h.total || 0,
+                    completionRate: h.completionRate || 0,
+                    streak: h.streak || 0
                 }
             })
 
             // 维持选中状态
             if (selectedHabit.value) {
-                const updated = allHabits.value.find((h) => h.id === selectedHabit.value.id)
-                if (updated) selectedHabit.value = updated
-                else selectedHabit.value = null
-            } else if (habits.value.length > 0) {
-                selectedHabit.value = habits.value[0]
-            } else if (archivedHabits.value.length > 0) {
-                selectedHabit.value = archivedHabits.value[0]
+                const updated = habitStore.allHabits.find((h) => h.id === selectedHabit.value.id)
+                if (updated) habitStore.setSelectedHabitId(updated.id)
+                else habitStore.setSelectedHabitId(habitStore.habits[0]?.id || habitStore.archivedHabits[0]?.id || null)
+            } else if (habitStore.habits.length > 0) {
+                habitStore.setSelectedHabitId(habitStore.habits[0].id)
+            } else if (habitStore.archivedHabits.length > 0) {
+                habitStore.setSelectedHabitId(habitStore.archivedHabits[0].id)
             }
         } catch (e) {
             console.error('Fetch habits failed', e)
@@ -130,7 +132,7 @@ export function useHabitData() {
             currentHabitLogs.value = logs
 
             // 找到对应的习惯，更新其 logs 相关字段
-            const habit = allHabits.value.find(h => h.id === habitId)
+            const habit = habitStore.allHabits.find(h => h.id === habitId)
             if (habit) {
                 const viewYearVal = viewYear.value
                 const viewMonthVal = viewMonth.value
@@ -142,21 +144,15 @@ export function useHabitData() {
 
                 const completedDays = monthlyLogs.map((log) => new Date(log.completed_at).getDate())
 
-                const updatedHabit = {
-                    ...habit,
+                // 通过 habitStore 局部更新
+                habitStore.patchHabit(habitId, {
                     logs,
                     monthlyLogs,
                     completedDays,
                     total: logs.length,
                     completionRate: Math.round((logs.length / 30) * 100),
                     streak: calculateStreak(logs)
-                }
-
-                // 更新 allHabits 中的数据，selectedHabit 会自动通过 computed 关联到 allHabits
-                const index = allHabits.value.findIndex(h => h.id === habitId)
-                if (index !== -1) {
-                    allHabits.value[index] = updatedHabit
-                }
+                })
             }
         } catch (e) {
             console.error('Fetch logs for habit failed', e)

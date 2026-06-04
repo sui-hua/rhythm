@@ -165,7 +165,7 @@ const handleQuickLog = async (note) => {
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .habits-desktop-root {
-  @apply h-screen w-full bg-white flex overflow-hidden font-sans text-black selection:bg-black selection:text-white relative;
+  @apply h-screen w-full bg-background flex overflow-hidden font-sans text-foreground selection:bg-foreground selection:text-background relative;
 }
 
 .habits-desktop-main {
@@ -185,7 +185,7 @@ const handleQuickLog = async (note) => {
 }
 
 .skeleton-sidebar {
-  @apply w-[280px] border-r border-border bg-white p-6 flex flex-col;
+  @apply w-[280px] border-r border-border bg-background p-6 flex flex-col;
 }
 
 .skeleton-content {

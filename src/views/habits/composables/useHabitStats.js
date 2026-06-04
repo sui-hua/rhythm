@@ -13,8 +13,10 @@ export function useHabitStats(habits, selectedHabit) {
         const currentMonth = todayDate.getMonth()
         const currentDay = todayDate.getDate()
 
-        // 遍历习惯列表，检查它们每项在真实系统时间“今日”是否存在打卡记录
+        // 遍历习惯列表，检查它们每项在真实系统时间”今日”是否存在打卡记录
         const completedTodayCount = habits.value.filter((h) => {
+            // 防御性检查：logs 可能尚未加载
+            if (!h.logs || !Array.isArray(h.logs)) return false
             // 使用不受页面翻页控制的全量 logs 过滤
             return h.logs.some((log) => {
                 const logDate = new Date(log.completed_at)
