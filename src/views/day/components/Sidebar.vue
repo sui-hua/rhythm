@@ -121,12 +121,12 @@
       </div>
       <div v-else-if="!isLoading" class="pb-24 pt-4">
         <EmptyState
-          title="No Tasks Today"
-          description="Your schedule is clear. Take a deep breath or plan something new."
+          title="今日暂无任务"
+          description="日程已清空，深呼吸放松一下，或者计划点新事情。"
         >
           <template #action>
             <Button variant="outline" size="sm" class="rounded-full px-6 active:scale-[0.97]" @click="$emit('add-event')">
-              Create First Task
+              添加第一个任务
             </Button>
           </template>
         </EmptyState>
