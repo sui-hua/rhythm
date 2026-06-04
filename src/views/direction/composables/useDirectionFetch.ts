@@ -1,8 +1,5 @@
-/**
- * Direction 数据拉取 composable。
- * 负责页面初始化时加载目标、月度计划、日计划，
- * 并注册模块级 watcher 响应目标/月份切换。
- */
+// useDirectionFetch.ts
+// Direction 模块数据拉取与状态联动的核心 Composable
 
 import { computed, watch, ref } from 'vue'
 import { db } from '@/services/database'
@@ -16,14 +13,16 @@ import type { GoalMonth } from '@/services/db/goalMonths'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { GoalWithMeta, CategorizedGoalGroup, DirectionFetchReturn } from '@/views/direction/types'
 
-// 模块级守卫：确保 watchers 全局只注册一次，避免 4 个调用点产生 12 个重复 watcher
+// 模块级守卫：watchers 全局只注册一次，避免多个调用点产生重复 watcher
 let watchersRegistered = false
-// 模块级定时器引用：防止 showAddModal 短时间内多次关闭导致定时器累积
+// 模块级定时器引用：防止弹窗短时间内多次关闭导致定时器累积
 let showAddModalTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
- * 从月度计划列表中解析出默认选中的月份计划。
- * 优先选择当前月份，否则选第一个排序最小的。
+ * 从月度计划列表中解析默认选中的月份计划
+ *
+ * 优先选择当前月份对应的计划；若不存在则回退到排序最小的计划。
+ * null 表示列表为空，调用方需做空值保护。
  */
 const resolveDefaultGoalMonth = (list: GoalMonth[]): GoalMonth | null => {
   const sorted = list
@@ -44,6 +43,12 @@ const resolveDefaultGoalMonth = (list: GoalMonth[]): GoalMonth | null => {
 
 export { parseDateOnly } from '@/views/direction/utils/dateOnly'
 
+/**
+ * Direction 数据拉取与状态联动
+ *
+ * 使用场景：Direction 模块页面初始化、目标/月份切换时的数据加载
+ * 数据流：Supabase → goalDataStore / goalSelectionStore / goalBatchStore → 组件
+ */
 export function useDirectionFetch(): DirectionFetchReturn {
   const dataStore = useGoalDataStore()
   const selectionStore = useGoalSelectionStore()
@@ -56,14 +61,14 @@ export function useDirectionFetch(): DirectionFetchReturn {
     selectedGoal, editingGoal, selectedMonth
   } = storeToRefs(selectionStore)
 
-  // 将 store 引用断言为具体类型
+  // store 返回的 Ref 泛型与实际数据结构不匹配，需要断言为具体类型
   const goalsTyped = goals as unknown as { value: Goal[] }
   const goalMonthsTyped = goalMonths as unknown as { value: GoalMonth[] }
   const selectedGoalTyped = selectedGoal as unknown as { value: GoalWithMeta | null }
   const editingGoalTyped = editingGoal as unknown as { value: GoalWithMeta | null }
   const selectedMonthTyped = selectedMonth as unknown as { value: number | null }
 
-  // 将 store 缓存断言为具体类型
+  // store 缓存的类型同上，断言后可在 watcher 中直接读写
   const goalMonthsCache = dataStore.goalMonthsCache as unknown as Record<string, GoalMonth[]>
   const goalDaysCache = dataStore.goalDaysCache as unknown as Record<string, GoalDay[]>
   const goalMonthsMap = batchStore.goalMonthsMap as unknown as Record<string, GoalMonth>
@@ -71,10 +76,10 @@ export function useDirectionFetch(): DirectionFetchReturn {
 
   // 初始化锁：仅在 fetchData 执行期间为 true，阻止 watcher 触发冗余请求
   let isInitializing = false
-  // 页面加载状态：控制 loading 展示，每次调用创建独立实例
+  // 页面加载状态：控制 loading 展示，每次 composable 调用创建独立实例
   const isPageLoading = ref(false)
 
-  // 按分类分组目标列表，用于侧边栏分类展示
+  // 按分类分组目标列表，用于侧边栏分组展示
   const categorizedGoals = computed((): CategorizedGoalGroup[] => {
     const map = new Map<string, GoalWithMeta[]>()
     for (const goal of goalsTyped.value) {
@@ -91,12 +96,13 @@ export function useDirectionFetch(): DirectionFetchReturn {
     return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
   })
 
-  /** 重新加载目标列表 */
+  // 重新加载目标列表，供外部手动刷新使用
   const loadGoals = async (): Promise<void> => {
     goalsTyped.value = await db.goal.list()
   }
 
-  /** 加载指定目标的月度计划并填充缓存和映射表 */
+  // 加载指定目标的月度计划，有缓存时跳过网络请求
+  // 同时填充 goalMonthsMap 映射表，供 batchStore 批量操作使用
   const loadGoalMonths = async (goalId: string): Promise<void> => {
     if (goalMonthsCache[goalId]) return
     goalMonthsCache[goalId] = await db.goalMonths.list(goalId)
@@ -112,7 +118,8 @@ export function useDirectionFetch(): DirectionFetchReturn {
     dataStore.syncGoalMonthsToFlatList(goalId)
   }
 
-  /** 加载指定月度计划的日计划并同步到 dailyTasks 映射 */
+  // 加载指定月度计划的日计划并同步到 dailyTasks 映射
+  // force=true 时跳过缓存，用于月份切换后强制刷新
   const loadGoalDays = async (monthPlanId: string, { force = false } = {}): Promise<void> => {
     if (!force && goalDaysCache[monthPlanId]) return
 
@@ -128,6 +135,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
     if (!monthDate) return
 
     const month = monthDate.getMonth() + 1
+    // 先清除该目标-月份前缀下的旧映射，防止残留脏数据
     const prefix = `goal-${gm.goal_id}-${month}-`
     for (const key of Object.keys(dailyTasks)) {
       if (key.startsWith(prefix)) delete dailyTasks[key]
@@ -142,7 +150,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
     }
   }
 
-  /** 页面初始化数据拉取：加载目标 → 月度计划 → 日计划 */
+  // 页面初始化数据拉取：目标 → 月度计划 → 日计划，按层级顺序加载
   const fetchData = async (): Promise<void> => {
     isPageLoading.value = true
     isInitializing = true
@@ -179,16 +187,15 @@ export function useDirectionFetch(): DirectionFetchReturn {
   if (!watchersRegistered) {
     watchersRegistered = true
 
-    // 新增弹窗关闭时延迟清空编辑状态，避免闪烁
+    // 弹窗关闭时延迟清空编辑状态，300ms 延迟避免关闭动画期间闪烁
     watch(showAddModal, (val: boolean) => {
       if (!val) {
-        // 清除前一个定时器，防止短时间内多次关闭导致定时器累积
         if (showAddModalTimer) clearTimeout(showAddModalTimer)
         showAddModalTimer = setTimeout(() => { editingGoalTyped.value = null }, 300)
       }
     })
 
-    // 月份切换时重新加载对应日计划
+    // 月份切换时重新加载对应日计划，初始化期间跳过避免与 fetchData 冲突
     watch(selectedMonth, async (newMonth: number | null, oldMonth: number | null) => {
       if (isInitializing) return
       if (!newMonth || newMonth === oldMonth) return
@@ -205,7 +212,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
       await loadGoalDays(gm.id, { force: true })
     })
 
-    // 目标切换时重新加载月度计划和默认日计划
+    // 目标切换时重新加载月度计划，并自动选中默认月份的日计划
     watch(selectedGoal, async (newGoal, oldGoal) => {
       if (isInitializing) return
       if (!newGoal || newGoal === oldGoal) return
@@ -229,7 +236,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
     })
   }
 
-  // 首次调用时触发页面初始化数据拉取
+  // 首次调用时触发页面初始化数据拉取，后续调用复用已加载数据
   if (!initialized.value) {
     fetchData()
     initialized.value = true

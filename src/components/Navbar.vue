@@ -1,21 +1,15 @@
 <template>
   <!--
-    导航栏最外层父容器
-    - group: 定义一个 hover 组，当鼠标悬停在其内部有效区域时，触发整个组的 group-hover 状态
-    - pointer-events-none: 作为全宽块级元素，使其不会阻挡页面下方原有内容的点击事件
+    Navbar — 全局顶部导航栏，桌面端 hover 滑出，移动端常驻底部
+    主要结构：桌面端导航（hover 触发区 + 导航面板 + 退出按钮）、移动端导航（上下文胶囊 + 底部导航 + 退出按钮）
   -->
-  <!-- Desktop Navbar (hover reveal) -->
+
+  <!-- 桌面端导航开始：外层 hover 容器，pointer-events-none 避免阻挡页面内容点击 -->
   <div class="fixed top-0 left-0 right-0 h-24 z-200 group pointer-events-none hidden md:block">
-    <!--
-      实际的导航面板
-      - 默认状态:  -translate-y-[150%] (隐藏在顶部之外) 且 opacity-0 (透明)
-      - 悬停状态 (group-hover): translate-y-0 opacity-100 (往下滑出并显示)
-      - pointer-events-auto: 恢复本身的鼠标交互，使得内部按钮可以点击，且鼠标悬停在它身上时面板不会消失
-    -->
+    <!-- 导航面板：默认隐藏在顶部上方，group-hover 时滑出并显示，pointer-events-auto 恢复交互 -->
     <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-background/80 backdrop-blur-xl border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto">
-    <!-- <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-white/80 backdrop-blur-xl border border-zinc-100 rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out translate-y-0opacity-100 pointer-events-auto"> -->
       <div class="flex items-center gap-1">
-        <!-- 例如身处月或者日页面，显示左侧快捷返回及切换区域 -->
+        <!-- 上下文导航区：月/日页面时显示左侧快捷返回及切换控件 -->
         <Transition name="nav-context">
           <div v-if="contextInfo.show" class="flex items-center gap-2 px-4 pr-6 border-r border-border mr-2 overflow-hidden">
             <template v-if="contextInfo.mode === 'month'">
@@ -79,14 +73,10 @@
       </div>
 
     </nav>
-    <!--
-      顶部隐形触发热区 (Invisible Trigger Area)
-      - 固定在最顶部的透明高 10px(h-10) 区域
-      - pointer-events-auto: 恢复鼠标事件捕捉。当鼠标触碰到这个区域时，就会触发外层 div 的 group:hover 动作，从而使 nav 导航栏滑出
-    -->
+    <!-- 顶部隐形触发热区：pointer-events-auto 恢复鼠标事件，hover 时触发外层 group-hover 使导航面板滑出 -->
     <div class="absolute top-0 left-0 right-0 h-10 pointer-events-auto"></div>
 
-    <!-- Desktop logout (top-right, reveal with navbar) -->
+    <!-- 桌面端退出按钮：随导航面板一起显隐 -->
     <button
       class="fixed top-6 right-6 z-210 w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"
       @click="handleLogout"
@@ -95,9 +85,11 @@
     </button>
   </div>
 
-  <!-- Mobile Navbar (always visible) -->
+  <!-- 桌面端导航结束 -->
+
+  <!-- 移动端导航开始：常驻显示 -->
   <div class="md:hidden">
-    <!-- Context pill (month/day navigation) -->
+    <!-- 移动端上下文胶囊：月/日页面时显示在顶部居中 -->
     <div
       v-if="contextInfo.show"
       class="fixed top-3 left-1/2 -translate-x-1/2 z-200 pointer-events-auto"
@@ -141,7 +133,7 @@
       </div>
     </div>
 
-    <!-- Bottom nav -->
+    <!-- 移动端底部导航栏：固定在屏幕底部居中 -->
     <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-200 flex items-center gap-1 bg-background/90 backdrop-blur-xl border border-border rounded-full px-2 py-2 shadow-2xl shadow-black/5 pointer-events-auto">
       <Button
         v-for="item in navItems"
@@ -161,7 +153,7 @@
 
     </nav>
 
-    <!-- Mobile logout (top-right) -->
+    <!-- 移动端退出按钮：固定在右上角 -->
     <button
       class="fixed top-3 right-3 z-200 w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-auto"
       @click="handleLogout"
@@ -172,21 +164,32 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * Navbar — 全局顶部导航栏组件
+ * 数据流：路由路径 → contextInfo（上下文导航状态）→ 模板渲染
+ * 桌面端 hover 触发滑出，移动端常驻底部导航
+ */
+
+// ── 依赖导入 ──
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { Calendar, CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut } from 'lucide-vue-next'
+import { CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import supabase from '@/services/supabase'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { buildDayPath, buildMonthPath, buildYearPath, getRouteDateContext } from '@/views/day/utils/routeDateContext'
 
+// ── Store ──
 const dateStore = useDateStore()
+
+// ── 路由 ──
 const router = useRouter()
 const route = useRoute()
 
-// 导航栏菜单配置（computed 确保跨午夜后路径自动更新）
+// ── 计算属性 ──
+// 导航栏菜单配置，使用 computed 确保跨午夜后路径自动更新
 const navItems = computed(() => [
   { name: '时序 ', path: buildDayPath(new Date()), icon: LayoutGrid, base: '/day' },
   { name: '习惯', path: '/habits', icon: CheckCircle2, base: '/habits' },
@@ -194,17 +197,20 @@ const navItems = computed(() => [
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
 ])
 
-// 判断导航项是否激活（时序拥有多层级路由，处在任何一层都算激活）
+// ── 方法 ──
+// 判断导航项是否激活，时序模块拥有多层级路由（day/month/year），处在任何一层都算激活
 const isActive = (item: { name: string; path: string; icon: any; base: string }) => {
   if (item.base === '/day' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path.startsWith('/year'))) return true
   return route.path === item.path || route.path.startsWith(item.base)
 }
 
-// 根据当前路由计算导航栏左侧的面包屑辅助控件状态
+// ── 计算属性 ──
+// 根据当前路由计算导航栏左侧的上下文导航控件状态（月视图显示年份返回，日视图显示前后切换）
 const contextInfo = computed(() => {
   const path = route.path
   const { year: currentYear, month, date: currentDate } = getRouteDateContext(route.params, dateStore.currentDate)
 
+  // 月视图模式：显示年份返回按钮
   if (path.startsWith('/month/')) {
     return {
       title: `${currentYear}年`,
@@ -213,11 +219,14 @@ const contextInfo = computed(() => {
       mode: 'month' as const
     }
   }
+  // 日视图模式：显示月份名称 + 前后天切换按钮
   if (path === '/day' || path.startsWith('/day/')) {
+    // 构建前一天路径，用于左箭头导航
     const prevDate = new Date(currentDate)
     prevDate.setDate(currentDate.getDate() - 1)
     const prevDayPath = buildDayPath(prevDate)
 
+    // 构建后一天路径，用于右箭头导航
     const nextDate = new Date(currentDate)
     nextDate.setDate(currentDate.getDate() + 1)
     const nextDayPath = buildDayPath(nextDate)
@@ -231,9 +240,12 @@ const contextInfo = computed(() => {
       mode: 'day' as const
     }
   }
+  // 其他页面不显示上下文导航
   return { show: false, mode: null as null }
 })
 
+// ── 方法 ──
+// 退出登录，清除 Supabase 会话后自动由路由守卫重定向到登录页
 const handleLogout = async () => {
   await supabase.auth.signOut()
 }

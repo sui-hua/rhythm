@@ -1,18 +1,18 @@
 /**
- * useDragSnap - 拖拽吸附逻辑
+ * useDragSnap - 拖拽吸附工具函数
  *
- * 提供像素<->时间转换和边界约束计算。
- * 所有函数为纯函数，不依赖 Vue 响应式系统。
+ * 使用场景：时间轴任务拖拽移动和底部边缘缩放
+ * 数据流：纯函数，输入像素/时间 → 输出对齐后的时间值
  *
- * 常量：
- *   HOUR_HEIGHT = 180px（对应 CSS max(25vh, 180px) 中的最小值）
- *   SNAP_MINUTES = 5
- *   SNAP_PX = 15px（5 分钟对应的像素值）
+ * 所有函数为纯函数，不依赖 Vue 响应式系统，可安全在任何上下文调用
  */
 
+// 小时对应的高度像素值，与 CSS max(25vh, 180px) 中的最小值保持一致
 export const HOUR_HEIGHT = 180
+// 吸附粒度：5 分钟
 export const SNAP_MINUTES = 5
-export const SNAP_PX = (SNAP_MINUTES / 60) * HOUR_HEIGHT // 15px
+// 5 分钟对应的像素值（15px）
+export const SNAP_PX = (SNAP_MINUTES / 60) * HOUR_HEIGHT
 
 /** 拖拽/缩放计算的输入任务快照 */
 export interface DragTaskInput {
@@ -27,9 +27,8 @@ export interface DragResult {
 }
 
 /**
- * 像素 -> 小时（浮点数），snap 到 5 分钟粒度
- * @param px - 像素偏移量
- * @returns 对齐后的小时数
+ * 像素转换为小时数（浮点数），snap 到 5 分钟粒度
+ * 使用 Math.round 确保四舍五入到最近的吸附点
  */
 export function pxToHour(px: number): number {
     const rawHours = px / HOUR_HEIGHT
@@ -38,33 +37,34 @@ export function pxToHour(px: number): number {
 }
 
 /**
- * 小时 -> 像素
- * @param hour - 小时数（浮点数）
- * @returns 像素值
+ * 小时数转换为像素值
+ * 用于计算任务元素的 top/height 定位
  */
 export function hourToPx(hour: number): number {
     return hour * HOUR_HEIGHT
 }
 
 /**
- * 拖拽移动：计算新的开始/结束时间，保持 duration 不变
- * @param task - 任务对象，需有 startHour 和 durationHours
- * @param deltaY - 垂直拖拽像素偏移量（正=向下，负=向上）
+ * 拖拽移动计算
+ * 保持任务时长不变，计算新的开始/结束时间
+ * 边界约束：不允许超出 0-24 小时范围
  */
 export function calcDragResult(task: DragTaskInput, deltaY: number): DragResult {
     const deltaHours = pxToHour(deltaY)
+    // 最大起始时间 = 24h - 任务时长，防止任务溢出到次日
     const maxStart = Math.max(0, 24 - task.durationHours)
     const newStart = Math.max(0, Math.min(maxStart, task.startHour + deltaHours))
     return { newStart, newEnd: newStart + task.durationHours }
 }
 
 /**
- * 缩放：计算新的结束时间，保持 startHour 不变
- * @param task - 任务对象，需有 startHour 和 durationHours
- * @param newHeight - 缩放后的高度（像素）
+ * 缩放计算
+ * 保持起始时间不变，根据新高度计算结束时间
+ * 最小持续时间 5 分钟，最大不超过 24h 减去起始时间
  */
 export function calcResizeResult(task: DragTaskInput, newHeight: number): DragResult {
-    const minDuration = SNAP_MINUTES / 60 // 0.25h = 5min
+    // 最小 5 分钟，避免任务被缩放到不可见
+    const minDuration = SNAP_MINUTES / 60
     const maxDuration = 24 - task.startHour
     const newDuration = Math.max(minDuration, Math.min(maxDuration, pxToHour(newHeight)))
     return { newStart: task.startHour, newEnd: task.startHour + newDuration }

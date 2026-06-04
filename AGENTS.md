@@ -114,31 +114,87 @@ src/
 **template 注释：** 每个主要结构块写开始和结束注释
 
 ```vue
-<!-- 搜索区开始 -->
-<ContentWrap>
-  <el-form :model="queryParams">...</el-form>
-</ContentWrap>
-<!-- 搜索区结束 -->
+<template>
+  <!--
+    组件名称 — 一句话说明核心职责
+    主要结构：区域A、区域B、区域C
+  -->
+  <div class="...">
+
+    <!-- 搜索区开始 -->
+    <section class="...">
+      <input ... />
+      <button ... />
+    </section>
+    <!-- 搜索区结束 -->
+
+    <!-- 数据表格开始 -->
+    <table>
+      ...
+    </table>
+    <!-- 数据表格结束 -->
+
+    <!-- 新增/编辑弹窗 -->
+    <Modal v-if="showModal" />
+
+  </div>
+</template>
 ```
 
 **script 注释：** 每个状态变量、每个函数必须加注释
 
-```ts
-// 表格加载状态，用于控制重复请求和 loading 展示
-const loading = ref(false)
+```vue
+<script lang="ts" setup>
+/**
+ * 组件/Composable 的职责说明
+ * 数据流：xxx → xxx → xxx
+ */
 
-// 页面初始化和查询条件变化时拉取列表数据
-const getList = async () => {
+// ── 依赖导入 ──
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+// ── Store ──
+const authStore = useAuthStore()
+
+// ── Props ──
+// 当前任务数据，由父组件传入
+const props = defineProps<{ task: Task }>()
+
+// ── Emits ──
+// select: 选中任务 | edit: 编辑任务
+const emit = defineEmits<{ select: [id: string]; edit: [id: string] }>()
+
+// ── 状态 ──
+// 表单提交中，防止重复点击
+const submitting = ref(false)
+// 当前展开的面板索引，-1 表示全部折叠
+const expandedIndex = ref(-1)
+
+// ── 计算属性 ──
+// 已完成的任务数量，用于顶部统计
+const completedCount = computed(() => props.tasks.filter(t => t.done).length)
+
+// ── 方法 ──
+// 提交表单，失败时保留用户输入不重置
+async function handleSubmit() {
   // 请求发出前锁定，防止重复提交
-  loading.value = true
+  submitting.value = true
   try {
-    const data = await DemoApi.getDemoPage(queryParams)
-    list.value = data.list
+    await api.save(formData.value)
+    emit('saved')
   } finally {
     // 请求结束后释放锁定，确保异常场景也能恢复按钮状态
-    loading.value = false
+    submitting.value = false
   }
 }
+
+// ── 生命周期 ──
+// 页面挂载后滚动到上次位置
+onMounted(() => {
+  scrollToLastPosition()
+})
+</script>
 ```
 
 **行内注释对比：**
@@ -149,6 +205,123 @@ list.filter(f => f.id !== fieldId)
 
 // Good: filter 返回新数组，确保引用变化触发响应式更新
 list.filter(f => f.id !== fieldId)
+
+// Good: 解释 WHY、边界条件、副作用
+// 延迟 300ms，等待关闭动画结束后再清空数据
+setTimeout(() => { data.value = null }, 300)
+
+// 周日映射为 6，周一映射为 0（ISO 8601 标准）
+const offset = (firstDayOfWeek + 6) % 7
+```
+
+**Composable 注释规范：**
+
+```typescript
+// useXxx.ts
+
+import { ref, computed } from 'vue'
+
+// 返回值类型定义
+export interface UseXxxReturn {
+  state: Ref<Type>
+  handleAction: () => void
+}
+
+/**
+ * Composable 的核心职责
+ *
+ * 使用场景：xxx 模块的 xxx 功能
+ * 数据流：API → store → 组件
+ */
+export function useXxx(param: Type): UseXxxReturn {
+  // 内部状态说明
+  const state = ref(initialValue)
+
+  // 派生计算，用于 xxx 展示
+  const derived = computed(() => transform(state.value))
+
+  // 操作说明，处理 xxx 场景
+  function handleAction() {
+    // 关键步骤说明
+    state.value = newValue
+  }
+
+  return { state, derived, handleAction }
+}
+```
+
+**Store 注释规范：**
+
+```typescript
+// useXxxStore.ts
+
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+/**
+ * Store 管理的状态域说明
+ * persist: true → 状态自动同步到 localStorage，刷新后恢复
+ */
+export const useXxxStore = defineStore('xxx', () => {
+  // ── 状态 ──
+  // 当前登录用户 ID
+  const userId = ref<string | null>(null)
+  // 用户完整信息（兼容 Supabase Auth 返回的 User）
+  const user = ref<User | null>(null)
+
+  // ── 计算属性 ──
+  // 是否已登录
+  const isLoggedIn = computed(() => !!userId.value)
+
+  // ── Actions ──
+  // 设置用户信息，同时更新 userId
+  function setUser(userData: User) {
+    user.value = userData
+    userId.value = userData.id
+  }
+
+  // 清除登录状态，登出时调用
+  function clearAuth() {
+    userId.value = null
+    user.value = null
+  }
+
+  return { userId, user, isLoggedIn, setUser, clearAuth }
+}, { persist: true })
+```
+
+**工具函数注释规范：**
+
+```typescript
+// dateFormatter.ts
+
+/**
+ * 将 Date 对象格式化为 YYYY-MM-DD 字符串
+ * @example toDateOnly(new Date('2026-06-04')) → '2026-06-04'
+ */
+export function toDateOnly(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// 判断两个日期是否为同一天（忽略时分秒）
+export function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+/**
+ * 获取指定月份的第一天偏移量（周一=0, 周日=6）
+ * 用于日历网格渲染时计算前置空格数
+ */
+export function getFirstDayOffset(year: number, month: number): number {
+  return (new Date(year, month - 1, 1).getDay() + 6) % 7
+}
 ```
 
 ---

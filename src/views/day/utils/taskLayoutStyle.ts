@@ -1,17 +1,13 @@
 /**
- * ============================================
- * 任务卡片横向布局样式 (views/day/utils/taskLayoutStyle.ts)
- * ============================================
+ * 任务卡片横向布局样式
  *
- * 【模块职责】
- * - 只负责时间轴卡片的横向定位和堆叠语义：
- *   - 普通任务按列平铺
- *   - carry-over 任务保留错层堆叠
+ * 只负责时间轴卡片的横向定位和堆叠语义：
+ * - 普通任务按列平铺
+ * - carry-over 任务保留错层堆叠
  *
- * 【纵向定位说明】
- * - 纵向的 top / height 由各自渲染容器决定：
- *   - TaskItem 使用 CSS 变量 --hour-height
- *   - TaskItemWrapper 使用拖拽时的像素高度
+ * 纵向的 top / height 由各自渲染容器决定：
+ * - TaskItem 使用 CSS 变量 --hour-height
+ * - TaskItemWrapper 使用拖拽时的像素高度
  */
 
 import type { TimelineTask } from './types'
@@ -24,6 +20,10 @@ interface TaskLayoutStyle {
   transform?: string
 }
 
+/**
+ * 根据任务的布局元数据生成横向 CSS 样式
+ * @param task - 包含 _col/_numCols/_stackIndex 等布局字段的任务对象
+ */
 export function buildTaskHorizontalLayoutStyle(task: TimelineTask = {} as TimelineTask): TaskLayoutStyle {
   const col = task._col || 0
   const numCols = task._numCols || 1
@@ -34,7 +34,7 @@ export function buildTaskHorizontalLayoutStyle(task: TimelineTask = {} as Timeli
     zIndex: col + 10
   }
 
-  // carry-over 堆叠模式：限制最多展示 5 层，逐层偏移
+  // carry-over 堆叠模式：最多展示 5 层，逐层偏移形成错层效果
   if (isStackedCarryOver) {
     const visibleStackIndex = Math.min(task._stackIndex || 0, 4)
     const baseOffsetX = visibleStackIndex * 14
@@ -47,6 +47,7 @@ export function buildTaskHorizontalLayoutStyle(task: TimelineTask = {} as Timeli
       ? `calc((100% - var(--timeline-left)) / ${numCols} - 6px)`
       : 'min(360px, calc(100% - var(--timeline-left) - 12px))'
     style.transform = `translate(${baseOffsetX}px, ${baseOffsetY}px)`
+    // 堆叠层数越大 z-index 越高，保证顶层卡片在最上方
     style.zIndex = 40 + (stackSize - visibleStackIndex)
     return style
   }

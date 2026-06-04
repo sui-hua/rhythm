@@ -1,11 +1,19 @@
+// dateStore.ts
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+/**
+ * 全局日期状态管理
+ * 存储当前选中日期，供 Timeline、Month、Year 等模块统一读取
+ */
 export const useDateStore = defineStore('date', () => {
-  // 当前选中日期
+  // ── 状态 ──
+  // 当前选中日期，初始化为当天
   const currentDate = ref<Date>(new Date())
 
-  // 设置日期
+  // ── Actions ──
+  // 整体替换日期对象
   const setDate = (newDate: Date): void => {
     currentDate.value = newDate
   }
@@ -19,10 +27,11 @@ export const useDateStore = defineStore('date', () => {
    * @example setYearMonthDay(2026, 4, 15) → month=4 表示 5 月
    */
   const setYearMonthDay = (year?: number, month?: number, day?: number): void => {
-    // 注意：JavaScript 中的 month 是 0-indexed 的，传入的值应当注意兼容
+    // 基于当前日期副本修改，避免直接 mutate 原始 Date 对象导致引用丢失
     const newDate = new Date(currentDate.value)
     if (year !== undefined) newDate.setFullYear(year)
     if (month !== undefined) newDate.setMonth(month)
+    // JavaScript Date 的 month 是 0-indexed，调用方需注意传入 0-11
     if (day !== undefined) newDate.setDate(day)
 
     currentDate.value = newDate

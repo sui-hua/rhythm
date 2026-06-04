@@ -1,25 +1,5 @@
-/**
- * ============================================
- * Year 视图逻辑层 (views/year/composables/useYearView.ts)
- * ============================================
- *
- * 【模块职责】
- * - 年度总览视图的数据获取和状态管理
- * - 聚合所有习惯的年度打卡数据
- * - 计算每个月的打卡天数
- *
- * 【数据结构 - yearData】
- * - 12 个月的数据数组
- * - 每个月份包含：name（英文月份）、days（天数）、firstDayOffset（周一偏移）
- * - completedDays（本月已打卡的天数数组）
- *
- * 【路由参数】
- * - /year/:year
- * - 自动补全和合法性校验
- *
- * @module useYearView
- * @description 年度总览视图的组合式函数，负责年度习惯数据的聚合、展示和路由同步
- */
+// useYearView.ts
+// Year 模块的视图逻辑层，负责年度习惯打卡数据的聚合和路由同步
 
 import type { Ref, ComputedRef } from 'vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -30,21 +10,21 @@ import { useDateStore } from '@/stores/dateStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { buildMonthPath, buildYearPath, getRouteYearContext } from '@/views/day/utils/routeDateContext'
 
-// 月份数据项接口
+// 月份数据项，包含日历渲染所需的全部信息和打卡统计
 export interface YearMonthData {
   /** 英文月份名 */
   name: string
   /** 该月天数 */
   days: number
-  /** 周一偏移（0=周一） */
+  /** 周一偏移（0=周一），用于日历网格对齐 */
   firstDayOffset: number
   /** 月份索引 0-11 */
   index: number
-  /** 该月已打卡日期数组 */
+  /** 该月已打卡日期数组，用于热力图渲染 */
   completedDays: number[]
 }
 
-// composable 返回值接口
+// useYearView composable 的返回值类型
 export interface UseYearViewReturn {
   /** 12个月的打卡统计数据，用于渲染年度热力图 */
   yearData: ComputedRef<YearMonthData[]>
@@ -55,44 +35,39 @@ export interface UseYearViewReturn {
 }
 
 /**
- * 年度总览视图的组合式函数
- * @description 整合年度习惯数据的获取、解析、展示和路由同步逻辑
- * @returns 视图状态和方法
+ * 年度总览视图逻辑
+ *
+ * 使用场景：Year 页面，展示年度习惯打卡热力图
+ * 数据流：路由参数 → fetchHabits + fetchYearLogs → yearData 聚合计算 → 组件渲染
  */
 export const useYearView = (): UseYearViewReturn => {
-  /** 页面级加载状态 */
+  // 页面级加载状态
   const isPageLoading = ref(false)
 
-  /** 当前年度所有未归档的习惯列表 */
+  // 当前年度所有未归档的习惯列表，仅首次进入时加载
   const habits = ref<Habit[]>([])
 
-  /** 当前年度所有习惯的打卡日志 */
+  // 当前年度所有习惯的打卡日志，每年切换时重新加载
   const yearLogs = ref<HabitLog[]>([])
 
   const route = useRoute()
   const router = useRouter()
   const dateStore = useDateStore()
 
-  /**
-   * 从路由参数解析出的年份
-   * @description 通过 getRouteYearContext 校验并规范化年份，支持自动补全和合法性校验
-   */
+  // 从路由参数解析并规范化年份，支持自动补全和合法性校验
   const routeYear = computed((): number =>
     getRouteYearContext(route.params.year as string, dateStore.currentDate.getFullYear()).year
   )
 
-  /** 标记习惯数据是否已获取，防止重复请求 */
+  // 标记习惯数据是否已获取，避免路由切换时重复请求
   const hasFetchedHabits = ref(false)
 
-  /**
-   * 获取所有未归档的习惯列表
-   * @description 从数据库加载习惯数据，过滤掉已归档(is_archived=true)的习惯
-   */
+  // 获取所有未归档的习惯列表
   const fetchHabits = async (): Promise<void> => {
     isPageLoading.value = true
     try {
       const allHabits = await db.habit.list()
-      // 过滤掉已归档的习惯，只保留活跃习惯
+      // 过滤掉已归档的习惯，只保留活跃习惯用于年度统计
       habits.value = allHabits.filter((habit) => !(habit as Habit & { is_archived?: boolean }).is_archived)
     } catch (e) {
       console.error('Failed to fetch habits', e)
@@ -101,11 +76,7 @@ export const useYearView = (): UseYearViewReturn => {
     }
   }
 
-  /**
-   * 获取指定年份的所有打卡日志
-   * @description 调用数据库接口获取整年的习惯打卡记录，用于聚合统计
-   * @param year - 目标年份
-   */
+  // 获取指定年份的所有打卡日志，用于聚合统计
   const fetchYearLogs = async (year: number): Promise<void> => {
     try {
       yearLogs.value = await db.habit.listLogsByYear(year)
@@ -116,18 +87,15 @@ export const useYearView = (): UseYearViewReturn => {
   }
 
   /**
-   * 同步路由年份与当前视图状态
-   * @description 核心路由处理函数，负责：
-   * 1. 校验路由年份的合法性，非规范格式自动重定向
-   * 2. 更新 dateStore 的年份状态
-   * 3. 按需加载习惯数据和年度日志
-   * @returns 返回 true 表示路由合法且数据加载成功，false 表示已重定向
+   * 路由同步主函数
+   *
+   * 校验路由年份合法性 → 更新全局日期状态 → 按需加载数据。
+   * 返回 false 表示路由不合法已重定向，调用方应终止后续逻辑。
    */
   const syncYearRoute = async (): Promise<boolean> => {
-    // 解析路由年份上下文，包含规范化年份和合法性标志
     const context = getRouteYearContext(route.params.year as string, dateStore.currentDate.getFullYear())
 
-    // 非规范路由（如缺少年份、格式错误）需要重定向到规范路径
+    // 非规范路由（如缺少年份、格式错误）重定向到规范路径
     if (!context.isCanonical) {
       const targetYear = context.hasParsedYear
         ? new Date(context.year, 0, 1).getFullYear()
@@ -136,16 +104,15 @@ export const useYearView = (): UseYearViewReturn => {
       return false
     }
 
-    // 更新全局日期状态，设为该年1月1日
+    // 更新全局日期状态为该年1月1日
     dateStore.setYearMonthDay(context.year, 0, 1)
 
-    // 首次进入时加载习惯列表（仅执行一次）
+    // 习惯列表仅首次加载一次，年度日志每年切换时重新加载
     if (!hasFetchedHabits.value) {
       await fetchHabits()
       hasFetchedHabits.value = true
     }
 
-    // 加载该年度的打卡日志
     await fetchYearLogs(context.year)
 
     return true
@@ -157,22 +124,21 @@ export const useYearView = (): UseYearViewReturn => {
   watch(() => route.params.year, syncYearRoute)
 
   /**
-   * 计算年度数据（供视图渲染使用）
-   * @description 根据年度打卡日志聚合出每月数据：
-   * - 遍历所有打卡记录，按月份分组统计已打卡天数
-   * - 计算每月第一天是周几（用于日历对齐）
+   * 年度数据聚合计算
+   *
+   * 将打卡日志按月份分组统计，构建 12 个月的数据数组供热力图渲染。
+   * 使用 Set 去重同一天的多次打卡，确保 completedDays 无重复。
    */
   const yearData = computed((): YearMonthData[] => {
     const currentYear = routeYear.value
-    /** 按月索引存储已打卡日期集合 */
+    // 按月索引存储已打卡日期集合，自动去重
     const completedByMonth = new Map<number, Set<number>>()
 
-    // 聚合年度打卡数据：筛选当年记录，按月-日二级分组
     yearLogs.value.forEach((log) => {
       const d = new Date(log.completed_at ?? '')
       if (d.getFullYear() === currentYear) {
-        const m = d.getMonth() // 0-11 月份索引
-        const day = d.getDate() // 1-31 日期
+        const m = d.getMonth()
+        const day = d.getDate()
         if (!completedByMonth.has(m)) completedByMonth.set(m, new Set())
         completedByMonth.get(m)!.add(day)
       }
@@ -181,16 +147,17 @@ export const useYearView = (): UseYearViewReturn => {
     // 构建 12 个月的数据数组
     const result: YearMonthData[] = []
     for (let m = 1; m <= 12; m++) {
-      const index = m - 1 // 0-11 索引
-      const name = getMonthName(m, 'en') // 英文月份名
-      const daysInMonth = new Date(currentYear, m, 0).getDate() // 该月总天数
+      const index = m - 1
+      const name = getMonthName(m, 'en')
+      const daysInMonth = new Date(currentYear, m, 0).getDate()
       result.push({
-        name, // 英文月份名
-        days: daysInMonth, // 该月天数
-        firstDayOffset: (new Date(currentYear, index, 1).getDay() + 6) % 7, // 周一偏移（0=周一）
-        index, // 月份索引 0-11
+        name,
+        days: daysInMonth,
+        // (getDay() + 6) % 7 将周日(0)映射为6，周一(1)映射为0，符合 ISO 8601
+        firstDayOffset: (new Date(currentYear, index, 1).getDay() + 6) % 7,
+        index,
         completedDays: completedByMonth.has(index)
-          ? Array.from(completedByMonth.get(index)!) // 该月已打卡日期数组
+          ? Array.from(completedByMonth.get(index)!)
           : []
       })
     }
@@ -198,22 +165,15 @@ export const useYearView = (): UseYearViewReturn => {
     return result
   })
 
-  /**
-   * 进入指定月份的视图
-   * @description 点击月度区块时导航到 /month/:year/:month 路由
-   * @param month - 月份数据对象（包含 index 属性）
-   */
+  // 点击月度区块时导航到 /month/:year/:month 路由
   const enterMonth = (month: YearMonthData): void => {
-    // index + 1 转为 1-12 月份，路由参数使用 1-12
+    // index 是 0-11，路由参数需要 1-12，所以 +1
     router.push(buildMonthPath(routeYear.value, month.index + 1))
   }
 
   return {
-    /** 12个月的打卡统计数据，用于渲染年度热力图 */
     yearData,
-    /** 导航到月度视图 */
     enterMonth,
-    /** 页面加载状态 */
     isPageLoading
   }
 }

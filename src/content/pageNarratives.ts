@@ -1,4 +1,12 @@
-/** 页面叙述配置接口 */
+/**
+ * 页面叙述文案配置
+ *
+ * 集中管理各页面的标题、副标题和空状态文案，
+ * 供 PageIntroBanner 和 EmptyState 等组件统一引用。
+ */
+
+// ── 类型定义 ──
+// 单个页面的叙述文案结构
 interface PageNarrative {
   title: string
   subtitle: string
@@ -6,10 +14,11 @@ interface PageNarrative {
   emptyDescription: string
 }
 
-/** 页面叙述配置映射类型 */
+// 页面叙述配置映射类型，key 为页面标识符
 type PageNarratives = Record<string, PageNarrative>
 
-/** 各页面的叙述文案配置 */
+// ── 配置数据 ──
+// 各页面的叙述文案，key 对应路由中的模块名
 export const pageNarratives: PageNarratives = {
   day: {
     title: '时序',
@@ -37,7 +46,7 @@ export const pageNarratives: PageNarratives = {
   }
 }
 
-/** 空叙述配置，用于未匹配到页面时的回退 */
+// 未匹配到页面时的回退配置
 const fallbackNarrative: PageNarrative = {
   title: '',
   subtitle: '',
@@ -47,7 +56,8 @@ const fallbackNarrative: PageNarrative = {
 
 /**
  * 获取指定页面的叙述配置
- * @param key - 页面标识符
+ *
+ * @param key - 页面标识符（如 'day'、'habits'）
  * @returns 页面叙述配置，未匹配时返回空配置
  */
 export const getPageNarrative = (key: string): PageNarrative =>

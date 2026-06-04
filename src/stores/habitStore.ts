@@ -1,31 +1,39 @@
+// habitStore.ts
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { db } from '@/services/database'
 import type { Habit } from '@/types/models'
 
-// 习惯数据统一状态管理，支持乐观更新
+/**
+ * 习惯数据统一状态管理
+ * 支持乐观更新：先修改本地状态，再同步数据库，失败时回滚
+ */
 export const useHabitStore = defineStore('habit', () => {
-  // 所有习惯数据（包含已归档）
+  // ── 状态 ──
+  // 所有习惯数据（包含已归档），作为唯一数据源
   const allHabits = ref<Habit[]>([])
 
-  // 当前选中的习惯 ID
+  // 当前选中的习惯 ID，用于详情面板定位
   const selectedHabitId = ref<string | null>(null)
 
-  // 全局 loading 状态
+  // 全局 loading 状态，控制列表骨架屏
   const loading = ref(false)
 
-  // 活跃习惯（过滤掉已归档）
+  // ── 计算属性 ──
+  // 活跃习惯（过滤掉已归档），供列表页和日程页使用
   const habits = computed(() => allHabits.value.filter(h => !h.is_archived))
 
-  // 已归档习惯
+  // 已归档习惯，供归档管理页使用
   const archivedHabits = computed(() => allHabits.value.filter(h => h.is_archived))
 
-  // 当前选中的习惯对象
+  // 当前选中的习惯对象，从 allHabits 中按 ID 查找
   const selectedHabit = computed(() =>
     allHabits.value.find(h => h.id === selectedHabitId.value) || null
   )
 
-  // 从数据库拉取所有习惯数据
+  // ── Actions ──
+  // 从数据库拉取所有习惯数据，页面初始化时调用
   const fetchHabits = async (): Promise<void> => {
     loading.value = true
     try {
@@ -37,7 +45,8 @@ export const useHabitStore = defineStore('habit', () => {
     }
   }
 
-  // 局部更新指定习惯的字段（用于乐观更新）
+  // 局部更新指定习惯的字段，用于乐观更新场景
+  // 仅修改传入的字段，其余字段保持不变
   const patchHabit = (id: string, patch: Partial<Habit>): void => {
     const index = allHabits.value.findIndex(h => h.id === id)
     if (index !== -1) {
@@ -45,12 +54,12 @@ export const useHabitStore = defineStore('habit', () => {
     }
   }
 
-  // 向列表中添加新习惯
+  // 向列表中添加新习惯，创建成功后立即反映在 UI 上
   const addHabit = (habit: Habit): void => {
     allHabits.value.push(habit)
   }
 
-  // 更新指定习惯的完整数据
+  // 更新指定习惯的完整数据，用于编辑保存后的本地同步
   const updateHabit = (id: string, data: Partial<Habit>): void => {
     const index = allHabits.value.findIndex(h => h.id === id)
     if (index !== -1) {
@@ -58,7 +67,7 @@ export const useHabitStore = defineStore('habit', () => {
     }
   }
 
-  // 归档指定习惯
+  // 归档指定习惯，归档后从活跃列表中移除但仍保留在 allHabits 中
   const archiveHabit = (id: string): void => {
     const index = allHabits.value.findIndex(h => h.id === id)
     if (index !== -1) {
@@ -66,7 +75,7 @@ export const useHabitStore = defineStore('habit', () => {
     }
   }
 
-  // 设置当前选中的习惯 ID
+  // 设置当前选中的习惯 ID，传 null 取消选中
   const setSelectedHabitId = (id: string | null): void => {
     selectedHabitId.value = id
   }

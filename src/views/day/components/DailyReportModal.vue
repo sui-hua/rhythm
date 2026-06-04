@@ -1,17 +1,20 @@
 <template>
-  <!-- 每日日报弹窗：使用标准 Dialog 组件 -->
+  <!--
+    DailyReportModal — 每日日报弹窗
+    主要结构：标题区、四格统计卡片（昨天完成/未完成、今日任务数、顺延数）、操作按钮
+  -->
   <Dialog :open="show" @update:open="handleOpenChange">
     <DialogContent class="sm:max-w-md p-6 rounded-xl border shadow-lg bg-background">
-      <!-- 弹窗标题区 -->
+      <!-- 标题区开始 -->
       <div class="flex items-center justify-between mb-4">
         <div>
           <DialogTitle class="text-xl font-semibold">每日日报</DialogTitle>
           <DialogDescription class="text-xs text-muted-foreground mt-1">昨天复盘 · 今天计划</DialogDescription>
         </div>
       </div>
-      <!-- 弹窗标题区结束 -->
+      <!-- 标题区结束 -->
 
-      <!-- 统计卡片网格 -->
+      <!-- 统计卡片网格开始：2x2 布局展示昨日与今日的任务概况 -->
       <div class="grid grid-cols-2 gap-4">
         <div class="rounded-xl border border-border p-4">
           <p class="text-xs text-muted-foreground">昨天已完成</p>
@@ -32,7 +35,7 @@
       </div>
       <!-- 统计卡片网格结束 -->
 
-      <!-- 操作按钮区 -->
+      <!-- 操作按钮区开始：确认顺延或仅关闭 -->
       <div class="mt-6 flex flex-col gap-2">
         <Button class="w-full h-10" @click="$emit('confirm-carryover')">确认转移到今天</Button>
         <Button variant="outline" class="w-full h-10" @click="$emit('confirm')">知道了</Button>
@@ -44,15 +47,17 @@
 
 <script lang="ts" setup>
 /**
- * DailyReportModal - 每日日报弹窗
- *
- * 使用标准 Dialog 组件替代原有的 Teleport + 自定义动画实现。
- * 展示昨日完成/未完成、今日任务数和顺延任务数的统计卡片。
+ * DailyReportModal — 每日日报弹窗
+ * 数据流：props（show/stats）→ template 渲染统计卡片 → emit（confirm/confirm-carryover/close）
+ * 使用标准 Dialog 组件，展示昨日完成/未完成、今日任务数和顺延任务数
  */
+
+// ── 依赖导入 ──
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
-// 弹窗显示状态和统计数据
+// ── Props ──
+// show: 控制弹窗显隐 | stats: 四项统计数据，默认值均为 0
 const props = defineProps({
   show: Boolean,
   stats: {
@@ -66,10 +71,12 @@ const props = defineProps({
   }
 })
 
-// 事件：close（关闭）、confirm（确认）、confirm-carryover（确认顺延）、update:open（v-model 支持）
+// ── Emits ──
+// close: 关闭弹窗 | confirm: 用户已阅读日报 | confirm-carryover: 确认将未完成任务顺延到今天 | update:open: v-model 双向绑定
 const emit = defineEmits(['close', 'confirm', 'confirm-carryover', 'update:open'])
 
-// Dialog open 状态变化时，同步触发 close 事件以兼容父组件现有监听
+// ── 方法 ──
+// 同步 Dialog open 状态变化，关闭时额外触发 close 事件以兼容父组件现有监听
 const handleOpenChange = (open: boolean) => {
   emit('update:open', open)
   if (!open) {

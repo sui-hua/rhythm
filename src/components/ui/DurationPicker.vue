@@ -1,8 +1,14 @@
 <template>
+  <!--
+    DurationPicker — 时长选择器
+    主要结构：标签、数值输入框、单位切换下拉框
+  -->
   <div class="grid gap-2">
+    <!-- 标签：关联输入框的无障碍标识 -->
     <label v-if="label" :for="id" class="text-sm font-medium leading-none">{{ label }}</label>
     <div class="flex w-full">
-      <Input 
+      <!-- 数值输入框：根据当前单位显示小时或分钟值 -->
+      <Input
         :id="id"
         :name="id"
         v-model="displayDuration"
@@ -12,6 +18,7 @@
         class="h-9 font-mono flex-1 rounded-r-none focus-visible:z-10 shadow-none"
         @keyup.enter="$emit('submit')"
       />
+      <!-- 单位切换：小时 / 分钟 -->
       <Select v-model="durationUnit">
         <SelectTrigger class="w-[80px] h-9 rounded-l-none border-l-0 focus:z-10 focus:ring-offset-0 bg-transparent">
           <SelectValue />
@@ -24,132 +31,100 @@
     </div>
   </div>
 </template>
+
 <script lang="ts" setup>
 /**
- * DurationPicker.vue - 时长选择器组件
+ * DurationPicker — 时长选择器组件
  *
- * 功能说明：
- *   用于选择和输入时长数值，支持两种单位切换：小时(hour)和分钟(minute)。
- *   内部以小数小时（如 1.5 表示 1 小时 30 分钟）作为统一存储格式，
- *   通过 v-model 与父组件进行双向绑定。
+ * 用于输入时长数值，支持小时和分钟两种单位切换。
+ * 内部以小数小时（如 1.5 表示 1 小时 30 分钟）作为统一存储格式，
+ * 通过 v-model 与父组件进行双向绑定。
  *
  * 单位转换规则：
- *   - 输入/显示单位为"分钟"时：modelValue = 输入值 / 60
- *   - 输入/显示单位为"小时"时：modelValue = 输入值
- *
- * 使用示例：
- *   传入 v-model、label 等参数进行时长选择
- *
- * @property {number} modelValue - 时长值，单位为小时（如 1.5 表示 1.5 小时）
- * @property {string} [id='duration-picker'] - 关联的 label id
- * @property {string} [label=''] - 标签文本
- *
- * @emits {update:modelValue} - 当值改变时触发，参数为新的时长值（小时）
- * @emits {submit} - 当按下回车键时触发
+ * - 分钟模式：显示值 = modelValue * 60，emit 时 / 60
+ * - 小时模式：直接对应，不做转换
  */
+
+// ── 依赖导入 ──
 import { ref, computed, watch, nextTick } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-// ==================== Props & Emits ====================
-// Props：modelValue（时长，小时为单位）、id（关联label）、label（显示标签）
+// ── Props & Emits ──
+// modelValue：时长值，单位为小时（如 1.5 表示 1.5 小时）
+// id：关联 label 的输入框 ID
+// label：显示标签文本
 const props = defineProps({
   modelValue: { type: Number, default: 0 },
   id: { type: String, default: 'duration-picker' },
   label: { type: String, default: '' }
 })
 
-// Emits：update:modelValue（值变化）、submit（回车提交）
+// update:modelValue：值变化时触发
+// submit：回车提交时触发
 const emit = defineEmits(['update:modelValue', 'submit'])
 
-// ==================== 单位状态 ====================
-// durationUnit：当前选择的单位，初始值根据 modelValue 大小决定
-// - modelValue > 1 小时 → 默认选"小时"
-// - modelValue <= 1 小时 → 默认选"分钟"
+// ── 状态 ──
+// 当前选择的单位，初始值根据 modelValue 大小自动判断
+// 大于 1 小时默认选"小时"，否则默认选"分钟"
 const durationUnit = ref(props.modelValue > 1 ? 'hour' : 'minute')
 
-// ==================== 显示值计算属性 ====================
-// displayDuration：输入框中显示的数值（带单位转换）
-//
-// getter：根据当前单位将 modelValue 转换为显示值
-//   - 分钟模式：modelValue * 60（如 0.5 小时 → 显示 30）
-//   - 小时模式：直接显示 modelValue
-//
-// setter：将用户输入的数值转换后 emit
-//   - 分钟模式：emit(输入值 / 60)
-//   - 小时模式：emit(输入值)
-// 空值处理：输入为空或 null 时 emit 0
+// ── 计算属性 ──
+// 输入框显示值，自动在小时和分钟之间做单位转换
 const displayDuration = computed({
+  // 根据当前单位将 modelValue 转换为显示值
   get() {
     if (durationUnit.value === 'minute') {
-      // 分钟模式：将小时转换为分钟显示
+      // 分钟模式：将小时转换为分钟，<= 0 时显示空字符串
       return props.modelValue <= 0 ? '' : Math.round(props.modelValue * 60)
     }
-    // 小时模式：直接返回，保留两位小数精度
+    // 小时模式：保留两位小数精度
     return Math.round(props.modelValue * 100) / 100
   },
+  // 将用户输入转换回小时单位后 emit
   set(val: string | number) {
-    // 空值处理
+    // 空值或 null 统一归零
     if (val === '' || val === null) {
       emit('update:modelValue', 0)
       return
     }
     const num = parseFloat(String(val)) || 0
     if (durationUnit.value === 'minute') {
-      // 分钟模式：转换为小时
       emit('update:modelValue', num / 60)
     } else {
-      // 小时模式：直接使用
       emit('update:modelValue', num)
     }
   }
 })
 
-// ==================== 单位切换逻辑 ====================
-// switchingUnit：防止单位切换时触发值变化的 watcher（避免循环）
+// ── 单位切换逻辑 ──
+// 防止单位切换时触发 modelValue watcher 产生循环更新
 let switchingUnit = false
 
-/**
- * 单位切换 watcher
- *
- * 目标：切换单位时尝试维持输入框的"字面值"不变
- *
- * 示例：用户输入 "30" 并选择"分钟"（即 30 分钟 = 0.5 小时）
- *       切换到"小时"后，输入框应显示 "0.5"（值不变，只是单位变了）
- *
- * 实现步骤：
- * 1. 记录切换前的显示值（previousDisplayValue）
- * 2. 根据新单位 emit 调整后的 modelValue
- * 3. 使用 nextTick 确保 DOM 更新完成后再重置锁
- */
+// 切换单位时维持输入框的字面值不变（值不变，只是单位变了）
+// 例如：输入 "30" 分钟 = 0.5 小时，切到小时后显示 "0.5"
 watch(durationUnit, async (newUnit, oldUnit) => {
-  if (switchingUnit) return  // 防止循环
+  if (switchingUnit) return
   if (newUnit === oldUnit) return
 
   switchingUnit = true
-  // 步骤1：获取旧状态下的显示数值
-  //   - 分钟模式：modelValue * 60
-  //   - 小时模式：直接用 modelValue
+  // 获取旧单位下的显示数值
   const previousDisplayValue = (oldUnit === 'minute' ? Math.round(props.modelValue * 60) : props.modelValue)
 
-  // 步骤2：根据新单位 emit 调整后的值
-  //   - 切到小时：直接用显示值（因为小时模式直接显示数值）
-  //   - 切到分钟：显示值 / 60（转换为小时存储）
+  // 根据新单位 emit 调整后的值
   if (newUnit === 'hour') {
     emit('update:modelValue', previousDisplayValue)
   } else {
     emit('update:modelValue', previousDisplayValue / 60)
   }
 
+  // 等待 DOM 更新完成后再释放锁，避免中间状态触发 watcher
   await nextTick()
   switchingUnit = false
 })
 
-// ==================== 外部重置同步 ====================
-// modelValue watcher：监听外部值变化，同步单位选择
-//
-// 场景：当父组件重置 modelValue（如从 0 变成 0.5）时，
-//       需要根据新值大小重新判断默认单位
+// ── 外部重置同步 ──
+// 监听父组件重置 modelValue 时，根据新值大小重新判断默认单位
 watch(() => props.modelValue, (newVal, oldVal) => {
   if (switchingUnit) return
   // 初始加载或值跨越阈值时自动切换单位

@@ -1,8 +1,13 @@
 <template>
+  <!--
+    Sidebar — 日页面右侧侧边栏，展示当日任务列表与进度统计
+    主要结构：加载骨架屏、日期标题、可滚动任务列表（普通任务 + 遗留任务分组）、底部进度条与添加按钮
+  -->
   <aside
     class="border-r border-border flex flex-col h-full overflow-hidden group relative z-20 bg-background"
     :style="{ width: width + 'px' }"
   >
+    <!-- 加载骨架屏：数据加载中时覆盖整个侧边栏 -->
     <div
       v-if="isLoading"
       class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm px-4 pt-24"
@@ -11,13 +16,15 @@
         <SkeletonTask v-for="i in 5" :key="i" />
       </div>
     </div>
-    <!-- 侧边栏宽度拖拽调整手柄 -->
+
+    <!-- 侧边栏宽度拖拽调整手柄：hover 时显示，拖拽改变侧边栏宽度 -->
     <div
       class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0 group-hover:opacity-100 hover:bg-primary/10"
       :class="{ 'bg-primary/20 opacity-100': isResizing }"
       @mousedown="startResize">
     </div>
 
+    <!-- 日期标题区：显示选中日期的天数和月份名称 -->
     <header class="px-6 pt-12 pb-8 shrink-0 mb-2 bg-transparent">
       <div class="flex flex-col gap-1">
         <div class="flex items-center justify-between">
@@ -27,9 +34,9 @@
       </div>
     </header>
 
-    <!-- 侧边栏任务列表，可滚动 -->
+    <!-- 任务列表区开始：可滚动区域，包含普通任务和遗留任务分组 -->
     <ScrollArea class="flex-1 px-4 relative z-10">
-      <!-- 任务列表 -->
+      <!-- 有任务时渲染任务列表 -->
       <div v-if="dayStore.dailySchedule.length > 0" class="flex flex-col gap-2 pb-24 pt-2">
         <template v-for="(section, sectionIndex) in sidebarSections" :key="`desktop-${sectionIndex}`">
           <div
@@ -119,6 +126,7 @@
           </div>
         </template>
       </div>
+      <!-- 无任务时显示空状态提示 -->
       <div v-else-if="!isLoading" class="pb-24 pt-4">
         <EmptyState
           title="今日暂无任务"
@@ -132,8 +140,9 @@
         </EmptyState>
       </div>
     </ScrollArea>
+    <!-- 任务列表区结束 -->
 
-    <!-- 侧边栏底部统计和添加按钮 -->
+    <!-- 底部统计区：任务完成度进度条 + 添加项目按钮 -->
     <footer class="p-6 border-t border-border/10 bg-transparent relative z-10 flex flex-col gap-4">
       <div class="w-full">
         <div class="flex justify-between items-center mb-2">
@@ -154,6 +163,13 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * Sidebar — 日页面右侧侧边栏组件
+ * 数据流：dayStore.dailySchedule → indexedDailySchedule（带索引）→ sidebarSections（分组）→ 模板渲染
+ * 负责展示当日任务列表、遗留任务分组、完成度统计，并提供任务操作入口
+ */
+
+// ── 依赖导入 ──
 import { computed, ref } from 'vue'
 import { ChevronDown, Plus, Settings2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -168,6 +184,8 @@ import { getMonthName } from '@/utils/dateFormatter'
 import { useDayStore } from '@/stores/dayStore'
 import { buildSidebarSections } from '@/views/day/utils/sidebarSections'
 
+// ── Props ──
+// isLoading: 数据加载状态，控制骨架屏显隐
 defineProps({
   isLoading: {
     type: Boolean,
@@ -175,40 +193,40 @@ defineProps({
   }
 })
 
-// ==================== 状态初始化 ====================
-
+// ── Store ──
 // 日期状态管理，获取当前选中的日期
 const dateStore = useDateStore()
-
-// 从 dayStore 获取当日任务相关数据和方法
-// dayStore.dailySchedule: 当日任务列表
-// dayStore.completedCount: 已完成任务数量
-// dayStore.handleToggleComplete: 切换任务完成状态的方法
+// 当日任务数据和操作方法：dailySchedule（任务列表）、completedCount（已完成数）、handleToggleComplete（切换完成状态）
 const dayStore = useDayStore()
+
+// ── 计算属性 ──
+// 为每项日程附加原始索引，供 scrollToTask 定位使用
 const indexedDailySchedule = computed(() => dayStore.dailySchedule.map((item, index) => ({ ...item, _originalIndex: index })))
+// 将日程列表分为普通任务项和遗留任务分组，供模板按 section 类型分别渲染
 const sidebarSections = computed(() => buildSidebarSections(indexedDailySchedule.value))
+
+// ── 状态 ──
+// 遗留任务分组是否展开，默认收起
 const isCarryOverExpanded = ref(false)
 
-// 宽度可调整功能
-// width: 当前侧边栏宽度
-// startResize: 开始拖拽调整宽度
-// isResizing: 是否正在调整宽度的状态
+// ── Composables ──
+// 侧边栏宽度可拖拽调整：width（当前宽度）、startResize（启动拖拽）、isResizing（拖拽中状态）
 const { width, startResize, isResizing } = useResizable()
 
-// ==================== 计算属性 ====================
-
-// 获取选中日期的天数（1-31）
+// ── 计算属性 ──
+// 选中日期的天数（1-31），用于标题区大字显示
 const selectedDay = computed(() => dateStore.currentDate.getDate())
-
-// 获取选中日期的完整月份名称（如 "January"）
+// 选中日期的完整月份名称（如 "January"），用于标题区副标题
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
 
+// ── 方法 ──
+// 切换遗留任务分组的展开/收起状态
 const toggleCarryOverGroup = () => {
   isCarryOverExpanded.value = !isCarryOverExpanded.value
 }
 
-// ==================== 事件定义 ====================
-// 向父组件暴露的事件
+// ── Emits ──
+// scrollToTask: 滚动到指定任务 | add-event: 添加新任务 | edit-task: 编辑任务
 defineEmits(['scrollToTask', 'add-event', 'edit-task'])
 </script>
 

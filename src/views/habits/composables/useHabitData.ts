@@ -1,3 +1,6 @@
+// useHabitData.ts
+// 习惯模块的数据管理层，负责列表加载、选中状态和日志联动
+
 import { ref, computed } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import { db } from '@/services/database'
@@ -6,13 +9,13 @@ import { useHabitStore } from '@/stores/habitStore'
 import type { HabitLog as DbHabitLog } from '@/services/db/habit'
 import type { AugmentedHabit } from '@/types/models'
 
-// 月份变更事件的载荷
+// 日历月份上下文，用于月份切换时的数据联动
 export interface ViewContext {
   year: number
   month: number
 }
 
-// useHabitData composable 的返回值接口
+// useHabitData composable 的返回值类型
 export interface UseHabitDataReturn {
   habits: ComputedRef<AugmentedHabit[]>
   archivedHabits: ComputedRef<AugmentedHabit[]>
@@ -27,45 +30,45 @@ export interface UseHabitDataReturn {
 }
 
 /**
- * 习惯数据管理 composable
+ * 习惯数据管理
  *
- * 负责习惯列表的加载、选中状态维护、日志数据拉取，
- * 以及日历月份切换时的数据联动更新。
+ * 使用场景：Habits 模块页面，管理习惯列表、选中状态、日志拉取
+ * 数据流：Supabase → habitStore → 组件；日志数据由本 composable 独立拉取并 patch 回 store
  */
 export function useHabitData(): UseHabitDataReturn {
     const dateStore = useDateStore()
     const habitStore = useHabitStore()
 
-    // 页面级 loading 状态
+    // 页面级 loading 状态，控制骨架屏展示
     const isPageLoading: Ref<boolean> = ref(false)
 
-    // 活跃习惯（从 habitStore 读取，过滤掉已归档）
-    // habitStore 是 JS 文件，allHabits 类型为 never[]，需要通过 any 桥接
+    // 活跃习惯列表（已过滤归档项）
+    // habitStore 是 JS 文件，类型推断为 never[]，需断言为具体类型
     const habits: ComputedRef<AugmentedHabit[]> = computed(() => habitStore.habits as unknown as AugmentedHabit[])
 
-    // 已归档习惯（从 habitStore 读取）
+    // 已归档习惯列表，从 habitStore 响应式读取
     const archivedHabits: ComputedRef<AugmentedHabit[]> = computed(() => habitStore.archivedHabits as unknown as AugmentedHabit[])
 
-    // 存储当前选中习惯的日志
+    // 当前选中习惯的全量日志，独立于 habitStore 存储，避免交叉污染
     const currentHabitLogs: Ref<DbHabitLog[]> = ref([])
 
-    // 用于独立于全局真实时间，在日历上专门控制显示当前"查看的"年份和月份
+    // 独立于系统真实时间的"查看中"年月，用于日历翻页时不干扰全局日期状态
     const viewYear: Ref<number> = ref(dateStore.currentDate.getFullYear())
     const viewMonth: Ref<number> = ref(dateStore.currentDate.getMonth())
 
-    // 当前选中的习惯对象（从 habitStore 读取）
+    // 当前选中的习惯对象，从 habitStore 响应式读取
     const selectedHabit: ComputedRef<AugmentedHabit | null> = computed(() => habitStore.selectedHabit as unknown as AugmentedHabit | null)
 
-    // 设置当前选中的习惯
+    // 设置当前选中的习惯，null 表示取消选中
     const setSelectedHabit = (habit: AugmentedHabit | null): void => {
         habitStore.setSelectedHabitId(habit ? String(habit.id) : null)
     }
 
+    // 日历月份切换时的联动处理：更新本地月份状态，并刷新当前选中习惯的月度统计
     const handleMonthChange = ({ year, month }: ViewContext): void => {
         viewYear.value = year
         viewMonth.value = month
-        // 不再调用 fetchHabits，直接在内存中过滤
-        // 但需要重新计算 completedDays 和 monthlyLogs
+        // 月份切换时不重新拉取数据，直接在内存中按新月份过滤，减少网络请求
         if (selectedHabit.value && currentHabitLogs.value.length > 0) {
             const viewYearVal = year
             const viewMonthVal = month
@@ -77,7 +80,7 @@ export function useHabitData(): UseHabitDataReturn {
 
             const completedDays = monthlyLogs.map((log) => new Date(log.completed_at!).getDate())
 
-            // patchHabit 签名期望 Partial<Habit>，但实际使用中需要传递扩展字段
+            // patchHabit 期望 Partial<Habit>，但需要传递扩展字段（monthlyLogs 等），故用 as any 桥接
             habitStore.patchHabit(String(selectedHabit.value.id), {
                 monthlyLogs,
                 completedDays
@@ -85,22 +88,22 @@ export function useHabitData(): UseHabitDataReturn {
         }
     }
 
-    // 从今天或昨天开始计算连续打卡天数
+    // 从今天或昨天开始计算连续打卡天数，支持"昨天打了今天没打"的场景
     const calculateStreak = (logs: DbHabitLog[]): number => {
   if (!logs || logs.length === 0) return 0
 
+  // 去重并按日期倒序排列，便于从最近一天向前遍历
   const sortedDates = [...new Set(
     logs.map(log => new Date(log.completed_at!).toDateString())
   )].sort().reverse()
 
   if (sortedDates.length === 0) return 0
 
-  // 计算连续天数
   let streak = 0
   const today = new Date().toDateString()
   const yesterday = new Date(Date.now() - 86400000).toDateString()
 
-  // 从今天或昨天开始计算
+  // 只从今天或昨天开始计算连击，避免中间断开多天仍算连击
   const startDate = sortedDates[0] === today ? today :
                     sortedDates[0] === yesterday ? yesterday : null
 
@@ -114,7 +117,7 @@ export function useHabitData(): UseHabitDataReturn {
       streak++
       currentDate = new Date(currentDate.getTime() - 86400000)
     } else if (new Date(dateStr) < currentDate) {
-      break // 连击中断
+      break // 遇到更早的日期说明连击已中断
     }
   }
 
@@ -127,7 +130,7 @@ export function useHabitData(): UseHabitDataReturn {
         try {
             await habitStore.fetchHabits()
 
-            // 为每个习惯补充日志相关的占位字段
+            // 为每个习惯补充日志相关字段的默认值，防止后续计算中访问 undefined
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const all = habitStore.allHabits as any[]
             all.forEach((h: any, index: number) => {
@@ -142,7 +145,7 @@ export function useHabitData(): UseHabitDataReturn {
                 }
             })
 
-            // 维持选中状态
+            // 刷新后维持选中状态：优先选中之前选中的习惯，否则选中列表第一个
             if (selectedHabit.value) {
                 const updated = all.find((h: any) => h.id === selectedHabit.value!.id)
                 if (updated) habitStore.setSelectedHabitId(String(updated.id))
@@ -159,6 +162,7 @@ export function useHabitData(): UseHabitDataReturn {
         }
     }
 
+    // 拉取指定习惯的全量日志，并根据当前查看月份计算月度统计后 patch 回 store
     const fetchLogsForHabit = async (habitId: string | number | null): Promise<void> => {
         if (!habitId) {
             currentHabitLogs.value = []
@@ -169,13 +173,13 @@ export function useHabitData(): UseHabitDataReturn {
             const logs = await db.habit.listLogsByHabit(habitId)
             currentHabitLogs.value = logs
 
-            // 找到对应的习惯，更新其 logs 相关字段
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const habit = (habitStore.allHabits as any[]).find((h: any) => h.id === habitId)
             if (habit) {
                 const viewYearVal = viewYear.value
                 const viewMonthVal = viewMonth.value
 
+                // 按当前查看月份过滤日志，用于日历热力图展示
                 const monthlyLogs = logs.filter((log) => {
                     const d = new Date(log.completed_at!)
                     return d.getFullYear() === viewYearVal && d.getMonth() === viewMonthVal
@@ -183,7 +187,7 @@ export function useHabitData(): UseHabitDataReturn {
 
                 const completedDays = monthlyLogs.map((log) => new Date(log.completed_at!).getDate())
 
-                // 通过 habitStore 局部更新
+                // patchHabit 期望 Partial<Habit>，需要传递扩展字段，用 as any 桥接
                 habitStore.patchHabit(String(habitId), {
                     logs,
                     monthlyLogs,
@@ -212,7 +216,12 @@ export function useHabitData(): UseHabitDataReturn {
     }
 }
 
-// 乐观更新：构建带新打卡记录的临时习惯对象
+/**
+ * 乐观更新辅助：构建带新打卡记录的临时习惯对象
+ *
+ * 在数据库写入前先更新 UI，写入失败时由调用方回滚。
+ * 不修改原始对象，返回全新引用以触发响应式更新。
+ */
 export function buildPatchedHabit(habit: AugmentedHabit, newLog: DbHabitLog | null, viewContext: ViewContext): AugmentedHabit {
   if (!newLog) return habit
 

@@ -1,18 +1,16 @@
 <template>
   <!--
-    ============================================
-    根组件 (App.vue)
-    ============================================
-    【模块职责】
-    - 全局布局容器
-    - 导航栏渲染控制
-    - 路由视图 + 转场动画
-    - 认证状态初始化
+    根组件 — 全局布局容器，负责认证初始化和路由转场
+    主要结构：全局提示、加载条、导航栏、路由视图
   -->
   <div class="h-screen w-full bg-background flex overflow-hidden font-sans text-foreground selection:bg-foreground selection:text-background relative">
+    <!-- 全局 Toast 提示区 -->
     <Toaster position="top-right" />
+    <!-- 全局加载进度条 -->
     <GlobalLoadingBar />
+    <!-- 导航栏：已登录且未隐藏时显示 -->
     <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />
+    <!-- 路由视图区：带转场动画 -->
     <RouterView v-slot="{ Component }">
       <Transition :name="transitionName" mode="out-in">
         <component :is="Component" :key="route.path" />
@@ -23,13 +21,13 @@
 
 <script lang="ts" setup>
 /**
- * 认证初始化流程：
- * 1. 检查现有 session
- * 2. 有登录用户 → 存入 authStore，请求通知权限
- * 3. 无登录用户 → 清除状态，重定向到登录页
- * 4. 监听多标签页/登出状态变化
+ * 根组件脚本
+ * 职责：全局认证初始化、路由转场控制、导航栏渲染
+ * 数据流：Supabase session → authStore → 全局状态 → UI 渲染
  */
-import {ref, computed, onMounted} from 'vue'
+
+// ── 依赖导入 ──
+import { computed, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import GlobalLoadingBar from '@/components/ui/GlobalLoadingBar.vue'
@@ -42,6 +40,7 @@ import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { useNotifications } from '@/composables/useNotifications'
 
+// ── Store ──
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -51,6 +50,7 @@ const goalSelectionStore = useGoalSelectionStore()
 const goalBatchStore = useGoalBatchStore()
 const { requestPermission } = useNotifications()
 
+// ── 计算属性 ──
 // 根据路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
 const transitionName = computed(() => {
   const path = route.path
@@ -61,6 +61,8 @@ const transitionName = computed(() => {
   }
 })
 
+// ── 生命周期 ──
+// 应用启动时初始化认证状态，监听多标签页和登出事件
 onMounted(async () => {
   try {
     // 检查是否有现有 session
@@ -73,10 +75,10 @@ onMounted(async () => {
 
     if (session?.user) {
       authStore.setUser(session.user)
-      // 请求通知权限
+      // 请求通知权限，用于日程提醒
       requestPermission()
     } else {
-      // 当前没有登录用户
+      // 当前没有登录用户，清除状态并重定向到登录页
       authStore.clearAuth()
       if (route.path !== '/login') {
         router.push('/login')
@@ -88,6 +90,7 @@ onMounted(async () => {
       if (session?.user) {
         authStore.setUser(session.user)
       } else {
+        // 登出时清除所有业务 Store，避免残留脏数据
         authStore.clearAuth()
         goalDataStore.reset()
         goalSelectionStore.reset()

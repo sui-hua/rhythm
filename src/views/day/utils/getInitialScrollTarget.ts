@@ -1,11 +1,11 @@
 /**
- * ============================================
- * 初始滚动定位 (views/day/utils/getInitialScrollTarget.ts)
- * ============================================
+ * 初始滚动定位
  *
- * 【模块职责】
- * - 根据日程列表和当前时间，计算页面加载后的滚动目标位置
- * - 返回值为联合类型，供调用方按 type 分支处理
+ * 根据日程列表和当前时间，计算页面加载后的滚动目标位置：
+ * - 空日程 → 默认 8:00
+ * - 非今日 → 定位首个未完成任务
+ * - 今日且任务已过期超 2 小时 → 定位当前时间
+ * - 其他 → 定位首个未完成任务
  */
 
 import { isSameDay } from '@/utils/dateFormatter'
@@ -21,10 +21,12 @@ interface ScrollTargetOptions {
   now?: Date
 }
 
+// 无日程时默认滚动到 8 点位置
 const DEFAULT_HOUR = 8
+
+// 任务结束超过此时长（小时）视为过期，定位到当前时间
 const STALE_TASK_THRESHOLD_HOURS = 2
 
-// 空日程 → 默认 8:00；非今日 → 定位首个未完成任务；今日且任务过期 → 定位当前时间；否则定位任务
 export const getInitialScrollTarget = ({
   schedule = [],
   targetDate,
@@ -37,7 +39,7 @@ export const getInitialScrollTarget = ({
     }
   }
 
-  // 查找第一个未完成的任务索引，全部完成则回退到首条
+  // 查找第一个未完成的任务，全部完成则回退到首条
   const firstUncompletedIndex = schedule.findIndex(task => !task.completed)
   const targetIndex = firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0
   const targetTask = schedule[targetIndex]
@@ -54,6 +56,7 @@ export const getInitialScrollTarget = ({
   const currentHour = now.getHours() + now.getMinutes() / 60
   const taskEndHour = (targetTask!.startHour ?? 0) + (targetTask!.durationHours || 0)
 
+  // 任务结束时间距当前时间超过阈值，说明用户可能已跳过该任务，定位到当前时间
   if (currentHour - taskEndHour >= STALE_TASK_THRESHOLD_HOURS) {
     return {
       type: 'current-time',

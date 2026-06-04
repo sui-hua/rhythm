@@ -1,29 +1,12 @@
-/**
- * ============================================
- * 节流与防抖工具 (utils/throttle.ts)
- * ============================================
- *
- * 【模块职责】
- * - throttle() → 时间节流，限制函数执行频率
- * - withLoadingLock() → 异步请求锁，防止重复提交
- *
- * 【使用场景】
- * - 防止按钮重复点击
- * - 搜索建议请求
- * - 表单提交防抖
- */
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFunction = (...args: any[]) => any
 
 /**
- * 节流函数 (Throttle)
- * 用于限制函数执行频率，确保在设定的时间内只执行一次。
- * 特别适用于防止按钮重复点击、搜索建议请求等场景。
+ * 时间节流函数，在 delay 毫秒内最多执行一次
+ * 采用 leading + trailing 策略：首次触发立即执行，冷却期内最后一次触发也会延迟执行
  *
- * @param fn - 需要执行的回调函数
- * @param delay - 节流的时间间隔（毫秒），默认 500ms
- * @returns 返回一个新的节流函数
+ * @param fn - 需要节流的目标函数
+ * @param delay - 冷却时间（毫秒），默认 500ms
  */
 export function throttle<T extends AnyFunction>(fn: T, delay = 500): (...args: Parameters<T>) => void {
   let timer: ReturnType<typeof setTimeout> | null = null
@@ -32,7 +15,7 @@ export function throttle<T extends AnyFunction>(fn: T, delay = 500): (...args: P
   return function (this: any, ...args: Parameters<T>): void {
     const now = Date.now()
 
-    // 如果已经超出了冷却时间，立即执行并在本次执行后重新进入冷却
+    // 已超出冷却期：立即执行，并重置冷却计时
     if (now - lastTime >= delay) {
       if (timer) {
         clearTimeout(timer)
@@ -41,8 +24,7 @@ export function throttle<T extends AnyFunction>(fn: T, delay = 500): (...args: P
       fn.apply(this, args)
       lastTime = now
     } else {
-      // 如果还在冷却期且没有设置定时器，则设置一个定时器，
-      // 保证最后一次触发能在冷却结束后被执行一次 (Trailing)
+      // 冷却期内：仅设置一个尾部定时器，保证最后一次调用不丢失
       if (!timer) {
         timer = setTimeout(() => {
           fn.apply(this, args)
@@ -55,12 +37,11 @@ export function throttle<T extends AnyFunction>(fn: T, delay = 500): (...args: P
 }
 
 /**
- * 带有"正在加载"状态锁定的节流函数 (Loading Lock)
- * 专门用于异步请求，在 promise resolve/reject 之前，不允许再次重复调用。
- * 相比时间节流，这在处理网络请求时通常更为精确。
+ * 异步加载锁：在上一次 Promise 完成前，阻止重复调用
+ * 比时间节流更适合网络请求场景，因为锁定时长取决于实际请求耗时而非固定间隔
  *
- * @param asyncFn - 需要执行的异步函数（必须返回 Promise）
- * @returns 返回一个新的包装后的函数
+ * @param asyncFn - 需要包装的异步函数
+ * @returns 包装后的函数，重复调用时返回 undefined
  */
 export function withLoadingLock<T extends (...args: any[]) => Promise<any>>(asyncFn: T): (...args: Parameters<T>) => Promise<ReturnType<T> | void> {
   let isLoading = false

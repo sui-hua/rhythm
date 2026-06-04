@@ -1,7 +1,5 @@
-/**
- * @fileoverview Summary 管理器 composable
- * 提供总结模块的核心状态管理，包括 CRUD 操作、tab 切换和视图状态控制。
- */
+// useSummaryManager.ts
+// Summary 模块的核心状态管理，整合 CRUD、tab 切换和视图状态
 
 import type { Ref, ComputedRef } from 'vue'
 import { computed, onMounted, ref } from 'vue'
@@ -12,10 +10,10 @@ import { buildSummaryPayload } from '@/views/summary/utils/summaryAdapters'
 import { summaryTabToKind } from '@/views/summary/utils/summaryRouteHelpers'
 import type { SummaryRecord } from '@/views/summary/utils/summaryAdapters'
 
-// 视图状态类型
+// 视图状态类型：表单编辑 / 详情展示 / 空状态
 type SummaryView = 'form' | 'detail-or-edit' | 'empty'
 
-// composable 返回值接口
+// useSummaryManager composable 的返回值类型
 export interface UseSummaryManagerReturn {
   activeTab: Ref<string>
   summaries: Ref<SummaryRecord[]>
@@ -33,31 +31,29 @@ export interface UseSummaryManagerReturn {
 }
 
 /**
- * Summary 管理器 composable
- * 整合总结模块的 CRUD 操作、tab 切换和视图状态控制。
+ * 总结模块状态管理器
+ *
+ * 使用场景：Summary 页面，管理日/周/月/年总结的增删改查和视图切换
+ * 数据流：Supabase → summaries (Ref) → 组件；操作方法直接写数据库后刷新列表
  *
  * @returns 总结模块的状态和操作方法
  */
 export const useSummaryManager = (): UseSummaryManagerReturn => {
-  // 认证状态
   const authStore = useAuthStore()
-  // 当前激活的 tab id
+  // 当前激活的 tab id，默认展示日总结
   const activeTab = ref('day')
-  // 总结列表
+  // 当前类型的总结列表
   const summaries = ref<SummaryRecord[]>([])
-  // 加载状态
+  // 数据加载状态
   const loading = ref(false)
-  // 页面加载状态（loading 的别名）
+  // isPageLoading 是 loading 的别名，供页面级骨架屏使用
   const isPageLoading: Ref<boolean> = loading
-  // 当前选中的总结
+  // 当前选中查看/编辑的总结记录
   const selectedSummary = ref<SummaryRecord | null>(null)
-  // 是否处于创建模式
+  // 是否处于新建模式，与选中状态互斥
   const isCreating = ref(false)
 
-  /**
-   * 加载指定类型的总结列表
-   * 根据当前 tab id 转换为 kind 后查询数据库
-   */
+  // 根据当前 tab id 转换为 kind 后查询数据库
   const loadSummaries = async (): Promise<void> => {
     loading.value = true
     try {
@@ -70,12 +66,7 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     }
   }
 
-  /**
-   * 切换 tab 时的处理
-   * 重置选中状态并重新加载数据
-   *
-   * @param tabId - 新的 tab id
-   */
+  // 切换 tab：重置选中状态并重新加载对应类型的数据
   const handleTabChange = (tabId: string): void => {
     activeTab.value = tabId
     selectedSummary.value = null
@@ -83,29 +74,19 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     loadSummaries()
   }
 
-  /**
-   * 选中一条总结记录
-   * @param summary - 要选中的总结对象
-   */
+  // 选中一条总结记录，进入详情/编辑视图
   const handleSelect = (summary: SummaryRecord): void => {
     selectedSummary.value = summary
     isCreating.value = false
   }
 
-  /**
-   * 进入创建模式
-   */
+  // 进入创建模式，清空选中状态
   const handleCreate = (): void => {
     selectedSummary.value = null
     isCreating.value = true
   }
 
-  /**
-   * 保存总结数据
-   * 构建载荷后调用数据库保存，然后刷新列表
-   *
-   * @param data - 表单数据
-   */
+  // 保存总结数据：构建 payload → 写入数据库 → 刷新列表
   const handleSave = async (data: Record<string, string>): Promise<void> => {
     try {
       const userId = authStore.userId
@@ -115,6 +96,7 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
 
       const kind = summaryTabToKind(activeTab.value)
       const existingSummary = selectedSummary.value
+      // 编辑时复用原有周期，新建时按 kind 和当前时间生成默认周期
       const period = existingSummary?.period_start && existingSummary?.period_end
         ? {
             periodStart: existingSummary.period_start,
@@ -139,19 +121,12 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     }
   }
 
-  /**
-   * 取消创建/编辑
-   */
+  // 取消创建/编辑，退出表单视图
   const handleCancel = (): void => {
     isCreating.value = false
   }
 
-  /**
-   * 删除一条总结记录
-   * 删除前需要用户确认，删除后刷新列表
-   *
-   * @param id - 要删除的记录 ID
-   */
+  // 删除总结记录：确认后删除并刷新列表
   const handleDelete = async (id: string | number): Promise<void> => {
     if (!confirm('确定要删除这条总结吗？')) return
 
@@ -169,7 +144,7 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     loadSummaries()
   })
 
-  // 当前视图状态计算
+  // 根据当前状态派生视图类型：创建中 → 表单；已选中 → 详情；否则 → 空状态
   const currentView = computed((): SummaryView => {
     if (isCreating.value) return 'form'
     if (selectedSummary.value) return 'detail-or-edit'
