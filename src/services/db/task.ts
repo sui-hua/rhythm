@@ -16,7 +16,6 @@ export interface Task {
   id: string | number
   title: string
   description?: string | null
-  status?: 'inbox' | 'pending' | 'completed'
   completed?: boolean
   start_time?: string
   end_time?: string
@@ -32,7 +31,6 @@ export interface CreateTaskPayload {
   user_id?: string
   description?: string
   completed?: boolean
-  status?: 'inbox' | 'pending' | 'completed'
   start_time?: string
   end_time?: string
 }
@@ -41,7 +39,7 @@ export interface CreateTaskPayload {
 export interface UpdateTaskPayload {
   title?: string
   description?: string
-  status?: 'inbox' | 'pending' | 'completed'
+  completed?: boolean
   start_time?: string
   end_time?: string
   actual_start_time?: string | null

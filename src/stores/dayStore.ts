@@ -101,12 +101,12 @@ export const useDayStore = defineStore('day', () => {
   const completedCount = computed<number>(() => dailySchedule.value.filter(t => t.completed).length)
 
   // ── 私有方法 ──
-  // 切换任务完成状态，通过 status 字段控制（pending ↔ completed）
+  // 切换任务完成状态，通过 completed 布尔字段控制
   const toggleTaskCompletion = async (task: TaskScheduleItem): Promise<void> => {
-    const newStatus = task.completed ? 'pending' : 'completed'
-    const updates: UpdateTaskPayload = { status: newStatus }
+    // task.completed 已在调用前被乐观更新翻转，直接用当前值
+    const updates: UpdateTaskPayload = { completed: task.completed }
     // 完成时记录实际结束时间，用于统计任务耗时
-    if (!task.completed) {
+    if (task.completed) {
       updates.actual_end_time = new Date().toISOString()
     }
     await db.task.update(task.id, updates)
@@ -174,7 +174,7 @@ export const useDayStore = defineStore('day', () => {
       // 检查是否有正在运行的任务，自动同步到番茄钟 store
       // 避免用户刷新页面后丢失正在进行的计时状态
       const runningTask = tasks.value.find(t =>
-        t.start_time && !t.status?.includes('completed') && t.status !== 'completed'
+        t.start_time && !t.completed
       )
       if (runningTask) {
         const pomodoroStore = usePomodoroStore()
@@ -229,7 +229,7 @@ export const useDayStore = defineStore('day', () => {
     try {
       const sourceTasks = await db.task.list(startOfSource, endOfSource)
       // 先过滤未完成，再过滤创建时间在一周内
-      const uncompleted = (sourceTasks || []).filter((t: Task) => t.status !== 'completed').filter((t: Task) => {
+      const uncompleted = (sourceTasks || []).filter((t: Task) => !t.completed).filter((t: Task) => {
         const createdAt = t.created_at ? new Date(t.created_at) : null
         if (!createdAt || isNaN(createdAt.getTime())) return false
         return (targetStart.getTime() - createdAt.getTime()) < oneWeekMs
@@ -301,7 +301,7 @@ export const useDayStore = defineStore('day', () => {
     try {
       await db.task.update(task.id, {
         start_time: startTime,
-        status: 'pending'
+        completed: false
       } as UpdateTaskPayload)
       await fetchTaskUpdate(task.id)
       // 同步到番茄钟，使计时器立即启动
