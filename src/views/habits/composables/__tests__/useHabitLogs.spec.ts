@@ -1,0 +1,220 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref, computed } from 'vue'
+import type { AugmentedHabit } from '@/types/models'
+
+// mock db
+vi.mock('@/services/database', () => ({
+  db: {
+    habit: {
+      deleteLog: vi.fn(),
+      log: vi.fn()
+    }
+  }
+}))
+
+// mock habitStore
+const mockPatchHabit = vi.fn()
+vi.mock('@/stores/habitStore', () => ({
+  useHabitStore: () => ({
+    patchHabit: mockPatchHabit
+  })
+}))
+
+// mock buildPatchedHabit
+vi.mock('../useHabitData', () => ({
+  buildPatchedHabit: vi.fn((habit: any, _newLog: any, _ctx: any) => ({
+    ...habit,
+    logs: [...(habit.logs || []), { id: 'new-log' }],
+    monthlyLogs: [...(habit.monthlyLogs || []), { id: 'new-log' }],
+    completedDays: [...(habit.completedDays || []), 15],
+    total: (habit.total || 0) + 1
+  }))
+}))
+
+import { db } from '@/services/database'
+import { useHabitLogs, useHabitLogsFormatter } from '../useHabitLogs'
+import type { HabitLog as DbHabitLog } from '@/services/db/habit'
+
+describe('useHabitLogsFormatter', () => {
+  // 格式化日志：正确格式化日期和排序
+  it('formattedLogs 按时间倒序排列并格式化日期', () => {
+    const logs: DbHabitLog[] = [
+      { id: '1', habit_id: 'h1', completed_at: '2026-06-01T10:00:00Z', log: '第一次' },
+      { id: '2', habit_id: 'h1', completed_at: '2026-06-15T10:00:00Z', log: '第二次' },
+      { id: '3', habit_id: 'h1', completed_at: '2026-06-10T10:00:00Z', log: '' }
+    ]
+    const { formattedLogs } = useHabitLogsFormatter(logs)
+    const result = formattedLogs.value
+    expect(result).toHaveLength(3)
+    // 最新日期排在最前
+    expect(result[0].id).toBe('2')
+    expect(result[0].date).toBe('06/15')
+    expect(result[0].logText).toBe('第二次')
+    expect(result[1].id).toBe('3')
+    expect(result[2].id).toBe('1')
+  })
+
+  // 空日志返回空数组
+  it('formattedLogs 空日志返回空数组', () => {
+    const { formattedLogs } = useHabitLogsFormatter([])
+    expect(formattedLogs.value).toEqual([])
+  })
+
+  // null 输入返回空数组
+  it('formattedLogs null 输入返回空数组', () => {
+    const { formattedLogs } = useHabitLogsFormatter(null)
+    expect(formattedLogs.value).toEqual([])
+  })
+
+  // Ref 输入兼容
+  it('formattedLogs 支持 Ref 类型输入', () => {
+    const logsRef = ref<DbHabitLog[]>([
+      { id: '1', habit_id: 'h1', completed_at: '2026-06-01T10:00:00Z', log: 'test' }
+    ])
+    const { formattedLogs } = useHabitLogsFormatter(logsRef)
+    expect(formattedLogs.value).toHaveLength(1)
+  })
+})
+
+describe('useHabitLogs', () => {
+  function createMockHabit(overrides: Partial<AugmentedHabit> = {}): AugmentedHabit {
+    return {
+      id: 'h1',
+      name: '早起',
+      logs: [],
+      monthlyLogs: [],
+      completedDays: [],
+      total: 0,
+      ...overrides
+    } as unknown as AugmentedHabit
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // toggleComplete：无选中习惯时早返回
+  it('toggleComplete 无选中习惯时直接返回', async () => {
+    const selectedHabit = computed(() => null)
+    const fetchHabits = vi.fn()
+    const { toggleComplete } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    await toggleComplete(15)
+    expect(db.habit.deleteLog).not.toHaveBeenCalled()
+    expect(db.habit.log).not.toHaveBeenCalled()
+  })
+
+  // toggleComplete：已有打卡时删除（取消打卡）
+  it('toggleComplete 已有打卡时删除记录', async () => {
+    const existingLog = { id: 'log-1', habit_id: 'h1', completed_at: '2026-06-15T12:00:00Z', log: '' }
+    const habit = createMockHabit({
+      logs: [existingLog] as any,
+      monthlyLogs: [existingLog] as any,
+      completedDays: [15] as any,
+      total: 1
+    })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.deleteLog).mockResolvedValue(undefined)
+
+    const { toggleComplete } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    await toggleComplete(15)
+
+    expect(db.habit.deleteLog).toHaveBeenCalledWith('log-1')
+    expect(mockPatchHabit).toHaveBeenCalled()
+  })
+
+  // toggleComplete：删除失败时回滚（调用 fetchHabits）
+  it('toggleComplete 删除失败时调用 fetchHabits 回滚', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const existingLog = { id: 'log-1', habit_id: 'h1', completed_at: '2026-06-15T12:00:00Z', log: '' }
+    const habit = createMockHabit({
+      logs: [existingLog] as any,
+      monthlyLogs: [existingLog] as any,
+      completedDays: [15] as any,
+      total: 1
+    })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.deleteLog).mockRejectedValue(new Error('delete failed'))
+
+    const { toggleComplete } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    await toggleComplete(15)
+
+    expect(fetchHabits).toHaveBeenCalled()
+    consoleSpy.mockRestore()
+  })
+
+  // toggleComplete：无打卡时新增（乐观更新 + 写入数据库）
+  it('toggleComplete 无打卡时新增记录并写入数据库', async () => {
+    const habit = createMockHabit()
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.log).mockResolvedValue(undefined)
+
+    const { toggleComplete, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    await toggleComplete(15)
+
+    expect(mockPatchHabit).toHaveBeenCalled()
+    expect(db.habit.log).toHaveBeenCalledWith('h1', '', expect.any(Date))
+    expect(fetchHabits).toHaveBeenCalled()
+    expect(isSubmitting.value).toBe(false)
+  })
+
+  // handleQuickLog：空备注返回 false
+  it('handleQuickLog 空备注返回 false', async () => {
+    const habit = createMockHabit()
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn()
+    const { handleQuickLog } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const result = await handleQuickLog('')
+    expect(result).toBe(false)
+    expect(db.habit.log).not.toHaveBeenCalled()
+  })
+
+  // handleQuickLog：今日已有打卡返回 false
+  it('handleQuickLog 今日已有打卡返回 false', async () => {
+    const now = new Date()
+    const todayLog = {
+      id: 'log-today',
+      habit_id: 'h1',
+      completed_at: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0).toISOString(),
+      log: ''
+    }
+    const habit = createMockHabit({
+      monthlyLogs: [todayLog] as any
+    })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn()
+    const { handleQuickLog } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const result = await handleQuickLog('备注内容')
+    expect(result).toBe(false)
+  })
+
+  // handleQuickLog：正常快速打卡
+  it('handleQuickLog 正常打卡返回 true', async () => {
+    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.log).mockResolvedValue(undefined)
+
+    const { handleQuickLog } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const result = await handleQuickLog('今天状态不错')
+    expect(result).toBe(true)
+    expect(db.habit.log).toHaveBeenCalledWith('h1', '今天状态不错', expect.any(Date))
+  })
+
+  // handleQuickLog：写入失败时回滚并返回 false
+  it('handleQuickLog 写入失败时回滚并返回 false', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.log).mockRejectedValue(new Error('write failed'))
+
+    const { handleQuickLog } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const result = await handleQuickLog('备注')
+    expect(result).toBe(false)
+    expect(fetchHabits).toHaveBeenCalled()
+    consoleSpy.mockRestore()
+  })
+})

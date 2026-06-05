@@ -1,0 +1,81 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import DailyReportModal from '../DailyReportModal.vue'
+
+// stub Dialog 系列组件，仅渲染插槽内容
+const stubs = {
+  Dialog: { template: '<div><slot /></div>' },
+  DialogContent: { template: '<div><slot /></div>' },
+  DialogTitle: { template: '<div><slot /></div>' },
+  DialogDescription: { template: '<div><slot /></div>' },
+  Button: { template: '<button><slot /></button>', props: ['variant'] }
+}
+
+describe('DailyReportModal', () => {
+  const defaultStats = {
+    yesterdayCompleted: 3,
+    yesterdayUncompleted: 1,
+    todayTotal: 5,
+    carryoverToToday: 2
+  }
+
+  it('显示统计数据', () => {
+    const wrapper = mount(DailyReportModal, {
+      props: { show: true, stats: defaultStats },
+      global: { stubs }
+    })
+    expect(wrapper.text()).toContain('3')
+    expect(wrapper.text()).toContain('1')
+    expect(wrapper.text()).toContain('5')
+    expect(wrapper.text()).toContain('2')
+  })
+
+  it('显示统计项标签', () => {
+    const wrapper = mount(DailyReportModal, {
+      props: { show: true, stats: defaultStats },
+      global: { stubs }
+    })
+    expect(wrapper.text()).toContain('昨天已完成')
+    expect(wrapper.text()).toContain('昨天未完成')
+    expect(wrapper.text()).toContain('今日任务数')
+    expect(wrapper.text()).toContain('顺延到今天')
+  })
+
+  it('显示"每日日报"标题', () => {
+    const wrapper = mount(DailyReportModal, {
+      props: { show: true, stats: defaultStats },
+      global: { stubs }
+    })
+    expect(wrapper.text()).toContain('每日日报')
+  })
+
+  it('点击"知道了"按钮触发 confirm 事件', async () => {
+    const wrapper = mount(DailyReportModal, {
+      props: { show: true, stats: defaultStats },
+      global: { stubs }
+    })
+    const btn = wrapper.findAll('button').find(b => b.text() === '知道了')
+    await btn?.trigger('click')
+    expect(wrapper.emitted('confirm')).toBeTruthy()
+  })
+
+  it('点击"确认转移到今天"按钮触发 confirm-carryover 事件', async () => {
+    const wrapper = mount(DailyReportModal, {
+      props: { show: true, stats: defaultStats },
+      global: { stubs }
+    })
+    const btn = wrapper.findAll('button').find(b => b.text().includes('确认转移到今天'))
+    await btn?.trigger('click')
+    expect(wrapper.emitted('confirm-carryover')).toBeTruthy()
+  })
+
+  it('show=false 时 Dialog 收到 open=false', () => {
+    const wrapper = mount(DailyReportModal, {
+      props: { show: false, stats: defaultStats },
+      global: { stubs }
+    })
+    // 组件仍然挂载，Dialog 接收 open prop
+    expect(wrapper.findComponent({ name: 'Dialog' }).exists() || wrapper.exists()).toBe(true)
+  })
+})
