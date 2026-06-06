@@ -2,6 +2,7 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { User } from '@supabase/supabase-js'
 
 /**
  * 用户认证状态管理
@@ -12,13 +13,11 @@ export const useAuthStore = defineStore('auth', () => {
   // 当前登录用户 ID，null 表示未登录
   const userId = ref<string | null>(null)
   // 当前登录用户完整对象（兼容 Supabase Auth 返回的 User）
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = ref<any>(null)
+  const user = ref<User | null>(null)
 
   // ── Actions ──
-  // 设置用户信息，同时更新 userId，支持 Supabase User 和自定义 User 类型
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const setUser = (userData: any): void => {
+  // 设置用户信息，同时更新 userId
+  const setUser = (userData: User | null): void => {
     user.value = userData
     // 取 userData.id 赋值，兼容对象为 null/undefined 的边界情况
     userId.value = userData?.id || null

@@ -19,15 +19,33 @@ vi.mock('@/utils/audio', () => ({
 }))
 
 vi.mock('@/utils/goalDayStatus', () => ({
-  toGoalDayStatus: vi.fn((completed: boolean) => (completed ? 'completed' : 'pending'))
+  toGoalDayStatus: vi.fn((completed: boolean) => (completed ? 'completed' : 'active'))
 }))
 
-vi.mock('@/views/day/composables/useDayExecutionItems', () => ({
+vi.mock('@/utils/dayExecutionItems', () => ({
   buildDayExecutionItems: vi.fn(() => [])
 }))
 
-vi.mock('@/views/habits/utils/habitFrequency', () => ({
+vi.mock('@/utils/habitFrequency', () => ({
   matchesHabitFrequency: vi.fn(() => true)
+}))
+
+vi.mock('@/stores/habitStore', () => ({
+  useHabitStore: () => ({
+    habits: [],
+    loading: false,
+    fetchHabits: vi.fn().mockResolvedValue(undefined)
+  })
+}))
+
+vi.mock('@/views/day/composables/useDayActions', () => ({
+  useDayActions: () => ({
+    handleToggleComplete: vi.fn(),
+    handleStartTask: vi.fn(),
+    updateTaskTime: vi.fn(),
+    carryOverUncompletedTasksTo: vi.fn(),
+    fetchTaskUpdate: vi.fn()
+  })
 }))
 
 import { useDayStore } from '@/stores/dayStore'

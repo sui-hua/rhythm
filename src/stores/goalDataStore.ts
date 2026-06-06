@@ -48,10 +48,6 @@ export const useGoalDataStore = defineStore('goalData', () => {
   const categories = ref<GoalCategory[]>([])
   // 页面是否已初始化，防止重复加载
   const initialized = ref<boolean>(false)
-  // 新增目标弹窗显示状态
-  const showAddModal = ref<boolean>(false)
-  // 分类管理弹窗显示状态
-  const showCategoryModal = ref<boolean>(false)
 
   // ── 计算属性 / 查询方法 ──
   // 按 goalId 获取缓存的月度计划，不存在时返回空数组
@@ -88,15 +84,13 @@ export const useGoalDataStore = defineStore('goalData', () => {
     initialized.value = false
     categories.value = []
     archiveVersion.value = 0
-    showAddModal.value = false
-    showCategoryModal.value = false
     Object.keys(goalMonthsCache).forEach(key => delete goalMonthsCache[key])
     Object.keys(goalDaysCache).forEach(key => delete goalDaysCache[key])
   }
 
   return {
     goals, goalMonths, goalMonthsCache, goalDaysCache, archiveVersion,
-    categories, initialized, showAddModal, showCategoryModal,
+    categories, initialized,
     getGoalMonthsByGoalId, clearGoalDaysCache, syncGoalMonthsToFlatList, reset
   }
 })

@@ -35,12 +35,13 @@ describe('dateStore', () => {
     expect(store.currentDate.getDate()).toBe(10)
   })
 
-  it('setYearMonthDay 只传 month → year/day 不变', () => {
+  it('setYearMonthDay 只传 month（1-indexed）→ year/day 不变', () => {
     const store = useDateStore()
     const original = new Date(2024, 2, 10)
     store.setDate(original)
 
-    store.setYearMonthDay(undefined, 7)
+    // 传入 8 表示 8 月（1-indexed），内部转换为 JS 的 7（0-indexed）
+    store.setYearMonthDay(undefined, 8)
 
     expect(store.currentDate.getFullYear()).toBe(2024)
     expect(store.currentDate.getMonth()).toBe(7)
@@ -59,12 +60,13 @@ describe('dateStore', () => {
     expect(store.currentDate.getDate()).toBe(25)
   })
 
-  it('setYearMonthDay 全传 → 全变', () => {
+  it('setYearMonthDay 全传（1-indexed month）→ 全变', () => {
     const store = useDateStore()
     const original = new Date(2024, 2, 10)
     store.setDate(original)
 
-    store.setYearMonthDay(2026, 11, 31)
+    // 传入 12 表示 12 月（1-indexed），内部转换为 JS 的 11（0-indexed）
+    store.setYearMonthDay(2026, 12, 31)
 
     expect(store.currentDate.getFullYear()).toBe(2026)
     expect(store.currentDate.getMonth()).toBe(11)

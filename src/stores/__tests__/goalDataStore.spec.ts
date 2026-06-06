@@ -16,8 +16,6 @@ describe('goalDataStore', () => {
     expect(store.archiveVersion).toBe(0)
     expect(store.categories).toEqual([])
     expect(store.initialized).toBe(false)
-    expect(store.showAddModal).toBe(false)
-    expect(store.showCategoryModal).toBe(false)
   })
 
   it('reset 清空所有缓存和状态', () => {
@@ -30,8 +28,6 @@ describe('goalDataStore', () => {
     store.archiveVersion = 5
     store.categories = [{ id: 'c-1' }] as any
     store.initialized = true
-    store.showAddModal = true
-    store.showCategoryModal = true
 
     store.reset()
 
@@ -42,8 +38,6 @@ describe('goalDataStore', () => {
     expect(store.archiveVersion).toBe(0)
     expect(store.categories).toEqual([])
     expect(store.initialized).toBe(false)
-    expect(store.showAddModal).toBe(false)
-    expect(store.showCategoryModal).toBe(false)
   })
 
   it('clearGoalDaysCache 清空日计划缓存', () => {

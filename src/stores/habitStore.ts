@@ -3,6 +3,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { db } from '@/services/database'
+import { safeAction } from '@/utils/safeAction'
 import type { Habit, AugmentedHabit } from '@/types/models'
 
 /**
@@ -34,13 +35,14 @@ export const useHabitStore = defineStore('habit', () => {
   )
 
   // ── Actions ──
-  // 从数据库拉取所有习惯数据，页面初始化时调用
+  // 从数据库拉取所有习惯数据（含已归档），页面初始化时调用
   const fetchHabits = async (): Promise<void> => {
     loading.value = true
     try {
-      allHabits.value = await db.habit.list() as AugmentedHabit[]
-    } catch (e) {
-      console.error('获取习惯列表失败:', e)
+      await safeAction(
+        async () => { allHabits.value = await db.habit.list(true) as AugmentedHabit[] },
+        '获取习惯列表失败'
+      )
     } finally {
       loading.value = false
     }
