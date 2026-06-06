@@ -3,7 +3,7 @@
  * 提供 tab id 与 summary kind 之间的双向映射。
  */
 
-import type { SummaryKind } from './summaryPeriods'
+import type { SummaryKind } from '@/services/db/summaryPeriods'
 
 // 侧边栏 tab id 类型
 export type SummaryTab = 'day' | 'week' | 'month' | 'year'

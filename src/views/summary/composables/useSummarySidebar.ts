@@ -4,7 +4,7 @@
  */
 
 import type { Ref, ComputedRef } from 'vue'
-import type { SummaryKind } from '../utils/summaryPeriods'
+import type { SummaryKind } from '@/services/db/summaryPeriods'
 
 // 日期部分接口
 interface DateParts {

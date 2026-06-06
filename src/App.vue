@@ -10,12 +10,16 @@
     <GlobalLoadingBar />
     <!-- 导航栏：已登录且未隐藏时显示 -->
     <Navbar v-if="authStore.userId && !uiStore.navbarHidden" />
-    <!-- 路由视图区：带转场动画 -->
-    <RouterView v-slot="{ Component }">
-      <Transition :name="transitionName" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </Transition>
-    </RouterView>
+    <!-- 路由视图区：固定路由容器承载进出场页面，避免切换时布局留空 -->
+    <main class="route-view-host">
+      <RouterView v-slot="{ Component }">
+        <Transition :name="transitionName">
+          <div :key="route.path" class="route-view-shell">
+            <component :is="Component" />
+          </div>
+        </Transition>
+      </RouterView>
+    </main>
   </div>
 </template>
 
@@ -38,6 +42,7 @@ import { useUiStore } from '@/stores/uiStore'
 import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
+import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { useNotifications } from '@/composables/useNotifications'
 
 // ── Store ──
@@ -48,18 +53,14 @@ const uiStore = useUiStore()
 const goalDataStore = useGoalDataStore()
 const goalSelectionStore = useGoalSelectionStore()
 const goalBatchStore = useGoalBatchStore()
+const pomodoroStore = usePomodoroStore()
 const { requestPermission } = useNotifications()
 
 // ── 计算属性 ──
-// 根据路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
-const transitionName = computed(() => {
-  const path = route.path
-  if (path.includes('/day')) {
-    return 'view-slide'
-  } else {
-    return 'view-fade'
-  }
-})
+// 根据目标路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
+const transitionName = computed(() =>
+  route.path.includes('/day') ? 'view-slide' : 'view-fade'
+)
 
 // ── 生命周期 ──
 // 应用启动时初始化认证状态，监听多标签页和登出事件
@@ -91,10 +92,15 @@ onMounted(async () => {
         authStore.setUser(session.user)
       } else {
         // 登出时清除所有业务 Store，避免残留脏数据
+        // authStore: 清除用户 ID 和 token
         authStore.clearAuth()
+        // Direction 模块：清空目标/月度计划/日计划缓存与选中状态
         goalDataStore.reset()
         goalSelectionStore.reset()
         goalBatchStore.reset()
+        // 番茄钟：停止计时器、清空活跃任务
+        pomodoroStore.reset()
+        // habitStore / dayStore 无持久化状态，下次进入页面时自动重新拉取
         router.push('/login')
       }
     })
@@ -106,6 +112,22 @@ onMounted(async () => {
 
 
 <style scoped>
+/* 路由视图容器：页面转场时保持新旧页面叠放，避免 out-in 造成空白帧 */
+.route-view-host {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.route-view-shell {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 /* 视图转场动画 */
 .view-fade-enter-active, .view-fade-leave-active {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);

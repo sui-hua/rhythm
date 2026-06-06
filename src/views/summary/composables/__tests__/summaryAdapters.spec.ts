@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildSummaryPayload, mapSummaryRowToRecord, toUnifiedSummaryPayload } from '@/views/summary/utils/summaryAdapters'
-import type { SummaryRow, BuildSummaryPayloadParams } from '@/views/summary/utils/summaryAdapters'
-import { buildDefaultPeriod } from '@/views/summary/utils/summaryPeriods'
-import type { Period } from '@/views/summary/utils/summaryPeriods'
+import { buildSummaryPayload, mapSummaryRowToRecord, toUnifiedSummaryPayload } from '@/services/db/summaryAdapters'
+import type { SummaryRow, BuildSummaryPayloadParams } from '@/services/db/summaryAdapters'
+import { buildDefaultPeriod } from '@/services/db/summaryPeriods'
+import type { Period } from '@/services/db/summaryPeriods'
 import { summaryKindToTab, summaryTabToKind } from '@/views/summary/utils/summaryRouteHelpers'
 
 describe('mapSummaryRowToRecord', () => {

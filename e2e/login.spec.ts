@@ -26,21 +26,26 @@ test.describe('登录页面', () => {
   })
 
   test('点击演示账号 → 自动填充凭据', async ({ page }) => {
+    // 接受 confirm 对话框（演示账号安全提示）
+    page.on('dialog', dialog => dialog.accept())
     await page.getByText('使用演示账号体验').click()
     await expect(page.locator('#email')).toHaveValue('123456@163.com')
     await expect(page.locator('#password')).toHaveValue('123456')
   })
 
   test('演示账号登录 → 跳转到首页', async ({ page }) => {
+    // 接受 confirm 对话框（演示账号安全提示）
+    page.on('dialog', dialog => dialog.accept())
     await page.getByText('使用演示账号体验').click()
-    await page.click('button[type="submit"]')
+    // 新代码中点击演示账号会自动触发登录，无需手动点击提交
     await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 15000 })
     await expect(page).toHaveURL(/\/day/)
   })
 
   test('登录按钮显示加载状态', async ({ page }) => {
+    // 接受 confirm 对话框（演示账号安全提示）
+    page.on('dialog', dialog => dialog.accept())
     await page.getByText('使用演示账号体验').click()
-    await page.click('button[type="submit"]')
     await expect(page.locator('button[type="submit"]')).toHaveText(/登录中/)
     await expect(page.locator('button[type="submit"]')).toBeDisabled()
   })
@@ -49,7 +54,7 @@ test.describe('登录页面', () => {
     await page.fill('#email', 'wrong@example.com')
     await page.fill('#password', 'wrongpassword')
     await page.click('button[type="submit"]')
-    await expect(page.locator('.text-red-500')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('.text-destructive')).toBeVisible({ timeout: 10000 })
   })
 
   test('空表单 → 浏览器原生校验阻止提交', async ({ page }) => {
@@ -61,8 +66,8 @@ test.describe('登录页面', () => {
 test.describe('登录后行为', () => {
   test('已登录访问 /login → 重定向到首页', async ({ page }) => {
     await page.goto('/login')
+    page.on('dialog', dialog => dialog.accept())
     await page.getByText('使用演示账号体验').click()
-    await page.click('button[type="submit"]')
     await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 15000 })
 
     await page.goto('/login')
@@ -71,8 +76,8 @@ test.describe('登录后行为', () => {
 
   test('登出后 → 回到登录页', async ({ page }) => {
     await page.goto('/login')
+    page.on('dialog', dialog => dialog.accept())
     await page.getByText('使用演示账号体验').click()
-    await page.click('button[type="submit"]')
     await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 15000 })
 
     await page.evaluate(() => localStorage.clear())

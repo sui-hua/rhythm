@@ -44,10 +44,10 @@
             </CardDescription>
           </CardHeader>
           <CardContent class="space-y-6">
-            <!-- 日总结专用表单，结构与通用表单不同 -->
+            <!-- 日总结专用表单，结构与通用表单不同；新建时使用预填的今日数据 -->
             <DailySummaryForm
               v-if="activeTab === 'day'"
-              :initial-data="selectedSummary ?? undefined"
+              :initial-data="selectedSummary ?? prefilledSummary ?? undefined"
               @save="handleSave"
               @cancel="handleCancel"
               @delete="selectedSummary?.id && handleDelete(selectedSummary.id)"
@@ -92,18 +92,19 @@ const narrative = getPageNarrative('summary')
 // ── 视图状态 ──
 // 从 composable 获取总结模块的全部状态与操作方法
 const {
-  activeTab,       // 当前选中的 tab（day/week/month/year）
-  summaries,       // 当前 tab 下的总结列表
-  loading,         // 数据加载中状态
-  selectedSummary, // 当前选中的总结记录
-  isCreating,      // 是否处于新建模式
-  currentView,     // 计算得出的视图状态：form / detail-or-edit / empty
-  handleTabChange, // 切换 tab 并重新加载数据
-  handleSelect,    // 选中一条总结记录
-  handleCreate,    // 进入新建模式
-  handleSave,      // 保存总结（新建或更新）
-  handleCancel,    // 取消编辑，返回空状态
-  handleDelete     // 删除总结记录
+  activeTab,        // 当前选中的 tab（day/week/month/year）
+  summaries,        // 当前 tab 下的总结列表
+  loading,          // 数据加载中状态
+  selectedSummary,  // 当前选中的总结记录
+  prefilledSummary, // 新建日总结时的预填数据（今日任务和习惯聚合）
+  isCreating,       // 是否处于新建模式
+  currentView,      // 计算得出的视图状态：form / detail-or-edit / empty
+  handleTabChange,  // 切换 tab 并重新加载数据
+  handleSelect,     // 选中一条总结记录
+  handleCreate,     // 进入新建模式
+  handleSave,       // 保存总结（新建或更新）
+  handleCancel,     // 取消编辑，返回空状态
+  handleDelete      // 删除总结记录
 } = useSummaryManager()
 </script>
 

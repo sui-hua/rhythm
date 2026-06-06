@@ -11,6 +11,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { beginRouteLoading, endRouteLoading } from '@/composables/useGlobalLoading'
 import { buildDayPath, buildMonthPath, buildYearPath } from '@/views/day/utils/routeDateContext'
+import supabase from '@/services/supabase'
 
 // ── 路由组件懒加载 ──
 const LoginView = () => import('@/views/login/index.vue')
@@ -92,17 +93,33 @@ const router = createRouter({
 // ── 全局前置守卫 ──
 // 未登录用户访问非登录页时重定向到 /login
 // 已登录用户访问 /login 时重定向到首页
-router.beforeEach((to, from, next) => {
+// 首次导航时验证 session 有效性，防止 localStorage 残留过期登录态
+let sessionVerified = false
+
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
+  // 未登录用户访问非登录页，重定向到登录页
   if (to.path !== '/login' && !authStore.userId) {
-    next('/login')
-  } else if (to.path === '/login' && authStore.userId) {
-    next('/')
-  } else {
-    beginRouteLoading()
-    next()
+    return '/login'
   }
+
+  // 首次加载时验证 session 有效性
+  if (authStore.userId && !sessionVerified) {
+    const { data: { session } } = await supabase.auth.getSession()
+    sessionVerified = true
+    if (!session) {
+      authStore.clearAuth()
+      return '/login'
+    }
+  }
+
+  // 已登录用户访问登录页，重定向到首页
+  if (to.path === '/login' && authStore.userId) {
+    return '/'
+  }
+
+  beginRouteLoading()
 })
 
 // ── 全局后置守卫 ──

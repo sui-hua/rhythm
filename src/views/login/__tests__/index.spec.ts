@@ -82,11 +82,17 @@ describe('LoginView', () => {
   })
 
   it('点击演示账号按钮填充凭据', async () => {
+    // mock window.confirm 以允许演示账号填充
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    // mock handleLogin 避免实际登录请求
+    mockHandleLogin.mockResolvedValue(undefined)
+
     const wrapper = mount(LoginView, { global: { stubs } })
     const demoBtn = wrapper.findAll('button').find(b => b.text().includes('使用演示账号体验'))
     await demoBtn?.trigger('click')
     expect(mockEmail.value).toBe('123456@163.com')
     expect(mockPassword.value).toBe('123456')
+    expect(mockHandleLogin).toHaveBeenCalled()
   })
 
   it('渲染 WelcomeChecklist 组件', () => {

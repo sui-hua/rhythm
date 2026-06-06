@@ -1,6 +1,6 @@
 <template>
   <aside 
-    class="group w-full md:w-auto border-zinc-100 border-b md:border-b-0 md:border-r flex flex-col z-20 bg-background relative overflow-hidden"
+    class="group w-full md:w-auto border-border border-b md:border-b-0 md:border-r flex flex-col z-20 bg-background relative overflow-hidden"
     :style="{ width: width + 'px' }"
   >
     <!-- Resize Handle -->

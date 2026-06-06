@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { useSummarySidebar } from '@/views/summary/composables/useSummarySidebar'
 import type { SummaryItem } from '@/views/summary/composables/useSummarySidebar'
-import { buildDefaultPeriod } from '@/views/summary/utils/summaryPeriods'
+import { buildDefaultPeriod } from '@/services/db/summaryPeriods'
 
 describe('useSummarySidebar', () => {
   it('uses daily summary content as the title', () => {

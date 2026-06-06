@@ -1,84 +1,120 @@
 <template>
   <!--
-    Navbar — 全局顶部导航栏，桌面端 hover 滑出，移动端常驻底部
-    主要结构：桌面端导航（hover 触发区 + 导航面板 + 退出按钮）、移动端导航（上下文胶囊 + 底部导航 + 退出按钮）
+    Navbar — 全局顶部导航栏，桌面端常驻可折叠，移动端常驻底部
+    主要结构：桌面端导航（可折叠导航面板 + 退出按钮）、移动端导航（上下文胶囊 + 底部导航 + 退出按钮）
   -->
 
-  <!-- 桌面端导航开始：外层 hover 容器，pointer-events-none 避免阻挡页面内容点击 -->
-  <div class="fixed top-0 left-0 right-0 h-24 z-200 group pointer-events-none hidden md:block">
-    <!-- 导航面板：默认隐藏在顶部上方，group-hover 时滑出并显示，pointer-events-auto 恢复交互 -->
-    <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-background/80 backdrop-blur-xl border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-500 ease-in-out -translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto">
+  <!-- 桌面端导航开始：常驻可折叠导航栏，固定在顶部居中 -->
+  <div class="fixed top-0 left-0 right-0 z-200 hidden md:block">
+    <!-- 导航面板：默认可见，支持最小化/展开切换 -->
+    <nav class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center bg-background/80 backdrop-blur-xl border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl shadow-black/5 transition-all duration-300 ease-in-out">
       <div class="flex items-center gap-1">
-        <!-- 上下文导航区：月/日页面时显示左侧快捷返回及切换控件 -->
-        <Transition name="nav-context">
-          <div v-if="contextInfo.show" class="flex items-center gap-2 px-4 pr-6 border-r border-border mr-2 overflow-hidden">
-            <template v-if="contextInfo.mode === 'month'">
-              <button
-                  @click="router.push(contextInfo.backPath)"
-                  class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors mx-1"
-                >
-                  {{ contextInfo.title }}
-                </button>
+        <!-- 最小化状态：仅显示图标 -->
+        <template v-if="desktopCollapsed">
+          <Button
+            v-for="item in navItems"
+            :key="item.path"
+            variant="ghost"
+            size="icon"
+            @click="router.push(item.path)"
+            :class="cn(
+              'rounded-full w-9 h-9 transition-all duration-300',
+              isActive(item)
+                ? 'bg-black text-white shadow-lg hover:bg-foreground hover:text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            )"
+          >
+            <component :is="item.icon" class="w-4 h-4" />
+          </Button>
+          <!-- 展开按钮：最小化状态下显示在导航项右侧 -->
+          <button
+            class="ml-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            @click="desktopCollapsed = false"
+            title="展开导航栏"
+          >
+            <ChevronDown class="w-4 h-4" />
+          </button>
+        </template>
 
-            </template>
-
-            <template v-else-if="contextInfo.mode === 'day'">
-              <div class="flex items-center gap-1">
-                 <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="router.push(contextInfo.prevDayPath)"
-                  class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
-                >
-                  <ArrowLeft class="w-4 h-4" />
-                </Button>
-
+        <!-- 展开状态：显示完整导航项 + 最小化按钮 -->
+        <template v-else>
+          <!-- 上下文导航区：月/日页面时显示左侧快捷返回及切换控件 -->
+          <Transition name="nav-context">
+            <div v-if="contextInfo.show" class="flex items-center gap-2 px-4 pr-6 border-r border-border mr-2 overflow-hidden">
+              <template v-if="contextInfo.mode === 'month'">
                 <button
-                  @click="router.push(contextInfo.monthPath)"
-                  class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors mx-1"
-                >
-                  {{ contextInfo.title }}
-                </button>
+                    @click="router.push(contextInfo.backPath)"
+                    class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-muted px-3 py-1 rounded-md transition-colors mx-1"
+                  >
+                    {{ contextInfo.title }}
+                  </button>
 
-                 <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="router.push(contextInfo.nextDayPath)"
-                  class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all transform rotate-180"
-                >
-                  <ArrowLeft class="w-4 h-4" />
-                </Button>
-              </div>
-            </template>
-          </div>
-        </Transition>
+              </template>
 
-        <Button
-          v-for="item in navItems"
-          :key="item.path"
-          variant="ghost"
-          size="sm"
-          @click="router.push(item.path)"
-          :class="cn(
-            'rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500',
-            isActive(item)
-              ? 'bg-black text-white shadow-lg hover:bg-black hover:text-white'
-              : 'text-zinc-400 hover:text-foreground hover:bg-muted'
-          )"
-        >
-          <component :is="item.icon" class="w-3.5 h-3.5 mr-2" />
-          {{ item.name }}
-        </Button>
+              <template v-else-if="contextInfo.mode === 'day'">
+                <div class="flex items-center gap-1">
+                   <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="router.push(contextInfo.prevDayPath)"
+                    class="w-8 h-8 rounded-full hover:bg-foreground hover:text-background transition-all"
+                  >
+                    <ArrowLeft class="w-4 h-4" />
+                  </Button>
 
+                  <button
+                    @click="router.push(contextInfo.monthPath)"
+                    class="text-[12px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-muted px-3 py-1 rounded-md transition-colors mx-1"
+                  >
+                    {{ contextInfo.title }}
+                  </button>
+
+                   <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="router.push(contextInfo.nextDayPath)"
+                    class="w-8 h-8 rounded-full hover:bg-foreground hover:text-background transition-all transform rotate-180"
+                  >
+                    <ArrowLeft class="w-4 h-4" />
+                  </Button>
+                </div>
+              </template>
+            </div>
+          </Transition>
+
+          <Button
+            v-for="item in navItems"
+            :key="item.path"
+            variant="ghost"
+            size="sm"
+            @click="router.push(item.path)"
+            :class="cn(
+              'rounded-full px-6 h-10 text-xs font-black uppercase tracking-[0.2em] transition-all duration-500',
+              isActive(item)
+                ? 'bg-black text-white shadow-lg hover:bg-foreground hover:text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            )"
+          >
+            <component :is="item.icon" class="w-3.5 h-3.5 mr-2" />
+            {{ item.name }}
+          </Button>
+
+          <!-- 最小化按钮：展开状态下显示在导航项最右侧 -->
+          <button
+            class="ml-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            @click="desktopCollapsed = true"
+            title="最小化导航栏"
+          >
+            <ChevronUp class="w-4 h-4" />
+          </button>
+        </template>
       </div>
 
     </nav>
-    <!-- 顶部隐形触发热区：pointer-events-auto 恢复鼠标事件，hover 时触发外层 group-hover 使导航面板滑出 -->
-    <div class="absolute top-0 left-0 right-0 h-10 pointer-events-auto"></div>
 
-    <!-- 桌面端退出按钮：随导航面板一起显隐 -->
+    <!-- 桌面端退出按钮：常驻显示 -->
     <button
-      class="fixed top-6 right-6 z-210 w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"
+      class="fixed top-6 right-6 z-210 w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
       @click="handleLogout"
     >
       <LogOut class="w-4 h-4" />
@@ -98,7 +134,7 @@
         <template v-if="contextInfo.mode === 'month'">
           <button
             @click="router.push(contextInfo.backPath)"
-            class="text-[11px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors"
+            class="text-[11px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-muted px-3 py-1 rounded-md transition-colors"
           >
             {{ contextInfo.title }}
           </button>
@@ -109,14 +145,14 @@
             variant="ghost"
             size="icon"
             @click="router.push(contextInfo.prevDayPath)"
-            class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all"
+            class="w-8 h-8 rounded-full hover:bg-foreground hover:text-background transition-all"
           >
             <ArrowLeft class="w-4 h-4" />
           </Button>
 
           <button
             @click="router.push(contextInfo.monthPath)"
-            class="text-[11px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-zinc-100 px-3 py-1 rounded-md transition-colors"
+            class="text-[11px] font-black uppercase tracking-widest italic whitespace-nowrap hover:bg-muted px-3 py-1 rounded-md transition-colors"
           >
             {{ contextInfo.title }}
           </button>
@@ -125,7 +161,7 @@
             variant="ghost"
             size="icon"
             @click="router.push(contextInfo.nextDayPath)"
-            class="w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all transform rotate-180"
+            class="w-8 h-8 rounded-full hover:bg-foreground hover:text-background transition-all transform rotate-180"
           >
             <ArrowLeft class="w-4 h-4" />
           </Button>
@@ -144,8 +180,8 @@
         :class="cn(
           'rounded-full w-11 h-11 transition-all duration-300',
           isActive(item)
-            ? 'bg-black text-white shadow-lg hover:bg-black hover:text-white'
-            : 'text-zinc-400 hover:text-foreground hover:bg-muted'
+            ? 'bg-black text-white shadow-lg hover:bg-foreground hover:text-background'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         )"
       >
         <component :is="item.icon" class="w-4 h-4" />
@@ -155,7 +191,7 @@
 
     <!-- 移动端退出按钮：固定在右上角 -->
     <button
-      class="fixed top-3 right-3 z-200 w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all pointer-events-auto"
+      class="fixed top-3 right-3 z-200 w-11 h-11 bg-background/90 backdrop-blur-xl border border-border rounded-full shadow-2xl shadow-black/5 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all pointer-events-auto"
       @click="handleLogout"
     >
       <LogOut class="w-4 h-4" />
@@ -167,14 +203,14 @@
 /**
  * Navbar — 全局顶部导航栏组件
  * 数据流：路由路径 → contextInfo（上下文导航状态）→ 模板渲染
- * 桌面端 hover 触发滑出，移动端常驻底部导航
+ * 桌面端常驻可折叠（最小化仅显示图标），移动端常驻底部导航
  */
 
 // ── 依赖导入 ──
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut } from 'lucide-vue-next'
+import { CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import supabase from '@/services/supabase'
 import { useDateStore } from '@/stores/dateStore'
@@ -187,6 +223,10 @@ const dateStore = useDateStore()
 // ── 路由 ──
 const router = useRouter()
 const route = useRoute()
+
+// ── 状态 ──
+// 桌面端导航栏是否最小化（仅显示图标），默认展开
+const desktopCollapsed = ref(false)
 
 // ── 计算属性 ──
 // 导航栏菜单配置，使用 computed 确保跨午夜后路径自动更新

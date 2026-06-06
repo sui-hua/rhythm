@@ -17,4 +17,15 @@ export default defineConfig({
             '@': fileURLToPath(new URL('./src', import.meta.url))
         },
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vue-vendor': ['vue', 'vue-router', 'pinia'],
+                    'ui-vendor': ['reka-ui', 'lucide-vue-next'],
+                    'supabase-vendor': ['@supabase/supabase-js'],
+                }
+            }
+        }
+    },
 })

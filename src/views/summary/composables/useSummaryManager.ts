@@ -5,10 +5,12 @@ import type { Ref, ComputedRef } from 'vue'
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
-import { buildDefaultPeriod } from '@/views/summary/utils/summaryPeriods'
-import { buildSummaryPayload } from '@/views/summary/utils/summaryAdapters'
+import { safeAction } from '@/utils/safeAction'
+import { buildDefaultPeriod } from '@/services/db/summaryPeriods'
+import { buildSummaryPayload } from '@/services/db/summaryAdapters'
 import { summaryTabToKind } from '@/views/summary/utils/summaryRouteHelpers'
-import type { SummaryRecord } from '@/views/summary/utils/summaryAdapters'
+import { fetchTodayDataOverview } from '@/views/summary/composables/useSummaryPrefill'
+import type { SummaryRecord } from '@/services/db/summaryAdapters'
 
 // 视图状态类型：表单编辑 / 详情展示 / 空状态
 type SummaryView = 'form' | 'detail-or-edit' | 'empty'
@@ -20,6 +22,7 @@ export interface UseSummaryManagerReturn {
   loading: Ref<boolean>
   isPageLoading: Ref<boolean>
   selectedSummary: Ref<SummaryRecord | null>
+  prefilledSummary: Ref<SummaryRecord | null>
   isCreating: Ref<boolean>
   currentView: ComputedRef<SummaryView>
   handleTabChange: (tabId: string) => void
@@ -52,6 +55,8 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
   const selectedSummary = ref<SummaryRecord | null>(null)
   // 是否处于新建模式，与选中状态互斥
   const isCreating = ref(false)
+  // 新建日总结时的预填数据，由今日任务和习惯数据自动聚合生成
+  const prefilledSummary = ref<SummaryRecord | null>(null)
 
   // 根据当前 tab id 转换为 kind 后查询数据库
   const loadSummaries = async (): Promise<void> => {
@@ -66,10 +71,45 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     }
   }
 
+  /**
+   * 构建日总结的默认内容（数据自动聚合）
+   *
+   * 当日总结为空时，自动拉取今日任务完成和习惯打卡数据，
+   * 生成可编辑的默认模板文字，减少用户手动输入。
+   *
+   * @returns 默认 content 对象，获取失败时返回空对象
+   */
+  const buildDailyDefaultContent = async (): Promise<Record<string, string>> => {
+    try {
+      const overview = await fetchTodayDataOverview()
+      const doneLines: string[] = []
+
+      // 聚合已完成任务标题
+      if (overview.completedTaskTitles.length > 0) {
+        doneLines.push(...overview.completedTaskTitles)
+      }
+
+      // 聚合习惯打卡统计
+      if (overview.habitLogCount > 0) {
+        doneLines.push(`完成 ${overview.habitLogCount} 项习惯打卡`)
+      }
+
+      return {
+        done: doneLines.length > 0 ? doneLines.join('\n') : '',
+        improve: '',
+        tomorrow: ''
+      }
+    } catch (error) {
+      console.warn('自动聚合今日数据失败:', error)
+      return {}
+    }
+  }
+
   // 切换 tab：重置选中状态并重新加载对应类型的数据
   const handleTabChange = (tabId: string): void => {
     activeTab.value = tabId
     selectedSummary.value = null
+    prefilledSummary.value = null
     isCreating.value = false
     loadSummaries()
   }
@@ -80,15 +120,24 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     isCreating.value = false
   }
 
-  // 进入创建模式，清空选中状态
-  const handleCreate = (): void => {
+  // 进入创建模式，清空选中状态；日总结时自动聚合今日数据作为表单默认内容
+  const handleCreate = async (): Promise<void> => {
     selectedSummary.value = null
+    prefilledSummary.value = null
     isCreating.value = true
+
+    // 日总结 tab 下自动聚合今日任务和习惯数据
+    if (activeTab.value === 'day') {
+      const defaultContent = await buildDailyDefaultContent()
+      if (Object.keys(defaultContent).length > 0) {
+        prefilledSummary.value = { content: defaultContent } as SummaryRecord
+      }
+    }
   }
 
   // 保存总结数据：构建 payload → 写入数据库 → 刷新列表
   const handleSave = async (data: Record<string, string>): Promise<void> => {
-    try {
+    await safeAction(async () => {
       const userId = authStore.userId
       if (!userId) {
         throw new Error('当前用户未登录，无法保存总结')
@@ -112,31 +161,35 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
         existingRecord: existingSummary
       })
 
-      const savedSummary = await db.summary.save(payload)
-      selectedSummary.value = savedSummary
+      // 已有记录走更新，新记录走创建
+      let savedSummary
+      if (existingSummary?.id) {
+        savedSummary = await db.summary.update(existingSummary.id, payload)
+      } else {
+        savedSummary = await db.summary.create(payload)
+      }
+
+      selectedSummary.value = savedSummary as SummaryRecord
       await loadSummaries()
       isCreating.value = false
-    } catch (error) {
-      console.error('Failed to save summary', error)
-    }
+    }, 'Failed to save summary')
   }
 
-  // 取消创建/编辑，退出表单视图
+  // 取消创建/编辑，退出表单视图并清空预填数据
   const handleCancel = (): void => {
     isCreating.value = false
+    prefilledSummary.value = null
   }
 
   // 删除总结记录：确认后删除并刷新列表
   const handleDelete = async (id: string | number): Promise<void> => {
     if (!confirm('确定要删除这条总结吗？')) return
 
-    try {
-      await db.summary.remove(id)
+    await safeAction(async () => {
+      await db.summary.delete(id)
       selectedSummary.value = null
       await loadSummaries()
-    } catch (error) {
-      console.error('Failed to delete summary', error)
-    }
+    }, 'Failed to delete summary')
   }
 
   // 页面挂载时加载初始数据
@@ -157,6 +210,7 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
     loading,
     isPageLoading,
     selectedSummary,
+    prefilledSummary,
     isCreating,
     currentView,
     handleTabChange,

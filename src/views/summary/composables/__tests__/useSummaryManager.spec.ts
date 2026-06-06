@@ -20,27 +20,29 @@ vi.mock('@/stores/authStore', () => ({
 
 // mock db
 const mockListByKind = vi.fn()
-const mockSave = vi.fn()
-const mockRemove = vi.fn()
+const mockCreate = vi.fn()
+const mockUpdate = vi.fn()
+const mockDelete = vi.fn()
 vi.mock('@/services/database', () => ({
   db: {
     summary: {
       listByKind: (...args: any[]) => mockListByKind(...args),
-      save: (...args: any[]) => mockSave(...args),
-      remove: (...args: any[]) => mockRemove(...args)
+      create: (...args: any[]) => mockCreate(...args),
+      update: (...args: any[]) => mockUpdate(...args),
+      delete: (...args: any[]) => mockDelete(...args)
     }
   }
 }))
 
 // mock summary 工具函数
-vi.mock('@/views/summary/utils/summaryPeriods', () => ({
+vi.mock('@/services/db/summaryPeriods', () => ({
   buildDefaultPeriod: vi.fn(() => ({
     periodStart: '2026-06-01',
     periodEnd: '2026-06-05'
   }))
 }))
 
-vi.mock('@/views/summary/utils/summaryAdapters', () => ({
+vi.mock('@/services/db/summaryAdapters', () => ({
   buildSummaryPayload: vi.fn((params: any) => ({
     ...params,
     kind: params.kind,
@@ -107,7 +109,7 @@ describe('useSummaryManager', () => {
   // handleSave：保存成功后更新选中记录并刷新列表
   it('handleSave 保存成功后更新选中记录', async () => {
     const savedRecord = { id: 99, kind: 'daily', title: '已保存' }
-    mockSave.mockResolvedValue(savedRecord)
+    mockCreate.mockResolvedValue(savedRecord)
     mockListByKind.mockResolvedValue([savedRecord])
 
     const { handleSave, selectedSummary, isCreating } = useSummaryManager()
@@ -126,7 +128,7 @@ describe('useSummaryManager', () => {
     const { handleSave } = useSummaryManager()
     await handleSave({ done: 'test' })
 
-    expect(mockSave).not.toHaveBeenCalled()
+    expect(mockCreate).not.toHaveBeenCalled()
     consoleSpy.mockRestore()
   })
 
@@ -161,14 +163,14 @@ describe('useSummaryManager', () => {
 
   // handleDelete：确认后删除并刷新列表
   it('handleDelete 确认后删除记录并刷新', async () => {
-    mockRemove.mockResolvedValue(undefined)
+    mockDelete.mockResolvedValue(undefined)
     mockListByKind.mockResolvedValue([])
 
     const { handleDelete, selectedSummary } = useSummaryManager()
     selectedSummary.value = { id: 1 } as any
     await handleDelete(1)
 
-    expect(mockRemove).toHaveBeenCalledWith(1)
+    expect(mockDelete).toHaveBeenCalledWith(1)
     expect(selectedSummary.value).toBeNull()
   })
 })

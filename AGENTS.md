@@ -13,7 +13,7 @@
 - 状态管理：Pinia（`authStore` 启用持久化）
 - 数据服务：Supabase
 - UI / 工具库：VueUse、Radix Vue、Reka UI
-- 语言现状：JavaScript 为主，配合 TypeScript 工具链
+- 语言现状：TypeScript
 
 ### 常用命令
 
@@ -42,15 +42,28 @@ src/
 ├── composables/         # 全局可复用逻辑
 ├── components/          # 全局通用组件
 ├── router/              # 路由配置与守卫
-│   └── index.js         # 路由守卫逻辑
+│   └── index.ts         # 路由守卫逻辑
 ├── services/            # 数据库访问服务
-│   ├── database.js      # 底层直连与 RPC
-│   └── safeDb.js        # 带 toast 提示的安全封装
+│   ├── supabase.ts      # Supabase 客户端配置与 createBase 泛型工厂函数
+│   ├── database.ts      # 底层直连与 RPC
+│   └── db/              # 各表 CRUD 操作模块
 ├── stores/              # Pinia 状态管理
-│   ├── authStore.js     # 用户认证（persist: true）
-│   ├── dateStore.js     # 日期状态
-│   ├── uiStore.js       # 界面状态
-│   └── pomodoroStore.js # 番茄钟状态
+│   ├── authStore.ts     # 用户认证（persist: true）
+│   ├── dateStore.ts     # 日期状态
+│   ├── uiStore.ts       # 界面状态
+│   ├── pomodoroStore.ts # 番茄钟状态
+│   ├── goalDataStore.ts     # Direction 数据缓存（目标/月度/日计划）
+│   ├── goalSelectionStore.ts # Direction 选中与编辑状态
+│   └── goalBatchStore.ts    # Direction 批量编辑状态
+├── utils/               # 纯工具函数
+│   ├── dateFormatter.ts     # 日期格式化
+│   ├── formatDuration.ts    # 时长格式化
+│   ├── habitFrequency.ts    # 习惯频率匹配
+│   ├── dayExecutionItems.ts # 日程条目聚合构建
+│   ├── safeAction.ts        # 异步操作统一错误处理
+│   ├── audio.ts             # 音效播放
+│   ├── throttle.ts          # 节流工具
+│   └── goalDayStatus.ts     # 目标日状态计算
 └── views/               # 页面视图
     ├── [module]/        # 各业务模块
     │   ├── composables/ # 模块专属逻辑
@@ -75,21 +88,58 @@ src/
 
 模块文档位于 `docs/modules/`。
 
+### 模块内部架构
+
+**Day 模块（dayStore + useDayActions）：**
+- `stores/dayStore.ts`：状态定义、数据拉取（fetchTasks）、computed 派生（dailySchedule 等）
+- `views/day/composables/useDayActions.ts`：操作逻辑（完成切换、计时、时间更新、任务顺延）
+- dayStore 通过 `useDayActions({ tasks, routeDateContext })` 获取操作函数，职责分离
+
+**Direction 模块状态管理：**
+- `stores/goalDataStore.ts`：目标/月度/日计划数据缓存
+- `stores/goalSelectionStore.ts`：选中目标、编辑目标、月份切换等 UI 状态
+- `stores/goalBatchStore.ts`：批量编辑选中状态与映射表
+- `views/direction/composables/modalState.ts`：弹窗显示状态的共享 ref（避免循环依赖）
+
 ### 数据层
 
 | 文件 | 导出 | 用途 |
 |------|------|------|
-| `src/services/database.js` | `db` | 底层直连与 RPC 调用 |
-| `src/services/safeDb.js` | `safeDb` | 失败时自动 toast，Direction 模块统一使用 |
+| `src/services/supabase.ts` | `createBase`、`default`(supabase) | Supabase 客户端配置与 CRUD 泛型工厂函数 |
+| `src/services/database.ts` | `db` | 底层直连与 RPC 调用 |
+| `src/utils/safeAction.ts` | `safeAction` | 异步操作统一错误处理包装 |
 
-- `supabase.createBase(tableName)` 生成标准 CRUD 对象
+- `createBase<T>(tableName)` 生成带泛型的标准 CRUD 对象，返回值类型自动推导
 - 标准能力：`list`、`getById`、`create`、`update`、`delete`、`query`
+- `safeAction(action, errorMessage)` 包装异步操作，捕获错误并 console.error，返回 `T | null`
 - 数据库真相源：以 Supabase MCP 查询到的线上真实结构为准
 - Direction 模块 RPC：`batch_upsert_daily_plans`、`batch_delete_daily_plans`
 
+### 数据库表结构（2026-06-05 更新）
+
+所有表启用 RLS，`user_id` 外键关联 `auth.users(id)`。`updated_at` 字段通过触发器自动更新。
+
+| 表名 | 主要字段 | 约束与索引 |
+|------|----------|------------|
+| `task` | id, user_id, title, start_time, end_time, completed, actual_start_time, actual_end_time | FK: user_id → auth.users; 索引: idx_task_user_start(user_id, start_time) |
+| `goal` | id, user_id, title, status, category_id, year, carry_over_lookback_days | FK: user_id → auth.users, category_id → goal_categories (ON DELETE SET NULL); CHECK: status IN ('active','completed','archived'), priority 1-3 |
+| `goal_months` | id, goal_id, user_id, title, status, month | FK: user_id → auth.users, goal_id → goal; CHECK: status IN ('active','completed','archived') |
+| `goal_days` | id, goal_month_id, user_id, title, status, day | FK: user_id → auth.users, goal_month_id → goal_months (ON DELETE CASCADE); CHECK: status IN ('active','completed','archived'); 索引: idx_goal_days_user_day(user_id, day) |
+| `goal_categories` | id, user_id, name, sort_order | FK: user_id → auth.users |
+| `habit` | id, user_id, title, frequency, target_value, is_archived | FK: user_id → auth.users |
+| `habit_logs` | id, habit_id, user_id, value, completed_at, log | FK: user_id → auth.users (DEFAULT auth.uid()), habit_id → habit; 索引: idx_habit_logs_completed(habit_id, completed_at) |
+| `summary` | id, user_id, title, content, kind, period_start, period_end | CHECK: kind IN ('daily','weekly','monthly','yearly') |
+| `daily_report_log` | id, user_id, report_date | FK: user_id → auth.users |
+
+**关键约定：**
+- `goal_days.status` 使用 varchar 枚举：`'active'`(默认) / `'completed'` / `'archived'`，前端直接使用字符串值
+- `goal_days` 删除关联的 `goal_months` 时级联删除（ON DELETE CASCADE）
+- `goal` 删除关联的 `goal_categories` 时 category_id 置空（ON DELETE SET NULL）
+- `habit_logs.user_id` 默认值为 `auth.uid()`，无需前端手动传入
+
 ### 路由守卫
 
-- 路由守卫位于 `src/router/index.js`
+- 路由守卫位于 `src/router/index.ts`
 - `beforeEach` 依据 `authStore.userId` 判断登录状态
 - 未登录用户统一重定向到 `/login`
 - 涉及登录态、跳转控制的改动，必须同步检查：路由守卫、`authStore` 数据流、页面初始化依赖

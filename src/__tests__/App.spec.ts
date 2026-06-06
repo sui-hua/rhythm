@@ -12,3 +12,14 @@ describe('App.vue 通知初始化', () => {
     expect(mountedBlock).not.toMatch(/useNotifications\(\)/)
   })
 })
+
+describe('App.vue 路由转场', () => {
+  it('路由页面使用固定 shell 转场，避免 out-in 切换时卸载为空', () => {
+    const appPath = resolve(process.cwd(), 'src/App.vue')
+    const source = readFileSync(appPath, 'utf-8')
+
+    expect(source).not.toMatch(/mode=["']out-in["']/)
+    expect(source).toMatch(/class="route-view-shell"/)
+    expect(source).toMatch(/\.route-view-shell\s*\{/)
+  })
+})
