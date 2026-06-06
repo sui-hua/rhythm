@@ -94,11 +94,11 @@ export function useDayNavigation() {
 
     /**
      * 将路由参数同步到 dateStore
-     * 保持全局日期状态与 URL 一致，month 需要 -1 转换为 0-indexed
+     * 保持全局日期状态与 URL 一致，month 已统一为 1-indexed
      */
     const syncDateWithRoute = () => {
         const { year, month, day } = getRouteDateContext(route.params as Record<string, string | undefined>, dateStore.currentDate)
-        dateStore.setYearMonthDay(year, month - 1, day)
+        dateStore.setYearMonthDay(year, month, day)
     }
 
     /**
@@ -170,8 +170,8 @@ export function useDayNavigation() {
             }, 50)
         })
 
-        // 每秒刷新当前时间，保持时间线指示器实时
-        intervalId = setInterval(updateCurrentHour, 1000)
+        // 每分钟刷新当前时间，保持时间线指示器分钟级精度
+        intervalId = setInterval(updateCurrentHour, 60000)
     })
 
     // 监听路由参数变化，重新同步数据和日期状态

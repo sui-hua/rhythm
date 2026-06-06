@@ -24,9 +24,9 @@
       ]"
     >
 
-      <!-- 中等任务布局（0.4 ~ 0.8h）：横向排列呼吸点 + 标题 -->
+      <!-- 中等任务布局（0.4 ~ 0.8h）：横向排列呼吸点 + 标题 + 悬停编辑按钮 -->
       <template v-if="(task.durationHours || 1) >= 0.4 && (task.durationHours || 1) < 0.8">
-        <div class="flex items-center gap-2.5 w-full">
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
           <div
             class="w-1.5 h-1.5 rounded-full shrink-0 outline outline-2 outline-offset-1 transition-all duration-300"
             :class="task.completed ? 'bg-zinc-300 outline-zinc-100 dark:bg-zinc-700 dark:outline-zinc-800' : 'bg-primary outline-primary/20 group-hover:scale-110'"
@@ -37,6 +37,14 @@
           >
             {{ task.title }}
           </h3>
+          <!-- 悬停编辑按钮：所有中等任务统一显示，提升双击编辑可发现性 -->
+          <button
+            class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded shrink-0 cursor-pointer hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
+            @click.stop="$emit('edit', index)"
+            aria-label="编辑任务"
+          >
+            <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
         </div>
         <!-- 遗留任务标签：显示结转来源信息 -->
         <p
@@ -95,7 +103,7 @@
                     size="sm" 
                     variant="ghost" 
                     class="h-7 px-3 text-xs gap-1.5 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 rounded-lg font-bold"
-                    @click.stop="dayStore.handleStartTask(task)"
+                    @click.stop="handleStartTask(task)"
                 >
                     <Play class="w-3 h-3 fill-current" /> 执行
                 </Button>
@@ -112,19 +120,27 @@
         </div>
       </template>
 
-      <!-- 极短信布局开始（< 0.4h）：仅显示呼吸点 + 标题，节省空间 -->
+      <!-- 极短信布局开始（< 0.4h）：呼吸点 + 标题 + 悬停编辑按钮 -->
       <template v-else>
-        <div class="flex items-center gap-2 w-full pt-px">
-          <div 
+        <div class="flex items-center gap-2 flex-1 min-w-0 pt-px">
+          <div
             class="w-1.5 h-1.5 rounded-full shrink-0 outline outline-2 outline-offset-1 transition-all duration-300"
             :class="task.completed ? 'bg-zinc-300 outline-zinc-100 dark:bg-zinc-700 dark:outline-zinc-800' : 'bg-primary outline-primary/20 group-hover:scale-110'"
           ></div>
-          <h3 
+          <h3
             class="text-[11px] font-bold tracking-tight transition-transform duration-300 truncate leading-none"
             :class="!task.completed ? 'text-zinc-900 dark:text-zinc-100 group-hover:translate-x-1' : 'line-through text-zinc-400'"
           >
             {{ task.title }}
           </h3>
+          <!-- 悬停编辑按钮：所有短任务统一显示，提升双击编辑可发现性 -->
+          <button
+            class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded shrink-0 cursor-pointer hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
+            @click.stop="$emit('edit', index)"
+            aria-label="编辑任务"
+          >
+            <Settings2 class="w-3 h-3 text-muted-foreground" />
+          </button>
         </div>
       </template>
     </div>
@@ -141,7 +157,7 @@
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Play, Timer, Maximize2 } from 'lucide-vue-next'
+import { Play, Timer, Maximize2, Settings2 } from 'lucide-vue-next'
 import { useDayStore } from '@/stores/dayStore'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { buildTaskHorizontalLayoutStyle } from '@/views/day/utils/taskLayoutStyle'
@@ -165,6 +181,15 @@ const emit = defineEmits(['select', 'edit'])
 // ── Store ──
 const dayStore = useDayStore()
 const store = usePomodoroStore()
+
+// ── 方法 ──
+// 开始任务计时：调用 dayStore 获取结果后同步到 pomodoroStore，使计时器立即启动
+async function handleStartTask(task: DailyScheduleItem) {
+  const result = await dayStore.handleStartTask(task)
+  if (result) {
+    store.setActiveTask(result.activeTask)
+  }
+}
 
 // ── 计算属性 ──
 // 计算任务卡片在时间轴上的定位样式（top/height 由 --hour-height 驱动，水平位置由列分配决定）

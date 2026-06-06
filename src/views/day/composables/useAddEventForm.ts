@@ -194,7 +194,7 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
                     // 习惯类型：更新习惯表（标题、时间、时长）
                     const taskTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
                     await db.habit.update(props.initialData.id, {
-                        name: eventForm.title,
+                        title: eventForm.title,
                         task_time: taskTimeStr,
                         duration: Math.round(durationValue * 60) || 10  // 转换为分钟存储
                     })

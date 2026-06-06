@@ -50,22 +50,22 @@ describe('DailyReportModal', () => {
     expect(wrapper.text()).toContain('每日日报')
   })
 
-  it('点击"知道了"按钮触发 confirm 事件', async () => {
+  it('点击"仅确认"按钮触发 confirm 事件', async () => {
     const wrapper = mount(DailyReportModal, {
       props: { show: true, stats: defaultStats },
       global: { stubs }
     })
-    const btn = wrapper.findAll('button').find(b => b.text() === '知道了')
+    const btn = wrapper.findAll('button').find(b => b.text() === '仅确认')
     await btn?.trigger('click')
     expect(wrapper.emitted('confirm')).toBeTruthy()
   })
 
-  it('点击"确认转移到今天"按钮触发 confirm-carryover 事件', async () => {
+  it('点击"将未完成任务顺延至今天"按钮触发 confirm-carryover 事件', async () => {
     const wrapper = mount(DailyReportModal, {
       props: { show: true, stats: defaultStats },
       global: { stubs }
     })
-    const btn = wrapper.findAll('button').find(b => b.text().includes('确认转移到今天'))
+    const btn = wrapper.findAll('button').find(b => b.text().includes('将未完成任务顺延至今天'))
     await btn?.trigger('click')
     expect(wrapper.emitted('confirm-carryover')).toBeTruthy()
   })

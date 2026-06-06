@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildDayExecutionItems } from '@/views/day/composables/useDayExecutionItems'
-import type { DayExecutionItemsInput } from '@/views/day/composables/useDayExecutionItems'
+import { buildDayExecutionItems } from '@/utils/dayExecutionItems'
+import type { DayExecutionItemsInput } from '@/utils/dayExecutionItems'
 
 describe('buildDayExecutionItems', () => {
   it('marks historical pending daily plans as carry-over items', () => {

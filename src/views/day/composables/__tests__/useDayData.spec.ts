@@ -42,10 +42,10 @@ vi.mock('@/stores/pomodoroStore', () => ({
 }))
 
 vi.mock('@/utils/goalDayStatus', () => ({
-  toGoalDayStatus: vi.fn((completed: boolean) => completed ? 1 : 0)
+  toGoalDayStatus: vi.fn((completed: boolean) => completed ? 'completed' : 'active')
 }))
 
-vi.mock('@/views/habits/utils/habitFrequency', () => ({
+vi.mock('@/utils/habitFrequency', () => ({
   matchesHabitFrequency: vi.fn(() => true)
 }))
 
@@ -89,11 +89,11 @@ describe('useDayData', () => {
   it('查看昨天时，补打卡会把习惯日志写入当前路由日期', async () => {
     const store = useDayStore()
 
-    // completed: true 表示当前未完成（habit 完成态反转），翻转后变为 false → 添加日志
+    // 当前未完成，点击后应添加当前路由日期的习惯日志
     await store.handleToggleComplete({
       id: 'habit-1',
       type: 'habit',
-      completed: true
+      completed: false
     })
 
     expect(db.habit.log).toHaveBeenCalledTimes(1)
@@ -113,11 +113,11 @@ describe('useDayData', () => {
 
     const store = useDayStore()
 
-    // completed: false 表示当前已完成，翻转后变为 true → 删除日志
+    // 当前已完成，点击后应在当前路由日期范围内删除对应习惯日志
     await store.handleToggleComplete({
       id: 'habit-1',
       type: 'habit',
-      completed: false
+      completed: true
     })
 
     expect(db.habit.listLogsByDate).toHaveBeenCalledTimes(1)
@@ -145,13 +145,13 @@ describe('useDayData', () => {
       completed: false
     })
 
-    expect(db.goalDays.update).toHaveBeenCalledWith('plan-1', { status: 1 })
+    expect(db.goalDays.update).toHaveBeenCalledWith('plan-1', { status: 'completed' })
   })
 
   it('fetches daily plans through the day-view carry-over query', async () => {
     ;(db.goalDays.listForDayView as Mock).mockResolvedValue([
-      { id: 'plan-today', title: '今天任务', day: '2026-04-28', status: 0, task_time: '09:00', duration: 30 },
-      { id: 'plan-old', title: '昨天任务', day: '2026-04-27', status: 0, task_time: '10:00', duration: 30 }
+      { id: 'plan-today', title: '今天任务', day: '2026-04-28', status: 'active', task_time: '09:00', duration: 30 },
+      { id: 'plan-old', title: '昨天任务', day: '2026-04-27', status: 'active', task_time: '10:00', duration: 30 }
     ])
 
     const store = useDayStore()

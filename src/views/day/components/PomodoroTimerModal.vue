@@ -71,7 +71,7 @@
         <!-- 操作按钮区开始 -->
         <div class="z-10 w-full flex flex-col gap-4 px-4 pb-4">
             <Button
-                class="w-full h-16 rounded-[1.25rem] bg-primary text-primary-foreground text-lg font-black shadow-[0_8px_20px_-8px_rgba(var(--color-primary-rgb),0.5)] hover:shadow-[0_12px_25px_-8px_rgba(var(--color-primary-rgb),0.6)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-300"
+                class="w-full h-16 rounded-[1.25rem] bg-primary text-primary-foreground text-lg font-black shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-300"
                 @click="handleComplete"
             >
                 <CheckCircle class="w-6 h-6 mr-3" />

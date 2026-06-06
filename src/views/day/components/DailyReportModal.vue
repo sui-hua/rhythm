@@ -35,10 +35,10 @@
       </div>
       <!-- 统计卡片网格结束 -->
 
-      <!-- 操作按钮区开始：确认顺延或仅关闭 -->
+      <!-- 操作按钮区开始：仅确认或顺延未完成任务 -->
       <div class="mt-6 flex flex-col gap-2">
-        <Button class="w-full h-10" @click="$emit('confirm-carryover')">确认转移到今天</Button>
-        <Button variant="outline" class="w-full h-10" @click="$emit('confirm')">知道了</Button>
+        <Button variant="outline" class="w-full h-10" @click="$emit('confirm')">仅确认</Button>
+        <Button class="w-full h-10" @click="$emit('confirm-carryover')">将未完成任务顺延至今天</Button>
       </div>
       <!-- 操作按钮区结束 -->
     </DialogContent>
