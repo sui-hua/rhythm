@@ -8,22 +8,38 @@
       <p class="text-sm">暂无日志记录，开始你的习惯旅程吧</p>
     </div>
 
-    <div v-else class="flex flex-col gap-4">
-      <Card v-for="log in formattedLogs" :key="log.id"
-           class="group cursor-pointer transition-all border shadow-sm rounded-xl hover:translate-x-1 duration-300">
-        <CardContent class="p-4 flex items-center gap-6">
-          <div class="shrink-0 flex flex-col border-r pr-6 gap-1">
-            <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">{{ log.date }}</span>
-            <span class="text-sm font-bold tracking-tight">打卡</span>
-          </div>
-          <p class="flex-1 text-sm font-medium tracking-tight text-muted-foreground group-hover:text-foreground transition-colors duration-300 leading-relaxed">
-            {{ log.logText || '成功完成了今天的习惯打卡，继续坚持吧。' }}
-          </p>
-          <div class="w-8 h-8 rounded-full border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <ArrowUpRight class="w-4 h-4 text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+    <!-- 虚拟滚动容器：固定高度，内部绝对定位渲染可见项 -->
+    <div v-else ref="scrollContainerRef" class="h-[600px] overflow-auto">
+      <div :style="{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }">
+        <div
+          v-for="virtualRow in virtualizer.getVirtualItems()"
+          :key="virtualRow.index"
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: `${virtualRow.size}px`,
+            transform: `translateY(${virtualRow.start}px)`
+          }"
+          class="pb-4"
+        >
+          <Card class="group cursor-pointer transition-all border shadow-sm rounded-xl hover:translate-x-1 duration-300 h-full">
+            <CardContent class="p-4 flex items-center gap-6">
+              <div class="shrink-0 flex flex-col border-r pr-6 gap-1">
+                <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">{{ formattedLogs[virtualRow.index]?.date }}</span>
+                <span class="text-sm font-bold tracking-tight">打卡</span>
+              </div>
+              <p class="flex-1 text-sm font-medium tracking-tight text-muted-foreground group-hover:text-foreground transition-colors duration-300 leading-relaxed">
+                {{ formattedLogs[virtualRow.index]?.logText || '成功完成了今天的习惯打卡，继续坚持吧。' }}
+              </p>
+              <div class="w-8 h-8 rounded-full border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <ArrowUpRight class="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -49,6 +65,8 @@
  * 
  * @prop {Array} logs - 原始打卡记录数组，每项包含 id、日期、日志文本等字段
  */
+import { ref, computed } from 'vue'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 import { ArrowUpRight } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
 import type { HabitLog } from '@/services/db/habit'
@@ -65,4 +83,18 @@ const props = defineProps({
 })
 
 const { formattedLogs } = useHabitLogsFormatter(props.logs)
+
+// 虚拟滚动容器 DOM 引用
+const scrollContainerRef = ref<HTMLDivElement | null>(null)
+
+// 虚拟滚动配置：computed 确保 count 随 formattedLogs 变化自动更新
+const virtualizerOptions = computed(() => ({
+  count: formattedLogs.value.length,
+  getScrollElement: () => scrollContainerRef.value,
+  estimateSize: () => 80,
+  overscan: 5
+}))
+
+// 虚拟滚动实例：每项预估高度 80px，预加载 5 项
+const virtualizer = useVirtualizer(virtualizerOptions)
 </script>

@@ -3,8 +3,8 @@ import type { ComputedRef } from 'vue'
 import {
   createDefaultHabitFrequency,
   normalizeHabitFrequency
-} from '@/views/habits/utils/habitFrequency'
-import type { HabitFrequency } from '@/views/habits/utils/habitFrequency'
+} from '@/utils/habitFrequency'
+import type { HabitFrequency } from '@/utils/habitFrequency'
 
 // 星期选项
 export interface WeekdayOption {

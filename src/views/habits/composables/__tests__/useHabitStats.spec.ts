@@ -16,7 +16,7 @@ describe('useHabitStats', () => {
   function createMockHabit(overrides: Partial<AugmentedHabit> = {}): AugmentedHabit {
     return {
       id: 'h1',
-      name: '早起',
+      title: '早起',
       frequency: { type: 'daily' },
       logs: [],
       monthlyLogs: [],

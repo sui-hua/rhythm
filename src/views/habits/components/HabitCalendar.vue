@@ -24,7 +24,7 @@
           <div v-if="day"
                class="w-11 h-11 relative flex items-center justify-center rounded-full transition-all duration-300 select-none group border cursor-pointer"
                :class="[
-                 completedDays.includes(day) 
+                 completedDaysSet.has(day) 
                    ? 'bg-primary border-primary text-primary-foreground shadow-sm scale-[1.05]' 
                    : isToday(day)
                      ? 'border-primary shadow-sm hover:bg-primary/20 ring-1 ring-primary ring-offset-1'
@@ -33,7 +33,7 @@
                @click="handleToggleComplete(day)">
             <span class="text-[11px] font-bold transition-transform group-active:scale-90"
                   :class="[
-                    completedDays.includes(day) 
+                    completedDaysSet.has(day) 
                       ? 'text-primary-foreground' 
                       : isToday(day)
                         ? 'text-primary font-black'
@@ -78,7 +78,7 @@
  * @emits {toggle-complete} - 用户点击日期格子时触发，传递日期数字
  * @emits {month-changed} - 用户切换月份时触发，传递 { year, month } 对象
  */
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useToast } from '@/composables/useToast'
 import { Button } from '@/components/ui/button'
@@ -101,6 +101,9 @@ const emit = defineEmits([
   'month-changed'    // 月份翻页动作触发时抛出，以便外部组件感知最新查阅的年月再拉取对应的记录
 ])
 
+// 将 completedDays 数组转为 Set，O(1) 查找替代 Array.includes() 的 O(n) 线性查找
+const completedDaysSet = computed(() => new Set(props.completedDays))
+
 // toast 通知实例，用于打卡操作后的即时反馈
 const { toast } = useToast()
 
@@ -117,7 +120,7 @@ const {
 
 // 点击日期格子时触发打卡/取消打卡，并显示 toast 反馈
 const handleToggleComplete = (day: number) => {
-  const wasCompleted = props.completedDays.includes(day)
+  const wasCompleted = completedDaysSet.value.has(day)
   emit('toggle-complete', day)
   // 根据操作前状态显示不同提示
   if (wasCompleted) {

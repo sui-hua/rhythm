@@ -1,6 +1,6 @@
 <template>
   <aside 
-    class="border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden group/sidebar"
+    class="border-r border-border flex flex-col z-20 bg-background relative overflow-hidden group/sidebar"
     :style="{ width: width + 'px' }"
   >
     <!-- Resize Handle -->
@@ -18,8 +18,24 @@
 
     <ScrollArea class="flex-1 px-2 relative z-10 no-scrollbar">
       <div class="flex flex-col gap-2 pb-24 pt-2 px-2">
-        <button 
-          v-for="habit in habits" 
+        <!-- 习惯列表为空时的首次使用引导 -->
+        <div v-if="habits.length === 0 && (!archivedHabits || archivedHabits.length === 0)"
+             class="flex flex-col items-center gap-4 py-12 px-4 text-center">
+          <p class="text-sm text-muted-foreground leading-relaxed">
+            还没有习惯，点击下方按钮创建第一个
+          </p>
+          <Button
+            variant="outline"
+            class="gap-2 h-9 text-xs font-semibold"
+            @click="$emit('add-habit')"
+          >
+            <Plus class="w-4 h-4" />
+            添加习惯
+          </Button>
+        </div>
+
+        <button
+          v-for="habit in habits"
           :key="habit.id"
           @click="$emit('select-habit', habit)"
           @dblclick="$emit('edit-habit', habit)"
@@ -32,7 +48,7 @@
             >
               {{ habit.title }}
             </h4>
-            <div 
+            <div
               class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-200/50 rounded flex items-center justify-center shrink-0"
               @click.stop="$emit('edit-habit', habit)"
             >

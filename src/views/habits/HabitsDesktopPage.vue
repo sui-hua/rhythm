@@ -36,7 +36,7 @@
               :subtitle="narrative.subtitle"
             />
 
-            <HabitHeader :title="selectedHabit.title || selectedHabit.name || ''" />
+            <HabitHeader :title="selectedHabit.title || ''" />
 
             <HabitStats :stats="habitStats" />
 

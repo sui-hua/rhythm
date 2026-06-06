@@ -36,26 +36,32 @@ export function useHabitStats(
     const dateStore = useDateStore()
 
     // 今日完成率：使用系统真实时间，不受日历翻页影响
-    const todayCompletionRate: ComputedRef<number> = computed(() => {
-        if (!habits.value || habits.value.length === 0) return 0
-        // 直接使用系统真实今天，与日历的 viewYear/viewMonth 解耦
+    // 预计算今日已完成的习惯 ID 集合，避免每个习惯遍历全量 logs
+    const todayCompletedSet: ComputedRef<Set<string | number>> = computed(() => {
         const todayDate = new Date()
         const currentYear = todayDate.getFullYear()
         const currentMonth = todayDate.getMonth()
         const currentDay = todayDate.getDate()
 
-        // 遍历习惯列表，检查每项在今日是否有打卡记录
-        const completedTodayCount = habits.value.filter((h) => {
-            if (!h.logs || !Array.isArray(h.logs)) return false
+        const completedIds = new Set<string | number>()
+        for (const h of habits.value) {
+            if (!h.logs || !Array.isArray(h.logs)) continue
             // 使用全量 logs 而非 monthlyLogs，避免月份切换导致数据不一致
-            return h.logs.some((log) => {
+            const hasTodayLog = h.logs.some((log) => {
                 const logDate = new Date(log.completed_at!)
                 return logDate.getFullYear() === currentYear &&
                     logDate.getMonth() === currentMonth &&
                     logDate.getDate() === currentDay
             })
-        }).length
+            if (hasTodayLog) completedIds.add(h.id)
+        }
+        return completedIds
+    })
 
+    // 今日完成率：使用 Set.has() O(1) 查找替代 filter + some 遍历
+    const todayCompletionRate: ComputedRef<number> = computed(() => {
+        if (!habits.value || habits.value.length === 0) return 0
+        const completedTodayCount = habits.value.filter((h) => todayCompletedSet.value.has(h.id)).length
         return Math.round((completedTodayCount / habits.value.length) * 100)
     })
 

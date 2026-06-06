@@ -230,7 +230,7 @@ const submit = withLoadingLock(async () => {
       title: form.title,
       task_time: form.task_time || null, // 时间为空时存储 null
       duration: Math.round((Number(form.duration) || 0) * 60) || 10, // 转换小时为分钟，默认 10 分钟
-      frequency: JSON.stringify(buildFrequencyPayload()),
+      frequency: buildFrequencyPayload(),
       target_value: 1, // 目标完成值默认为 1
       is_archived: false // 新习惯默认未归档
     })

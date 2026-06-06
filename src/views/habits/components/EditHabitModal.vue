@@ -184,7 +184,7 @@ import { withLoadingLock } from '@/utils/throttle'
 import {
   createDefaultHabitFrequency,
   normalizeHabitFrequency
-} from '@/views/habits/utils/habitFrequency'
+} from '@/utils/habitFrequency'
 import type { FrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
@@ -271,7 +271,7 @@ const submit = withLoadingLock(async () => {
       title: form.title,
       task_time: form.task_time || null,
       duration: Math.round((Number(form.duration) || 0) * 60) || 10,
-      frequency: JSON.stringify(buildFrequencyPayload())
+      frequency: buildFrequencyPayload()
     })
     emit('refresh')
     emit('update:show', false)

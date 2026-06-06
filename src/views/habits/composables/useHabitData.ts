@@ -4,6 +4,7 @@
 import { ref, computed } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import { db } from '@/services/database'
+import { safeAction } from '@/utils/safeAction'
 import { useDateStore } from '@/stores/dateStore'
 import { useHabitStore } from '@/stores/habitStore'
 import type { HabitLog as DbHabitLog } from '@/services/db/habit'
@@ -127,34 +128,34 @@ export function useHabitData(): UseHabitDataReturn {
     const fetchHabits = async (): Promise<void> => {
         isPageLoading.value = true
         try {
-            await habitStore.fetchHabits()
+            await safeAction(async () => {
+                await habitStore.fetchHabits()
 
-            // 为每个习惯补充日志相关字段的默认值，防止后续计算中访问 undefined
-            const all = habitStore.allHabits
-            all.forEach((h, index) => {
-                all[index] = {
-                    ...h,
-                    completedDays: h.completedDays || [],
-                    logs: h.logs || [],
-                    monthlyLogs: h.monthlyLogs || [],
-                    total: h.total || 0,
-                    completionRate: h.completionRate || 0,
-                    streak: h.streak || 0
+                // 为每个习惯补充日志相关字段的默认值，防止后续计算中访问 undefined
+                const all = habitStore.allHabits
+                all.forEach((h, index) => {
+                    all[index] = {
+                        ...h,
+                        completedDays: h.completedDays || [],
+                        logs: h.logs || [],
+                        monthlyLogs: h.monthlyLogs || [],
+                        total: h.total || 0,
+                        completionRate: h.completionRate || 0,
+                        streak: h.streak || 0
+                    }
+                })
+
+                // 刷新后维持选中状态：优先选中之前选中的习惯，否则选中列表第一个
+                if (selectedHabit.value) {
+                    const updated = all.find(h => h.id === selectedHabit.value!.id)
+                    if (updated) habitStore.setSelectedHabitId(String(updated.id))
+                    else habitStore.setSelectedHabitId(String(habitStore.habits[0]?.id || habitStore.archivedHabits[0]?.id || ''))
+                } else if (habitStore.habits.length > 0) {
+                    habitStore.setSelectedHabitId(String(habitStore.habits[0]!.id))
+                } else if (habitStore.archivedHabits.length > 0) {
+                    habitStore.setSelectedHabitId(String(habitStore.archivedHabits[0]!.id))
                 }
-            })
-
-            // 刷新后维持选中状态：优先选中之前选中的习惯，否则选中列表第一个
-            if (selectedHabit.value) {
-                const updated = all.find(h => h.id === selectedHabit.value!.id)
-                if (updated) habitStore.setSelectedHabitId(String(updated.id))
-                else habitStore.setSelectedHabitId(String(habitStore.habits[0]?.id || habitStore.archivedHabits[0]?.id || ''))
-            } else if (habitStore.habits.length > 0) {
-                habitStore.setSelectedHabitId(String(habitStore.habits[0]!.id))
-            } else if (habitStore.archivedHabits.length > 0) {
-                habitStore.setSelectedHabitId(String(habitStore.archivedHabits[0]!.id))
-            }
-        } catch (e) {
-            console.error('Fetch habits failed', e)
+            }, 'Fetch habits failed')
         } finally {
             isPageLoading.value = false
         }
@@ -167,7 +168,7 @@ export function useHabitData(): UseHabitDataReturn {
             return
         }
 
-        try {
+        await safeAction(async () => {
             const logs = await db.habit.listLogsByHabit(habitId)
             currentHabitLogs.value = logs
 
@@ -194,9 +195,7 @@ export function useHabitData(): UseHabitDataReturn {
                     streak: calculateStreak(logs)
                 })
             }
-        } catch (e) {
-            console.error('Fetch logs for habit failed', e)
-        }
+        }, 'Fetch logs for habit failed')
     }
 
     return {
