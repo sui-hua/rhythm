@@ -1,18 +1,18 @@
 ---
 name: project-review
-description: Use when the user asks for a broad project audit, product/UX/UI/architecture/performance review, full-stack quality assessment, or structured evidence-based report for the current repository.
+description: Use when the user asks for a broad project review, product/UX/UI/architecture/performance/security/code quality assessment, or structured evidence-based report for any repository or software project.
 ---
 
 # Project Review
 
-你是项目审查员。目标不是“多角色综合点评”，而是基于仓库证据输出可验证、可执行、可排序的项目审查报告。
+你是项目审查员。目标不是“多角色综合点评”，而是先识别项目形态和技术栈，再基于证据输出可验证、可执行、可排序的审查报告。
 
 ## 核心原则
 
 - 先读项目指令：优先遵守 `AGENTS.md`、`CLAUDE.md`、模块文档和用户本轮要求。
 - 先收集证据，再下结论：每个高/中优先级问题必须引用具体文件、页面、模块、命令输出或可复现场景。
 - 不为填满维度硬找问题：证据不足时写“未发现足够证据”或“需进一步确认”。
-- 优先用户影响和维护风险：数据正确性、核心流程可用性、认证权限、性能瓶颈、架构耦合优先于风格偏好。
+- 优先用户影响和维护风险：数据正确性、核心流程可用性、认证权限、安全、性能瓶颈、架构耦合优先于风格偏好。
 - 把报告沉淀到仓库：默认写入 `docs/reviews/项目全面审查-YYYY-MM-DD.md`，除非用户明确只要对话输出。
 
 ## 审查前证据清单
@@ -20,25 +20,23 @@ description: Use when the user asks for a broad project audit, product/UX/UI/arc
 开始评价前，先完成尽可能多的证据采集。若某项无法执行，在报告中说明原因。
 
 1. 阅读项目指令和概况：
-   - `AGENTS.md`
-   - `CLAUDE.md`
-   - `README.md`
-   - `package.json`
-2. 扫描结构与核心入口：
-   - `src/router/index.ts`
-   - `src/stores/`
-   - `src/services/`
-   - `src/views/`
-   - `src/components/`
-   - `src/composables/`
-3. 识别技术栈与真实后端形态：
-   - 传统服务端、BaaS、Supabase、Firebase、serverless、API 网关、RPC、Edge Functions、纯前端本地存储等都可能是“后端/数据服务层”。
-   - 不要假设一定存在 Controller / Service / DAO。
-4. 运行静态验证：
-   - `pnpm vue-tsc`
-   - `pnpm build`
-5. 有前端交互审查时，尽量启动或复用开发服务器，并用浏览器/截图观察核心页面。
-6. 有数据库或线上结构审查时，优先使用已配置 MCP 或仓库内迁移/SQL 文档；无法访问时标注“基于可见代码推断”。
+   - 优先读仓库根目录的代理/项目指令：`AGENTS.md`、`CLAUDE.md`、`GEMINI.md`、`.cursor/rules`、`.github/copilot-instructions.md` 等。
+   - 读项目说明：`README*`、`docs/`、`CONTRIBUTING*`、架构/模块文档、变更计划文档。
+2. 识别项目类型和技术栈：
+   - Web 前端：`package.json`、`vite.config.*`、`next.config.*`、`nuxt.config.*`、`angular.json`、`src/`、`app/`、`pages/`。
+   - 后端/API：`pom.xml`、`build.gradle*`、`go.mod`、`Cargo.toml`、`pyproject.toml`、`requirements*.txt`、`Gemfile`、`mix.exs`、`server/`、`api/`、`cmd/`、`internal/`。
+   - 移动端/桌面端：`ios/`、`android/`、`pubspec.yaml`、`tauri.conf.*`、`electron*`、`capacitor.config.*`、`Package.swift`。
+   - 数据/基础设施：`migrations/`、`schema.sql`、`prisma/`、`drizzle/`、`supabase/`、`terraform/`、`docker-compose.*`、`Dockerfile`、`k8s/`、`.github/workflows/`。
+   - CLI/库/工具：`bin/`、`cli/`、`lib/`、导出入口、测试夹具、示例目录。
+3. 建立项目地图：
+   - 列出主要入口、模块目录、数据流、外部依赖、配置文件、测试目录和部署入口。
+   - 先判断项目是否有 UI、服务端、数据库、后台任务、第三方 API、CI/CD；没有的维度不要强行审查。
+4. 选择验证命令：
+   - 优先使用项目文档和 manifest scripts 中已有命令。
+   - 常见候选：类型检查、lint、单元测试、集成测试、端到端测试、构建、格式检查、安全扫描。
+   - 不确定命令时先读取脚本列表，不要猜测包管理器或框架命令。
+5. 有 UI 审查时，尽量启动或复用本地应用，并用浏览器/截图观察核心页面；无法运行时基于代码和静态资源说明限制。
+6. 有数据库、云服务或线上结构审查时，优先使用已配置 MCP、仓库迁移、schema、IaC 或文档；无法访问时标注“基于可见代码推断”。
 
 ## 审查维度
 
@@ -63,41 +61,49 @@ description: Use when the user asks for a broad project audit, product/UX/UI/arc
 - 组件样式、按钮状态、弹窗、表单、图标是否一致。
 - 是否使用项目设计令牌，避免随意硬编码颜色和间距。
 
-### 性能
+### 性能与资源
 
-- 首屏包体、路由懒加载、第三方依赖、静态资源是否合理。
-- 大列表、日历、时间轴、统计图是否有重复渲染或一次性渲染过量风险。
-- 请求是否重复、串行、过量字段返回或缺少缓存/节流。
-- 是否存在定时器、事件监听、watch 副作用未清理。
+- Web/移动/桌面：启动时间、首屏、包体、资源加载、缓存、图片/字体、渲染成本是否合理。
+- 后端/API：延迟、吞吐、N+1 查询、慢查询、缓存、队列、批处理、超时和重试是否合理。
+- CLI/库：启动耗时、内存占用、I/O、并发、错误恢复和大输入处理是否合理。
+- 是否存在重复请求、串行等待、过量字段返回、未释放资源、事件监听/定时任务泄漏。
 
-### 前端架构
+### 客户端 / UI 架构
 
-- Vue 组件是否职责清晰，复杂逻辑是否进入 composable/store。
-- Pinia store 是否边界明确，是否存在跨模块隐式依赖。
-- 路由守卫、认证状态、页面初始化顺序是否稳定。
-- 类型定义是否准确，是否有 `any`、空值、状态枚举不一致。
+- 适用于 Web 前端、移动端、桌面端、小程序等有用户界面的项目。
+- 组件/页面职责是否清晰，业务逻辑、状态管理、数据请求、展示层是否边界明确。
+- 路由/导航、认证状态、页面初始化、缓存和离线状态是否稳定。
+- 类型、状态枚举、空值、错误状态和跨页面共享状态是否一致。
 
 ### 后端与数据服务层
 
-用通用“服务端能力”视角审查，不预设后端形态：
+用通用“服务端能力”视角审查，不预设后端形态，也不要假设一定有传统后端：
 
-- API / RPC / BaaS 查询 / serverless 函数的职责是否清晰。
-- 客户端数据服务是否封装统一，错误处理、鉴权、重试、超时、空值处理是否一致。
-- 权限边界是否清楚：RLS、token、user_id、公开/私有数据访问是否可靠。
-- 业务规则放置是否合理：哪些应在数据库约束、RPC、服务端函数、前端校验中承担。
+- API / RPC / GraphQL / gRPC / BaaS 查询 / serverless 函数 / 本地数据层的职责是否清晰。
+- 数据访问是否封装统一，错误处理、鉴权、重试、超时、空值处理是否一致。
+- 权限边界是否清楚：token、session、tenant、user_id、role、RLS、公开/私有数据访问是否可靠。
+- 业务规则放置是否合理：哪些应在数据库约束、服务端、函数、客户端校验或本地模型中承担。
 - 外部服务依赖是否有失败处理和用户可恢复路径。
 
 ### 数据架构
 
-- 表结构、字段命名、状态枚举、外键、级联策略是否和业务一致。
-- 索引是否覆盖核心查询。
-- 并发写入、批量更新、删除级联、缓存同步是否有一致性风险。
+- 数据模型、字段命名、状态枚举、约束、关系、序列化格式是否和业务一致。
+- SQL/NoSQL/文件/缓存/搜索索引/事件流等存储形态是否选型合理。
+- 索引、分区、分页、归档、数据保留和核心查询是否匹配。
+- 并发写入、批量更新、删除级联、缓存同步、事件重放是否有一致性风险。
 - 数据迁移、备份、回滚和线上结构文档是否可追踪。
+
+### 安全与隐私
+
+- 认证、授权、会话、权限边界、多租户隔离是否可靠。
+- 输入校验、输出转义、文件上传、命令执行、SQL/NoSQL 注入、XSS/CSRF/SSRF 风险是否处理。
+- 密钥、环境变量、日志、错误信息、遥测、导出文件是否泄露敏感信息。
+- 依赖、镜像、CI/CD、发布流程是否有供应链风险。
 
 ### 系统架构与全栈质量
 
 - 模块边界、依赖方向、分层是否健康。
-- 前端类型和后端/数据库结构是否一致。
+- 客户端、服务端、数据结构和文档是否一致。
 - 测试覆盖是否保护核心路径。
 - 文档和实现是否同步。
 
@@ -111,18 +117,19 @@ description: Use when the user asks for a broad project audit, product/UX/UI/arc
 - 输出格式：问题标题、证据、影响、建议、优先级。
 - 约束：不得编造未观察到的页面或代码；证据不足必须明说。
 
-建议分组：
+可选分组：
 
 - 产品 + UX
 - UI + 可访问性
 - 性能 + 构建
-- 前端架构 + 代码质量
+- 客户端/UI 架构 + 代码质量
 - 后端/数据服务层 + 数据架构
-- 系统架构 + 文档/测试
+- 安全/隐私 + 依赖/供应链
+- 系统架构 + 文档/测试/交付
 
 ## 问题判定标准
 
-- 高优先级：影响核心流程、数据正确性、权限安全、构建/类型检查、明显性能瓶颈、会显著增加维护风险。
+- 高优先级：影响核心流程、数据正确性、权限安全、隐私、构建/类型检查、明显性能瓶颈、会显著增加维护风险。
 - 中优先级：影响体验流畅度、一致性、局部可维护性，但不阻塞核心使用。
 - 低优先级：视觉打磨、命名统一、文档补充、轻微重复。
 
@@ -166,10 +173,11 @@ description: Use when the user asks for a broad project audit, product/UX/UI/arc
 ### 产品逻辑
 ### UX
 ### UI
-### 性能
-### 前端架构
+### 性能与资源
+### 客户端 / UI 架构
 ### 后端与数据服务层
 ### 数据架构
+### 安全与隐私
 ### 系统架构与全栈质量
 
 ## 五、跨维度关键问题
@@ -196,7 +204,8 @@ description: Use when the user asks for a broad project audit, product/UX/UI/arc
 ## 常见错误
 
 - 只模拟“多个角色发言”，没有真实读文件或跑验证。
-- 后端审查套用传统 MVC 模板，忽略项目可能是 Supabase/BaaS/serverless。
+- 先入为主套用某个技术栈模板，忽略项目可能是纯前端、BaaS、serverless、CLI、库、移动端、桌面端或数据工程。
+- 在未识别包管理器、语言和框架前猜测验证命令。
 - 为了每个维度都有内容而制造低证据问题。
 - 把“审美不喜欢”写成高优先级问题。
 - 报告只留在对话中，没有写入仓库文档。
