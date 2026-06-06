@@ -1,7 +1,7 @@
 <template>
   <div class="flex-1 flex flex-col">
-    <div class="grid grid-cols-7 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
-      <div v-for="w in weekdays" :key="w" class="py-3 text-center text-[10px] font-black text-zinc-300 tracking-[0.2em]">{{ w }}</div>
+    <div class="grid grid-cols-7 border-b border-border bg-muted/50 shrink-0">
+      <div v-for="w in weekdays" :key="w" class="py-3 text-center text-[10px] font-black text-muted-foreground/70 tracking-[0.2em]">{{ w }}</div>
     </div>
     <div class="flex-1 grid grid-cols-7 auto-rows-fr gap-px bg-zinc-100">
       <DayCell
@@ -24,7 +24,7 @@
  * - 星期头部固定在顶部，日期区域 flex-1 占满剩余空间
  *
  * 组件结构：
- * - 顶部：星期标题栏（MON~SUN），浅灰背景，字母间距加宽
+ * - 顶部：星期标题栏（周一~周日），浅灰背景，字母间距加宽
  * - 主体：DayCell 组成的 7 列网格，每行代表一周
  *
  * 使用方式：
@@ -41,10 +41,14 @@ interface DayData {
   isCurrent: boolean
   tasks?: any[]
   taskHours?: number[]
+  /** 当日目标计划数量 */
+  goalCount?: number
+  /** 当日习惯打卡次数 */
+  habitCount?: number
 }
 
-// 星期标题，一周七天从周一到周日
-const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+// 星期标题，一周七天从周一到周日（中文）
+const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
 // 接收父组件传入的月度网格数据，用于渲染每日单元格
 defineProps<{

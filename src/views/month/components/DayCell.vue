@@ -10,14 +10,30 @@
     <!-- Foreground Content -->
     <div class="relative z-10 flex h-full items-start pointer-events-none">
       <div class="flex flex-col gap-1">
-        <!-- Geometric Event Indicators -->
+        <!-- Geometric Event Indicators: 任务 -->
         <div v-if="day.isCurrent && day.tasks?.length" class="flex gap-0.5 h-1">
-          <div 
-            v-for="i in Math.min(day.tasks.length, 5)" 
+          <div
+            v-for="i in Math.min(day.tasks.length, 5)"
             :key="i"
             class="w-1 h-1 bg-foreground/20 transition-colors duration-300 group-hover:bg-foreground"
           ></div>
           <div v-if="day.tasks.length > 5" class="w-1 h-1 border-b border-r border-foreground/20 rotate-45 transform -translate-y-0.5 ml-0.5 group-hover:border-foreground"></div>
+        </div>
+        <!-- 目标计划指示器（琥珀色圆点） -->
+        <div v-if="day.isCurrent && day.goalCount" class="flex gap-0.5 h-1">
+          <div
+            v-for="i in Math.min(day.goalCount, 3)"
+            :key="'g' + i"
+            class="w-1 h-1 rounded-full bg-amber-400/60 transition-colors duration-300 group-hover:bg-amber-500"
+          ></div>
+        </div>
+        <!-- 习惯打卡指示器（蓝色圆点） -->
+        <div v-if="day.isCurrent && day.habitCount" class="flex gap-0.5 h-1">
+          <div
+            v-for="i in Math.min(day.habitCount, 3)"
+            :key="'h' + i"
+            class="w-1 h-1 rounded-full bg-sky-400/60 transition-colors duration-300 group-hover:bg-sky-500"
+          ></div>
         </div>
         
         <div class="flex items-baseline gap-1">
@@ -84,6 +100,10 @@ interface DayData {
   tasks?: any[]
   /** 有任务的小时数组（可选） */
   taskHours?: number[]
+  /** 当日目标计划数量（可选） */
+  goalCount?: number
+  /** 当日习惯打卡次数（可选） */
+  habitCount?: number
 }
 
 defineProps<{

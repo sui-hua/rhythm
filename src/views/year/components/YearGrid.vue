@@ -4,7 +4,7 @@
     - 响应式网格布局：移动端 2 列，平板 3 列，桌面 4 列
     - 每个单元格渲染一个月份的摘要信息
   -->
-  <div class="h-full w-full bg-zinc-100 overflow-hidden">
+  <div class="h-full w-full bg-muted overflow-hidden">
     <!--
       网格容器
       - 使用 Tailwind Grid 实现响应式列数

@@ -5,6 +5,8 @@ import type { Ref, ComputedRef } from 'vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Task } from '@/services/db/task'
+import type { GoalDay } from '@/services/db/goalDays'
+import type { HabitLog } from '@/services/db/habit'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { getMonthName, getDaysInMonth, getFirstDayOffset } from '@/utils/dateFormatter'
@@ -37,6 +39,10 @@ export interface MonthGridCell {
   tasks?: (string | number)[]
   /** 任务占用的小时数组，用于时间条可视化（仅当月日期有数据） */
   taskHours?: number[]
+  /** 当日目标计划数量 */
+  goalCount?: number
+  /** 当日习惯打卡次数 */
+  habitCount?: number
 }
 
 // useMonthView composable 的返回值类型
@@ -45,6 +51,10 @@ export interface UseMonthViewReturn {
   selectedMonth: ComputedRef<SelectedMonthInfo>
   /** 42格日历网格数据（6周×7天） */
   monthGridData: ComputedRef<MonthGridCell[]>
+  /** 路由中的年份 */
+  routeYear: ComputedRef<number>
+  /** 路由中的月份（1-12） */
+  routeMonth: ComputedRef<number>
   /** 返回年度视图 */
   goBackToYear: () => void
   /** 进入指定日期的日视图 */
@@ -65,6 +75,12 @@ export const useMonthView = (): UseMonthViewReturn => {
 
   // 当月所有任务列表，按时间范围查询
   const tasks = ref<Task[]>([])
+
+  // 当月所有目标计划列表
+  const goalDaysList = ref<GoalDay[]>([])
+
+  // 当月所有习惯打卡记录
+  const habitLogsList = ref<HabitLog[]>([])
 
   const route = useRoute()
   const router = useRouter()
@@ -99,8 +115,8 @@ export const useMonthView = (): UseMonthViewReturn => {
 
   // 将全局日期状态同步到路由指定的年月，保持 dateStore 与路由一致
   const syncDateWithRoute = (): void => {
-    // setYearMonthDay 接受零基月份，所以 routeMonth - 1
-    dateStore.setYearMonthDay(routeYear.value, routeMonth.value - 1, 1)
+    // month 已统一为 1-indexed，直接传入路由参数即可
+    dateStore.setYearMonthDay(routeYear.value, routeMonth.value, 1)
   }
 
   /**
@@ -132,8 +148,8 @@ export const useMonthView = (): UseMonthViewReturn => {
     return true
   }
 
-  // 从数据库获取当月所有任务，按自然月范围查询
-  const fetchMonthTasks = async (): Promise<void> => {
+  // 从数据库获取当月所有任务、目标计划和习惯打卡记录
+  const fetchMonthData = async (): Promise<void> => {
     isPageLoading.value = true
     const monthZeroBased = routeMonth.value - 1
     const currentYear = routeYear.value
@@ -142,9 +158,17 @@ export const useMonthView = (): UseMonthViewReturn => {
     const end = new Date(currentYear, monthZeroBased + 1, 0, 23, 59, 59)
 
     try {
-      tasks.value = await db.task.list(start, end)
+      // 并行请求任务、目标计划、习惯打卡三类数据，提升加载速度
+      const [taskResult, goalResult, habitResult] = await Promise.all([
+        db.task.list(start, end),
+        db.goalDays.listByMonth(start, end),
+        db.habit.listLogsByDate(start, end)
+      ])
+      tasks.value = taskResult
+      goalDaysList.value = goalResult
+      habitLogsList.value = habitResult
     } catch (e) {
-      console.error('获取月度任务失败:', e)
+      console.error('获取月度数据失败:', e)
     } finally {
       isPageLoading.value = false
     }
@@ -154,7 +178,7 @@ export const useMonthView = (): UseMonthViewReturn => {
   const handleRouteSync = async (): Promise<boolean> => {
     if (!validateMonthRoute()) return false
     syncDateWithRoute()
-    await fetchMonthTasks()
+    await fetchMonthData()
     return true
   }
 
@@ -187,6 +211,28 @@ export const useMonthView = (): UseMonthViewReturn => {
       }
     }
 
+    // 按天分组目标计划，使用 day 字段（YYYY-MM-DD 格式）
+    const goalsByDay = new Map<number, GoalDay[]>()
+    for (const g of goalDaysList.value) {
+      const d = new Date(g.day + 'T00:00:00')
+      if (d.getFullYear() === currentYear && d.getMonth() === index) {
+        const day = d.getDate()
+        if (!goalsByDay.has(day)) goalsByDay.set(day, [])
+        goalsByDay.get(day)!.push(g)
+      }
+    }
+
+    // 按天分组习惯打卡记录，使用 completed_at 时间戳
+    const habitsByDay = new Map<number, HabitLog[]>()
+    for (const log of habitLogsList.value) {
+      const d = new Date(log.completed_at ?? '')
+      if (d.getFullYear() === currentYear && d.getMonth() === index) {
+        const day = d.getDate()
+        if (!habitsByDay.has(day)) habitsByDay.set(day, [])
+        habitsByDay.get(day)!.push(log)
+      }
+    }
+
     // 填充上月末尾日期（非当月标记）
     for (let i = firstDayOffset - 1; i >= 0; i--) {
       grid.push({ date: prevMonthLastDay - i, isCurrent: false })
@@ -207,11 +253,16 @@ export const useMonthView = (): UseMonthViewReturn => {
         return hours
       })
 
+      const dayGoals = goalsByDay.get(i) || []
+      const dayHabits = habitsByDay.get(i) || []
+
       grid.push({
         date: i,
         isCurrent: true,
         tasks: dayTasks.map((t) => t.id),
-        taskHours
+        taskHours,
+        goalCount: dayGoals.length,
+        habitCount: dayHabits.length
       })
     }
 
@@ -236,6 +287,8 @@ export const useMonthView = (): UseMonthViewReturn => {
   return {
     selectedMonth,
     monthGridData,
+    routeYear,
+    routeMonth,
     goBackToYear,
     enterDay,
     isPageLoading
