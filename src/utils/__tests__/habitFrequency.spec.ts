@@ -4,8 +4,8 @@ import {
   getWeekdayNumber,
   matchesHabitFrequency,
   normalizeHabitFrequency
-} from '@/views/habits/utils/habitFrequency'
-import type { WeeklyFrequency, MonthlyFrequency } from '@/views/habits/utils/habitFrequency'
+} from '@/utils/habitFrequency'
+import type { WeeklyFrequency, MonthlyFrequency } from '@/utils/habitFrequency'
 
 describe('habitFrequency', () => {
   it('未指定重复规则时默认按每日处理', () => {

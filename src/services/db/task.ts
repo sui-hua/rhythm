@@ -8,7 +8,7 @@
  * - 每日具体任务管理
  */
 
-import client from '@/services/supabase'
+import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 
 // Task 数据接口
@@ -46,7 +46,7 @@ export interface UpdateTaskPayload {
   actual_end_time?: string | null
 }
 
-const supabase = client.createBase<Task>(TABLES.TASK)
+const supabase = createBase<Task>(TABLES.TASK)
 
 export const task = {
   /**

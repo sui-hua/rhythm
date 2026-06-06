@@ -17,7 +17,8 @@ const mockCreateBase: Mock = vi.fn(() => ({
 }))
 
 vi.mock('@/services/supabase', () => ({
-  default: { createBase: mockCreateBase }
+  default: { createBase: mockCreateBase },
+  createBase: mockCreateBase
 }))
 
 beforeEach(() => {

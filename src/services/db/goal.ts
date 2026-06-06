@@ -1,5 +1,5 @@
 // goal table operations (top level of goal → goal_months → goal_days)
-import client from '@/services/supabase'
+import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 
 // Goal 数据接口
@@ -33,7 +33,7 @@ export interface UpdateGoalPayload {
   category_id?: string | number
 }
 
-const base = client.createBase<Goal>(TABLES.GOAL)
+const base = createBase<Goal>(TABLES.GOAL)
 
 export const goal = {
   async list(): Promise<Goal[]> {

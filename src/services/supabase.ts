@@ -11,7 +11,7 @@
  * - VITE_SUPABASE_URL    → Supabase 项目 URL
  * - VITE_SUPABASE_KEY    → Supabase Anon Key
  */
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 // 从环境变量获取 Supabase 配置
 const supabaseUrl: string | undefined = import.meta.env.VITE_SUPABASE_URL
@@ -30,7 +30,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // 创建 Supabase 客户端实例
-const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // 列表查询选项接口
 interface ListOptions {
@@ -84,10 +84,11 @@ function createBase<T = any>(tableName: string): BaseService<T> {
       return data as T
     },
 
-    async create<U = T>(payload: any) {
+    async create<U = T>(payload: Partial<U>) {
       const { data, error } = await supabase
         .from(tableName)
-        .insert(payload)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase insert 类型约束与 Partial<U> 不兼容
+        .insert(payload as any)
         .select()
         .single()
 
@@ -95,20 +96,22 @@ function createBase<T = any>(tableName: string): BaseService<T> {
       return data as U
     },
 
-    async createMany<U = T>(payloadArray: any[]) {
+    async createMany<U = T>(payloadArray: Partial<U>[]) {
       const { data, error } = await supabase
         .from(tableName)
-        .insert(payloadArray)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase insert 类型约束与 Partial<U>[] 不兼容
+        .insert(payloadArray as any)
         .select()
 
       if (error) throw error
       return data as U[]
     },
 
-    async update<U = T>(id: string | number, updates: any) {
+    async update<U = T>(id: string | number, updates: Partial<U>) {
       const { data, error } = await supabase
         .from(tableName)
-        .update(updates)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase update 类型约束与 Partial<U> 不兼容
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single()
@@ -137,13 +140,6 @@ function createBase<T = any>(tableName: string): BaseService<T> {
   }
 }
 
-// 扩展 SupabaseClient 类型以包含 createBase 方法
-interface ExtendedSupabaseClient extends SupabaseClient {
-  createBase: typeof createBase
-}
-
-const extendedSupabase = supabase as ExtendedSupabaseClient
-extendedSupabase.createBase = createBase
-
-export default extendedSupabase
+export default supabase
+export { createBase }
 export type { BaseService, ListOptions }

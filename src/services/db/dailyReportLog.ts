@@ -1,4 +1,4 @@
-import client from '@/services/supabase'
+import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 
 // DailyReportLog 数据接口
@@ -15,7 +15,7 @@ export interface CreateDailyReportLogPayload {
   report_date: string
 }
 
-const supabase = client.createBase<DailyReportLog>(TABLES.DAILY_REPORT_LOG)
+const supabase = createBase<DailyReportLog>(TABLES.DAILY_REPORT_LOG)
 
 export const dailyReportLog = {
   async getByUserAndDate(userId: string, reportDate: string): Promise<DailyReportLog | null> {

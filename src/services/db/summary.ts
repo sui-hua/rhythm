@@ -2,11 +2,13 @@
  * @fileoverview Summaries 数据库服务模块
  *
  * 提供总结数据（Summary）的 CRUD 操作封装，基于 Supabase 数据库。
+ * 基础 CRUD 由 createBase 工厂生成，自定义查询方法保留业务语义。
  * 支持按 kind（daily/weekly/monthly/yearly）维度查询和持久化总结记录。
  */
 
-import client from '@/services/supabase'
-import { mapSummaryRowToRecord } from '@/views/summary/utils/summaryAdapters'
+import { createBase } from '@/services/supabase'
+import { mapSummaryRowToRecord } from '@/services/db/summaryAdapters'
+import type { SummaryRow } from '@/services/db/summaryAdapters'
 import { TABLES } from './tables'
 
 // Summary 数据接口
@@ -29,56 +31,57 @@ export interface SummaryPayload {
   content?: Record<string, any>
 }
 
-const table = TABLES.SUMMARY
-
-/**
- * 持久化总结记录（插入或更新）
- * @param payload - 总结记录数据
- * @returns 持久化后的记录（经 mapSummaryRowToRecord 转换）
- */
-const persistSummary = async (payload: SummaryPayload): Promise<Summary> => {
-  const query = payload.id
-    ? client.from(table).update(payload).eq('id', payload.id)
-    : client.from(table).insert(payload)
-
-  const { data, error } = await query.select().single()
-
-  if (error) throw error
-  return mapSummaryRowToRecord(data)
-}
+// 通过 createBase 获取基础 CRUD 能力（list / getById / create / update / delete / query）
+const supabase = createBase<Summary>(TABLES.SUMMARY)
 
 export const summary = {
   /**
+   * 获取基础 CRUD 对象，供外部直接调用标准操作
+   */
+  ...supabase,
+
+  /**
    * 根据 kind 类型查询总结列表
    * @param kind - 总结类型（daily/weekly/monthly/yearly）
-   * @returns 总结记录数组
+   * @returns 总结记录数组（经 mapSummaryRowToRecord 转换）
    */
   async listByKind(kind: Summary['kind']): Promise<Summary[]> {
-    const { data, error } = await client
-      .from(table)
-      .select('*')
-      .eq('kind', kind)
-      .order('period_start', { ascending: false })
-
-    if (error) throw error
+    // query 返回原始行数据，需经 mapSummaryRowToRecord 转换为前端格式
+    const data = await supabase.query<SummaryRow>(q =>
+      q.select('*').eq('kind', kind).order('period_start', { ascending: false })
+    )
     return (data || []).map(mapSummaryRowToRecord)
   },
 
   /**
-   * 保存（创建或更新）总结记录
-   * @param payload - 总结记录数据
-   * @returns 保存后的记录
+   * 根据日期和类型查询总结记录
+   * @param date - 日期字符串（YYYY-MM-DD 格式或 ISO 字符串）
+   * @param kind - 总结类型（daily/weekly/monthly/yearly）
+   * @returns 匹配的总结记录，无匹配时返回 null
    */
-  async save(payload: SummaryPayload): Promise<Summary> {
-    return await persistSummary(payload)
+  async getByDateKind(date: string, kind: Summary['kind']): Promise<Summary | null> {
+    const rows = await supabase.query<SummaryRow>(q =>
+      q.select('*').eq('kind', kind).lte('period_start', date).gte('period_end', date).limit(1)
+    )
+    return rows?.length ? mapSummaryRowToRecord(rows[0]!) : null
   },
 
   /**
-   * 删除指定 ID 的总结记录
-   * @param id - 要删除的记录 ID
+   * 创建总结记录
+   * @param payload - 总结记录数据（不含 id）
+   * @returns 创建后的记录
    */
-  async remove(id: string | number): Promise<void> {
-    const { error } = await client.from(table).delete().eq('id', id)
-    if (error) throw error
+  async create(payload: SummaryPayload): Promise<Summary> {
+    return await supabase.create<Summary>(payload)
+  },
+
+  /**
+   * 更新总结记录
+   * @param id - 记录 ID
+   * @param payload - 要更新的字段
+   * @returns 更新后的记录
+   */
+  async update(id: string | number, payload: Partial<SummaryPayload>): Promise<Summary> {
+    return await supabase.update<Summary>(id, payload)
   }
 }

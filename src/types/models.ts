@@ -23,13 +23,6 @@ export interface AugmentedHabit extends BaseHabit {
   streak: number
 }
 
-/** 习惯重复规则 */
-export interface HabitFrequency {
-  type: 'daily' | 'weekly' | 'monthly'
-  weekdays?: number[]
-  monthDays?: number[]
-}
-
 // ── 日程安排项（判别联合） ──
 
 /** 日程安排项基础字段 */

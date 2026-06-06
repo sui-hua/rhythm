@@ -1,5 +1,5 @@
 // goal_days table operations (third level of goal → goal_months → goal_days)
-import client from '@/services/supabase'
+import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 import { toDateOnly } from '@/utils/dateFormatter'
 
@@ -10,7 +10,7 @@ export interface GoalDay {
   user_id: string
   title: string
   description?: string | null
-  status: number // 0 = pending, 1 = completed
+  status: string // 'active' | 'completed' | 'archived'
   priority?: number
   created_at?: string
   updated_at?: string
@@ -37,7 +37,7 @@ export interface CreateGoalDayPayload {
   user_id: string
   title: string
   description?: string | null
-  status?: number
+  status?: string
   priority?: number
   day: string
   task_time?: string | null
@@ -49,15 +49,15 @@ export interface UpdateGoalDayPayload {
   goal_month_id?: string
   title?: string
   description?: string | null
-  status?: number
+  status?: string
   priority?: number
   day?: string
   task_time?: string | null
   duration?: number
 }
 
-const base = client.createBase<GoalDay>(TABLES.GOAL_DAYS)
-const goalsBase = client.createBase(TABLES.GOAL)
+const base = createBase<GoalDay>(TABLES.GOAL_DAYS)
+const goalsBase = createBase(TABLES.GOAL)
 
 // 计算日期减去指定天数后的日期
 const subtractDays = (date: Date, days: number): Date => {
@@ -105,6 +105,23 @@ export const goalDays = {
     return await base.query(q => q
       .delete()
       .in('id', ids)
+    )
+  },
+
+  /**
+   * 查询指定月份日期范围内的所有目标计划
+   * @param start - 月首日期
+   * @param end - 月末日期
+   * @returns 该月所有 GoalDay 列表
+   */
+  async listByMonth(start: Date, end: Date): Promise<GoalDay[]> {
+    const startStr = toDateOnly(start)
+    const endStr = toDateOnly(end)
+
+    return await base.query(q => q
+      .select('*')
+      .gte('day', startStr)
+      .lte('day', endStr)
     )
   },
 
@@ -160,7 +177,7 @@ export const goalDays = {
 
     return (rows || []).filter((item) => {
       if (item.day === targetDateStr) return true
-      if (item.status !== 0) return false
+      if (item.status !== 'active') return false
 
       const lookbackDays = Number(item.goal_months?.goal?.carry_over_lookback_days || 0)
       if (lookbackDays <= 0) return false

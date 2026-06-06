@@ -4,7 +4,7 @@
  * 提供 goal_categories 表的查询、创建、更新、删除接口
  */
 
-import client from '@/services/supabase'
+import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 
 // GoalCategory 数据接口
@@ -30,7 +30,7 @@ export interface UpdateGoalCategoryPayload {
   sort_order?: number
 }
 
-const supabase = client.createBase<GoalCategory>(TABLES.GOAL_CATEGORIES)
+const supabase = createBase<GoalCategory>(TABLES.GOAL_CATEGORIES)
 
 export const goalCategories = {
   async list(): Promise<GoalCategory[]> {

@@ -11,14 +11,17 @@ const mockRpc: Mock = vi.fn()
 
 vi.mock('@/services/supabase', () => ({
   default: {
-    rpc: mockRpc,
-    createBase: vi.fn(() => ({
-      query: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn()
-    }))
-  }
+    rpc: mockRpc
+  },
+  createBase: vi.fn(() => ({
+    list: vi.fn(),
+    getById: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    update: vi.fn(),
+    query: vi.fn(),
+    delete: vi.fn()
+  }))
 }))
 
 

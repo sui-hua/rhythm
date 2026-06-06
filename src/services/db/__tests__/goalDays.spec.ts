@@ -19,7 +19,8 @@ const mockCreateBase: Mock = vi.fn((tableName: string) => {
 })
 
 vi.mock('@/services/supabase', () => ({
-  default: { createBase: mockCreateBase }
+  default: { createBase: mockCreateBase },
+  createBase: mockCreateBase
 }))
 
 beforeEach(() => {
@@ -177,13 +178,13 @@ describe('goalDays service', () => {
     // listForDayView 的 range 查询返回混合数据
     const rangeQueryResult = [
       // 当天任务，始终保留
-      { id: '1', day: '2026-06-05', status: 0, goal_months: { goal: { carry_over_lookback_days: 7 } } },
+      { id: '1', day: '2026-06-05', status: 'active', goal_months: { goal: { carry_over_lookback_days: 7 } } },
       // 历史未完成任务，在回溯范围内，保留
-      { id: '2', day: '2026-06-01', status: 0, goal_months: { goal: { carry_over_lookback_days: 7 } } },
+      { id: '2', day: '2026-06-01', status: 'active', goal_months: { goal: { carry_over_lookback_days: 7 } } },
       // 历史已完成任务，不保留
-      { id: '3', day: '2026-06-02', status: 1, goal_months: { goal: { carry_over_lookback_days: 7 } } },
+      { id: '3', day: '2026-06-02', status: 'completed', goal_months: { goal: { carry_over_lookback_days: 7 } } },
       // 历史未完成但超出回溯范围，不保留
-      { id: '4', day: '2026-05-20', status: 0, goal_months: { goal: { carry_over_lookback_days: 7 } } }
+      { id: '4', day: '2026-05-20', status: 'active', goal_months: { goal: { carry_over_lookback_days: 7 } } }
     ]
 
     let queryCallIndex = 0

@@ -9,11 +9,37 @@ const from: Mock = vi.fn()
 const client = { from }
 
 vi.mock('@/services/supabase', () => ({
-  default: client
+  default: client,
+  createBase: (tableName: string) => ({
+    async create(payload: unknown) {
+      const { data, error } = await client
+        .from(tableName)
+        .insert(payload)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    async update(id: string | number, updates: unknown) {
+      const { data, error } = await client
+        .from(tableName)
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    list: vi.fn(),
+    getById: vi.fn(),
+    createMany: vi.fn(),
+    query: vi.fn(),
+    delete: vi.fn()
+  })
 }))
 
 
-vi.mock('@/views/summary/utils/summaryAdapters', () => ({
+vi.mock('@/services/db/summaryAdapters', () => ({
   mapSummaryRowToRecord: (row: unknown) => row
 }))
 
@@ -54,17 +80,16 @@ beforeEach(() => {
 })
 
 describe('summaries service', () => {
-  it('saves a summary without legacy scope bridging', async () => {
+  it('creates a summary without legacy scope bridging', async () => {
     const { summary: summaries } = await import('@/services/db/summary')
 
-    await summaries.save({
+    await summaries.create({
       kind: 'daily',
       period_start: '2026-04-18T00:00:00.000Z',
       period_end: '2026-04-18T23:59:59.000Z',
       content: {
         done: '完成任务'
-      },
-      user_id: 'u1'
+      }
     })
 
     expect(insert).toHaveBeenCalledTimes(1)

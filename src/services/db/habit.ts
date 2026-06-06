@@ -1,17 +1,16 @@
-import client from '@/services/supabase'
+import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
+import type { HabitFrequency } from '@/utils/habitFrequency'
 
-// Habit 数据接口
+// Habit 数据接口（字段与 Supabase habits 表对齐）
 export interface Habit {
   id: string | number
-  name: string
-  title?: string
-  description?: string
-  frequency?: string
+  title: string
+  frequency?: HabitFrequency | null
   is_archived?: boolean
   task_time?: string | null
   duration?: number
-  target_value?: string | number
+  target_value?: number
   created_at?: string
   updated_at?: string
 }
@@ -24,39 +23,42 @@ export interface HabitLog {
   completed_at?: string
 }
 
-// Habit 创建参数
+// Habit 创建参数（字段与 Supabase habits 表对齐）
 export interface CreateHabitPayload {
-  name?: string
-  title?: string
-  description?: string
-  frequency?: string
+  title: string
+  frequency?: HabitFrequency | null
   user_id?: string
   task_time?: string | null
   duration?: number
-  target_value?: string | number
+  target_value?: number
   is_archived?: boolean
 }
 
-// Habit 更新参数
+// Habit 更新参数（字段与 Supabase habits 表对齐）
 export interface UpdateHabitPayload {
-  name?: string
-  description?: string
-  frequency?: string
-  is_archived?: boolean
   title?: string
+  frequency?: HabitFrequency | null
+  is_archived?: boolean
   task_time?: string | null
   duration?: number
 }
 
-const habitsBase = client.createBase<Habit>(TABLES.HABIT)
-const habitLogsBase = client.createBase<HabitLog>(TABLES.HABIT_LOGS)
+const habitsBase = createBase<Habit>(TABLES.HABIT)
+const habitLogsBase = createBase<HabitLog>(TABLES.HABIT_LOGS)
 
 export const habit = {
-  async list(): Promise<Habit[]> {
-    return await habitsBase.query(q => q
-      .select('*')
-      .order('created_at', { ascending: true })
-    )
+  /**
+   * 查询习惯列表
+   * @param includeArchived - 是否包含已归档习惯，默认 false
+   */
+  async list(includeArchived: boolean = false): Promise<Habit[]> {
+    return await habitsBase.query(q => {
+      let query = q.select('*')
+      if (!includeArchived) {
+        query = query.eq('is_archived', false)
+      }
+      return query.order('created_at', { ascending: true })
+    })
   },
 
   async listLogsByDate(startDate: Date, endDate: Date): Promise<HabitLog[]> {

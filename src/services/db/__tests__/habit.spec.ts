@@ -19,7 +19,8 @@ const mockCreateBase: Mock = vi.fn((tableName: string) => {
 })
 
 vi.mock('@/services/supabase', () => ({
-  default: { createBase: mockCreateBase }
+  default: { createBase: mockCreateBase },
+  createBase: mockCreateBase
 }))
 
 beforeEach(() => {
@@ -37,8 +38,8 @@ beforeEach(() => {
 })
 
 describe('habit service', () => {
-  it('list 按 created_at 升序查询所有习惯', async () => {
-    const mockHabits = [{ id: '1', name: '跑步' }]
+  it('list 默认过滤已归档习惯并按 created_at 升序查询', async () => {
+    const mockHabits = [{ id: '1', title: '跑步' }]
     mockQuery.mockResolvedValue(mockHabits)
 
     const { habit } = await import('@/services/db/habit')
@@ -48,10 +49,12 @@ describe('habit service', () => {
     const queryFn = mockQuery.mock.calls[0][0]
     const chain = {
       select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis()
     }
     queryFn(chain)
     expect(chain.select).toHaveBeenCalledWith('*')
+    expect(chain.eq).toHaveBeenCalledWith('is_archived', false)
     expect(chain.order).toHaveBeenCalledWith('created_at', { ascending: true })
     expect(result).toEqual(mockHabits)
   })
@@ -119,24 +122,24 @@ describe('habit service', () => {
   })
 
   it('create 委托给 habitsBase.create', async () => {
-    const newHabit = { id: '1', name: '早起' }
+    const newHabit = { id: '1', title: '早起' }
     mockCreate.mockResolvedValue(newHabit)
 
     const { habit } = await import('@/services/db/habit')
-    const result = await habit.create({ name: '早起' })
+    const result = await habit.create({ title: '早起' })
 
-    expect(mockCreate).toHaveBeenCalledWith({ name: '早起' })
+    expect(mockCreate).toHaveBeenCalledWith({ title: '早起' })
     expect(result).toEqual(newHabit)
   })
 
   it('update 委托给 habitsBase.update', async () => {
-    const updated = { id: '1', name: '晨跑' }
+    const updated = { id: '1', title: '晨跑' }
     mockUpdate.mockResolvedValue(updated)
 
     const { habit } = await import('@/services/db/habit')
-    const result = await habit.update('1', { name: '晨跑' })
+    const result = await habit.update('1', { title: '晨跑' })
 
-    expect(mockUpdate).toHaveBeenCalledWith('1', { name: '晨跑' })
+    expect(mockUpdate).toHaveBeenCalledWith('1', { title: '晨跑' })
     expect(result).toEqual(updated)
   })
 
