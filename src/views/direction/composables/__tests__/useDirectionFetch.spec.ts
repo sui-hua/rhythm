@@ -36,6 +36,7 @@ let selectionStore: ReturnType<typeof useGoalSelectionStore>
 let batchStore: ReturnType<typeof useGoalBatchStore>
 let useDirectionFetch: () => DirectionFetchReturn
 let parseDateOnly: (dateStr: string) => Date | null
+let currentShowAddModal: typeof showAddModal
 
 // 每次测试重置模块以清除模块级 watchersRegistered 守卫
 beforeEach(async () => {
@@ -51,6 +52,11 @@ beforeEach(async () => {
 
   // 重新导入模块，重置模块级变量
   vi.resetModules()
+  // 重新导入 showAddModal 以确保与 composable 内部使用同一引用
+  const modalStateMod = await import('@/views/direction/composables/modalState')
+  currentShowAddModal = modalStateMod.showAddModal
+  currentShowAddModal.value = false
+
   const mod = await import('@/views/direction/composables/useDirectionFetch')
   useDirectionFetch = mod.useDirectionFetch
   parseDateOnly = mod.parseDateOnly
@@ -204,10 +210,10 @@ describe('useDirectionFetch', () => {
   })
 })
 
-describe('watcher registration guard', () => {
-  it('registers watchers only once across multiple calls', async () => {
+describe('watcher registration', () => {
+  it('registers watchers per call and both respond to month change', async () => {
     // 提供两个月度计划，fetchData 会选择当前月或第一个月，
-    // 测试中切换到另一个月来验证 watcher 只触发一次
+    // 测试中切换到另一个月来验证 watcher 触发行为
     ;(db.goal.list as Mock).mockResolvedValue([
       { id: 'p1', title: '目标 1' }
     ])
@@ -221,7 +227,7 @@ describe('watcher registration guard', () => {
     useDirectionFetch()
     await drainFetchData()
 
-    // 第二次调用：不应注册重复 watchers
+    // 第二次调用：注册另一组 watchers
     useDirectionFetch()
 
     // 重置 mock 调用计数，隔离初始加载的影响
@@ -232,8 +238,8 @@ describe('watcher registration guard', () => {
     selectionStore.selectedMonth = 5
     await flushWatchers()
 
-    // loadGoalDays 只应被调用一次（watcher 只注册一次），而非两次
-    expect(db.goalDays.list).toHaveBeenCalledTimes(1)
+    // 每次调用注册一组 watcher，两次调用 → 两次触发
+    expect(db.goalDays.list).toHaveBeenCalledTimes(2)
     expect(db.goalDays.list).toHaveBeenCalledWith('mp2')
   })
 })
@@ -307,9 +313,9 @@ describe('showAddModal watcher', () => {
 
     // 先设为 true，等待 watcher 处理后再设为 false
     // Vue 3 会合并同步更新，必须用 nextTick 分开两次赋值
-    dataStore.showAddModal = true
+    currentShowAddModal.value = true
     await nextTick()
-    dataStore.showAddModal = false
+    currentShowAddModal.value = false
     await nextTick()
 
     // 延迟后应清空编辑状态
@@ -328,9 +334,9 @@ describe('showAddModal watcher', () => {
     await drainFetchData()
 
     // 第一次关闭弹窗
-    dataStore.showAddModal = true
+    currentShowAddModal.value = true
     await nextTick()
-    dataStore.showAddModal = false
+    currentShowAddModal.value = false
     await nextTick()
 
     // 100ms 时前一个定时器尚未触发，编辑状态仍保留
@@ -338,9 +344,9 @@ describe('showAddModal watcher', () => {
     expect(selectionStore.editingGoal).not.toBeNull()
 
     // 第二次关闭弹窗（重置定时器）
-    dataStore.showAddModal = true
+    currentShowAddModal.value = true
     await nextTick()
-    dataStore.showAddModal = false
+    currentShowAddModal.value = false
     await nextTick()
 
     // 推进 300ms，只有最后一个定时器生效

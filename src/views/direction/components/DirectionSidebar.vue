@@ -3,7 +3,7 @@
     DirectionSidebar — 目标导航侧边栏
     主要结构：拖拽调整宽度手柄、标题头部、分类目标列表、底部进度与添加按钮
   -->
-  <aside class="border-r border-zinc-100 flex flex-col z-20 bg-background relative overflow-hidden h-full shrink-0 group/sidebar" :style="{ width: width + 'px' }">
+  <aside class="border-r border-border flex flex-col z-20 bg-background relative overflow-hidden h-full shrink-0 group/sidebar" :style="{ width: width + 'px' }">
     <!-- 拖拽调整宽度手柄，hover 时显示，拖拽中高亮 -->
     <div class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-50 transition-colors opacity-0 group-hover/sidebar:opacity-100 hover:bg-primary/10" :class="isResizing ? 'bg-primary/20 !opacity-100' : ''" @mousedown="startResize"></div>
 

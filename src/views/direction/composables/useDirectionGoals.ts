@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
 import { getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { months, useGoalDataStore } from '@/stores/goalDataStore'
+import { showAddModal, showCategoryModal } from '@/views/direction/composables/modalState'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
@@ -20,7 +21,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
   const dataStore = useGoalDataStore()
   const selectionStore = useGoalSelectionStore()
   const batchStore = useGoalBatchStore()
-  const { goalMonths, showAddModal, showCategoryModal } = storeToRefs(dataStore)
+  const { goalMonths } = storeToRefs(dataStore)
   const { selectedGoal, editingGoal, selectedMonth, activePicker } = storeToRefs(selectionStore)
 
   // store 缓存引用，类型已在 store 定义中对齐

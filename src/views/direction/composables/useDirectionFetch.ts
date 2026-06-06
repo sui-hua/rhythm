@@ -1,20 +1,17 @@
 // useDirectionFetch.ts
 // Direction 模块数据拉取与状态联动的核心 Composable
 
-import { computed, watch, ref } from 'vue'
+import { computed, watch, ref, onUnmounted } from 'vue'
 import { db } from '@/services/database'
+import { safeAction } from '@/utils/safeAction'
 import { parseDateOnly, getDateOnlyMonth } from '@/views/direction/utils/dateOnly'
 import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
+import { showAddModal } from '@/views/direction/composables/modalState'
 import type { GoalMonth } from '@/services/db/goalMonths'
 import type { GoalWithMeta, CategorizedGoalGroup, DirectionFetchReturn } from '@/views/direction/types'
-
-// 模块级守卫：watchers 全局只注册一次，避免多个调用点产生重复 watcher
-let watchersRegistered = false
-// 模块级定时器引用：防止弹窗短时间内多次关闭导致定时器累积
-let showAddModalTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
  * 从月度计划列表中解析默认选中的月份计划
@@ -53,7 +50,7 @@ export function useDirectionFetch(): DirectionFetchReturn {
   const batchStore = useGoalBatchStore()
 
   const {
-    goals, goalMonths, initialized, showAddModal
+    goals, goalMonths, initialized
   } = storeToRefs(dataStore)
   const {
     selectedGoal, editingGoal, selectedMonth
@@ -146,85 +143,94 @@ export function useDirectionFetch(): DirectionFetchReturn {
     isPageLoading.value = true
     isInitializing = true
     try {
-      goals.value = await db.goal.list()
+      await safeAction(async () => {
+        goals.value = await db.goal.list()
 
-      if (goals.value.length > 0) {
-        selectedGoal.value = categorizedGoals.value[0]?.items[0] || null
-      }
-
-      if (selectedGoal.value) {
-        await loadGoalMonths(String(selectedGoal.value.goal_id))
-        goalMonths.value = goalMonthsCache[String(selectedGoal.value.goal_id)] || []
-      }
-
-      if (selectedGoal.value && goalMonths.value.length > 0) {
-        const targetGm = resolveDefaultGoalMonth(goalMonths.value)
-        const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
-
-        if (targetGm && targetMonth) {
-          selectedMonth.value = targetMonth
-          await loadGoalDays(targetGm.id, { force: true })
+        if (goals.value.length > 0) {
+          selectedGoal.value = categorizedGoals.value[0]?.items[0] || null
         }
-      }
-    } catch (e) {
-      console.error('Failed to fetch direction data', e)
+
+        if (selectedGoal.value) {
+          await loadGoalMonths(String(selectedGoal.value.goal_id))
+          goalMonths.value = goalMonthsCache[String(selectedGoal.value.goal_id)] || []
+        }
+
+        if (selectedGoal.value && goalMonths.value.length > 0) {
+          const targetGm = resolveDefaultGoalMonth(goalMonths.value)
+          const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
+
+          if (targetGm && targetMonth) {
+            selectedMonth.value = targetMonth
+            await loadGoalDays(targetGm.id, { force: true })
+          }
+        }
+      }, 'Failed to fetch direction data')
     } finally {
       isPageLoading.value = false
       isInitializing = false
     }
   }
 
-  // 模块级守卫：watchers 仅注册一次，避免多个调用点产生重复 watcher
-  if (!watchersRegistered) {
-    watchersRegistered = true
+  // 弹窗关闭定时器引用，用于延迟清空编辑状态
+  let showAddModalTimer: ReturnType<typeof setTimeout> | null = null
 
-    // 弹窗关闭时延迟清空编辑状态，300ms 延迟避免关闭动画期间闪烁
-    watch(showAddModal, (val: boolean) => {
-      if (!val) {
-        if (showAddModalTimer) clearTimeout(showAddModalTimer)
-        showAddModalTimer = setTimeout(() => { editingGoal.value = null }, 300)
+  // 弹窗关闭时延迟清空编辑状态，300ms 延迟避免关闭动画期间闪烁
+  const stopAddModalWatch = watch(showAddModal, (val: boolean) => {
+    if (!val) {
+      if (showAddModalTimer) clearTimeout(showAddModalTimer)
+      showAddModalTimer = setTimeout(() => { editingGoal.value = null }, 300)
+    }
+  })
+
+  // 月份切换时重新加载对应日计划，初始化期间跳过避免与 fetchData 冲突
+  const stopMonthWatch = watch(selectedMonth, async (newMonth: number | null, oldMonth: number | null) => {
+    if (isInitializing) return
+    if (!newMonth || newMonth === oldMonth) return
+    if (!selectedGoal.value) return
+
+    const goalId = String(selectedGoal.value.goal_id)
+    if (!goalId) return
+
+    const cached = goalMonthsCache[goalId] || []
+    const gm = cached.find(item => getDateOnlyMonth(item.month) === newMonth)
+    if (!gm) return
+
+    dataStore.clearGoalDaysCache(gm.id)
+    await loadGoalDays(gm.id, { force: true })
+  })
+
+  // 目标切换时重新加载月度计划，并自动选中默认月份的日计划
+  const stopGoalWatch = watch(selectedGoal, async (newGoal, oldGoal) => {
+    if (isInitializing) return
+    if (!newGoal || newGoal === oldGoal) return
+
+    const goalId = String(newGoal.goal_id)
+    if (!goalId) return
+
+    await loadGoalMonths(goalId)
+    goalMonths.value = goalMonthsCache[goalId] || []
+
+    if (goalMonths.value.length > 0) {
+      const targetGm = resolveDefaultGoalMonth(goalMonths.value)
+      const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
+
+      if (targetGm && targetMonth) {
+        selectedMonth.value = targetMonth
+        await loadGoalDays(targetGm.id, { force: true })
       }
-    })
+    }
+  })
 
-    // 月份切换时重新加载对应日计划，初始化期间跳过避免与 fetchData 冲突
-    watch(selectedMonth, async (newMonth: number | null, oldMonth: number | null) => {
-      if (isInitializing) return
-      if (!newMonth || newMonth === oldMonth) return
-      if (!selectedGoal.value) return
-
-      const goalId = String(selectedGoal.value.goal_id)
-      if (!goalId) return
-
-      const cached = goalMonthsCache[goalId] || []
-      const gm = cached.find(item => getDateOnlyMonth(item.month) === newMonth)
-      if (!gm) return
-
-      dataStore.clearGoalDaysCache(gm.id)
-      await loadGoalDays(gm.id, { force: true })
-    })
-
-    // 目标切换时重新加载月度计划，并自动选中默认月份的日计划
-    watch(selectedGoal, async (newGoal, oldGoal) => {
-      if (isInitializing) return
-      if (!newGoal || newGoal === oldGoal) return
-
-      const goalId = String(newGoal.goal_id)
-      if (!goalId) return
-
-      await loadGoalMonths(goalId)
-      goalMonths.value = goalMonthsCache[goalId] || []
-
-      if (goalMonths.value.length > 0) {
-        const targetGm = resolveDefaultGoalMonth(goalMonths.value)
-        const targetMonth = targetGm ? getDateOnlyMonth(targetGm.month) : null
-
-        if (targetGm && targetMonth) {
-          selectedMonth.value = targetMonth
-          await loadGoalDays(targetGm.id, { force: true })
-        }
-      }
-    })
-  }
+  // 组件卸载时清理所有 watcher 和定时器，防止内存泄漏
+  onUnmounted(() => {
+    stopAddModalWatch()
+    stopMonthWatch()
+    stopGoalWatch()
+    if (showAddModalTimer) {
+      clearTimeout(showAddModalTimer)
+      showAddModalTimer = null
+    }
+  })
 
   // 首次调用时触发页面初始化数据拉取，后续调用复用已加载数据
   if (!initialized.value) {

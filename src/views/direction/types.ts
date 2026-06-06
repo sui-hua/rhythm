@@ -126,5 +126,5 @@ export interface MonthlyProgressParams {
   dailyTasks: Record<string, GoalDay>
   goalId: string | number | null | undefined
   month: number | null | undefined
-  isGoalDayCompleted: (status: number) => boolean
+  isGoalDayCompleted: (status: string) => boolean
 }

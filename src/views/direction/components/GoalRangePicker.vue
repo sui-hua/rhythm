@@ -45,6 +45,9 @@
         </div>
         <!-- 月份范围显示与切换按钮行结束 -->
 
+        <!-- 操作提示 -->
+        <p class="text-xs text-muted-foreground mb-2">点击选择起止月份</p>
+
         <!-- 时间轴选择器开始 -->
         <div class="timeline">
           <!-- 背景轨道 -->

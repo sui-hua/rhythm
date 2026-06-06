@@ -11,14 +11,14 @@
       <!-- 页面级骨架：数据加载中展示占位动画 -->
       <div v-if="isPageLoading" class="w-full h-full flex p-0 overflow-auto relative z-10">
         <div class="w-[280px] border-r border-border bg-background p-6 flex flex-col">
-          <div class="w-3/4 h-4 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <div class="w-1/2 h-3 rounded-md mt-2 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <div class="w-2/3 h-4 rounded-md mt-4 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <div class="w-1/2 h-3 rounded-md mt-2 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          <div class="w-3/4 h-4 rounded-md bg-muted animate-pulse" />
+          <div class="w-1/2 h-3 rounded-md mt-2 bg-muted animate-pulse" />
+          <div class="w-2/3 h-4 rounded-md mt-4 bg-muted animate-pulse" />
+          <div class="w-1/2 h-3 rounded-md mt-2 bg-muted animate-pulse" />
         </div>
         <div class="flex-1 p-6">
-          <div class="h-12 rounded-lg mb-4 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <div class="h-48 rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          <div class="h-12 rounded-lg mb-4 bg-muted animate-pulse" />
+          <div class="h-48 rounded-lg bg-muted animate-pulse" />
         </div>
       </div>
       <!-- 主内容区：目标范围选择、任务面板、归档 -->

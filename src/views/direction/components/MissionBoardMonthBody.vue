@@ -2,12 +2,12 @@
   <div class="p-6 space-y-8 animate-in slide-in-from-top-2 border-t bg-background/50">
     <div class="grid grid-cols-7 gap-2 mb-2 text-center">
       <div
-        v-for="(wk, index) in ['周日', '周一', '周二', '周三', '周四', '周五', '周六']"
-        :key="wk"
+        v-for="wk in weekdays"
+        :key="wk.label"
         class="text-[10px] font-bold text-muted-foreground opacity-50 cursor-pointer hover:text-primary hover:opacity-100 transition-all select-none py-1 rounded-sm hover:bg-muted/50"
-        @click="selectWeekDay(month, index)"
+        @click="selectWeekDay(month, wk.dayIndex)"
       >
-        {{ wk }}
+        {{ wk.label }}
       </div>
     </div>
 
@@ -66,6 +66,17 @@ import { useDirectionSelection } from '@/views/direction/composables/useDirectio
 import { useDirectionBatch } from '@/views/direction/composables/useDirectionBatch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+
+// 星期标题数组（周一到周日），dayIndex 对应 JS Date.getDay() 返回值
+const weekdays = [
+  { label: '周一', dayIndex: 1 },
+  { label: '周二', dayIndex: 2 },
+  { label: '周三', dayIndex: 3 },
+  { label: '周四', dayIndex: 4 },
+  { label: '周五', dayIndex: 5 },
+  { label: '周六', dayIndex: 6 },
+  { label: '周日', dayIndex: 0 }
+]
 
 const { month } = defineProps({
   month: {

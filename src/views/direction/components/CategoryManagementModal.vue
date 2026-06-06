@@ -52,10 +52,12 @@ import { Plus, Trash2 } from 'lucide-vue-next'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { useGoalDataStore } from '@/stores/goalDataStore'
+import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { storeToRefs } from 'pinia'
 
 const store = useGoalDataStore()
-const { showCategoryModal, categories } = storeToRefs(store)
+const { categories } = storeToRefs(store)
+const { showCategoryModal } = useDirectionGoals()
 const newCategoryName = ref('')
 const loading = ref(false)
 const authStore = useAuthStore()

@@ -3,7 +3,7 @@ import { getDirectionMonthlyProgress } from '@/views/direction/utils/progress'
 import type { GoalDay } from '@/services/db/goalDays'
 
 // 完成状态判断回调，类型与 MonthlyProgressParams.isGoalDayCompleted 一致
-const isGoalDayCompleted = (status: unknown): boolean => status === 'done'
+const isGoalDayCompleted = (status: string): boolean => status === 'done'
 
 describe('getDirectionMonthlyProgress', () => {
   it('matches month prefixes without zero padding so 1-9 months are counted correctly', () => {
