@@ -76,16 +76,16 @@
             <button
               type="button"
               class="flex items-center justify-between rounded-lg px-2 py-2 text-left transition-colors hover:bg-zinc-100/80"
-              @click="toggleCarryOverGroup"
+              @click="toggleCarryOverGroup(sectionIndex)"
             >
               <div class="flex min-w-0 flex-col gap-1">
                 <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{{ section.label }}</span>
                 <span class="text-sm font-semibold text-foreground">{{ section.count }} 个未完成目标</span>
               </div>
-              <ChevronDown class="h-4 w-4 shrink-0 text-muted-foreground transition-transform" :class="isCarryOverExpanded ? 'rotate-180' : ''" />
+              <ChevronDown class="h-4 w-4 shrink-0 text-muted-foreground transition-transform" :class="expandedGroups[sectionIndex] ? 'rotate-180' : ''" />
             </button>
 
-            <div v-if="isCarryOverExpanded" class="flex flex-col gap-1 border-l border-border/50 pl-3">
+            <div v-if="expandedGroups[sectionIndex]" class="flex flex-col gap-1 border-l border-border/50 pl-3">
               <div
                 v-for="item in section.items"
                 :key="`desktop-carry-${item.id}`"
@@ -206,8 +206,8 @@ const indexedDailySchedule = computed(() => dayStore.dailySchedule.map((item, in
 const sidebarSections = computed(() => buildSidebarSections(indexedDailySchedule.value))
 
 // ── 状态 ──
-// 遗留任务分组是否展开，默认收起
-const isCarryOverExpanded = ref(false)
+// 各延后项分组的展开状态，按 sectionIndex 独立控制
+const expandedGroups = ref<Record<number, boolean>>({})
 
 // ── Composables ──
 // 侧边栏宽度可拖拽调整：width（当前宽度）、startResize（启动拖拽）、isResizing（拖拽中状态）
@@ -220,9 +220,9 @@ const selectedDay = computed(() => dateStore.currentDate.getDate())
 const selectedMonthName = computed(() => getMonthName(dateStore.currentDate.getMonth() + 1, 'full'))
 
 // ── 方法 ──
-// 切换遗留任务分组的展开/收起状态
-const toggleCarryOverGroup = () => {
-  isCarryOverExpanded.value = !isCarryOverExpanded.value
+// 切换指定延后项分组的展开/收起状态
+const toggleCarryOverGroup = (index: number) => {
+  expandedGroups.value[index] = !expandedGroups.value[index]
 }
 
 // ── Emits ──

@@ -1,5 +1,5 @@
 // goal_days table operations (third level of goal → goal_months → goal_days)
-import { createBase } from '@/services/supabase'
+import supabase, { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 import { toDateOnly } from '@/utils/dateFormatter'
 
@@ -155,36 +155,69 @@ export const goalDays = {
     }
 
     const earliestDateStr = toDateOnly(subtractDays(date, maxLookbackDays))
+
+    // 查询日期范围内的 goal_days（不含嵌套关联，避免 PostgREST 关系解析失败）
     const rows = await base.query(q => q
-      .select(`
-        *,
-        goal_months (
-          id,
-          task_time,
-          duration,
-          goal (
-            id,
-            task_time,
-            duration,
-            carry_over_lookback_days
-          )
-        )
-      `)
+      .select('*')
       .gte('day', earliestDateStr)
       .lte('day', targetDateStr)
       .order('day', { ascending: true })
     )
 
-    return (rows || []).filter((item) => {
-      if (item.day === targetDateStr) return true
+    if (!rows || rows.length === 0) return []
+
+    // 单独查询 goal_months + goal 的 carry_over_lookback_days 和时间信息
+    const goalMonthIds = [...new Set(rows.map(r => r.goal_month_id).filter(Boolean))]
+    const goalMonthMap = new Map<string, { task_time?: string | null; duration?: number; carry_over_lookback_days: number }>()
+
+    if (goalMonthIds.length > 0) {
+      const { data: monthRows } = await supabase
+        .from(TABLES.GOAL_MONTHS)
+        .select(`
+          id,
+          task_time,
+          duration,
+          goal:goal_id (task_time, duration, carry_over_lookback_days)
+        `)
+        .in('id', goalMonthIds)
+
+      for (const gm of (monthRows || [])) {
+        const goal = Array.isArray(gm.goal) ? gm.goal[0] : gm.goal
+        goalMonthMap.set(gm.id, {
+          task_time: gm.task_time,
+          duration: gm.duration,
+          carry_over_lookback_days: Number(goal?.carry_over_lookback_days || 0)
+        })
+      }
+    }
+
+    // 关联数据并过滤 carry-over 项
+    return rows.filter((item) => {
+      if (item.day === targetDateStr) {
+        // 当天项：附加继承的时间信息后直接保留
+        const gm = item.goal_month_id ? goalMonthMap.get(item.goal_month_id) : undefined
+        item.goal_months = gm ? { id: item.goal_month_id!, task_time: gm.task_time, duration: gm.duration } : undefined
+        return true
+      }
       if (item.status !== 'active') return false
 
-      const lookbackDays = Number(item.goal_months?.goal?.carry_over_lookback_days || 0)
+      // 通过单独查询的 map 获取 carry_over_lookback_days
+      const lookbackDays = item.goal_month_id
+        ? (goalMonthMap.get(item.goal_month_id)?.carry_over_lookback_days || 0)
+        : 0
       if (lookbackDays <= 0) return false
 
       const earliestAllowed = subtractDays(date, lookbackDays)
       const itemDate = new Date(`${item.day}T00:00:00`)
-      return itemDate >= earliestAllowed && item.day < targetDateStr
+      const withinWindow = itemDate >= earliestAllowed && item.day < targetDateStr
+
+      // 通过 carry-over 的项也需要附加继承的时间信息
+      if (withinWindow) {
+        const gm = goalMonthMap.get(item.goal_month_id!)
+        item.goal_months = gm ? { id: item.goal_month_id!, task_time: gm.task_time, duration: gm.duration } : undefined
+      }
+
+      return withinWindow
     })
   }
 }
