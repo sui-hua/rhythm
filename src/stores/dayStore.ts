@@ -100,7 +100,7 @@ export const useDayStore = defineStore('day', () => {
     updateTaskTime,
     carryOverUncompletedTasksTo,
     fetchTaskUpdate
-  } = useDayActions({ tasks, routeDateContext, dailySchedule, habitLogs })
+  } = useDayActions({ tasks, routeDateContext, dailySchedule, habitLogs, goalDays })
 
   // ── Actions ──
   // 拉取当日所有数据（任务、计划、习惯、习惯日志），并行请求减少等待时间

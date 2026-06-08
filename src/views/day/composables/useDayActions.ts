@@ -35,6 +35,8 @@ export interface UseDayActionsOptions {
   dailySchedule: Ref<DailyScheduleItem[]>
   /** 当日习惯日志列表，toggle 后需同步更新以驱动 computed 重算 */
   habitLogs: Ref<HabitLog[]>
+  /** 当日目标计划列表，toggle 完成后需同步 status 以驱动 dailySchedule 重算 */
+  goalDays: Ref<GoalDay[]>
 }
 
 /** handleStartTask 返回值，由调用方（组件）决定如何同步到 pomodoroStore */
@@ -49,7 +51,7 @@ export interface StartTaskResult {
  * 使用场景：day 模块的任务完成切换、计时、时间更新、顺延等
  * 数据流：组件调用 → 乐观更新 → API → 成功/回滚
  */
-export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLogs }: UseDayActionsOptions) {
+export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLogs, goalDays }: UseDayActionsOptions) {
   const dateStore = useDateStore()
 
   // ── 私有辅助 ──
@@ -120,10 +122,13 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
     }
   }
 
-  /** 切换日计划完成状态，直接使用字符串值 */
+  /** 切换日计划完成状态，直接使用字符串值，完成后同步源数据驱动 computed 重算 */
   const toggleDailyPlanCompletion = async (task: DailyScheduleItem): Promise<void> => {
     const newStatus = task.completed ? 'completed' : 'active'
     await db.goalDays.update(task.id, { status: newStatus })
+    // 同步更新 goalDays 源数据，确保 dailySchedule 重新计算时 completed 状态正确
+    const plan = goalDays.value.find(p => String(p.id) === String(task.id))
+    if (plan) plan.status = newStatus
   }
 
   // ── 导出 Actions ──

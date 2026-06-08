@@ -49,7 +49,7 @@
             <div @click.stop @dblclick.stop>
               <Checkbox
                 :model-value="section.item.completed"
-                @update:model-value="dayStore.handleToggleComplete(section.item)"
+                @update:model-value="() => dayStore.handleToggleComplete(section.item)"
                 class="shrink-0 w-5 h-5 rounded-md"
               />
             </div>
@@ -97,7 +97,7 @@
                 <div @click.stop @dblclick.stop>
                   <Checkbox
                     :model-value="item.completed"
-                    @update:model-value="dayStore.handleToggleComplete(item)"
+                    @update:model-value="() => dayStore.handleToggleComplete(item)"
                     class="shrink-0 w-5 h-5 rounded-md"
                   />
                 </div>
