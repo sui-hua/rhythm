@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EditHabitModal from '../EditHabitModal.vue'
+import { db } from '@/services/database'
 
 // mock db 服务
 vi.mock('@/services/database', () => ({
@@ -63,6 +64,11 @@ describe('EditHabitModal', () => {
     frequency: JSON.stringify({ type: 'daily', weekdays: [], monthDays: [] }),
     is_archived: false
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+  })
 
   it('显示"修改习惯"标题', () => {
     const wrapper = mount(EditHabitModal, {
@@ -132,5 +138,34 @@ describe('EditHabitModal', () => {
     expect(wrapper.text()).toContain('每日')
     expect(wrapper.text()).toContain('每周')
     expect(wrapper.text()).toContain('每月')
+  })
+
+  it('取消删除确认时不删除习惯', async () => {
+    vi.mocked(window.confirm).mockReturnValue(false)
+    const wrapper = mount(EditHabitModal, {
+      props: { show: true, habitData: mockHabit },
+      global: { stubs }
+    })
+
+    const deleteBtn = wrapper.findAll('button').find(b => b.text() === '删除该习惯')
+    await deleteBtn?.trigger('click')
+
+    expect(window.confirm).toHaveBeenCalledWith('确定要删除这个习惯吗？删除后相关打卡记录也会失去关联，且无法恢复。')
+    expect(db.habit.delete).not.toHaveBeenCalled()
+    expect(wrapper.emitted('deleted')).toBeFalsy()
+  })
+
+  it('确认删除后才删除习惯并通知父组件', async () => {
+    vi.mocked(window.confirm).mockReturnValue(true)
+    const wrapper = mount(EditHabitModal, {
+      props: { show: true, habitData: mockHabit },
+      global: { stubs }
+    })
+
+    const deleteBtn = wrapper.findAll('button').find(b => b.text() === '删除该习惯')
+    await deleteBtn?.trigger('click')
+
+    expect(db.habit.delete).toHaveBeenCalledWith('habit-1')
+    expect(wrapper.emitted('deleted')).toBeTruthy()
   })
 })

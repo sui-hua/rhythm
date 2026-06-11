@@ -12,6 +12,8 @@ import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
 import { useDirectionSelection } from '@/views/direction/composables/useDirectionSelection'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+import { confirmDelete } from '@/composables/useDeleteConfirm'
+import { useActionFeedback } from '@/composables/useActionFeedback'
 import type { GoalMonth } from '@/services/db/goalMonths'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { GoalWithMeta, DirectionBatchReturn } from '@/views/direction/types'
@@ -32,6 +34,7 @@ export function useDirectionBatch(): DirectionBatchReturn {
 
   const { hasTask } = useDirectionSelection()
   const { loadGoalDays } = useDirectionFetch()
+  const { error } = useActionFeedback()
 
   /** 从缓存中查找指定目标和月份的月度计划 */
   const getCurrentMonthlyPlan = (goalId: string | number, month: number): GoalMonth | null => {
@@ -84,34 +87,38 @@ export function useDirectionBatch(): DirectionBatchReturn {
       daysToUpdate = [...currentSelectedDates]
     }
 
-    const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
+    try {
+      const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
 
-    for (const day of daysToUpdate) {
-      const existingDailyPlan = existingDailyPlanMap.get(day)
-      const payload = {
-        goal_month_id: currentMp.id,
-        user_id: authStore.userId!,
-        day: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-        title: batchInput.value,
-        task_time: currentTiming.task_time,
-        duration: currentTiming.duration
+      for (const day of daysToUpdate) {
+        const existingDailyPlan = existingDailyPlanMap.get(day)
+        const payload = {
+          goal_month_id: currentMp.id,
+          user_id: authStore.userId!,
+          day: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+          title: batchInput.value,
+          task_time: currentTiming.task_time,
+          duration: currentTiming.duration
+        }
+
+        if (existingDailyPlan) {
+          await db.goalDays.update(existingDailyPlan.id, {
+            title: payload.title,
+            task_time: payload.task_time,
+            duration: payload.duration
+          })
+        } else {
+          await db.goalDays.create(payload)
+        }
       }
 
-      if (existingDailyPlan) {
-        await db.goalDays.update(existingDailyPlan.id, {
-          title: payload.title,
-          task_time: payload.task_time,
-          duration: payload.duration
-        })
-      } else {
-        await db.goalDays.create(payload)
-      }
+      await loadGoalDays(currentMp.id, { force: true })
+      archiveVersion.value++
+      batchInput.value = ''
+      selectedDates[m] = []
+    } catch (e) {
+      error('批量保存日计划失败，请稍后重试', e)
     }
-
-    await loadGoalDays(currentMp.id, { force: true })
-    archiveVersion.value++
-    batchInput.value = ''
-    selectedDates[m] = []
   }
 
   /** 批量删除选中日期的日计划 */
@@ -119,28 +126,33 @@ export function useDirectionBatch(): DirectionBatchReturn {
     const m = selectedMonth.value
     const currentSelectedDates = selectedDates[m!] || []
     if (!m || currentSelectedDates.length === 0) return
+    if (!confirmDelete({ type: 'goalDayBatch', count: currentSelectedDates.length })) return
 
     const currentMp = getCurrentMonthlyPlan(selectedGoal.value!.goal_id, m)
     if (!currentMp) return
 
-    const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
+    try {
+      const existingDailyPlanMap = await getExistingDailyPlanMap(currentMp.id)
 
-    const idsToDelete: string[] = []
-    for (const day of currentSelectedDates) {
-      const existingDailyPlan = existingDailyPlanMap.get(day)
-      if (existingDailyPlan) {
-        idsToDelete.push(existingDailyPlan.id)
+      const idsToDelete: string[] = []
+      for (const day of currentSelectedDates) {
+        const existingDailyPlan = existingDailyPlanMap.get(day)
+        if (existingDailyPlan) {
+          idsToDelete.push(existingDailyPlan.id)
+        }
       }
-    }
 
-    if (idsToDelete.length > 0) {
-      await db.goalDays.deleteByIds(idsToDelete)
-    }
+      if (idsToDelete.length > 0) {
+        await db.goalDays.deleteByIds(idsToDelete)
+      }
 
-    await loadGoalDays(currentMp.id, { force: true })
-    archiveVersion.value++
-    selectedDates[m] = []
-    batchInput.value = ''
+      await loadGoalDays(currentMp.id, { force: true })
+      archiveVersion.value++
+      selectedDates[m] = []
+      batchInput.value = ''
+    } catch (e) {
+      error('批量删除日计划失败，请稍后重试', e)
+    }
   }
 
   return {

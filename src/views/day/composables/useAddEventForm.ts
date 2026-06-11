@@ -6,6 +6,7 @@ import { useDateStore } from '@/stores/dateStore'
 import { useDayStore } from '@/stores/dayStore'
 import { useActionFeedback } from './useActionFeedback'
 import { withLoadingLock } from '@/utils/throttle'
+import { confirmDelete } from '@/composables/useDeleteConfirm'
 
 /** 编辑模式下的初始数据（来自日程项） */
 export interface InitialEventData {
@@ -252,6 +253,8 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
     // 删除任务/习惯
     const handleDelete = withLoadingLock(async () => {
         if (props.initialData) {
+            if (!confirmDelete(isHabit.value ? 'habit' : 'task')) return
+
             isSubmitting.value = true
             try {
                 if (isHabit.value) {

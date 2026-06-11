@@ -10,6 +10,7 @@ import { buildDefaultPeriod } from '@/services/db/summaryPeriods'
 import { buildSummaryPayload } from '@/services/db/summaryAdapters'
 import { summaryTabToKind } from '@/views/summary/utils/summaryRouteHelpers'
 import { fetchTodayDataOverview } from '@/views/summary/composables/useSummaryPrefill'
+import { confirmDelete } from '@/composables/useDeleteConfirm'
 import type { SummaryRecord } from '@/services/db/summaryAdapters'
 
 // 视图状态类型：表单编辑 / 详情展示 / 空状态
@@ -183,7 +184,7 @@ export const useSummaryManager = (): UseSummaryManagerReturn => {
 
   // 删除总结记录：确认后删除并刷新列表
   const handleDelete = async (id: string | number): Promise<void> => {
-    if (!confirm('确定要删除这条总结吗？')) return
+    if (!confirmDelete('summary')) return
 
     await safeAction(async () => {
       await db.summary.delete(id)

@@ -11,6 +11,7 @@
         @scroll-to-task="scrollToTask"
         @add-event="openAddModal"
         @edit-task="openEditModal"
+        @open-summary="showSummaryModal = true"
       />
 
       <!-- 时间轴主区域 -->
@@ -42,6 +43,12 @@
 
       <!-- 番茄钟弹窗 -->
       <PomodoroTimerModal />
+
+      <!-- 总结弹窗：日总结表单 -->
+      <SummaryModal
+        v-model:show="showSummaryModal"
+        @saved="handleSummarySaved"
+      />
     </div>
   </div>
 </template>
@@ -54,11 +61,12 @@
  */
 
 // ── 依赖导入 ──
-import { defineAsyncComponent, watch, onBeforeUnmount, onMounted } from 'vue'
+import { defineAsyncComponent, ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import Sidebar from '@/views/day/components/Sidebar.vue'
 import Timeline from '@/views/day/components/Timeline.vue'
 import DailyReportModal from '@/views/day/components/DailyReportModal.vue'
 import PomodoroTimerModal from '@/views/day/components/PomodoroTimerModal.vue'
+import SummaryModal from '@/views/day/components/SummaryModal.vue'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 import { useDayModal } from '@/views/day/composables/useDayModal'
 import { useDateStore } from '@/stores/dateStore'
@@ -75,6 +83,10 @@ const { isReady, isLoading, scrollToTask, currentHour } = useDayNavigation()
 // 弹窗控制：添加/编辑事件的显示状态和数据
 const { showAddModal, editingTask, openAddModal, openEditModal } = useDayModal()
 const dateStore = useDateStore()
+
+// ── 状态 ──
+// 总结弹窗显示状态
+const showSummaryModal = ref(false)
 
 // 日报弹窗：统计数据和显隐控制
 const { reportVisible, reportStats, closeReport } = useDailyReport()
@@ -103,6 +115,11 @@ onBeforeUnmount(() => {
 // 确认日报：关闭弹窗
 const handleDailyReportConfirm = async () => {
   await closeReport()
+}
+
+// 总结保存成功：刷新任务列表以更新总结任务状态
+const handleSummarySaved = async () => {
+  await dayStore.fetchTasks({ showLoading: false })
 }
 
 // 顺延未完成任务到今天：先锁定加载状态，顺延完成后刷新任务列表，最后关闭弹窗

@@ -38,7 +38,7 @@ vi.mock('@/stores/habitStore', () => ({
   })
 }))
 
-vi.mock('@/views/day/composables/useDayActions', () => ({
+vi.mock('@/composables/useDayActions', () => ({
   useDayActions: () => ({
     handleToggleComplete: vi.fn(),
     handleStartTask: vi.fn(),

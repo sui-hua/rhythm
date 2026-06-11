@@ -26,6 +26,7 @@ vi.mock('@/services/supabase', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   createBaseCalls.length = 0
+  mockQuery.mockResolvedValue([])
   mockCreateBase.mockImplementation((tableName: string) => {
     createBaseCalls.push(tableName)
     return {
@@ -161,6 +162,35 @@ describe('habit service', () => {
 
     expect(mockCreate).toHaveBeenCalledWith({ habit_id: 'h1', log: '完成' })
     expect(result).toEqual(newLog)
+  })
+
+  it('log 当天已有打卡记录时返回已有记录且不重复创建', async () => {
+    const completedAt = new Date('2026-06-05T10:00:00.000Z')
+    const existingLog = {
+      id: 'log-1',
+      habit_id: 'h1',
+      log: '已有备注',
+      completed_at: '2026-06-05T08:00:00.000Z'
+    }
+    mockQuery.mockResolvedValue([existingLog])
+
+    const { habit } = await import('@/services/db/habit')
+    const result = await habit.log('h1', '新的备注', completedAt)
+
+    const queryFn = mockQuery.mock.calls[0][0]
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis()
+    }
+    queryFn(chain)
+    expect(chain.eq).toHaveBeenCalledWith('habit_id', 'h1')
+    expect(chain.gte).toHaveBeenCalledWith('completed_at', new Date(2026, 5, 5, 0, 0, 0, 0).toISOString())
+    expect(chain.lte).toHaveBeenCalledWith('completed_at', new Date(2026, 5, 5, 23, 59, 59, 999).toISOString())
+    expect(mockCreate).not.toHaveBeenCalled()
+    expect(result).toEqual(existingLog)
   })
 
   it('log 创建打卡记录，completedAt 有值时设置 completed_at', async () => {

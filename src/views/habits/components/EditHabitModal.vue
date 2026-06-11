@@ -185,6 +185,7 @@ import {
   createDefaultHabitFrequency,
   normalizeHabitFrequency
 } from '@/utils/habitFrequency'
+import { confirmDelete } from '@/composables/useDeleteConfirm'
 import type { FrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
@@ -285,6 +286,8 @@ const submit = withLoadingLock(async () => {
  */
 const handleDelete = withLoadingLock(async () => {
   if (!props.habitData?.id) return
+  if (!confirmDelete('habit')) return
+
   try {
     await db.habit.delete(props.habitData.id)
     emit('deleted')

@@ -31,6 +31,14 @@ vi.mock('../useHabitData', () => ({
   }))
 }))
 
+const mockFeedbackError = vi.fn()
+vi.mock('@/composables/useActionFeedback', () => ({
+  useActionFeedback: () => ({
+    success: vi.fn(),
+    error: mockFeedbackError
+  })
+}))
+
 import { db } from '@/services/database'
 import { useHabitLogs, useHabitLogsFormatter } from '../useHabitLogs'
 import type { HabitLog as DbHabitLog } from '@/services/db/habit'
@@ -141,6 +149,7 @@ describe('useHabitLogs', () => {
     await toggleComplete(15)
 
     expect(fetchHabits).toHaveBeenCalled()
+    expect(mockFeedbackError).toHaveBeenCalledWith('取消打卡失败，已恢复数据', expect.any(Error))
     consoleSpy.mockRestore()
   })
 
@@ -158,6 +167,22 @@ describe('useHabitLogs', () => {
     expect(db.habit.log).toHaveBeenCalledWith('h1', '', expect.any(Date))
     expect(fetchHabits).toHaveBeenCalled()
     expect(isSubmitting.value).toBe(false)
+  })
+
+  // toggleComplete：新增失败时回滚并提示用户
+  it('toggleComplete 新增失败时调用 fetchHabits 回滚并提示用户', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const habit = createMockHabit()
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.log).mockRejectedValue(new Error('write failed'))
+
+    const { toggleComplete } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    await toggleComplete(15)
+
+    expect(fetchHabits).toHaveBeenCalled()
+    expect(mockFeedbackError).toHaveBeenCalledWith('打卡失败，已恢复数据', expect.any(Error))
+    consoleSpy.mockRestore()
   })
 
   // handleQuickLog：空备注返回 false
@@ -203,6 +228,26 @@ describe('useHabitLogs', () => {
     expect(db.habit.log).toHaveBeenCalledWith('h1', '今天状态不错', expect.any(Date))
   })
 
+  // handleQuickLog：本地日志过期时由服务层兜底幂等，组件侧仍只发起一次写请求
+  it('handleQuickLog 本地无今日记录时只调用一次打卡服务', async () => {
+    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const selectedHabit = computed(() => habit as any)
+    const fetchHabits = vi.fn()
+    vi.mocked(db.habit.log).mockResolvedValue({
+      id: 'existing-log',
+      habit_id: 'h1',
+      completed_at: new Date().toISOString(),
+      log: '旧备注'
+    } as any)
+
+    const { handleQuickLog } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const result = await handleQuickLog('今天状态不错')
+
+    expect(result).toBe(true)
+    expect(db.habit.log).toHaveBeenCalledTimes(1)
+    expect(fetchHabits).toHaveBeenCalledTimes(1)
+  })
+
   // handleQuickLog：写入失败时回滚并返回 false
   it('handleQuickLog 写入失败时回滚并返回 false', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -215,6 +260,7 @@ describe('useHabitLogs', () => {
     const result = await handleQuickLog('备注')
     expect(result).toBe(false)
     expect(fetchHabits).toHaveBeenCalled()
+    expect(mockFeedbackError).toHaveBeenCalledWith('快速打卡失败，已恢复数据', expect.any(Error))
     consoleSpy.mockRestore()
   })
 })

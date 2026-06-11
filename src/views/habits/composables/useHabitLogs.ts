@@ -4,6 +4,7 @@
 import { computed, ref } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import { db } from '@/services/database'
+import { useActionFeedback } from '@/composables/useActionFeedback'
 import { useHabitStore } from '@/stores/habitStore'
 import { buildPatchedHabit } from './useHabitData'
 import type { AugmentedHabit } from '@/types/models'
@@ -85,6 +86,7 @@ export function useHabitLogs(
   fetchHabits: () => Promise<void>
 ): UseHabitLogsReturn {
     const habitStore = useHabitStore()
+    const { error } = useActionFeedback()
 
     // 写操作按钮 loading 状态，防止重复提交
     const isSubmitting: Ref<boolean> = ref(false)
@@ -121,7 +123,7 @@ export function useHabitLogs(
             try {
                 await db.habit.deleteLog(existingLog.id)
             } catch (e) {
-                console.error('删除打卡记录失败，回滚:', e)
+                error('取消打卡失败，已恢复数据', e)
                 await fetchHabits()
             } finally {
                 isSubmitting.value = false
@@ -152,7 +154,7 @@ export function useHabitLogs(
                 // 写入成功后刷新，用真实记录替换临时 ID
                 await fetchHabits()
             } catch (e) {
-                console.error('新增打卡记录失败，回滚:', e)
+                error('打卡失败，已恢复数据', e)
                 await fetchHabits()
             } finally {
                 isSubmitting.value = false
@@ -210,7 +212,7 @@ export function useHabitLogs(
             await fetchHabits()
             return true
         } catch (e) {
-            console.error('Quick log failed, 回滚:', e)
+            error('快速打卡失败，已恢复数据', e)
             await fetchHabits()
             return false
         } finally {

@@ -39,15 +39,49 @@ interface ListOptions {
   selectFields?: string
 }
 
+// 动态表名无法直接套用 Supabase 生成类型，这里用最小查询接口隔离 SDK 链式调用。
+interface SupabaseQueryResult<TData = unknown> {
+  data: TData | null
+  error: unknown
+}
+
+// create/update payload 只允许对象形状，避免 any 从数据层继续扩散。
+type CreatePayload<T extends object> = Partial<T>
+type UpdatePayload<T extends object> = Partial<T>
+
+interface SupabaseTableQuery extends PromiseLike<SupabaseQueryResult> {
+  select: (columns?: string) => SupabaseTableQuery
+  insert: (payload: object | object[]) => SupabaseTableQuery
+  update: (payload: object) => SupabaseTableQuery
+  delete: () => SupabaseTableQuery
+  eq: (column: string, value: string | number | boolean | null) => SupabaseTableQuery
+  gt: (column: string, value: string | number | boolean | null) => SupabaseTableQuery
+  gte: (column: string, value: string | number | boolean | null) => SupabaseTableQuery
+  lte: (column: string, value: string | number | boolean | null) => SupabaseTableQuery
+  in: (column: string, values: Array<string | number>) => SupabaseTableQuery
+  limit: (count: number) => SupabaseTableQuery
+  order: (column: string, options?: { ascending?: boolean }) => SupabaseTableQuery
+  single: () => PromiseLike<SupabaseQueryResult>
+}
+
+type QueryBuilderFn<TData extends object> = (
+  query: SupabaseTableQuery
+) => PromiseLike<SupabaseQueryResult<TData[]>> | SupabaseTableQuery
+
 // 基础 CRUD 服务接口
-interface BaseService<T = any> {
+interface BaseService<T extends object = Record<string, unknown>> {
   list: (options?: ListOptions) => Promise<T[]>
   getById: (id: string | number) => Promise<T>
-  create: <U = T>(payload: Partial<U>) => Promise<U>
-  createMany: <U = T>(payloadArray: Partial<U>[]) => Promise<U[]>
-  update: <U = T>(id: string | number, updates: Partial<U>) => Promise<U>
-  query: <U = T>(queryFn: (query: any) => any) => Promise<U[]>
+  create: <U extends object = T>(payload: CreatePayload<U>) => Promise<U>
+  createMany: <U extends object = T>(payloadArray: CreatePayload<U>[]) => Promise<U[]>
+  update: <U extends object = T>(id: string | number, updates: UpdatePayload<U>) => Promise<U>
+  query: <U extends object = T>(queryFn: QueryBuilderFn<U>) => Promise<U[]>
   delete: (id: string | number) => Promise<void>
+}
+
+// 获取动态表查询对象，统一收敛 Supabase 动态表名带来的 unknown 转换。
+function table(tableName: string): SupabaseTableQuery {
+  return supabase.from(tableName) as unknown as SupabaseTableQuery
 }
 
 /**
@@ -55,7 +89,7 @@ interface BaseService<T = any> {
  * @param tableName - 目标表名
  * @returns 包含标准 CRUD 操作的对象
  */
-function createBase<T = any>(tableName: string): BaseService<T> {
+function createBase<T extends object = Record<string, unknown>>(tableName: string): BaseService<T> {
   return {
     async list(options: ListOptions = {}) {
       const {
@@ -64,8 +98,7 @@ function createBase<T = any>(tableName: string): BaseService<T> {
         selectFields = '*'
       } = options
 
-      const { data, error } = await supabase
-        .from(tableName)
+      const { data, error } = await table(tableName)
         .select(selectFields)
         .order(orderField, { ascending })
 
@@ -74,8 +107,7 @@ function createBase<T = any>(tableName: string): BaseService<T> {
     },
 
     async getById(id: string | number) {
-      const { data, error } = await supabase
-        .from(tableName)
+      const { data, error } = await table(tableName)
         .select('*')
         .eq('id', id)
         .single()
@@ -84,11 +116,9 @@ function createBase<T = any>(tableName: string): BaseService<T> {
       return data as T
     },
 
-    async create<U = T>(payload: Partial<U>) {
-      const { data, error } = await supabase
-        .from(tableName)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase insert 类型约束与 Partial<U> 不兼容
-        .insert(payload as any)
+    async create<U extends object = T>(payload: CreatePayload<U>) {
+      const { data, error } = await table(tableName)
+        .insert(payload)
         .select()
         .single()
 
@@ -96,22 +126,18 @@ function createBase<T = any>(tableName: string): BaseService<T> {
       return data as U
     },
 
-    async createMany<U = T>(payloadArray: Partial<U>[]) {
-      const { data, error } = await supabase
-        .from(tableName)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase insert 类型约束与 Partial<U>[] 不兼容
-        .insert(payloadArray as any)
+    async createMany<U extends object = T>(payloadArray: CreatePayload<U>[]) {
+      const { data, error } = await table(tableName)
+        .insert(payloadArray)
         .select()
 
       if (error) throw error
       return data as U[]
     },
 
-    async update<U = T>(id: string | number, updates: Partial<U>) {
-      const { data, error } = await supabase
-        .from(tableName)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase update 类型约束与 Partial<U> 不兼容
-        .update(updates as any)
+    async update<U extends object = T>(id: string | number, updates: UpdatePayload<U>) {
+      const { data, error } = await table(tableName)
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -120,18 +146,17 @@ function createBase<T = any>(tableName: string): BaseService<T> {
       return data as U
     },
 
-    async query<U = T>(queryFn: (query: any) => any) {
+    async query<U extends object = T>(queryFn: QueryBuilderFn<U>) {
       if (typeof queryFn !== 'function') {
         throw new Error('queryFn 必须是一个函数')
       }
-      const { data, error } = await queryFn(supabase.from(tableName))
+      const { data, error } = await queryFn(table(tableName))
       if (error) throw error
       return data as U[]
     },
 
     async delete(id: string | number) {
-      const { error } = await supabase
-        .from(tableName)
+      const { error } = await table(tableName)
         .delete()
         .eq('id', id)
 

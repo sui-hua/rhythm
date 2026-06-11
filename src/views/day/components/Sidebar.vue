@@ -41,8 +41,8 @@
         <template v-for="(section, sectionIndex) in sidebarSections" :key="`desktop-${sectionIndex}`">
           <div
             v-if="section.type === 'item'"
-            @click="$emit('scrollToTask', section.item.id)"
-            @dblclick="$emit('edit-task', section.item.id)"
+            @click="section.item.type === 'summary' ? $emit('open-summary') : $emit('scrollToTask', section.item.id)"
+            @dblclick="section.item.type !== 'summary' && $emit('edit-task', section.item.id)"
             class="flex items-center gap-3 p-3 mx-1 rounded-lg transition-all cursor-pointer group"
             :class="section.item.completed ? 'opacity-50' : 'hover:bg-zinc-50'"
           >
@@ -62,6 +62,7 @@
                   {{ section.item.title }}
                 </h4>
                 <button
+                  v-if="section.item.type !== 'summary'"
                   class="opacity-0 transition-opacity p-1 rounded flex items-center justify-center shrink-0 cursor-pointer group-hover:opacity-100 hover:bg-zinc-200/50"
                   @click.stop="$emit('edit-task', section.item.id)"
                   aria-label="编辑任务"
@@ -226,8 +227,8 @@ const toggleCarryOverGroup = (index: number) => {
 }
 
 // ── Emits ──
-// scrollToTask: 滚动到指定任务 | add-event: 添加新任务 | edit-task: 编辑任务
-defineEmits(['scrollToTask', 'add-event', 'edit-task'])
+// scrollToTask: 滚动到指定任务 | add-event: 添加新任务 | edit-task: 编辑任务 | open-summary: 打开总结弹框
+defineEmits(['scrollToTask', 'add-event', 'edit-task', 'open-summary'])
 </script>
 
 <style scoped>

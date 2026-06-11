@@ -11,7 +11,7 @@ import { toDateOnly } from '@/utils/dateFormatter'
 import type { Task } from '@/services/db/task'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { Habit, HabitLog } from '@/services/db/habit'
-import type { DailyScheduleItem, TaskScheduleItem, GoalDayScheduleItem, HabitScheduleItem } from '@/types/models'
+import type { DailyScheduleItem, TaskScheduleItem, GoalDayScheduleItem, HabitScheduleItem, SummaryScheduleItem } from '@/types/models'
 
 /** 构建日程表的输入参数 */
 export interface DayExecutionItemsInput {
@@ -175,6 +175,24 @@ export function buildDayExecutionItems({
             completed: isCompleted
         } satisfies HabitScheduleItem)
     })
+
+    // ============================================
+    // 阶段四：添加总结任务（虚拟项，固定在列表末尾）
+    schedule.push({
+        id: 'summary',
+        sourceLabel: 'summary',
+        type: 'summary',
+        original: null,
+        startHour: undefined,
+        durationHours: 0,
+        rawDuration: 0,
+        time: '待完成',
+        duration: '-',
+        category: '每日总结',
+        title: '完成今日总结',
+        description: '回顾今日完成情况，规划明日任务',
+        completed: false
+    } satisfies SummaryScheduleItem)
 
     // ============================================
     // 按 startHour 升序，未安排的排最后

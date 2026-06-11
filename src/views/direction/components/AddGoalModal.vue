@@ -123,7 +123,7 @@
 
       <DialogFooter class="modal-footer">
         <div class="modal-footer-left">
-          <button v-if="isEdit" type="button" class="delete-link" @click="handleDeleteGoal">
+          <button v-if="isEdit" type="button" class="delete-link" @click="confirmDeleteGoal">
             删除此目标
           </button>
         </div>
@@ -163,6 +163,7 @@ import { db } from '@/services/database'
 import { months, useGoalDataStore } from '@/stores/goalDataStore'
 import { storeToRefs } from 'pinia'
 import { withLoadingLock } from '@/utils/throttle'
+import { confirmDelete } from '@/composables/useDeleteConfirm'
 
 const store = useGoalDataStore()
 const { categories } = storeToRefs(store)
@@ -257,6 +258,12 @@ const submit = withLoadingLock(async () => {
     await handleAddGoal(payload)
   }
 })
+
+// 删除目标前二次确认，避免误删级联的月计划和日计划
+const confirmDeleteGoal = () => {
+  if (!confirmDelete('goal')) return
+  handleDeleteGoal()
+}
 </script>
 
 <style scoped>

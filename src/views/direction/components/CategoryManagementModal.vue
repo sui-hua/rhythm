@@ -54,6 +54,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useDirectionGoals } from '@/views/direction/composables/useDirectionGoals'
 import { storeToRefs } from 'pinia'
+import { confirmDelete } from '@/composables/useDeleteConfirm'
 
 const store = useGoalDataStore()
 const { categories } = storeToRefs(store)
@@ -92,7 +93,7 @@ const handleAddCategory = async () => {
 }
 
 const handleDeleteCategory = async (id: string | number) => {
-  if (!confirm('确定要删除这个类型吗？')) return
+  if (!confirmDelete('category')) return
   try {
     await db.goalCategories.delete(String(id))
     await fetchCategories()

@@ -81,6 +81,8 @@ describe('AddGoalModal', () => {
   beforeEach(() => {
     mockShowAddModal.value = true
     mockEditingGoal.value = null
+    mockHandleDeleteGoal.mockClear()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
   })
 
   it('新增模式显示"添加新目标"标题', () => {
@@ -173,5 +175,48 @@ describe('AddGoalModal', () => {
     }
     const wrapper = mount(AddGoalModal, { global: { stubs } })
     expect(wrapper.text()).toContain('删除此目标')
+  })
+
+  it('取消删除确认时不删除目标', async () => {
+    vi.mocked(window.confirm).mockReturnValue(false)
+    mockEditingGoal.value = {
+      goal_id: 'g-1',
+      name: '学习 Vue',
+      title: '学习 Vue',
+      startMonth: 3,
+      endMonth: 6,
+      category_id: 'cat-1',
+      task_time: '09:00',
+      duration: 60,
+      carry_over_lookback_days: 0
+    }
+    const wrapper = mount(AddGoalModal, { global: { stubs } })
+
+    const deleteButton = wrapper.findAll('button').find(button => button.text() === '删除此目标')
+    await deleteButton?.trigger('click')
+
+    expect(window.confirm).toHaveBeenCalledWith('确定要删除这个目标吗？删除后关联的月计划和日计划也会一并删除，且无法恢复。')
+    expect(mockHandleDeleteGoal).not.toHaveBeenCalled()
+  })
+
+  it('确认删除后才调用删除目标操作', async () => {
+    vi.mocked(window.confirm).mockReturnValue(true)
+    mockEditingGoal.value = {
+      goal_id: 'g-1',
+      name: '学习 Vue',
+      title: '学习 Vue',
+      startMonth: 3,
+      endMonth: 6,
+      category_id: 'cat-1',
+      task_time: '09:00',
+      duration: 60,
+      carry_over_lookback_days: 0
+    }
+    const wrapper = mount(AddGoalModal, { global: { stubs } })
+
+    const deleteButton = wrapper.findAll('button').find(button => button.text() === '删除此目标')
+    await deleteButton?.trigger('click')
+
+    expect(mockHandleDeleteGoal).toHaveBeenCalledTimes(1)
   })
 })

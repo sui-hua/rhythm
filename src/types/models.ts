@@ -65,8 +65,15 @@ export interface HabitScheduleItem extends DailyScheduleItemBase {
   original: BaseHabit
 }
 
+/** 总结来源的日程项（虚拟项，用于触发总结弹框） */
+export interface SummaryScheduleItem extends DailyScheduleItemBase {
+  type: 'summary'
+  sourceLabel: 'summary'
+  original: null
+}
+
 /** 日程安排项（判别联合，通过 type 字段区分来源） */
-export type DailyScheduleItem = TaskScheduleItem | GoalDayScheduleItem | HabitScheduleItem
+export type DailyScheduleItem = TaskScheduleItem | GoalDayScheduleItem | HabitScheduleItem | SummaryScheduleItem
 
 /** 番茄钟活跃任务 */
 export interface ActiveTask {

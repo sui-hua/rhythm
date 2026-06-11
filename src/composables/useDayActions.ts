@@ -1,16 +1,18 @@
 /**
- * useDayActions — 日页面操作逻辑 composable
+ * useDayActions — 每日时间轴操作逻辑 composable
  *
  * 从 dayStore 提取的任务完成切换、习惯打卡、日计划状态变更、任务计时、
  * 任务时间更新、任务顺延等操作。每个函数接收必要的 store refs 作为参数，
  * 不直接依赖 pomodoroStore，改为返回值让调用方处理。
  *
- * 数据流：组件 → useDayActions（乐观更新 + API 调用）→ 数据库
+ * 数据流：dayStore → useDayActions（乐观更新 + API 调用）→ 数据库
  */
 
 import { db } from '@/services/database'
+import { useActionFeedback } from '@/composables/useActionFeedback'
 import { playSuccessSound } from '@/utils/audio'
 import { useDateStore } from '@/stores/dateStore'
+import { toDateOnly } from '@/utils/dateFormatter'
 import type { Ref } from 'vue'
 import type { Task } from '@/services/db/task'
 import type { GoalDay } from '@/services/db/goalDays'
@@ -53,6 +55,7 @@ export interface StartTaskResult {
  */
 export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLogs, goalDays }: UseDayActionsOptions) {
   const dateStore = useDateStore()
+  const { error } = useActionFeedback()
 
   // ── 私有辅助 ──
 
@@ -85,6 +88,20 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
     }
   }
 
+  /**
+   * 判断本地日志中是否已有同一条或同一习惯同一天的记录
+   * 服务层幂等命中时可能返回既有日志，这里避免本地 ref 被重复追加。
+   */
+  const hasSameHabitLog = (source: HabitLog[], targetLog: HabitLog): boolean => {
+    const targetDate = targetLog.completed_at ? toDateOnly(new Date(targetLog.completed_at)) : null
+    return source.some(log => {
+      if (String(log.id) === String(targetLog.id)) return true
+      if (!targetDate || !log.completed_at) return false
+      return String(log.habit_id) === String(targetLog.habit_id)
+        && toDateOnly(new Date(log.completed_at)) === targetDate
+    })
+  }
+
   // ── 内部操作 ──
 
   /** 切换任务完成状态，通过 completed 布尔字段控制 */
@@ -107,7 +124,9 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
       // 标记完成：创建日志并同步到本地 ref
       const { startOfDay } = getCurrentDayRange()
       const newLog = await db.habit.log(task.id, '', startOfDay)
-      habitLogs.value = [...habitLogs.value, newLog]
+      if (!hasSameHabitLog(habitLogs.value, newLog)) {
+        habitLogs.value = [...habitLogs.value, newLog]
+      }
       return
     }
 
@@ -170,7 +189,7 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
     } catch (e) {
       // 回滚：恢复原始状态，确保 UI 与数据库一致
       target.completed = previousState
-      console.error('切换完成状态失败', e)
+      error('状态更新失败，已恢复原状态', e)
     }
   }
 
@@ -211,7 +230,7 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
     } catch (e) {
       // 回滚：清除乐观更新的值
       task.actual_start_time = null
-      console.error('开始计时失败', e)
+      error('开始计时失败，请稍后重试', e)
       return null
     }
   }
@@ -245,7 +264,7 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
       // 回滚：恢复原始时间
       task.original.start_time = previousStart
       task.original.end_time = previousEnd
-      console.error('更新任务时间失败:', e)
+      error('更新时间失败，已恢复原时间', e)
     }
   }
 
@@ -292,7 +311,7 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
         })
       )
     } catch (e) {
-      console.error('顺延未完成任务失败:', e)
+      error('顺延任务失败，请稍后重试', e)
     }
   }
 

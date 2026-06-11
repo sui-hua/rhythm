@@ -38,12 +38,27 @@ vi.mock('@/services/database', () => ({
   }
 }))
 
+vi.mock('@/composables/useDeleteConfirm', () => ({
+  confirmDelete: vi.fn(() => true)
+}))
+
+const mockFeedbackError = vi.fn()
+vi.mock('@/composables/useActionFeedback', () => ({
+  useActionFeedback: () => ({
+    success: vi.fn(),
+    error: mockFeedbackError
+  })
+}))
+
+import { confirmDelete } from '@/composables/useDeleteConfirm'
+
 let dataStore: ReturnType<typeof useGoalDataStore>
 let selectionStore: ReturnType<typeof useGoalSelectionStore>
 let batchStore: ReturnType<typeof useGoalBatchStore>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(confirmDelete).mockReturnValue(true)
   setActivePinia(createPinia())
   dataStore = useGoalDataStore()
   selectionStore = useGoalSelectionStore()
@@ -161,5 +176,69 @@ describe('useDirectionBatch', () => {
     expect(db.rpc).not.toHaveBeenCalled()
     expect(db.goalDays.deleteByIds).toHaveBeenCalledWith(['dp-1', 'dp-2'])
     expect(db.goalDays.delete).not.toHaveBeenCalled()
+  })
+
+  it('取消确认时不删除选中的日计划', async () => {
+    vi.mocked(confirmDelete).mockReturnValue(false)
+
+    dataStore.goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' }
+    ]
+    dataStore.goalDaysCache['mp-1'] = [
+      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
+    ]
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
+    selectionStore.selectedMonth = 4
+    batchStore.selectedDates[4] = [1]
+
+    const { handleBatchDelete } = useDirectionBatch()
+    await handleBatchDelete()
+
+    expect(confirmDelete).toHaveBeenCalledWith({ type: 'goalDayBatch', count: 1 })
+    expect(db.goalDays.deleteByIds).not.toHaveBeenCalled()
+  })
+
+  it('批量保存失败时保留输入和选中日期并提示用户', async () => {
+    ;(db.goalDays.update as Mock).mockRejectedValue(new Error('update failed'))
+
+    dataStore.goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: '09:45', duration: 25 }
+    ]
+    dataStore.goalDaysCache['mp-1'] = [
+      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
+    ]
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
+    selectionStore.selectedMonth = 4
+    batchStore.selectedDates[4] = [1]
+    batchStore.batchInput = '保留标题'
+
+    const { applyBatchTask } = useDirectionBatch()
+    await applyBatchTask()
+
+    expect(batchStore.batchInput).toBe('保留标题')
+    expect(batchStore.selectedDates[4]).toEqual([1])
+    expect(mockFeedbackError).toHaveBeenCalledWith('批量保存日计划失败，请稍后重试', expect.any(Error))
+  })
+
+  it('批量删除失败时保留选中日期并提示用户', async () => {
+    ;(db.goalDays.deleteByIds as Mock).mockRejectedValue(new Error('delete failed'))
+
+    dataStore.goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' }
+    ]
+    dataStore.goalDaysCache['mp-1'] = [
+      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
+    ]
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
+    selectionStore.selectedMonth = 4
+    batchStore.selectedDates[4] = [1]
+    batchStore.batchInput = '待删除'
+
+    const { handleBatchDelete } = useDirectionBatch()
+    await handleBatchDelete()
+
+    expect(batchStore.batchInput).toBe('待删除')
+    expect(batchStore.selectedDates[4]).toEqual([1])
+    expect(mockFeedbackError).toHaveBeenCalledWith('批量删除日计划失败，请稍后重试', expect.any(Error))
   })
 })

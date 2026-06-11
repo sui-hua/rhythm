@@ -46,6 +46,14 @@ export interface UpdateHabitPayload {
 const habitsBase = createBase<Habit>(TABLES.HABIT)
 const habitLogsBase = createBase<HabitLog>(TABLES.HABIT_LOGS)
 
+// 获取本地自然日的起止时间，用于同一习惯当天只保留一条打卡记录
+function getLocalDayRange(date: Date): { startOfDay: Date; endOfDay: Date } {
+  return {
+    startOfDay: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0),
+    endOfDay: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
+  }
+}
+
 export const habit = {
   /**
    * 查询习惯列表
@@ -137,6 +145,20 @@ export const habit = {
     log: string = '',
     completedAt: Date | null = null
   ): Promise<HabitLog> {
+    const targetDate = completedAt || new Date()
+    const { startOfDay, endOfDay } = getLocalDayRange(targetDate)
+
+    // 服务层幂等保护：同一习惯同一自然日已有记录时直接复用，不覆盖旧备注
+    const existingLogs = await habitLogsBase.query(q => q
+      .select('*')
+      .eq('habit_id', habitId)
+      .gte('completed_at', startOfDay.toISOString())
+      .lte('completed_at', endOfDay.toISOString())
+      .order('completed_at', { ascending: true })
+    )
+    const existingLog = existingLogs[0]
+    if (existingLog) return existingLog
+
     const payload: Partial<HabitLog> = {
       habit_id: habitId,
       log

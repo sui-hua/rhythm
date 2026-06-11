@@ -5,6 +5,7 @@ const mockQuery: Mock = vi.fn()
 const mockCreate: Mock = vi.fn()
 const mockUpdate: Mock = vi.fn()
 const mockDelete: Mock = vi.fn()
+const mockSupabaseFrom: Mock = vi.fn()
 
 // 记录 createBase 调用，区分 goal_days 和 goal 表
 const createBaseCalls: string[] = []
@@ -19,7 +20,7 @@ const mockCreateBase: Mock = vi.fn((tableName: string) => {
 })
 
 vi.mock('@/services/supabase', () => ({
-  default: { createBase: mockCreateBase },
+  default: { from: mockSupabaseFrom },
   createBase: mockCreateBase
 }))
 
@@ -35,6 +36,7 @@ beforeEach(() => {
       delete: mockDelete
     }
   })
+  mockSupabaseFrom.mockReset()
 })
 
 describe('goalDays service', () => {
@@ -178,13 +180,22 @@ describe('goalDays service', () => {
     // listForDayView 的 range 查询返回混合数据
     const rangeQueryResult = [
       // 当天任务，始终保留
-      { id: '1', day: '2026-06-05', status: 'active', goal_months: { goal: { carry_over_lookback_days: 7 } } },
+      { id: '1', goal_month_id: 'gm-1', day: '2026-06-05', status: 'active' },
       // 历史未完成任务，在回溯范围内，保留
-      { id: '2', day: '2026-06-01', status: 'active', goal_months: { goal: { carry_over_lookback_days: 7 } } },
+      { id: '2', goal_month_id: 'gm-1', day: '2026-06-01', status: 'active' },
       // 历史已完成任务，不保留
-      { id: '3', day: '2026-06-02', status: 'completed', goal_months: { goal: { carry_over_lookback_days: 7 } } },
+      { id: '3', goal_month_id: 'gm-1', day: '2026-06-02', status: 'completed' },
       // 历史未完成但超出回溯范围，不保留
-      { id: '4', day: '2026-05-20', status: 'active', goal_months: { goal: { carry_over_lookback_days: 7 } } }
+      { id: '4', goal_month_id: 'gm-1', day: '2026-05-20', status: 'active' }
+    ]
+    // listForDayView 会单独查询 goal_months + goal，以拿到每个目标自己的回溯配置
+    const monthRows = [
+      {
+        id: 'gm-1',
+        task_time: '09:00',
+        duration: 30,
+        goal: { task_time: '08:00', duration: 45, carry_over_lookback_days: 7 }
+      }
     ]
 
     let queryCallIndex = 0
@@ -193,6 +204,11 @@ describe('goalDays service', () => {
       if (queryCallIndex === 1) return Promise.resolve(goalsQueryResult)
       return Promise.resolve(rangeQueryResult)
     })
+    const monthQuery = {
+      select: vi.fn().mockReturnThis(),
+      in: vi.fn().mockResolvedValue({ data: monthRows })
+    }
+    mockSupabaseFrom.mockReturnValue(monthQuery)
 
     const { goalDays } = await import('@/services/db/goalDays')
     const result = await goalDays.listForDayView(new Date('2026-06-05T00:00:00.000Z'))
@@ -200,5 +216,7 @@ describe('goalDays service', () => {
     // 应保留 id=1（当天）和 id=2（历史未完成且在回溯范围内）
     expect(result).toHaveLength(2)
     expect(result.map(r => r.id)).toEqual(['1', '2'])
+    expect(mockSupabaseFrom).toHaveBeenCalledWith('goal_months')
+    expect(monthQuery.in).toHaveBeenCalledWith('id', ['gm-1'])
   })
 })
