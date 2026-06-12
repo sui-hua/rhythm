@@ -99,7 +99,7 @@
             <Button
               class="w-full h-9 bg-primary text-primary-foreground font-semibold"
               @click="submit"
-              :disabled="!isValid"
+              :disabled="!isValid || isSubmitting"
             >
               {{ initialData ? '保存修改' : '确认创建' }}
             </Button>
@@ -115,6 +115,7 @@
               v-if="initialData && !isHabit"
               type="button"
               @click="handleDelete"
+              :disabled="isSubmitting"
               class="text-xs text-destructive hover:underline underline-offset-4 mt-2"
             >
               删除此任务
@@ -163,7 +164,7 @@ const emit = defineEmits(['close', 'refresh', 'update:show'])
 
 // ── Composables ──
 // 表单状态、校验、提交和删除逻辑全部由 composable 管理
-const { eventForm, isHabit, errors, isValid, submit, handleDelete, markFieldTouched } = useAddEventForm(props, emit)
+const { eventForm, isHabit, errors, isValid, submit, handleDelete, isSubmitting, markFieldTouched } = useAddEventForm(props, emit)
 </script>
 
 <style scoped>

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import EditHabitModal from '../EditHabitModal.vue'
 import { db } from '@/services/database'
 
@@ -50,9 +51,18 @@ const stubs = {
     props: ['modelValue', 'placeholder', 'disabled', 'class'],
     emits: ['update:modelValue', 'blur', 'keyup']
   },
-  Button: { template: '<button><slot /></button>', props: ['variant', 'disabled', 'class', 'type', 'title'] },
+  Button: { template: '<button :disabled="disabled"><slot /></button>', props: ['variant', 'disabled', 'class', 'type', 'title'] },
   TimePicker: { template: '<div />', props: ['modelValue', 'label', 'id'] },
   DurationPicker: { template: '<div />', props: ['modelValue', 'label', 'id'] }
+}
+
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+
+  return { promise, resolve }
 }
 
 describe('EditHabitModal', () => {
@@ -68,6 +78,8 @@ describe('EditHabitModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.mocked(db.habit.update).mockResolvedValue({} as any)
+    vi.mocked(db.habit.delete).mockResolvedValue({} as any)
   })
 
   it('显示"修改习惯"标题', () => {
@@ -167,5 +179,47 @@ describe('EditHabitModal', () => {
 
     expect(db.habit.delete).toHaveBeenCalledWith('habit-1')
     expect(wrapper.emitted('deleted')).toBeTruthy()
+  })
+
+  it('保存 pending 时重复点击只更新一次', async () => {
+    const gate = deferred()
+    vi.mocked(db.habit.update).mockReturnValue(gate.promise as any)
+    const wrapper = mount(EditHabitModal, {
+      props: { show: true, habitData: mockHabit },
+      global: { stubs }
+    })
+
+    const saveBtn = wrapper.findAll('button').find(b => b.text() === '保存修改')!
+    const first = saveBtn.trigger('click')
+    const second = saveBtn.trigger('click')
+    await nextTick()
+
+    expect(db.habit.update).toHaveBeenCalledTimes(1)
+    expect(saveBtn.attributes('disabled')).toBeDefined()
+
+    gate.resolve()
+    await first
+    await second
+  })
+
+  it('删除 pending 时重复点击只删除一次', async () => {
+    const gate = deferred()
+    vi.mocked(db.habit.delete).mockReturnValue(gate.promise as any)
+    const wrapper = mount(EditHabitModal, {
+      props: { show: true, habitData: mockHabit },
+      global: { stubs }
+    })
+
+    const deleteBtn = wrapper.findAll('button').find(b => b.text() === '删除该习惯')!
+    const first = deleteBtn.trigger('click')
+    const second = deleteBtn.trigger('click')
+    await nextTick()
+
+    expect(db.habit.delete).toHaveBeenCalledTimes(1)
+    expect(deleteBtn.attributes('disabled')).toBeDefined()
+
+    gate.resolve()
+    await first
+    await second
   })
 })

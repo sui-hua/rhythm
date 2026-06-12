@@ -105,7 +105,7 @@
             <Button 
               class="w-full h-9 bg-primary text-primary-foreground font-semibold"
               @click="submit"
-              :disabled="!form.title.trim() || !canSubmitFrequency"
+              :disabled="!form.title.trim() || !canSubmitFrequency || isSubmitting"
             >
               确认创建
             </Button>
@@ -137,7 +137,7 @@
  *
  * @see {@link https://github.com/radix-ui/primitives|Radix Vue Dialog} 底层 Dialog 组件
  */
-import { computed, reactive } from 'vue'
+import { reactive } from 'vue'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -145,7 +145,7 @@ import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
-import { withLoadingLock } from '@/utils/throttle'
+import { useActionLock } from '@/composables/useActionLock'
 import type { FrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 import { useHabitFrequencyForm } from '@/views/habits/composables/useHabitFrequencyForm'
 
@@ -155,6 +155,9 @@ const props = defineProps({
 })
 
 const authStore = useAuthStore()
+
+// 习惯创建提交锁，防止双击或回车连发重复创建
+const { isSubmitting, withLock } = useActionLock()
 
 const emit = defineEmits([
   'close', // 关闭弹窗事件 (暂未使用该单独事件)
@@ -212,7 +215,7 @@ const {
  * 注意：数据库中 duration 以分钟为单位存储，因此需要将小时基数 * 60 转换
  *       默认时长为 10 分钟（即 10/60 小时）
  */
-const submit = withLoadingLock(async () => {
+const submit = withLock(async () => {
   // 提交前执行验证，确保错误提示在 UI 上可见
   validateTitle()
   if (errors.title || !canSubmitFrequency.value) return

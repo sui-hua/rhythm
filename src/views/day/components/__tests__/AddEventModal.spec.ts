@@ -4,6 +4,8 @@ import { mount } from '@vue/test-utils'
 import { ref, reactive } from 'vue'
 import AddEventModal from '../AddEventModal.vue'
 
+const mockIsSubmitting = ref(false)
+
 // mock useAddEventForm composable，返回可控的表单状态
 vi.mock('@/views/day/composables/useAddEventForm', () => ({
   useAddEventForm: () => ({
@@ -13,6 +15,7 @@ vi.mock('@/views/day/composables/useAddEventForm', () => ({
     isValid: ref(true),
     submit: vi.fn(),
     handleDelete: vi.fn(),
+    isSubmitting: mockIsSubmitting,
     markFieldTouched: vi.fn()
   }),
   InitialEventData: {}
@@ -25,12 +28,16 @@ const stubs = {
   DialogTitle: { template: '<div><slot /></div>' },
   DialogDescription: { template: '<div><slot /></div>' },
   Input: { template: '<input />', props: ['modelValue', 'placeholder', 'disabled'] },
-  Button: { template: '<button><slot /></button>', props: ['variant', 'disabled'] },
+  Button: { template: '<button :disabled="disabled"><slot /></button>', props: ['variant', 'disabled'] },
   TimePicker: { template: '<div />', props: ['modelValue', 'label', 'id'] },
   DurationPicker: { template: '<div />', props: ['modelValue', 'label', 'id'] }
 }
 
 describe('AddEventModal', () => {
+  beforeEach(() => {
+    mockIsSubmitting.value = false
+  })
+
   it('新增模式下显示"新增任务"标题', () => {
     const wrapper = mount(AddEventModal, {
       props: { show: true, initialData: null },
@@ -91,5 +98,23 @@ describe('AddEventModal', () => {
     const labels = wrapper.findAll('label')
     const hasDescLabel = labels.some(l => l.text().includes('描述'))
     expect(hasDescLabel).toBe(true)
+  })
+
+  it('提交中禁用保存和删除按钮，防止重复点击', () => {
+    mockIsSubmitting.value = true
+
+    const wrapper = mount(AddEventModal, {
+      props: {
+        show: true,
+        initialData: { id: 'task-1', type: 'task', title: '任务' }
+      },
+      global: { stubs }
+    })
+
+    const saveBtn = wrapper.findAll('button').find(b => b.text() === '保存修改')
+    const deleteBtn = wrapper.findAll('button').find(b => b.text() === '删除此任务')
+
+    expect(saveBtn?.attributes('disabled')).toBeDefined()
+    expect(deleteBtn?.attributes('disabled')).toBeDefined()
   })
 })

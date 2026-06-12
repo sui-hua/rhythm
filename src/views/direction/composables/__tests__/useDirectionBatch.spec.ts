@@ -52,6 +52,15 @@ vi.mock('@/composables/useActionFeedback', () => ({
 
 import { confirmDelete } from '@/composables/useDeleteConfirm'
 
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+
+  return { promise, resolve }
+}
+
 let dataStore: ReturnType<typeof useGoalDataStore>
 let selectionStore: ReturnType<typeof useGoalSelectionStore>
 let batchStore: ReturnType<typeof useGoalBatchStore>
@@ -220,6 +229,34 @@ describe('useDirectionBatch', () => {
     expect(mockFeedbackError).toHaveBeenCalledWith('批量保存日计划失败，请稍后重试', expect.any(Error))
   })
 
+  it('批量保存 pending 时重复触发只执行一次写入', async () => {
+    const gate = deferred()
+    ;(db.goalDays.update as Mock).mockReturnValue(gate.promise)
+
+    dataStore.goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01', task_time: '09:45', duration: 25 }
+    ]
+    dataStore.goalDaysCache['mp-1'] = [
+      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
+    ]
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
+    selectionStore.selectedMonth = 4
+    batchStore.selectedDates[4] = [1]
+    batchStore.batchInput = '防重复标题'
+
+    const { applyBatchTask, isSubmitting } = useDirectionBatch()
+    const first = applyBatchTask()
+    const second = applyBatchTask()
+    await Promise.resolve()
+
+    expect(isSubmitting.value).toBe(true)
+    expect(db.goalDays.update).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await first
+    await second
+  })
+
   it('批量删除失败时保留选中日期并提示用户', async () => {
     ;(db.goalDays.deleteByIds as Mock).mockRejectedValue(new Error('delete failed'))
 
@@ -240,5 +277,32 @@ describe('useDirectionBatch', () => {
     expect(batchStore.batchInput).toBe('待删除')
     expect(batchStore.selectedDates[4]).toEqual([1])
     expect(mockFeedbackError).toHaveBeenCalledWith('批量删除日计划失败，请稍后重试', expect.any(Error))
+  })
+
+  it('批量删除 pending 时重复触发只执行一次删除', async () => {
+    const gate = deferred()
+    ;(db.goalDays.deleteByIds as Mock).mockReturnValue(gate.promise)
+
+    dataStore.goalMonthsCache.p1 = [
+      { id: 'mp-1', goal_id: 'p1', month: '2026-04-01' }
+    ]
+    dataStore.goalDaysCache['mp-1'] = [
+      { id: 'dp-1', monthly_plan_id: 'mp-1', day: '2026-04-01' }
+    ]
+    selectionStore.selectedGoal = { id: 'p1', goal_id: 'p1', title: '目标 1', name: '目标 1', category_name: '未分类' }
+    selectionStore.selectedMonth = 4
+    batchStore.selectedDates[4] = [1]
+
+    const { handleBatchDelete, isSubmitting } = useDirectionBatch()
+    const first = handleBatchDelete()
+    const second = handleBatchDelete()
+    await Promise.resolve()
+
+    expect(isSubmitting.value).toBe(true)
+    expect(db.goalDays.deleteByIds).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await first
+    await second
   })
 })

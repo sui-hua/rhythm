@@ -69,8 +69,9 @@ export interface DirectionFetchReturn {
 /** useDirectionBatch 返回值接口 */
 export interface DirectionBatchReturn {
   batchInput: Ref<string>
-  applyBatchTask: () => Promise<void>
-  handleBatchDelete: () => Promise<void>
+  applyBatchTask: () => Promise<void | undefined>
+  handleBatchDelete: () => Promise<void | undefined>
+  isSubmitting: Ref<boolean>
 }
 
 /** useDirectionGoals 返回值接口 */

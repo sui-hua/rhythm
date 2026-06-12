@@ -1,10 +1,11 @@
 // useHabitLogs.ts
 // 习惯模块的打卡写操作层，处理乐观更新和失败回滚
 
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import { db } from '@/services/database'
 import { useActionFeedback } from '@/composables/useActionFeedback'
+import { useActionLock } from '@/composables/useActionLock'
 import { useHabitStore } from '@/stores/habitStore'
 import { buildPatchedHabit } from './useHabitData'
 import type { AugmentedHabit } from '@/types/models'
@@ -87,9 +88,7 @@ export function useHabitLogs(
 ): UseHabitLogsReturn {
     const habitStore = useHabitStore()
     const { error } = useActionFeedback()
-
-    // 写操作按钮 loading 状态，防止重复提交
-    const isSubmitting: Ref<boolean> = ref(false)
+    const { isSubmitting, withLock } = useActionLock()
 
     /**
      * 切换指定日期的打卡状态：已有则删除，没有则新增
@@ -97,17 +96,14 @@ export function useHabitLogs(
      * 采用乐观更新策略：先更新 UI 再写数据库，失败时回滚到一致状态。
      * 新增打卡使用临时 ID（temp-xxx），写入成功后通过 fetchHabits 获取真实 ID。
      */
-    const toggleComplete = async (day: number): Promise<void> => {
-        if (!selectedHabit.value || isSubmitting.value) return
-
+    const runToggleComplete = withLock(async (day: number): Promise<void> => {
+        if (!selectedHabit.value) return
         const habit = selectedHabit.value
 
         // 在月度日志中查找该日期是否已有打卡记录
         const existingLog = habit.monthlyLogs.find((log) => {
             return new Date(log.completed_at!).getDate() === day
         })
-
-        isSubmitting.value = true
 
         if (existingLog) {
             // 取消打卡：先从内存中移除该日记录
@@ -125,8 +121,6 @@ export function useHabitLogs(
             } catch (e) {
                 error('取消打卡失败，已恢复数据', e)
                 await fetchHabits()
-            } finally {
-                isSubmitting.value = false
             }
         } else {
             // 新增打卡：创建临时记录乐观更新 UI
@@ -156,10 +150,12 @@ export function useHabitLogs(
             } catch (e) {
                 error('打卡失败，已恢复数据', e)
                 await fetchHabits()
-            } finally {
-                isSubmitting.value = false
             }
         }
+    })
+
+    const toggleComplete = async (day: number): Promise<void> => {
+        await runToggleComplete(day)
     }
 
     /**
@@ -168,8 +164,8 @@ export function useHabitLogs(
      * 与 toggleComplete 类似的乐观更新策略，额外支持备注。
      * 若今日已有打卡记录则直接返回 false，不重复打卡。
      */
-    const handleQuickLog = async (note: string): Promise<boolean> => {
-        if (!selectedHabit.value || !note.trim() || isSubmitting.value) {
+    const runQuickLog = withLock(async (note: string): Promise<boolean> => {
+        if (!selectedHabit.value || !note.trim()) {
             console.warn('Habit not selected or note is empty')
             return false
         }
@@ -184,8 +180,6 @@ export function useHabitLogs(
         })
 
         if (existingLog) return false
-
-        isSubmitting.value = true
 
         // 创建临时记录乐观更新 UI
         const date = new Date(now.getFullYear(), now.getMonth(), today, 12, 0, 0)
@@ -215,9 +209,11 @@ export function useHabitLogs(
             error('快速打卡失败，已恢复数据', e)
             await fetchHabits()
             return false
-        } finally {
-            isSubmitting.value = false
         }
+    })
+
+    const handleQuickLog = async (note: string): Promise<boolean> => {
+        return (await runQuickLog(note)) ?? false
     }
 
     return {

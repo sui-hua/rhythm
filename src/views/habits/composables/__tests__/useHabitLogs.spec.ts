@@ -43,6 +43,15 @@ import { db } from '@/services/database'
 import { useHabitLogs, useHabitLogsFormatter } from '../useHabitLogs'
 import type { HabitLog as DbHabitLog } from '@/services/db/habit'
 
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+
+  return { promise, resolve }
+}
+
 describe('useHabitLogsFormatter', () => {
   // 格式化日志：正确格式化日期和排序
   it('formattedLogs 按时间倒序排列并格式化日期', () => {
@@ -169,6 +178,56 @@ describe('useHabitLogs', () => {
     expect(isSubmitting.value).toBe(false)
   })
 
+  // toggleComplete：新增 pending 时重复触发只写入一次
+  it('toggleComplete 新增 pending 时重复触发只调用一次打卡服务', async () => {
+    const gate = deferred()
+    const habit = createMockHabit()
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.log).mockReturnValue(gate.promise as any)
+
+    const { toggleComplete, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const first = toggleComplete(15)
+    const second = toggleComplete(15)
+
+    expect(isSubmitting.value).toBe(true)
+    expect(db.habit.log).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await first
+    await second
+
+    expect(db.habit.log).toHaveBeenCalledTimes(1)
+  })
+
+  // toggleComplete：删除 pending 时重复触发只删除一次
+  it('toggleComplete 删除 pending 时重复触发只调用一次删除服务', async () => {
+    const gate = deferred()
+    const existingLog = { id: 'log-1', habit_id: 'h1', completed_at: '2026-06-15T12:00:00Z', log: '' }
+    const habit = createMockHabit({
+      logs: [existingLog] as any,
+      monthlyLogs: [existingLog] as any,
+      completedDays: [15] as any,
+      total: 1
+    })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.deleteLog).mockReturnValue(gate.promise as any)
+
+    const { toggleComplete, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const first = toggleComplete(15)
+    const second = toggleComplete(15)
+
+    expect(isSubmitting.value).toBe(true)
+    expect(db.habit.deleteLog).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await first
+    await second
+
+    expect(db.habit.deleteLog).toHaveBeenCalledTimes(1)
+  })
+
   // toggleComplete：新增失败时回滚并提示用户
   it('toggleComplete 新增失败时调用 fetchHabits 回滚并提示用户', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -246,6 +305,27 @@ describe('useHabitLogs', () => {
     expect(result).toBe(true)
     expect(db.habit.log).toHaveBeenCalledTimes(1)
     expect(fetchHabits).toHaveBeenCalledTimes(1)
+  })
+
+  // handleQuickLog：pending 时重复触发只写入一次
+  it('handleQuickLog pending 时重复触发只调用一次打卡服务', async () => {
+    const gate = deferred()
+    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const selectedHabit = computed(() => habit)
+    const fetchHabits = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(db.habit.log).mockReturnValue(gate.promise as any)
+
+    const { handleQuickLog, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
+    const first = handleQuickLog('今天状态不错')
+    const second = handleQuickLog('今天状态不错')
+
+    expect(isSubmitting.value).toBe(true)
+    expect(db.habit.log).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await expect(first).resolves.toBe(true)
+    await expect(second).resolves.toBe(false)
+    expect(db.habit.log).toHaveBeenCalledTimes(1)
   })
 
   // handleQuickLog：写入失败时回滚并返回 false

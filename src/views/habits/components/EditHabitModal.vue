@@ -104,7 +104,7 @@
               <Button 
                 class="w-full h-9 bg-primary text-primary-foreground font-semibold"
                 @click="submit"
-                :disabled="!form.title.trim() || !canSubmitFrequency"
+                :disabled="!form.title.trim() || !canSubmitFrequency || isSubmitting"
               >
                 保存修改
               </Button>
@@ -120,6 +120,7 @@
                   v-if="!habitData?.is_archived"
                   class="flex-1 h-9 bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white font-medium transition-colors border-none"
                   @click="handleArchive(true)"
+                  :disabled="isSubmitting"
                 >
                   归档该习惯
                 </Button>
@@ -127,6 +128,7 @@
                   v-else
                   class="flex-1 h-9 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white font-medium transition-colors border-none"
                   @click="handleArchive(false)"
+                  :disabled="isSubmitting"
                 >
                   取消归档
                 </Button>
@@ -134,6 +136,7 @@
                   title="危险操作：删除无法恢复"
                   class="flex-1 h-9 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white font-medium transition-colors border-none"
                   @click="handleDelete"
+                  :disabled="isSubmitting"
                 >
                   删除该习惯
                 </Button>
@@ -180,7 +183,7 @@ import { Button } from '@/components/ui/button'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
 import { db } from '@/services/database'
-import { withLoadingLock } from '@/utils/throttle'
+import { useActionLock } from '@/composables/useActionLock'
 import {
   createDefaultHabitFrequency,
   normalizeHabitFrequency
@@ -208,6 +211,9 @@ const emit = defineEmits([
   'deleted', // 删除当前习惯后向父级汇报的事件，用于父级重置选中状态
   'update:show' // 支持双向绑定的更新显示状态
 ])
+
+// 习惯编辑相关写操作共享提交锁，避免保存、归档、删除重复触发
+const { isSubmitting, withLock } = useActionLock()
 
 // 弹窗内的可编辑表单数据
 const form: FrequencyForm & { title: string; task_time: string; duration: number } = reactive({
@@ -262,7 +268,7 @@ watch(() => props.habitData, (newVal) => {
 /**
  * 提交并保存更改的方法
  */
-const submit = withLoadingLock(async () => {
+const submit = withLock(async () => {
   // 提交前执行验证，确保错误提示在 UI 上可见
   validateTitle()
   if (errors.title || !props.habitData?.id || !canSubmitFrequency.value) return
@@ -284,7 +290,7 @@ const submit = withLoadingLock(async () => {
 /**
  * 删除当前习惯并通知外部
  */
-const handleDelete = withLoadingLock(async () => {
+const handleDelete = withLock(async () => {
   if (!props.habitData?.id) return
   if (!confirmDelete('habit')) return
 
@@ -301,7 +307,7 @@ const handleDelete = withLoadingLock(async () => {
 /**
  * 归档 / 取消归档当前习惯
  */
-const handleArchive = withLoadingLock(async (isArchived: boolean) => {
+const handleArchive = withLock(async (isArchived: boolean) => {
   if (!props.habitData?.id) return
   try {
     await db.habit.update(props.habitData.id, {

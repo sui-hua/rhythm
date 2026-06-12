@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import AddHabitModal from '../AddHabitModal.vue'
+import { db } from '@/services/database'
 
 // mock db 服务
 vi.mock('@/services/database', () => ({
@@ -45,16 +47,30 @@ const stubs = {
   DialogTitle: { template: '<div><slot /></div>' },
   DialogDescription: { template: '<div><slot /></div>' },
   Input: {
-    template: '<input />',
+    template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
     props: ['modelValue', 'placeholder', 'disabled', 'class'],
     emits: ['update:modelValue', 'blur', 'keyup']
   },
-  Button: { template: '<button><slot /></button>', props: ['variant', 'disabled', 'class', 'type'] },
+  Button: { template: '<button :disabled="disabled"><slot /></button>', props: ['variant', 'disabled', 'class', 'type'] },
   TimePicker: { template: '<div />', props: ['modelValue', 'label', 'id'] },
   DurationPicker: { template: '<div />', props: ['modelValue', 'label', 'id'] }
 }
 
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+
+  return { promise, resolve }
+}
+
 describe('AddHabitModal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(db.habit.create).mockResolvedValue({ id: 'new-habit-1' } as any)
+  })
+
   it('显示"添加新习惯"标题', () => {
     const wrapper = mount(AddHabitModal, {
       props: { show: true },
@@ -106,5 +122,27 @@ describe('AddHabitModal', () => {
     await cancelBtn?.trigger('click')
     expect(wrapper.emitted('update:show')).toBeTruthy()
     expect(wrapper.emitted('update:show')![0]).toEqual([false])
+  })
+
+  it('创建 pending 时重复点击只创建一次', async () => {
+    const gate = deferred()
+    vi.mocked(db.habit.create).mockReturnValue(gate.promise as any)
+    const wrapper = mount(AddHabitModal, {
+      props: { show: true },
+      global: { stubs }
+    })
+    await wrapper.find('input').setValue('每日阅读')
+
+    const createBtn = wrapper.findAll('button').find(b => b.text() === '确认创建')!
+    const first = createBtn.trigger('click')
+    const second = createBtn.trigger('click')
+    await nextTick()
+
+    expect(db.habit.create).toHaveBeenCalledTimes(1)
+    expect(createBtn.attributes('disabled')).toBeDefined()
+
+    gate.resolve()
+    await first
+    await second
   })
 })

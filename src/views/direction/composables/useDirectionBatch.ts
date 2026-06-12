@@ -14,6 +14,7 @@ import { useDirectionSelection } from '@/views/direction/composables/useDirectio
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
 import { confirmDelete } from '@/composables/useDeleteConfirm'
 import { useActionFeedback } from '@/composables/useActionFeedback'
+import { useActionLock } from '@/composables/useActionLock'
 import type { GoalMonth } from '@/services/db/goalMonths'
 import type { GoalDay } from '@/services/db/goalDays'
 import type { GoalWithMeta, DirectionBatchReturn } from '@/views/direction/types'
@@ -35,6 +36,7 @@ export function useDirectionBatch(): DirectionBatchReturn {
   const { hasTask } = useDirectionSelection()
   const { loadGoalDays } = useDirectionFetch()
   const { error } = useActionFeedback()
+  const { isSubmitting, withLock } = useActionLock()
 
   /** 从缓存中查找指定目标和月份的月度计划 */
   const getCurrentMonthlyPlan = (goalId: string | number, month: number): GoalMonth | null => {
@@ -68,7 +70,7 @@ export function useDirectionBatch(): DirectionBatchReturn {
   }
 
   /** 批量创建/更新日计划：对选中日期执行 upsert 操作 */
-  const applyBatchTask = async (): Promise<void> => {
+  const applyBatchTask = withLock(async (): Promise<void> => {
     const m = selectedMonth.value
     if (!m || !batchInput.value.trim()) return
 
@@ -119,10 +121,10 @@ export function useDirectionBatch(): DirectionBatchReturn {
     } catch (e) {
       error('批量保存日计划失败，请稍后重试', e)
     }
-  }
+  })
 
   /** 批量删除选中日期的日计划 */
-  const handleBatchDelete = async (): Promise<void> => {
+  const handleBatchDelete = withLock(async (): Promise<void> => {
     const m = selectedMonth.value
     const currentSelectedDates = selectedDates[m!] || []
     if (!m || currentSelectedDates.length === 0) return
@@ -153,11 +155,12 @@ export function useDirectionBatch(): DirectionBatchReturn {
     } catch (e) {
       error('批量删除日计划失败，请稍后重试', e)
     }
-  }
+  })
 
   return {
     batchInput,
     applyBatchTask,
-    handleBatchDelete
+    handleBatchDelete,
+    isSubmitting
   }
 }

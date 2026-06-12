@@ -1,11 +1,11 @@
-import { ref, reactive, watch, computed } from 'vue'
-import type { Ref, ComputedRef } from 'vue'
+import { reactive, watch, computed } from 'vue'
+import type { ComputedRef } from 'vue'
 import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { useDateStore } from '@/stores/dateStore'
 import { useDayStore } from '@/stores/dayStore'
 import { useActionFeedback } from './useActionFeedback'
-import { withLoadingLock } from '@/utils/throttle'
+import { useActionLock } from '@/composables/useActionLock'
 import { confirmDelete } from '@/composables/useDeleteConfirm'
 
 /** 编辑模式下的初始数据（来自日程项） */
@@ -62,9 +62,7 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
     const dateStore = useDateStore()
     const dayStore = useDayStore()
     const { success, error } = useActionFeedback()
-
-    // 写操作（提交/删除）按钮的 loading 状态，防止重复点击
-    const isSubmitting: Ref<boolean> = ref(false)
+    const { isSubmitting, withLock } = useActionLock()
 
     // 判断当前编辑的项目是否为习惯类型
     const isHabit: ComputedRef<boolean> = computed(() => props.initialData?.type === 'habit')
@@ -167,13 +165,11 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
     })
 
     // 提交表单：新建或更新
-    const submit = withLoadingLock(async () => {
+    const submit = withLock(async () => {
         if (!isValid.value) {
             markAllFieldsTouched()
             return
         }
-
-        isSubmitting.value = true
 
         // 校验时间格式是否合法
         const timeParts = eventForm.time.split(':')
@@ -181,7 +177,6 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
         const minutes = parseInt(timeParts[1] ?? '0', 10)
         if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
             error('时间格式无效')
-            isSubmitting.value = false
             return
         }
         const durationValue = parseFloat(String(eventForm.duration))
@@ -245,17 +240,14 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
             success(props.initialData ? '更新成功' : '创建成功')
         } catch (e) {
             error('保存失败', e)
-        } finally {
-            isSubmitting.value = false
         }
     })
 
     // 删除任务/习惯
-    const handleDelete = withLoadingLock(async () => {
+    const handleDelete = withLock(async () => {
         if (props.initialData) {
             if (!confirmDelete(isHabit.value ? 'habit' : 'task')) return
 
-            isSubmitting.value = true
             try {
                 if (isHabit.value) {
                     await db.habit.delete(props.initialData.id)
@@ -267,8 +259,6 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
                 success('删除成功')
             } catch (e) {
                 error('删除失败', e)
-            } finally {
-                isSubmitting.value = false
             }
         }
     })

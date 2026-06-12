@@ -36,22 +36,23 @@
         <Input
           class="flex-1 bg-zinc-50 border-transparent focus-visible:bg-white transition-all text-foreground h-9 shadow-sm"
           :model-value="batchInput"
+          :disabled="isSubmitting"
           placeholder="批量输入任务内容..."
           @update:model-value="batchInput = String($event)"
-          @keyup.enter="applyBatchTask"
+          @keyup.enter="!isSubmitting && applyBatchTask()"
         />
 
         <div class="flex items-center gap-1">
           <template v-if="isAllSelectedDatesHaveTask(month)">
-            <Button class="h-9 font-bold text-[10px] px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!batchInput.trim()" @click="applyBatchTask">
+            <Button class="h-9 font-bold text-[10px] px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!batchInput.trim() || isSubmitting" @click="applyBatchTask">
               修改
             </Button>
-            <Button class="h-9 font-bold text-[10px] px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-none border border-red-200" @click="handleBatchDelete">
+            <Button class="h-9 font-bold text-[10px] px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-none border border-red-200" :disabled="isSubmitting" @click="handleBatchDelete">
               删除
             </Button>
           </template>
           <template v-else>
-            <Button class="h-9 font-bold text-[10px] px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!batchInput.trim()" @click="applyBatchTask">
+            <Button class="h-9 font-bold text-[10px] px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!batchInput.trim() || isSubmitting" @click="applyBatchTask">
               应用
             </Button>
           </template>
@@ -97,7 +98,7 @@ const {
   selectWeekDay,
   isAllSelectedDatesHaveTask
 } = useDirectionSelection()
-const { batchInput, applyBatchTask, handleBatchDelete } = useDirectionBatch()
+const { batchInput, applyBatchTask, handleBatchDelete, isSubmitting } = useDirectionBatch()
 </script>
 
 <style scoped>
