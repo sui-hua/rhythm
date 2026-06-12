@@ -21,8 +21,8 @@ export interface GoalWithMeta extends Goal {
   category_name: string
   startMonth?: number
   endMonth?: number
-  task_time?: string
-  duration?: number
+  task_time?: string | null
+  duration?: number | null
   carry_over_lookback_days?: number
 }
 
@@ -119,7 +119,7 @@ export interface DirectionSelectionReturn {
 
 /** useDirectionTasks 返回值接口 */
 export interface DirectionTasksReturn {
-  handleUpdateTask: (task: GoalDay, payload: Partial<GoalDay>) => Promise<void>
+  handleUpdateTask: (task: GoalDay | null, payload: Partial<GoalDay>) => Promise<void>
 }
 
 /** progress 工具函数参数 */

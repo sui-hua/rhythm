@@ -2,6 +2,7 @@
 import supabase, { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
 import { toDateOnly } from '@/utils/dateFormatter'
+import type { GoalStatus } from './types'
 
 // GoalDay 数据接口
 export interface GoalDay {
@@ -10,22 +11,22 @@ export interface GoalDay {
   user_id: string
   title: string
   description?: string | null
-  status: string // 'active' | 'completed' | 'archived'
+  status: GoalStatus
   priority?: number
   created_at?: string
   updated_at?: string
   day: string
   task_time?: string | null
-  duration?: number
+  duration?: number | null
   // 关联查询时可能包含的字段
   goal_months?: {
     id: string
     task_time?: string | null
-    duration?: number
+    duration?: number | null
     goal?: {
       id: string
       task_time?: string | null
-      duration?: number
+      duration?: number | null
       carry_over_lookback_days?: number
     }
   }
@@ -37,11 +38,11 @@ export interface CreateGoalDayPayload {
   user_id: string
   title: string
   description?: string | null
-  status?: string
+  status?: GoalStatus
   priority?: number
   day: string
   task_time?: string | null
-  duration?: number
+  duration?: number | null
 }
 
 // GoalDay 更新参数
@@ -49,11 +50,11 @@ export interface UpdateGoalDayPayload {
   goal_month_id?: string
   title?: string
   description?: string | null
-  status?: string
+  status?: GoalStatus
   priority?: number
   day?: string
   task_time?: string | null
-  duration?: number
+  duration?: number | null
 }
 
 const base = createBase<GoalDay>(TABLES.GOAL_DAYS)
@@ -168,7 +169,7 @@ export const goalDays = {
 
     // 单独查询 goal_months + goal 的 carry_over_lookback_days 和时间信息
     const goalMonthIds = [...new Set(rows.map(r => r.goal_month_id).filter(Boolean))]
-    const goalMonthMap = new Map<string, { task_time?: string | null; duration?: number; carry_over_lookback_days: number }>()
+    const goalMonthMap = new Map<string, { task_time?: string | null; duration?: number | null; carry_over_lookback_days: number }>()
 
     if (goalMonthIds.length > 0) {
       const { data: monthRows } = await supabase

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import type { BuildSummaryPayloadParams, SummaryPayloadRecord, SummaryRecord } from '@/services/db/summaryAdapters'
+import type { SummaryKind } from '@/services/db/types'
 
 // mock vue 的 onMounted
 vi.mock('vue', async () => {
@@ -26,10 +28,10 @@ const mockDelete = vi.fn()
 vi.mock('@/services/database', () => ({
   db: {
     summary: {
-      listByKind: (...args: any[]) => mockListByKind(...args),
-      create: (...args: any[]) => mockCreate(...args),
-      update: (...args: any[]) => mockUpdate(...args),
-      delete: (...args: any[]) => mockDelete(...args)
+      listByKind: (kind: SummaryKind) => mockListByKind(kind),
+      create: (payload: SummaryPayloadRecord) => mockCreate(payload),
+      update: (id: string | number, payload: Partial<SummaryPayloadRecord>) => mockUpdate(id, payload),
+      delete: (id: string | number) => mockDelete(id)
     }
   }
 }))
@@ -43,10 +45,14 @@ vi.mock('@/services/db/summaryPeriods', () => ({
 }))
 
 vi.mock('@/services/db/summaryAdapters', () => ({
-  buildSummaryPayload: vi.fn((params: any) => ({
+  buildSummaryPayload: vi.fn((params: BuildSummaryPayloadParams): SummaryPayloadRecord => ({
     ...params,
     kind: params.kind,
-    user_id: params.userId
+    user_id: params.userId,
+    period_start: params.period.periodStart,
+    period_end: params.period.periodEnd,
+    title: params.formData.title ?? null,
+    content: params.formData
   }))
 }))
 
@@ -62,6 +68,15 @@ vi.stubGlobal('confirm', vi.fn(() => true))
 
 import { useSummaryManager } from '../useSummaryManager'
 
+// 构造完整 SummaryRecord，避免测试只塞局部字段导致类型约束失效
+const summaryRecord = (overrides: Partial<SummaryRecord> = {}): SummaryRecord => ({
+  id: 1,
+  kind: 'daily',
+  title: '测试',
+  content: {},
+  ...overrides
+})
+
 describe('useSummaryManager', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -73,7 +88,7 @@ describe('useSummaryManager', () => {
   // handleTabChange：切换 tab 并重新加载数据
   it('handleTabChange 切换 tab 重置状态并加载数据', async () => {
     const { handleTabChange, activeTab, selectedSummary, isCreating } = useSummaryManager()
-    selectedSummary.value = { id: 1, kind: 'daily' } as any
+    selectedSummary.value = summaryRecord()
     isCreating.value = true
 
     handleTabChange('week')
@@ -91,7 +106,7 @@ describe('useSummaryManager', () => {
   it('handleSelect 选中记录并退出创建模式', () => {
     const { handleSelect, selectedSummary, isCreating } = useSummaryManager()
     isCreating.value = true
-    const summary = { id: 1, kind: 'daily', title: '测试' } as any
+    const summary = summaryRecord()
     handleSelect(summary)
     expect(selectedSummary.value).toEqual(summary)
     expect(isCreating.value).toBe(false)
@@ -100,7 +115,7 @@ describe('useSummaryManager', () => {
   // handleCreate：进入创建模式
   it('handleCreate 清空选中并进入创建模式', () => {
     const { handleCreate, selectedSummary, isCreating } = useSummaryManager()
-    selectedSummary.value = { id: 1 } as any
+    selectedSummary.value = summaryRecord()
     handleCreate()
     expect(selectedSummary.value).toBeNull()
     expect(isCreating.value).toBe(true)
@@ -108,7 +123,7 @@ describe('useSummaryManager', () => {
 
   // handleSave：保存成功后更新选中记录并刷新列表
   it('handleSave 保存成功后更新选中记录', async () => {
-    const savedRecord = { id: 99, kind: 'daily', title: '已保存' }
+    const savedRecord = summaryRecord({ id: 99, title: '已保存' })
     mockCreate.mockResolvedValue(savedRecord)
     mockListByKind.mockResolvedValue([savedRecord])
 
@@ -142,7 +157,7 @@ describe('useSummaryManager', () => {
   // currentView：选中记录时为 detail-or-edit
   it('currentView 选中记录时为 detail-or-edit', () => {
     const { handleSelect, currentView } = useSummaryManager()
-    handleSelect({ id: 1, kind: 'daily' } as any)
+    handleSelect(summaryRecord())
     expect(currentView.value).toBe('detail-or-edit')
   })
 
@@ -167,7 +182,7 @@ describe('useSummaryManager', () => {
     mockListByKind.mockResolvedValue([])
 
     const { handleDelete, selectedSummary } = useSummaryManager()
-    selectedSummary.value = { id: 1 } as any
+    selectedSummary.value = summaryRecord()
     await handleDelete(1)
 
     expect(mockDelete).toHaveBeenCalledWith(1)

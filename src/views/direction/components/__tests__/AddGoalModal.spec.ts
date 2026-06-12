@@ -49,7 +49,7 @@ vi.mock('@/services/database', () => ({
 
 // mock withLoadingLock，直接执行回调
 vi.mock('@/utils/throttle', () => ({
-  withLoadingLock: (fn: any) => fn
+  withLoadingLock: <Args extends unknown[], Result>(fn: (...args: Args) => Promise<Result>) => fn
 }))
 
 // stub Dialog 和其他子组件

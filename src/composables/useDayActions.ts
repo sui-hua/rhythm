@@ -220,8 +220,8 @@ export function useDayActions({ tasks, routeDateContext, dailySchedule, habitLog
           title: task.title,
           type: 'task',
           completed: task.completed,
-          start_time: task.original.start_time,
-          end_time: task.original.end_time,
+          start_time: task.original.start_time ?? undefined,
+          end_time: task.original.end_time ?? undefined,
           actual_start_time: startTime,
           actual_end_time: null,
           original: task.original

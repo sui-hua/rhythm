@@ -1,6 +1,7 @@
 // goal_months table operations (second level of goal → goal_months → goal_days)
 import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
+import type { GoalStatus } from './types'
 
 // GoalMonth 数据接口
 export interface GoalMonth {
@@ -9,7 +10,7 @@ export interface GoalMonth {
   user_id: string
   title: string
   description?: string | null
-  status?: 'active' | 'completed' | 'archived'
+  status?: GoalStatus
   priority?: number
   created_at?: string
   updated_at?: string
@@ -24,7 +25,7 @@ export interface CreateGoalMonthPayload {
   user_id: string
   title: string
   description?: string | null
-  status?: 'active' | 'completed' | 'archived'
+  status?: GoalStatus
   priority?: number
   month?: string
   task_time?: string | null
@@ -36,7 +37,7 @@ export interface UpdateGoalMonthPayload {
   goal_id?: string
   title?: string
   description?: string | null
-  status?: 'active' | 'completed' | 'archived'
+  status?: GoalStatus
   priority?: number
   month?: string
   task_time?: string | null

@@ -28,7 +28,10 @@ export interface AddEventFormProps {
 }
 
 /** 组件 emits 类型 */
-export type AddEventFormEmit = (event: 'close' | 'refresh' | 'update:show', ...args: any[]) => void
+export type AddEventFormEmit = {
+    (event: 'close' | 'refresh'): void
+    (event: 'update:show', value: boolean): void
+}
 
 /** 表单数据结构 */
 interface EventFormData {

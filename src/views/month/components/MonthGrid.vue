@@ -34,12 +34,13 @@
  * @emit {Date} enterDay - 用户点击进入某日详情
  */
 import DayCell from '@/views/month/components/DayCell.vue'
+import type { EntityId } from '@/services/db/types'
 
 /** 日期单元格数据结构，与 DayCell props 保持一致 */
 interface DayData {
   date: string | number
   isCurrent: boolean
-  tasks?: any[]
+  tasks?: EntityId[]
   taskHours?: number[]
   /** 当日目标计划数量 */
   goalCount?: number

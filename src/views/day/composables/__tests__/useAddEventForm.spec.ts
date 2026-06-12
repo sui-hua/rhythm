@@ -33,6 +33,7 @@ vi.mock('@/composables/useDeleteConfirm', () => ({
 
 import { db } from '@/services/database'
 import { useAddEventForm } from '@/views/day/composables/useAddEventForm'
+import type { Task } from '@/services/db/task'
 
 function deferred<T = void>() {
   let resolve!: (value: T | PromiseLike<T>) => void
@@ -64,8 +65,8 @@ describe('useAddEventForm', () => {
   })
 
   it('新增任务 pending 时重复提交只创建一次', async () => {
-    const gate = deferred()
-    vi.mocked(db.task.create).mockReturnValue(gate.promise as any)
+    const gate = deferred<Task>()
+    vi.mocked(db.task.create).mockReturnValue(gate.promise)
     const props = reactive<AddEventFormProps>({ show: true, initialData: null })
     const emit: AddEventFormEmit = vi.fn()
 
@@ -80,7 +81,7 @@ describe('useAddEventForm', () => {
     expect(isSubmitting.value).toBe(true)
     expect(db.task.create).toHaveBeenCalledTimes(1)
 
-    gate.resolve()
+    gate.resolve({ id: 'task-1', title: '写周报' })
     await first
     await second
 
@@ -90,7 +91,7 @@ describe('useAddEventForm', () => {
 
   it('删除任务 pending 时重复触发只删除一次', async () => {
     const gate = deferred()
-    vi.mocked(db.task.delete).mockReturnValue(gate.promise as any)
+    vi.mocked(db.task.delete).mockReturnValue(gate.promise)
     const props = reactive<AddEventFormProps>({
       show: true,
       initialData: { id: 'task-1', type: 'task', title: '写周报', time: '09:00', rawDuration: 0.5 }

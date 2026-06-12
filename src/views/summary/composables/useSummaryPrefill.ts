@@ -43,7 +43,7 @@ interface BuildDailySummaryPrefillParams {
 }
 
 // 预填结果接口
-export interface DailySummaryPrefillData {
+export interface DailySummaryPrefillData extends Record<string, string> {
   done: string
   improve: string
   tomorrow: string

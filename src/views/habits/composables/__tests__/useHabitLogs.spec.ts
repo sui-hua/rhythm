@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, computed } from 'vue'
 import type { AugmentedHabit } from '@/types/models'
+import type { ViewContext } from '../useHabitData'
+import type { HabitLog as DbHabitLog } from '@/services/db/habit'
 
 // mock db
 vi.mock('@/services/database', () => ({
@@ -22,7 +24,7 @@ vi.mock('@/stores/habitStore', () => ({
 
 // mock buildPatchedHabit
 vi.mock('../useHabitData', () => ({
-  buildPatchedHabit: vi.fn((habit: any, _newLog: any, _ctx: any) => ({
+  buildPatchedHabit: vi.fn((habit: AugmentedHabit, _newLog: DbHabitLog, _ctx: ViewContext) => ({
     ...habit,
     logs: [...(habit.logs || []), { id: 'new-log' }],
     monthlyLogs: [...(habit.monthlyLogs || []), { id: 'new-log' }],
@@ -41,7 +43,6 @@ vi.mock('@/composables/useActionFeedback', () => ({
 
 import { db } from '@/services/database'
 import { useHabitLogs, useHabitLogsFormatter } from '../useHabitLogs'
-import type { HabitLog as DbHabitLog } from '@/services/db/habit'
 
 function deferred<T = void>() {
   let resolve!: (value: T | PromiseLike<T>) => void
@@ -94,6 +95,16 @@ describe('useHabitLogsFormatter', () => {
 })
 
 describe('useHabitLogs', () => {
+  function createLog(overrides: Partial<DbHabitLog> = {}): DbHabitLog {
+    return {
+      id: 'log-1',
+      habit_id: 'h1',
+      completed_at: '2026-06-15T12:00:00Z',
+      log: '',
+      ...overrides
+    }
+  }
+
   function createMockHabit(overrides: Partial<AugmentedHabit> = {}): AugmentedHabit {
     return {
       id: 'h1',
@@ -102,8 +113,10 @@ describe('useHabitLogs', () => {
       monthlyLogs: [],
       completedDays: [],
       total: 0,
+      completionRate: 0,
+      streak: 0,
       ...overrides
-    } as unknown as AugmentedHabit
+    }
   }
 
   beforeEach(() => {
@@ -122,11 +135,11 @@ describe('useHabitLogs', () => {
 
   // toggleComplete：已有打卡时删除（取消打卡）
   it('toggleComplete 已有打卡时删除记录', async () => {
-    const existingLog = { id: 'log-1', habit_id: 'h1', completed_at: '2026-06-15T12:00:00Z', log: '' }
+    const existingLog = createLog()
     const habit = createMockHabit({
-      logs: [existingLog] as any,
-      monthlyLogs: [existingLog] as any,
-      completedDays: [15] as any,
+      logs: [existingLog],
+      monthlyLogs: [existingLog],
+      completedDays: [15],
       total: 1
     })
     const selectedHabit = computed(() => habit)
@@ -143,11 +156,11 @@ describe('useHabitLogs', () => {
   // toggleComplete：删除失败时回滚（调用 fetchHabits）
   it('toggleComplete 删除失败时调用 fetchHabits 回滚', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const existingLog = { id: 'log-1', habit_id: 'h1', completed_at: '2026-06-15T12:00:00Z', log: '' }
+    const existingLog = createLog()
     const habit = createMockHabit({
-      logs: [existingLog] as any,
-      monthlyLogs: [existingLog] as any,
-      completedDays: [15] as any,
+      logs: [existingLog],
+      monthlyLogs: [existingLog],
+      completedDays: [15],
       total: 1
     })
     const selectedHabit = computed(() => habit)
@@ -180,11 +193,11 @@ describe('useHabitLogs', () => {
 
   // toggleComplete：新增 pending 时重复触发只写入一次
   it('toggleComplete 新增 pending 时重复触发只调用一次打卡服务', async () => {
-    const gate = deferred()
+    const gate = deferred<DbHabitLog>()
     const habit = createMockHabit()
     const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn().mockResolvedValue(undefined)
-    vi.mocked(db.habit.log).mockReturnValue(gate.promise as any)
+    vi.mocked(db.habit.log).mockReturnValue(gate.promise)
 
     const { toggleComplete, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
     const first = toggleComplete(15)
@@ -193,7 +206,7 @@ describe('useHabitLogs', () => {
     expect(isSubmitting.value).toBe(true)
     expect(db.habit.log).toHaveBeenCalledTimes(1)
 
-    gate.resolve()
+    gate.resolve(createLog({ id: 'new-log' }))
     await first
     await second
 
@@ -203,16 +216,16 @@ describe('useHabitLogs', () => {
   // toggleComplete：删除 pending 时重复触发只删除一次
   it('toggleComplete 删除 pending 时重复触发只调用一次删除服务', async () => {
     const gate = deferred()
-    const existingLog = { id: 'log-1', habit_id: 'h1', completed_at: '2026-06-15T12:00:00Z', log: '' }
+    const existingLog = createLog()
     const habit = createMockHabit({
-      logs: [existingLog] as any,
-      monthlyLogs: [existingLog] as any,
-      completedDays: [15] as any,
+      logs: [existingLog],
+      monthlyLogs: [existingLog],
+      completedDays: [15],
       total: 1
     })
     const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn().mockResolvedValue(undefined)
-    vi.mocked(db.habit.deleteLog).mockReturnValue(gate.promise as any)
+    vi.mocked(db.habit.deleteLog).mockReturnValue(gate.promise)
 
     const { toggleComplete, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
     const first = toggleComplete(15)
@@ -265,7 +278,7 @@ describe('useHabitLogs', () => {
       log: ''
     }
     const habit = createMockHabit({
-      monthlyLogs: [todayLog] as any
+      monthlyLogs: [todayLog]
     })
     const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn()
@@ -276,7 +289,7 @@ describe('useHabitLogs', () => {
 
   // handleQuickLog：正常快速打卡
   it('handleQuickLog 正常打卡返回 true', async () => {
-    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const habit = createMockHabit({ monthlyLogs: [] })
     const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn().mockResolvedValue(undefined)
     vi.mocked(db.habit.log).mockResolvedValue(undefined)
@@ -289,15 +302,15 @@ describe('useHabitLogs', () => {
 
   // handleQuickLog：本地日志过期时由服务层兜底幂等，组件侧仍只发起一次写请求
   it('handleQuickLog 本地无今日记录时只调用一次打卡服务', async () => {
-    const habit = createMockHabit({ monthlyLogs: [] as any })
-    const selectedHabit = computed(() => habit as any)
+    const habit = createMockHabit({ monthlyLogs: [] })
+    const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn()
     vi.mocked(db.habit.log).mockResolvedValue({
       id: 'existing-log',
       habit_id: 'h1',
       completed_at: new Date().toISOString(),
       log: '旧备注'
-    } as any)
+    })
 
     const { handleQuickLog } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
     const result = await handleQuickLog('今天状态不错')
@@ -309,11 +322,11 @@ describe('useHabitLogs', () => {
 
   // handleQuickLog：pending 时重复触发只写入一次
   it('handleQuickLog pending 时重复触发只调用一次打卡服务', async () => {
-    const gate = deferred()
-    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const gate = deferred<DbHabitLog>()
+    const habit = createMockHabit({ monthlyLogs: [] })
     const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn().mockResolvedValue(undefined)
-    vi.mocked(db.habit.log).mockReturnValue(gate.promise as any)
+    vi.mocked(db.habit.log).mockReturnValue(gate.promise)
 
     const { handleQuickLog, isSubmitting } = useHabitLogs(selectedHabit, ref(2026), ref(5), fetchHabits)
     const first = handleQuickLog('今天状态不错')
@@ -322,7 +335,7 @@ describe('useHabitLogs', () => {
     expect(isSubmitting.value).toBe(true)
     expect(db.habit.log).toHaveBeenCalledTimes(1)
 
-    gate.resolve()
+    gate.resolve(createLog({ id: 'new-log' }))
     await expect(first).resolves.toBe(true)
     await expect(second).resolves.toBe(false)
     expect(db.habit.log).toHaveBeenCalledTimes(1)
@@ -331,7 +344,7 @@ describe('useHabitLogs', () => {
   // handleQuickLog：写入失败时回滚并返回 false
   it('handleQuickLog 写入失败时回滚并返回 false', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const habit = createMockHabit({ monthlyLogs: [] as any })
+    const habit = createMockHabit({ monthlyLogs: [] })
     const selectedHabit = computed(() => habit)
     const fetchHabits = vi.fn().mockResolvedValue(undefined)
     vi.mocked(db.habit.log).mockRejectedValue(new Error('write failed'))

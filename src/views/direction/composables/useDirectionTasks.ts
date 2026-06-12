@@ -14,7 +14,7 @@ export function useDirectionTasks(): DirectionTasksReturn {
    * 更新单个日计划任务。
    * 二元签名：先更新数据库，再同步到 store 的 dailyTasks 映射表。
    */
-  const handleUpdateTask = async (task: GoalDay, payload: Partial<GoalDay>): Promise<void> => {
+  const handleUpdateTask = async (task: GoalDay | null, payload: Partial<GoalDay>): Promise<void> => {
     if (!task || !task.id) return
     try {
       await db.goalDays.update(task.id, {

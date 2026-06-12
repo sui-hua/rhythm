@@ -19,10 +19,11 @@ vi.mock('@/stores/authStore', () => ({
 
 // mock supabase
 const mockSignInWithPassword = vi.fn()
+type LoginCredentials = { email: string; password: string }
 vi.mock('@/services/supabase', () => ({
   default: {
     auth: {
-      signInWithPassword: (...args: any[]) => mockSignInWithPassword(...args)
+      signInWithPassword: (credentials: LoginCredentials) => mockSignInWithPassword(credentials)
     }
   }
 }))
@@ -101,9 +102,10 @@ describe('useLoginForm', () => {
 
   // loading 状态：请求期间为 true，结束后为 false
   it('请求期间 loading 为 true，结束后恢复 false', async () => {
-    let resolveLogin: any
+    type LoginResult = { data: { user: { id: string } }; error: null }
+    let resolveLogin: (value: LoginResult) => void
     mockSignInWithPassword.mockImplementation(
-      () => new Promise((resolve) => { resolveLogin = resolve })
+      () => new Promise<LoginResult>((resolve) => { resolveLogin = resolve })
     )
 
     const { handleLogin, loading } = useLoginForm()

@@ -48,6 +48,7 @@ import { db } from '@/services/database'
 import { useAuthStore } from '@/stores/authStore'
 import { buildDefaultPeriod } from '@/services/db/summaryPeriods'
 import { buildSummaryPayload } from '@/services/db/summaryAdapters'
+import type { SummaryRecord } from '@/services/db/summaryAdapters'
 import { safeAction } from '@/utils/safeAction'
 
 // ── Props ──
@@ -100,7 +101,7 @@ const prefilledData = computed(() => {
 
   // 只有有内容时才返回预填数据
   if (prefill.done || prefill.improve || prefill.tomorrow) {
-    return { content: prefill } as unknown as Record<string, any>
+    return { content: prefill } satisfies Pick<SummaryRecord, 'content'>
   }
 
   return undefined

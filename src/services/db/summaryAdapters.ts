@@ -8,17 +8,16 @@
  * @module summaryAdapters
  */
 
-import type { Period, SummaryKind } from './summaryPeriods'
+import type { Period } from './summaryPeriods'
 import { buildDefaultPeriod } from './summaryPeriods'
+import type { EntityId, JsonObject, SummaryKind } from './types'
 
-// 内容对象类型，支持自由键值对
-interface ContentObject {
-  [key: string]: string | undefined
-}
+// 内容对象类型，支持自由字符串键值对
+type ContentObject = Record<string, string>
 
 // 数据库行原始数据接口
 export interface SummaryRow {
-  id?: string | number
+  id?: EntityId
   user_id?: string
   kind?: string
   period_start?: string
@@ -31,7 +30,7 @@ export interface SummaryRow {
 
 // 前端记录格式接口
 export interface SummaryRecord {
-  id?: string | number
+  id?: EntityId
   user_id?: string
   kind: SummaryKind
   period_start?: string
@@ -48,18 +47,18 @@ export interface BuildSummaryPayloadParams {
   userId: string
   period: Period
   formData: Record<string, string>
-  existingRecord?: { id?: string | number } | null
+  existingRecord?: { id?: EntityId } | null
 }
 
 // buildSummaryPayload 返回的数据库载荷接口
 export interface SummaryPayloadRecord {
-  id?: string | number
+  id?: EntityId
   user_id: string
   kind: SummaryKind
   period_start: string
   period_end: string
   title: string | null
-  content: Record<string, any>
+  content: JsonObject
 }
 
 /**
@@ -84,13 +83,16 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
  * normalizeContent({ text: 'hello' }) // => { text: 'hello' }
  * normalizeContent(null)              // => {}
  */
-const normalizeContent = (content: string | ContentObject | null | undefined): ContentObject => {
+const normalizeContent = (content: string | JsonObject | ContentObject | null | undefined): ContentObject => {
   if (typeof content === 'string') {
     return { text: content }
   }
 
   if (isPlainObject(content)) {
-    return content as ContentObject
+    return Object.fromEntries(
+      Object.entries(content)
+        .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+    )
   }
 
   return {}
@@ -270,7 +272,7 @@ export const toUnifiedSummaryPayload = (summary: Record<string, unknown>): Summa
   if (isUnifiedPayload(summary)) {
     return {
       ...summary,
-      content: normalizeContent(summary.content as string | ContentObject | null)
+      content: normalizeContent(summary.content as string | JsonObject | null)
     } as SummaryPayloadRecord
   }
 
@@ -283,6 +285,8 @@ export const toUnifiedSummaryPayload = (summary: Record<string, unknown>): Summa
     userId: (summary.user_id as string) ?? (summary.userId as string),
     period,
     formData,
-    existingRecord: summary.id ? { id: summary.id as string | number } : null
+    existingRecord: typeof summary.id === 'string' || typeof summary.id === 'number'
+      ? { id: summary.id }
+      : null
   })
 }

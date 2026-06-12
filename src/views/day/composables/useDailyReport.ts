@@ -54,13 +54,13 @@ export const useDailyReport = () => {
             db.task.list(tStart, tEnd)
         ])
 
-        const yCompleted = (yesterdayTasks || []).filter((t: any) => t.completed).length
+        const yCompleted = (yesterdayTasks || []).filter(t => t.completed).length
         const yUncompleted = (yesterdayTasks || []).length - yCompleted
         const todayTotal = (todayTasks || []).length
 
         // 顺延规则：只统计创建时间在 7 天内的未完成任务，与任务顺延逻辑保持一致
         const oneWeekMs = 7 * 24 * 60 * 60 * 1000
-        const carryoverToToday = (yesterdayTasks || []).filter((t: any) => {
+        const carryoverToToday = (yesterdayTasks || []).filter(t => {
             if (t.completed) return false
             const createdAt = t.created_at ? new Date(t.created_at) : null
             // 跳过创建时间无效的任务，避免 NaN 参与计算

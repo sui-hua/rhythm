@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import type { AugmentedHabit } from '@/types/models'
+import type { HabitLog } from '@/services/db/habit'
 
 // mock dateStore
 vi.mock('@/stores/dateStore', () => ({
@@ -25,7 +26,7 @@ describe('useHabitStats', () => {
       completionRate: 0,
       streak: 0,
       ...overrides
-    } as unknown as AugmentedHabit
+    }
   }
 
   // todayCompletionRate：空列表返回 0
@@ -51,9 +52,10 @@ describe('useHabitStats', () => {
   it('todayCompletionRate 全部打卡返回 100', () => {
     const now = new Date()
     const todayISO = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0).toISOString()
+    const todayLog = (habitId: string): HabitLog => ({ id: `log-${habitId}`, habit_id: habitId, completed_at: todayISO })
     const habits = ref<AugmentedHabit[]>([
-      createMockHabit({ logs: [{ completed_at: todayISO }] as any }),
-      createMockHabit({ id: 'h2', logs: [{ completed_at: todayISO }] as any })
+      createMockHabit({ logs: [todayLog('h1')] }),
+      createMockHabit({ id: 'h2', logs: [todayLog('h2')] })
     ])
     const selectedHabit = ref<AugmentedHabit | null>(null)
     const { todayCompletionRate } = useHabitStats(habits, selectedHabit)
@@ -64,8 +66,9 @@ describe('useHabitStats', () => {
   it('todayCompletionRate 部分打卡返回正确百分比', () => {
     const now = new Date()
     const todayISO = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0).toISOString()
+    const todayLog: HabitLog = { id: 'log-h1', habit_id: 'h1', completed_at: todayISO }
     const habits = ref<AugmentedHabit[]>([
-      createMockHabit({ logs: [{ completed_at: todayISO }] as any }),
+      createMockHabit({ logs: [todayLog] }),
       createMockHabit({ id: 'h2', logs: [] })
     ])
     const selectedHabit = ref<AugmentedHabit | null>(null)
@@ -86,7 +89,7 @@ describe('useHabitStats', () => {
     const habits = ref<AugmentedHabit[]>([])
     const selectedHabit = ref<AugmentedHabit | null>(
       createMockHabit({
-        completedDays: [1, 3, 5] as any,
+        completedDays: [1, 3, 5],
         total: 30,
         completionRate: 80,
         streak: 5

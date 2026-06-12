@@ -15,7 +15,7 @@ export interface DailySummaryFormData {
 
 // 初始数据接口（来自数据库记录）
 interface InitialSummaryData {
-  content?: Record<string, string>
+  content?: unknown
 }
 
 // composable 返回值接口

@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
+import type { GoalDay } from '@/services/db/goalDays'
+import type { GoalMonth } from '@/services/db/goalMonths'
+import type { GoalWithMeta } from '@/views/direction/types'
 
 // mock dateOnly 工具函数
 vi.mock('@/views/direction/utils/dateOnly', () => ({
@@ -19,16 +22,33 @@ vi.mock('@/views/direction/utils/dateOnly', () => ({
 }))
 
 // mock stores
-const mockSelectedGoal = ref<any>(null)
+const mockSelectedGoal = ref<GoalWithMeta | null>(null)
 const mockSelectedMonth = ref<number | null>(null)
 const mockIsSelecting = ref(false)
 const mockActivePicker = ref('start')
 const mockArchiveVersion = ref(0)
 
-const mockGoalMonthsCache: Record<string, any[]> = {}
-const mockGoalDaysCache: Record<string, any[]> = {}
+const mockGoalMonthsCache: Record<string, GoalMonth[]> = {}
+const mockGoalDaysCache: Record<string, GoalDay[]> = {}
 const mockSelectedDates: Record<string, number[]> = {}
-const mockDailyTasks: Record<string, any> = {}
+const mockDailyTasks: Record<string, GoalDay> = {}
+
+const goal = (goalId: string): GoalWithMeta => ({
+  id: goalId,
+  goal_id: goalId,
+  title: `目标 ${goalId}`,
+  name: `目标 ${goalId}`,
+  category_name: '未分类'
+})
+
+const goalDay = (overrides: Partial<GoalDay> = {}): GoalDay => ({
+  id: 'd1',
+  user_id: 'user-1',
+  title: '写代码',
+  status: 'active',
+  day: '2026-06-12',
+  ...overrides
+})
 
 vi.mock('@/stores/goalDataStore', () => ({
   useGoalDataStore: () => ({
@@ -59,10 +79,10 @@ vi.mock('pinia', async () => {
   const actual = await vi.importActual<typeof import('pinia')>('pinia')
   return {
     ...actual,
-    storeToRefs: (store: Record<string, any>) => {
-      const refs: Record<string, any> = {}
+    storeToRefs: (store: Record<string, unknown>) => {
+      const refs: Record<string, Ref<unknown>> = {}
       for (const [key, value] of Object.entries(store)) {
-        refs[key] = value
+        refs[key] = value as Ref<unknown>
       }
       return refs
     }
@@ -93,14 +113,14 @@ describe('useDirectionSelection', () => {
 
   // goalKey 格式：有选中目标时返回 goal-{goal_id}-{month}
   it('goalKey 有选中目标时返回 goal-{goal_id}-{month}', () => {
-    mockSelectedGoal.value = { goal_id: 'abc' }
+    mockSelectedGoal.value = goal('abc')
     const { goalKey } = useDirectionSelection()
     expect(goalKey(3)).toBe('goal-abc-3')
   })
 
   // dayTaskKey 格式
   it('dayTaskKey 返回 goalKey(month)-{day} 格式', () => {
-    mockSelectedGoal.value = { goal_id: 'abc' }
+    mockSelectedGoal.value = goal('abc')
     mockSelectedMonth.value = 3
     const { dayTaskKey } = useDirectionSelection()
     expect(dayTaskKey(15)).toBe('goal-abc-3-15')
@@ -121,15 +141,15 @@ describe('useDirectionSelection', () => {
 
   // hasTask：有任务标题时返回 true
   it('hasTask 有任务标题时返回 true', () => {
-    mockSelectedGoal.value = { goal_id: 'g1' }
-    mockDailyTasks['goal-g1-3-15'] = { title: '写代码', id: 'd1' }
+    mockSelectedGoal.value = goal('g1')
+    mockDailyTasks['goal-g1-3-15'] = goalDay()
     const { hasTask } = useDirectionSelection()
     expect(hasTask(3, 15)).toBe(true)
   })
 
   // hasTask：无任务时返回 false
   it('hasTask 无任务时返回 false', () => {
-    mockSelectedGoal.value = { goal_id: 'g1' }
+    mockSelectedGoal.value = goal('g1')
     const { hasTask } = useDirectionSelection()
     expect(hasTask(3, 15)).toBe(false)
   })

@@ -20,8 +20,23 @@ interface SerializedTask {
   originalStartTime?: string | null
 }
 
+interface PeriodicSyncManager {
+  register: (tag: string, options?: { minInterval?: number }) => Promise<void>
+  unregister: (tag: string) => Promise<void>
+}
+
+interface ServiceWorkerRegistrationWithPeriodicSync extends ServiceWorkerRegistration {
+  periodicSync?: PeriodicSyncManager
+}
+
 let checkInterval: ReturnType<typeof setInterval> | null = null
 let swRegistration: ServiceWorkerRegistration | null = null
+
+// 浏览器实验 API 的类型守卫，避免把动态字段扩散到业务逻辑中
+const getPeriodicSync = (registration: ServiceWorkerRegistration): PeriodicSyncManager | null => {
+  const candidate = registration as ServiceWorkerRegistrationWithPeriodicSync
+  return candidate.periodicSync ?? null
+}
 
 const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
   if (!('serviceWorker' in navigator)) {
@@ -201,10 +216,9 @@ export function useNotifications(): UseNotificationsReturn {
         syncTasksToSw(items)
       }
 
-      // periodicSync 是实验性 API，TypeScript 类型定义尚未包含，需保留 as any
-      if ('periodicSync' in swRegistration) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(swRegistration as any).periodicSync.register('check-tasks', {
+      const periodicSync = getPeriodicSync(swRegistration)
+      if (periodicSync) {
+        periodicSync.register('check-tasks', {
           minInterval: 60000
         }).catch(console.warn)
       }
@@ -246,10 +260,8 @@ export function useNotifications(): UseNotificationsReturn {
       checkInterval = null
     }
 
-    // periodicSync 是实验性 API，TypeScript 类型定义尚未包含，需保留 as any
-    if (swRegistration && 'periodicSync' in swRegistration) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(swRegistration as any).periodicSync.unregister('check-tasks').catch(console.warn)
+    if (swRegistration) {
+      getPeriodicSync(swRegistration)?.unregister('check-tasks').catch(console.warn)
     }
   }
 

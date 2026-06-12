@@ -51,6 +51,7 @@ vi.mock('@/composables/useDayActions', () => ({
 import { useDayStore } from '@/stores/dayStore'
 import { useDateStore } from '@/stores/dateStore'
 import { db } from '@/services/database'
+import type { Task } from '@/services/db/task'
 
 const mockTaskList = vi.mocked(db.task.list)
 
@@ -93,7 +94,7 @@ describe('dayStore', () => {
   })
 
   it('isLoading 在 fetchTasks 期间为 true', async () => {
-    let resolveList: (v: any) => void
+    let resolveList: (value: Task[]) => void
     mockTaskList.mockReturnValue(new Promise(r => { resolveList = r }))
 
     const dateStore = useDateStore()

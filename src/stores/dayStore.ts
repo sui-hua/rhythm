@@ -143,8 +143,8 @@ export const useDayStore = defineStore('day', () => {
               title: runningTask.title,
               type: 'task',
               completed: runningTask.completed ?? false,
-              start_time: runningTask.start_time,
-              end_time: runningTask.end_time,
+              start_time: runningTask.start_time ?? undefined,
+              end_time: runningTask.end_time ?? undefined,
               actual_start_time: runningTask.actual_start_time,
               actual_end_time: runningTask.actual_end_time,
               original: runningTask

@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import AddHabitModal from '../AddHabitModal.vue'
 import { db } from '@/services/database'
+import type { Habit } from '@/services/db/habit'
 
 // mock db 服务
 vi.mock('@/services/database', () => ({
@@ -21,7 +22,7 @@ vi.mock('@/stores/authStore', () => ({
 
 // mock withLoadingLock，直接执行回调
 vi.mock('@/utils/throttle', () => ({
-  withLoadingLock: (fn: any) => fn
+  withLoadingLock: <Args extends unknown[], Result>(fn: (...args: Args) => Promise<Result>) => fn
 }))
 
 // mock useHabitFrequencyForm
@@ -68,7 +69,7 @@ function deferred<T = void>() {
 describe('AddHabitModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(db.habit.create).mockResolvedValue({ id: 'new-habit-1' } as any)
+    vi.mocked(db.habit.create).mockResolvedValue({ id: 'new-habit-1', title: '每日阅读' } satisfies Habit)
   })
 
   it('显示"添加新习惯"标题', () => {
@@ -125,8 +126,8 @@ describe('AddHabitModal', () => {
   })
 
   it('创建 pending 时重复点击只创建一次', async () => {
-    const gate = deferred()
-    vi.mocked(db.habit.create).mockReturnValue(gate.promise as any)
+    const gate = deferred<Habit>()
+    vi.mocked(db.habit.create).mockReturnValue(gate.promise)
     const wrapper = mount(AddHabitModal, {
       props: { show: true },
       global: { stubs }
@@ -141,7 +142,7 @@ describe('AddHabitModal', () => {
     expect(db.habit.create).toHaveBeenCalledTimes(1)
     expect(createBtn.attributes('disabled')).toBeDefined()
 
-    gate.resolve()
+    gate.resolve({ id: 'new-habit-1', title: '每日阅读' })
     await first
     await second
   })

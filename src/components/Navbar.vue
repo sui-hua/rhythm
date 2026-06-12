@@ -207,7 +207,7 @@
  */
 
 // ── 依赖导入 ──
-import { computed, ref } from 'vue'
+import { computed, ref, type Component } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, Compass, LayoutGrid, ArrowLeft, BookOpen, LogOut, ChevronUp, ChevronDown } from 'lucide-vue-next'
@@ -237,9 +237,16 @@ const navItems = computed(() => [
   { name: '总结', path: '/summary', icon: BookOpen, base: '/summary' },
 ])
 
+interface NavItem {
+  name: string
+  path: string
+  icon: Component
+  base: string
+}
+
 // ── 方法 ──
 // 判断导航项是否激活，时序模块拥有多层级路由（day/month/year），处在任何一层都算激活
-const isActive = (item: { name: string; path: string; icon: any; base: string }) => {
+const isActive = (item: NavItem) => {
   if (item.base === '/day' && (route.path.startsWith('/month') || route.path.startsWith('/day') || route.path.startsWith('/year'))) return true
   return route.path === item.path || route.path.startsWith(item.base)
 }

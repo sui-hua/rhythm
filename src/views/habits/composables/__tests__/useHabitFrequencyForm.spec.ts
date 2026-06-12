@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { reactive } from 'vue'
+import type { HabitFrequency } from '@/utils/habitFrequency'
 
 // mock habitFrequency 工具函数
 vi.mock('@/views/habits/utils/habitFrequency', () => ({
   createDefaultHabitFrequency: vi.fn(() => ({ type: 'daily' })),
-  normalizeHabitFrequency: vi.fn((freq: any) => {
+  normalizeHabitFrequency: vi.fn((freq: HabitFrequency) => {
     if (freq.type === 'weekly') return { type: 'weekly', weekdays: [...freq.weekdays].sort((a: number, b: number) => a - b) }
     if (freq.type === 'monthly') return { type: 'monthly', monthDays: [...freq.monthDays].sort((a: number, b: number) => a - b) }
     return { type: 'daily' }

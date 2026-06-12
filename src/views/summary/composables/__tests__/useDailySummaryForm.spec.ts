@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, nextTick } from 'vue'
 import { useDailySummaryForm } from '../useDailySummaryForm'
 
+type DailyInitialData = Parameters<typeof useDailySummaryForm>[0]['value']
+
 describe('useDailySummaryForm', () => {
   // 初始数据为 null 时表单重置为空
   it('initialData 为 null 时表单字段全为空字符串', () => {
@@ -42,7 +44,7 @@ describe('useDailySummaryForm', () => {
   // content 为非对象格式时回退为空
   it('initialData content 为数组时回退为空对象', () => {
     const initialData = ref({
-      content: ['invalid'] as any
+      content: ['invalid']
     })
     const { formData } = useDailySummaryForm(initialData)
     expect(formData.value).toEqual({ done: '', improve: '', tomorrow: '' })
@@ -50,7 +52,7 @@ describe('useDailySummaryForm', () => {
 
   // 初始数据从有值变为 null 时重置表单
   it('initialData 从有值变为 null 时重置表单', async () => {
-    const initialData = ref<any>({
+    const initialData = ref<DailyInitialData>({
       content: { done: '做了', improve: '改进', tomorrow: '计划' }
     })
     const { formData } = useDailySummaryForm(initialData)
@@ -64,7 +66,7 @@ describe('useDailySummaryForm', () => {
 
   // 初始数据变化时自动更新表单
   it('initialData 变化时自动更新表单', async () => {
-    const initialData = ref<any>({
+    const initialData = ref<DailyInitialData>({
       content: { done: 'v1', improve: '', tomorrow: '' }
     })
     const { formData } = useDailySummaryForm(initialData)
@@ -92,7 +94,7 @@ describe('useDailySummaryForm', () => {
 
   // buildPayload 反映表单修改后的值
   it('buildPayload 反映手动修改后的表单值', () => {
-    const initialData = ref<any>(null)
+    const initialData = ref<DailyInitialData>(null)
     const { formData, buildPayload } = useDailySummaryForm(initialData)
     formData.value.done = '手动输入'
     formData.value.improve = '手动改进'

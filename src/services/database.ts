@@ -7,11 +7,12 @@ import { task } from './db/task'
 import { summary } from './db/summary'
 import { goalCategories } from './db/goalCategories'
 import { dailyReportLog } from './db/dailyReportLog'
+import type { JsonObject } from './db/types'
 
 // 数据库统一入口，聚合所有表的 CRUD 操作与 RPC 调用
 export const db = {
   // 直接调用 Supabase RPC 函数（如批量操作等场景）
-  rpc(name: string, params?: Record<string, any>) {
+  rpc(name: string, params?: JsonObject) {
     return client.rpc(name, params)
   },
   goal,

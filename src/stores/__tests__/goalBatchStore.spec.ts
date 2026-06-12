@@ -1,6 +1,24 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
+import type { GoalDay } from '@/services/db/goalDays'
+import type { GoalMonth } from '@/services/db/goalMonths'
+
+const goalMonth: GoalMonth = {
+  id: 'gm-1',
+  goal_id: 'goal-1',
+  user_id: 'user-1',
+  title: '月计划',
+  month: '2026-06-01'
+}
+
+const goalDay: GoalDay = {
+  id: 'gd-1',
+  user_id: 'user-1',
+  title: '日计划',
+  status: 'active',
+  day: '2026-06-12'
+}
 
 describe('goalBatchStore', () => {
   beforeEach(() => {
@@ -18,8 +36,8 @@ describe('goalBatchStore', () => {
   it('添加数据后 reset 可清空所有缓存', () => {
     const store = useGoalBatchStore()
 
-    store.goalMonthsMap['goal-1-6'] = { id: 'gm-1' } as any
-    store.dailyTasks['goal-1-6-1'] = { id: 'gd-1' } as any
+    store.goalMonthsMap['goal-1-6'] = goalMonth
+    store.dailyTasks['goal-1-6-1'] = goalDay
     store.selectedDates['2026-06'] = [1, 2, 3]
     store.batchInput = '测试输入'
 

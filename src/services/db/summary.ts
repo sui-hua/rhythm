@@ -8,27 +8,32 @@
 
 import { createBase } from '@/services/supabase'
 import { mapSummaryRowToRecord } from '@/services/db/summaryAdapters'
-import type { SummaryRow } from '@/services/db/summaryAdapters'
+import type { SummaryRecord, SummaryRow } from '@/services/db/summaryAdapters'
 import { TABLES } from './tables'
+import type { EntityId, JsonObject, SummaryKind } from './types'
 
 // Summary 数据接口
 export interface Summary {
-  id?: string | number
-  kind: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  id?: EntityId
+  user_id?: string
+  kind: SummaryKind
   period_start?: string
   period_end?: string
-  content?: Record<string, any>
+  title?: string | null
+  content?: JsonObject
   created_at?: string
-  updated_at?: string
+  updated_at?: string | null
 }
 
 // Summary 创建/更新参数
 export interface SummaryPayload {
-  id?: string | number
-  kind: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  id?: EntityId
+  user_id?: string
+  kind: SummaryKind
   period_start: string
   period_end?: string
-  content?: Record<string, any>
+  title?: string | null
+  content?: JsonObject
 }
 
 // 通过 createBase 获取基础 CRUD 能力（list / getById / create / update / delete / query）
@@ -45,7 +50,7 @@ export const summary = {
    * @param kind - 总结类型（daily/weekly/monthly/yearly）
    * @returns 总结记录数组（经 mapSummaryRowToRecord 转换）
    */
-  async listByKind(kind: Summary['kind']): Promise<Summary[]> {
+  async listByKind(kind: Summary['kind']): Promise<SummaryRecord[]> {
     // query 返回原始行数据，需经 mapSummaryRowToRecord 转换为前端格式
     const data = await supabase.query<SummaryRow>(q =>
       q.select('*').eq('kind', kind).order('period_start', { ascending: false })
@@ -59,7 +64,7 @@ export const summary = {
    * @param kind - 总结类型（daily/weekly/monthly/yearly）
    * @returns 匹配的总结记录，无匹配时返回 null
    */
-  async getByDateKind(date: string, kind: Summary['kind']): Promise<Summary | null> {
+  async getByDateKind(date: string, kind: Summary['kind']): Promise<SummaryRecord | null> {
     const rows = await supabase.query<SummaryRow>(q =>
       q.select('*').eq('kind', kind).lte('period_start', date).gte('period_end', date).limit(1)
     )

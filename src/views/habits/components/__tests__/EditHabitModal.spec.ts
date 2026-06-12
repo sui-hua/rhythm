@@ -4,6 +4,8 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import EditHabitModal from '../EditHabitModal.vue'
 import { db } from '@/services/database'
+import type { Habit } from '@/services/db/habit'
+import type { HabitFrequency } from '@/utils/habitFrequency'
 
 // mock db 服务
 vi.mock('@/services/database', () => ({
@@ -17,13 +19,13 @@ vi.mock('@/services/database', () => ({
 
 // mock withLoadingLock，直接执行回调
 vi.mock('@/utils/throttle', () => ({
-  withLoadingLock: (fn: any) => fn
+  withLoadingLock: <Args extends unknown[], Result>(fn: (...args: Args) => Promise<Result>) => fn
 }))
 
 // mock habitFrequency 工具函数
 vi.mock('@/views/habits/utils/habitFrequency', () => ({
   createDefaultHabitFrequency: () => ({ type: 'daily', weekdays: [], monthDays: [] }),
-  normalizeHabitFrequency: (freq: any) => freq
+  normalizeHabitFrequency: (freq: HabitFrequency) => freq
 }))
 
 // mock useHabitFrequencyForm
@@ -78,8 +80,8 @@ describe('EditHabitModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    vi.mocked(db.habit.update).mockResolvedValue({} as any)
-    vi.mocked(db.habit.delete).mockResolvedValue({} as any)
+    vi.mocked(db.habit.update).mockResolvedValue({ id: 'habit-1', title: '每日阅读' } satisfies Habit)
+    vi.mocked(db.habit.delete).mockResolvedValue(undefined)
   })
 
   it('显示"修改习惯"标题', () => {
@@ -182,8 +184,8 @@ describe('EditHabitModal', () => {
   })
 
   it('保存 pending 时重复点击只更新一次', async () => {
-    const gate = deferred()
-    vi.mocked(db.habit.update).mockReturnValue(gate.promise as any)
+    const gate = deferred<Habit>()
+    vi.mocked(db.habit.update).mockReturnValue(gate.promise)
     const wrapper = mount(EditHabitModal, {
       props: { show: true, habitData: mockHabit },
       global: { stubs }
@@ -197,14 +199,14 @@ describe('EditHabitModal', () => {
     expect(db.habit.update).toHaveBeenCalledTimes(1)
     expect(saveBtn.attributes('disabled')).toBeDefined()
 
-    gate.resolve()
+    gate.resolve({ id: 'habit-1', title: '每日阅读' })
     await first
     await second
   })
 
   it('删除 pending 时重复点击只删除一次', async () => {
     const gate = deferred()
-    vi.mocked(db.habit.delete).mockReturnValue(gate.promise as any)
+    vi.mocked(db.habit.delete).mockReturnValue(gate.promise)
     const wrapper = mount(EditHabitModal, {
       props: { show: true, habitData: mockHabit },
       global: { stubs }

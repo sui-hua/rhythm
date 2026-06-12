@@ -49,7 +49,7 @@ describe('useHabitCalendar', () => {
     expect(grid).toHaveLength(30) // 6月有30天
     expect(grid[0]).toBe(1)
     expect(grid[29]).toBe(30)
-    expect(grid.every((cell: any) => cell !== null)).toBe(true)
+    expect(grid.every((cell: number | null) => cell !== null)).toBe(true)
   })
 
   // calendarGrid：月份第一天是周日时有 6 个 null 填充
@@ -58,7 +58,7 @@ describe('useHabitCalendar', () => {
     // 切换到 2026年2月（2月1日是周日）
     viewMonth.value = 1 // February = 1 (0-based)
     const grid = calendarGrid.value
-    const nullCount = grid.filter((c: any) => c === null).length
+    const nullCount = grid.filter((c: number | null) => c === null).length
     expect(nullCount).toBe(6)
     expect(grid[6]).toBe(1)
   })

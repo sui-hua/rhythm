@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, nextTick } from 'vue'
 import { useGenericSummaryForm } from '../useGenericSummaryForm'
 
+type GenericInitialData = Parameters<typeof useGenericSummaryForm>[0]['value']
+
 describe('useGenericSummaryForm', () => {
   // typeName：week 映射为"周"
   it('typeName week 类型映射为"周"', () => {
@@ -98,7 +100,7 @@ describe('useGenericSummaryForm', () => {
 
   // 初始数据从有值变为 null 时重置
   it('initialData 从有值变为 null 时重置表单', async () => {
-    const initialData = ref<any>({
+    const initialData = ref<GenericInitialData>({
       title: '标题',
       content: { text: '内容' }
     })
@@ -127,7 +129,7 @@ describe('useGenericSummaryForm', () => {
 
   // buildPayload 反映手动修改后的值
   it('buildPayload 反映手动修改后的表单值', () => {
-    const initialData = ref<any>(null)
+    const initialData = ref<GenericInitialData>(null)
     const typeRef = ref('week')
     const { title, content, buildPayload } = useGenericSummaryForm(initialData, typeRef)
     title.value = '手动标题'

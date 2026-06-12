@@ -79,16 +79,22 @@ import { Plus } from 'lucide-vue-next'
 import { computed, toRef } from 'vue'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import type { SummaryRecord } from '@/services/db/summaryAdapters'
+import type { EntityId } from '@/services/db/types'
 
 // Props：父组件传入当前激活的 Tab、总结列表、当前选中项 ID
-const props = defineProps({
-  activeTab: String,           // 当前激活的 tab id（如 'day' | 'week' | 'month' | 'year'）
-  summaries: Array as () => Record<string, any>[],  // 总结记录列表，每项包含 id、日期、标题等字段
-  selectedSummaryId: String    // 当前选中的总结 ID，用于高亮展示
-})
+const props = defineProps<{
+  activeTab?: string
+  summaries?: SummaryRecord[]
+  selectedSummaryId?: EntityId
+}>()
 
 // Emits：组件内部状态变化时通知父组件
-const emit = defineEmits(['update:activeTab', 'select', 'create'])
+const emit = defineEmits<{
+  'update:activeTab': [tabId: string]
+  select: [summary: SummaryRecord]
+  create: []
+}>()
 
 // useResizable：侧边栏宽度拖拽调整
 const { width, startResize, isResizing } = useResizable()

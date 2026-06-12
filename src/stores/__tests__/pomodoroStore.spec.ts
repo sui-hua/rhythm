@@ -39,8 +39,7 @@ describe('pomodoroStore', () => {
       start_time: '2026-06-05T10:00:00Z',
       end_time: '2026-06-05T11:00:00Z',
       actual_start_time: '2026-06-05T10:00:00Z',
-      actual_end_time: null,
-      original: {} as any
+      actual_end_time: null
     }
 
     store.setActiveTask(task)
@@ -60,8 +59,7 @@ describe('pomodoroStore', () => {
       start_time: '2026-06-05T10:00:00Z',
       end_time: '2026-06-05T11:00:00Z',
       actual_start_time: '2026-06-05T10:00:00Z',
-      actual_end_time: null,
-      original: {} as any
+      actual_end_time: null
     }
     store.setActiveTask(task)
     expect(store.activeTask).not.toBeNull()
@@ -82,8 +80,7 @@ describe('pomodoroStore', () => {
       start_time: '2026-06-05T10:00:00Z',
       end_time: '2026-06-05T11:00:00Z',
       actual_start_time: '2026-06-05T10:00:00Z',
-      actual_end_time: null,
-      original: {} as any
+      actual_end_time: null
     }
     store.setActiveTask(task)
     expect(store.showModal).toBe(true)
@@ -103,8 +100,7 @@ describe('pomodoroStore', () => {
       start_time: '2026-06-05T10:00:00Z',
       end_time: '2026-06-05T11:00:00Z',
       actual_start_time: '2026-06-05T10:00:00Z',
-      actual_end_time: null,
-      original: {} as any
+      actual_end_time: null
     }
     store.setActiveTask(task)
     store.closeModal()
@@ -137,8 +133,7 @@ describe('pomodoroStore', () => {
       start_time: startTime,
       end_time: null,
       actual_start_time: startTime,
-      actual_end_time: null,
-      original: {} as any
+      actual_end_time: null
     }
 
     store.setActiveTask(task)

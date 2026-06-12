@@ -48,7 +48,7 @@ vi.mock('@/views/day/utils/routeDateContext', () => ({
 
 // mock cn 工具
 vi.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' ')
+  cn: (...args: unknown[]) => args.filter(Boolean).join(' ')
 }))
 
 // stub 子组件

@@ -10,15 +10,18 @@
 
 import { createBase } from '@/services/supabase'
 import { TABLES } from './tables'
+import type { EntityId, TaskStatus } from './types'
 
 // Task 数据接口
 export interface Task {
-  id: string | number
+  id: EntityId
+  user_id?: string
   title: string
   description?: string | null
+  status?: TaskStatus
   completed?: boolean
-  start_time?: string
-  end_time?: string
+  start_time?: string | null
+  end_time?: string | null
   actual_start_time?: string | null
   actual_end_time?: string | null
   created_at?: string
@@ -29,19 +32,21 @@ export interface Task {
 export interface CreateTaskPayload {
   title: string
   user_id?: string
-  description?: string
+  description?: string | null
+  status?: TaskStatus
   completed?: boolean
-  start_time?: string
-  end_time?: string
+  start_time?: string | null
+  end_time?: string | null
 }
 
 // Task 更新参数
 export interface UpdateTaskPayload {
   title?: string
-  description?: string
+  description?: string | null
+  status?: TaskStatus
   completed?: boolean
-  start_time?: string
-  end_time?: string
+  start_time?: string | null
+  end_time?: string | null
   actual_start_time?: string | null
   actual_end_time?: string | null
 }
@@ -79,7 +84,7 @@ export const task = {
    * @param updates - 要更新的字段
    * @returns 更新结果
    */
-  async update(id: string | number, updates: UpdateTaskPayload): Promise<Task> {
+  async update(id: EntityId, updates: UpdateTaskPayload): Promise<Task> {
     return await supabase.update<Task>(id, updates)
   },
 
@@ -87,7 +92,7 @@ export const task = {
    * 删除指定任务
    * @param id - 任务 ID
    */
-  async delete(id: string | number): Promise<void> {
+  async delete(id: EntityId): Promise<void> {
     return await supabase.delete(id)
   },
 
@@ -96,7 +101,7 @@ export const task = {
    * @param id - 任务 ID
    * @returns 单个任务对象
    */
-  async getById(id: string | number): Promise<Task> {
+  async getById(id: EntityId): Promise<Task> {
     return await supabase.getById(id)
   },
 

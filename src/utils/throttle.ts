@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any
-
 /**
  * 时间节流函数，在 delay 毫秒内最多执行一次
  * 采用 leading + trailing 策略：首次触发立即执行，冷却期内最后一次触发也会延迟执行
@@ -8,11 +5,14 @@ type AnyFunction = (...args: any[]) => any
  * @param fn - 需要节流的目标函数
  * @param delay - 冷却时间（毫秒），默认 500ms
  */
-export function throttle<T extends AnyFunction>(fn: T, delay = 500): (...args: Parameters<T>) => void {
+export function throttle<This, Args extends unknown[]>(
+  fn: (this: This, ...args: Args) => unknown,
+  delay = 500
+): (this: This, ...args: Args) => void {
   let timer: ReturnType<typeof setTimeout> | null = null
   let lastTime = 0
 
-  return function (this: any, ...args: Parameters<T>): void {
+  return function (this: This, ...args: Args): void {
     const now = Date.now()
 
     // 已超出冷却期：立即执行，并重置冷却计时
@@ -43,10 +43,12 @@ export function throttle<T extends AnyFunction>(fn: T, delay = 500): (...args: P
  * @param asyncFn - 需要包装的异步函数
  * @returns 包装后的函数，重复调用时返回 undefined
  */
-export function withLoadingLock<T extends (...args: any[]) => Promise<any>>(asyncFn: T): (...args: Parameters<T>) => Promise<ReturnType<T> | void> {
+export function withLoadingLock<This, Args extends unknown[], Result>(
+  asyncFn: (this: This, ...args: Args) => Promise<Result>
+): (this: This, ...args: Args) => Promise<Result | void> {
   let isLoading = false
 
-  return async function (this: any, ...args: Parameters<T>): Promise<ReturnType<T> | void> {
+  return async function (this: This, ...args: Args): Promise<Result | void> {
     if (isLoading) return
     isLoading = true
     try {

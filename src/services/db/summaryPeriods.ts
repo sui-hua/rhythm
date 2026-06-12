@@ -4,14 +4,13 @@
  * 所有时间均转换为本地时区的零点或末点，并输出 ISO 字符串格式。
  */
 
+export type { SummaryKind } from './types'
+
 // 周期对象接口，包含 ISO 格式的起止时间
 export interface Period {
   periodStart: string
   periodEnd: string
 }
-
-// Summary 类型枚举
-export type SummaryKind = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 /**
  * 将给定日期转换为本地时区当日 00:00:00.000（该天零点）。

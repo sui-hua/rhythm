@@ -13,6 +13,7 @@ import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { storeToRefs } from 'pinia'
 import { useDirectionFetch } from '@/views/direction/composables/useDirectionFetch'
+import type { CreateGoalPayload } from '@/services/db/goal'
 import type { GoalMonth, CreateGoalMonthPayload, UpdateGoalMonthPayload } from '@/services/db/goalMonths'
 import type { GoalWithMeta, GoalFormData, DateRange, DirectionGoalsReturn } from '@/views/direction/types'
 
@@ -33,7 +34,10 @@ export function useDirectionGoals(): DirectionGoalsReturn {
   const isSubmitting = ref(false)
 
   /** 解析计划时间配置，带 fallback 链 */
-  const resolvePlanTiming = (source: Partial<{ task_time: string; duration: number }> = {}, fallback: Partial<{ task_time: string; duration: number }> = {}): { task_time: string; duration: number } => ({
+  const resolvePlanTiming = (
+    source: Partial<{ task_time: string | null; duration: number | null }> = {},
+    fallback: Partial<{ task_time: string | null; duration: number | null }> = {}
+  ): { task_time: string; duration: number } => ({
     task_time: source.task_time ?? fallback.task_time ?? '09:00',
     duration: source.duration ?? fallback.duration ?? 30
   })
@@ -249,11 +253,11 @@ export function useDirectionGoals(): DirectionGoalsReturn {
       const startM = newGoal.startMonth || 1
       const endM = newGoal.endMonth || startM
 
-      const planData = {
+      const planData: CreateGoalPayload = {
         user_id: authStore.userId,
         title: newGoal.title,
         description: newGoal.description || '',
-        year: `${year}-01-01`,
+        year,
         category_id: newGoal.category_id || null,
         task_time: newGoal.task_time || '09:00',
         duration: newGoal.duration || 30,
@@ -263,7 +267,7 @@ export function useDirectionGoals(): DirectionGoalsReturn {
         priority: 2,
       }
 
-      const createdPlan = await db.goal.create(planData as Parameters<typeof db.goal.create>[0])
+      const createdPlan = await db.goal.create(planData)
 
       const promises: Promise<GoalMonth>[] = []
       for (let m = startM; m <= endM; m++) {

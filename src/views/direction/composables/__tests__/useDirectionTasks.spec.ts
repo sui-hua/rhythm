@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import type { GoalDay } from '@/services/db/goalDays'
 
 // mock db
 vi.mock('@/services/database', () => ({
@@ -11,7 +12,18 @@ vi.mock('@/services/database', () => ({
 }))
 
 // mock goalBatchStore
-const mockDailyTasks: Record<string, any> = {}
+const mockDailyTasks: Record<string, GoalDay> = {}
+
+const goalDay = (overrides: Partial<GoalDay> = {}): GoalDay => ({
+  id: 'task-1',
+  user_id: 'user-1',
+  title: '旧标题',
+  status: 'active',
+  day: '2026-06-12',
+  task_time: '09:00',
+  duration: 30,
+  ...overrides
+})
 
 vi.mock('@/stores/goalBatchStore', () => ({
   useGoalBatchStore: () => ({
@@ -32,25 +44,25 @@ describe('useDirectionTasks', () => {
   // handleUpdateTask：null task 时早返回，不调用数据库
   it('handleUpdateTask task 为 null 时直接返回', async () => {
     const { handleUpdateTask } = useDirectionTasks()
-    await handleUpdateTask(null as any, { title: 'new' })
+    await handleUpdateTask(null, { title: 'new' })
     expect(db.goalDays.update).not.toHaveBeenCalled()
   })
 
   // handleUpdateTask：task.id 为空时早返回
   it('handleUpdateTask task.id 为空时直接返回', async () => {
     const { handleUpdateTask } = useDirectionTasks()
-    await handleUpdateTask({ id: '' } as any, { title: 'new' })
+    await handleUpdateTask(goalDay({ id: '' }), { title: 'new' })
     expect(db.goalDays.update).not.toHaveBeenCalled()
   })
 
   // handleUpdateTask：正常更新数据库并同步 store
   it('handleUpdateTask 正常更新数据库并同步 store', async () => {
     vi.mocked(db.goalDays.update).mockResolvedValue(undefined)
-    mockDailyTasks['key-1'] = { id: 'task-1', title: '旧标题', task_time: '09:00', duration: 30 }
+    mockDailyTasks['key-1'] = goalDay()
 
     const { handleUpdateTask } = useDirectionTasks()
     await handleUpdateTask(
-      { id: 'task-1', title: '旧标题', task_time: '09:00', duration: 30 } as any,
+      goalDay(),
       { title: '新标题' }
     )
 
@@ -65,11 +77,11 @@ describe('useDirectionTasks', () => {
   // handleUpdateTask：payload 中的字段覆盖原值
   it('handleUpdateTask payload 字段覆盖原 task 值', async () => {
     vi.mocked(db.goalDays.update).mockResolvedValue(undefined)
-    mockDailyTasks['key-2'] = { id: 'task-2', title: '标题', task_time: '10:00', duration: 60 }
+    mockDailyTasks['key-2'] = goalDay({ id: 'task-2', title: '标题', task_time: '10:00', duration: 60 })
 
     const { handleUpdateTask } = useDirectionTasks()
     await handleUpdateTask(
-      { id: 'task-2', title: '标题', task_time: '10:00', duration: 60 } as any,
+      goalDay({ id: 'task-2', title: '标题', task_time: '10:00', duration: 60 }),
       { task_time: '14:00', duration: 45 }
     )
 
@@ -87,7 +99,7 @@ describe('useDirectionTasks', () => {
 
     const { handleUpdateTask } = useDirectionTasks()
     await expect(
-      handleUpdateTask({ id: 'task-1', title: 't' } as any, { title: 'new' })
+      handleUpdateTask(goalDay({ title: 't' }), { title: 'new' })
     ).resolves.toBeUndefined()
 
     expect(consoleSpy).toHaveBeenCalled()

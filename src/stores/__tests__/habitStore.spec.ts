@@ -12,6 +12,7 @@ vi.mock('@/services/database', () => ({
 
 import { useHabitStore } from '@/stores/habitStore'
 import { db } from '@/services/database'
+import type { Habit } from '@/services/db/habit'
 
 const mockDbHabitList = vi.mocked(db.habit.list)
 
@@ -22,10 +23,11 @@ describe('habitStore', () => {
   })
 
   it('fetchHabits 调用 db.habit.list', async () => {
-    mockDbHabitList.mockResolvedValue([
+    const habits: Habit[] = [
       { id: 'h-1', title: '早起', is_archived: false },
       { id: 'h-2', title: '阅读', is_archived: true }
-    ] as any)
+    ]
+    mockDbHabitList.mockResolvedValue(habits)
 
     const store = useHabitStore()
     await store.fetchHabits()
@@ -35,11 +37,12 @@ describe('habitStore', () => {
   })
 
   it('habits 计算属性过滤 is_archived', async () => {
-    mockDbHabitList.mockResolvedValue([
+    const habits: Habit[] = [
       { id: 'h-1', title: '早起', is_archived: false },
       { id: 'h-2', title: '阅读', is_archived: true },
       { id: 'h-3', title: '运动', is_archived: false }
-    ] as any)
+    ]
+    mockDbHabitList.mockResolvedValue(habits)
 
     const store = useHabitStore()
     await store.fetchHabits()

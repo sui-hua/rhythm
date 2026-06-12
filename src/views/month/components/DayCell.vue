@@ -90,6 +90,8 @@
  * - enterDay: 点击当前月份日期时触发，参数为日期字符串
  */
 <script lang="ts" setup>
+import type { EntityId } from '@/services/db/types'
+
 /** 日期单元格数据结构 */
 interface DayData {
   /** 日期数字（1-31） */
@@ -97,7 +99,7 @@ interface DayData {
   /** 是否为当前月份日期 */
   isCurrent: boolean
   /** 当日任务列表（可选） */
-  tasks?: any[]
+  tasks?: EntityId[]
   /** 有任务的小时数组（可选） */
   taskHours?: number[]
   /** 当日目标计划数量（可选） */

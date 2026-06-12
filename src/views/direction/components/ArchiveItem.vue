@@ -1,23 +1,19 @@
 <script lang="ts" setup>
-defineProps({
-  day: {
-    type: Number,
-    required: true
-  },
-  task: {
-    type: Object,
-    default: null
-  },
-  taskKey: {
-    type: String,
-    required: true
-  }
-})
+import type { GoalDay, UpdateGoalDayPayload } from '@/services/db/goalDays'
 
-const emit = defineEmits(['update-task'])
+defineProps<{
+  day: number
+  task?: GoalDay | null
+  taskKey: string
+}>()
+
+const emit = defineEmits<{
+  'update-task': [task: GoalDay, payload: UpdateGoalDayPayload]
+}>()
 
 // 二元签名：handleUpdateTask(task, payload)
-const handleUpdateTask = (task: any, payload: any) => {
+const handleUpdateTask = (task: GoalDay | null | undefined, payload: UpdateGoalDayPayload) => {
+  if (!task) return
   emit('update-task', task, payload)
 }
 </script>
