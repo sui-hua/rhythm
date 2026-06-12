@@ -383,6 +383,13 @@ export function getFirstDayOffset(year: number, month: number): number {
 - 实现计划执行过程中，不要提前提交 commit
 - 所有代码编写完成后，再统一进行提交
 - 由用户执行最终提交，代理不执行 `git commit`
+- 提交前必须检查暂存区：`git status --short`、`git diff --cached --name-status`、`git diff --cached`
+- 分批提交时，一个 commit 只表达一个清晰主题，避免混入无关文件；优先精确 `git add <file>`，谨慎使用 `git add .`
+- 提交信息使用 Conventional Commits：`<type>(<scope>): <subject>`
+- 常用 type：`feat` 新功能、`fix` 修复、`refactor` 重构、`test` 测试、`docs` 文档、`style` 样式、`perf` 性能、`chore` 配置/杂项
+- 常用 scope：`day`、`direction`、`habits`、`summary`、`auth`、`router`、`db`、`types`、`ui`、`docs`
+- subject 使用中文简洁描述，不超过 72 字符，不以句号结尾，如 `fix(day): 保留回溯范围内的未完成目标日计划`
+- 推荐分批顺序：回归测试 → 业务修复/功能实现 → 架构重构 → 文档更新
 
 ### 代理协作偏好
 
