@@ -11,7 +11,6 @@ import { ref, computed } from 'vue'
 import { db } from '@/services/database'
 import { useDateStore } from '@/stores/dateStore'
 import { useHabitStore } from '@/stores/habitStore'
-import { usePomodoroStore } from '@/stores/pomodoroStore'
 import { getMonthName } from '@/utils/dateFormatter'
 import { buildDayExecutionItems } from '@/utils/dayExecutionItems'
 import { matchesHabitFrequency } from '@/utils/habitFrequency'
@@ -130,27 +129,6 @@ export const useDayStore = defineStore('day', () => {
 
         tasks.value = fetchedTasks || []
 
-        // 检查是否有正在运行的任务，自动同步到番茄钟 store
-        // 避免用户刷新页面后丢失正在进行的计时状态
-        const runningTask = tasks.value.find(t =>
-          t.start_time && !t.completed
-        )
-        if (runningTask) {
-          const pomodoroStore = usePomodoroStore()
-          if (!pomodoroStore.activeTask) {
-            pomodoroStore.setActiveTask({
-              id: String(runningTask.id),
-              title: runningTask.title,
-              type: 'task',
-              completed: runningTask.completed ?? false,
-              start_time: runningTask.start_time ?? undefined,
-              end_time: runningTask.end_time ?? undefined,
-              actual_start_time: runningTask.actual_start_time,
-              actual_end_time: runningTask.actual_end_time,
-              original: runningTask
-            })
-          }
-        }
         goalDays.value = fetchedPlans
         // 从 habitStore 缓存读取活跃习惯，过滤匹配当日频率的项
         habits.value = habitStore.habits.filter((habit: Habit) => {

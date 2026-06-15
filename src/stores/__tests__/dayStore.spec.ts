@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
+const mockSetActiveTask = vi.hoisted(() => vi.fn())
+
 // mock 所有外部依赖
 vi.mock('@/services/database', () => ({
   db: {
@@ -35,6 +37,13 @@ vi.mock('@/stores/habitStore', () => ({
     habits: [],
     loading: false,
     fetchHabits: vi.fn().mockResolvedValue(undefined)
+  })
+}))
+
+vi.mock('@/stores/pomodoroStore', () => ({
+  usePomodoroStore: () => ({
+    activeTask: null,
+    setActiveTask: mockSetActiveTask
   })
 }))
 
@@ -91,6 +100,28 @@ describe('dayStore', () => {
     await dayStore.fetchTasks()
 
     expect(mockTaskList).toHaveBeenCalledTimes(1)
+  })
+
+  it('fetchTasks 不会根据未完成任务自动打开番茄钟', async () => {
+    mockTaskList.mockResolvedValue([
+      {
+        id: 'task-1',
+        title: '计划任务',
+        start_time: '2026-06-05T09:00:00.000Z',
+        end_time: '2026-06-05T10:00:00.000Z',
+        completed: false,
+        actual_start_time: null,
+        actual_end_time: null
+      } as Task
+    ])
+
+    const dateStore = useDateStore()
+    dateStore.setDate(new Date(2026, 5, 5))
+
+    const dayStore = useDayStore()
+    await dayStore.fetchTasks()
+
+    expect(mockSetActiveTask).not.toHaveBeenCalled()
   })
 
   it('isLoading 在 fetchTasks 期间为 true', async () => {
