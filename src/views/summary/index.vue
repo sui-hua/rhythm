@@ -109,5 +109,4 @@ const {
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 </style>

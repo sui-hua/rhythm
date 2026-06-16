@@ -78,7 +78,6 @@ const showGuide = computed(() => !onboardingStore.directionGuideCompleted)
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 
 .direction-content::-webkit-scrollbar { display: none; }
 </style>

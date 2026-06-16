@@ -107,5 +107,4 @@ const { tabs, formatDate, getSummaryTitle } = useSummarySidebar(activeTabRef)
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
 </style>
