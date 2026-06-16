@@ -80,7 +80,7 @@ const { selectedMonth, goalKey, toggleMonth } = useDirectionSelection()
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .month-header {
   @apply px-6 py-5 cursor-pointer flex items-center justify-between bg-zinc-50/30 transition-colors hover:bg-zinc-100/50;

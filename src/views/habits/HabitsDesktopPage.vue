@@ -163,7 +163,7 @@ const handleQuickLog = async (note: string) => {
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .habits-desktop-root {

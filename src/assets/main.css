@@ -1,7 +1,7 @@
 @import "nprogress/nprogress.css";
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "./tw-theme.css";
+@import "./index.css";
 
 @layer components {
   #nprogress {

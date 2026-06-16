@@ -127,7 +127,7 @@ const { width, startResize, isResizing } = useResizable()
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .sidebar-scroll::-webkit-scrollbar { display: none; }
 </style>

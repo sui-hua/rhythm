@@ -9,7 +9,7 @@
 - 项目名称：`rhythm`
 - 前端框架：Vue 3（Composition API + `<script setup>`）
 - 构建工具：Vite 7
-- 样式体系：Tailwind CSS 4（设计令牌在 `src/assets/tw-theme.css`）
+- 样式体系：Tailwind CSS 4（设计令牌在 `src/assets/index.css`）
 - 状态管理：Pinia（`authStore` 启用持久化）
 - 数据服务：Supabase
 - UI / 工具库：VueUse、Radix Vue、Reka UI
@@ -23,6 +23,11 @@ pnpm build     # 生产构建（用于验证打包是否正常）
 pnpm preview   # 预览生产构建
 pnpm vue-tsc   # TypeScript 类型检查（提交前必须通过）
 ```
+
+### 命令执行环境
+
+- 当前 Codex 沙盒内无法识别 `pnpm` 命令；执行 `pnpm` 相关命令时必须使用提权，在沙盒外运行。
+- 已验证沙盒外 `pnpm -v` 可用，版本为 `10.33.0`。
 
 ### 环境变量
 
@@ -38,7 +43,7 @@ pnpm vue-tsc   # TypeScript 类型检查（提交前必须通过）
 ```
 src/
 ├── assets/              # 静态资源、主题配置
-│   └── tw-theme.css     # Tailwind 主题定义
+│   └── index.css     # Tailwind 主题定义
 ├── composables/         # 全局可复用逻辑
 ├── components/          # 全局通用组件
 ├── router/              # 路由配置与守卫

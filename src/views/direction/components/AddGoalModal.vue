@@ -267,7 +267,7 @@ const confirmDeleteGoal = () => {
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .modal-content {
   @apply sm:max-w-[450px] p-6 rounded-xl border shadow-lg bg-background;

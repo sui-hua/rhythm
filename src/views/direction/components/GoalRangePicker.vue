@@ -198,7 +198,7 @@ const handleConfirm = () => {
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .picker-root {
   @apply p-6 md:p-10 flex flex-col gap-6;

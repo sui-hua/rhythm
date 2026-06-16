@@ -22,7 +22,7 @@ const { selectedMonth } = useDirectionSelection()
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .month-card {
   @apply mb-4 rounded-xl transition-all duration-300 overflow-hidden border shadow-sm hover:bg-accent/30;

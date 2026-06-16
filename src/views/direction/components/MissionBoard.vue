@@ -32,7 +32,7 @@ const { endSelection } = useDirectionSelection()
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .board-root {
   @apply pb-32 px-6;

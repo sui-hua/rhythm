@@ -36,7 +36,7 @@ defineProps({
 </template>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .archive-header {
   @apply p-6 md:p-10 border-b flex justify-between items-end;

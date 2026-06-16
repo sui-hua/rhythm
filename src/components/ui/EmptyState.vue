@@ -48,7 +48,7 @@ defineProps({
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 
 .ease-expo {
   transition-timing-function: var(--ease-expo);

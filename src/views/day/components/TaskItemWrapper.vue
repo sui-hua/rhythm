@@ -158,5 +158,5 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-@reference "@/assets/tw-theme.css";
+@reference "@/assets/index.css";
 </style>
