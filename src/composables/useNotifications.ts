@@ -1,4 +1,4 @@
-import { ref, onUnmounted, type Ref } from 'vue'
+import { ref, onUnmounted, getCurrentInstance, type Ref } from 'vue'
 import { playSuccessSound } from '@/utils/audio'
 import type { DailyScheduleItem } from '@/types/models'
 
@@ -16,6 +16,7 @@ interface SerializedTask {
   title: string
   description?: string
   startHour?: number
+  scheduledDate?: string | null
   originalDay?: string | null
   originalStartTime?: string | null
 }
@@ -31,6 +32,25 @@ interface ServiceWorkerRegistrationWithPeriodicSync extends ServiceWorkerRegistr
 
 let checkInterval: ReturnType<typeof setInterval> | null = null
 let swRegistration: ServiceWorkerRegistration | null = null
+const NOTIFICATION_ICON_URL = '/notification-icon.png'
+
+// 通知按用户本地自然日匹配，避免凌晨被 UTC 日期错分到前一天
+const formatLocalDateOnly = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 将数据库时间或 date-only 字符串统一归一成本地 YYYY-MM-DD
+const normalizeScheduleDate = (value?: string | null): string | null => {
+  if (!value) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return formatLocalDateOnly(date)
+}
 
 // 浏览器实验 API 的类型守卫，避免把动态字段扩散到业务逻辑中
 const getPeriodicSync = (registration: ServiceWorkerRegistration): PeriodicSyncManager | null => {
@@ -39,7 +59,7 @@ const getPeriodicSync = (registration: ServiceWorkerRegistration): PeriodicSyncM
 }
 
 const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
-  if (!('serviceWorker' in navigator)) {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
     console.warn('Service Worker not supported')
     return null
   }
@@ -54,6 +74,13 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null
   }
 }
 
+// 已授权场景下复用已有注册，避免重复注册 Service Worker
+const ensureServiceWorkerRegistration = async (): Promise<ServiceWorkerRegistration | null> => {
+  if (swRegistration) return swRegistration
+  swRegistration = await registerServiceWorker()
+  return swRegistration
+}
+
 // 从日程列表中提取 Service Worker 需要的可序列化字段
 const serializeTasksForSw = (items: DailyScheduleItem[]): SerializedTask[] => {
   return items.map(item => ({
@@ -64,6 +91,7 @@ const serializeTasksForSw = (items: DailyScheduleItem[]): SerializedTask[] => {
     title: item.title,
     description: item.description,
     startHour: item.startHour,
+    scheduledDate: item.scheduledDate || null,
     // 只提取 original 中 Service Worker 需要的日期字段，避免传递整个 reactive proxy 对象
     originalDay: (item.original as ScheduleOriginal)?.day || null,
     originalStartTime: (item.original as ScheduleOriginal)?.start_time || null
@@ -115,14 +143,14 @@ export function useNotifications(): UseNotificationsReturn {
 
   const requestPermission = async (): Promise<boolean> => {
     hasAskedPermission.value = true
-    if (!('Notification' in window)) {
+    if (typeof Notification === 'undefined') {
       console.warn('浏览器不支持 Web Notification')
       return false
     }
 
     if (Notification.permission === 'granted') {
       notificationPermission.value = 'granted'
-      swRegistration = await registerServiceWorker()
+      swRegistration = await ensureServiceWorkerRegistration()
       return true
     }
 
@@ -130,7 +158,7 @@ export function useNotifications(): UseNotificationsReturn {
       const permission = await Notification.requestPermission()
       notificationPermission.value = permission
       if (permission === 'granted') {
-        swRegistration = await registerServiceWorker()
+        swRegistration = await ensureServiceWorkerRegistration()
       }
       return permission === 'granted'
     }
@@ -139,7 +167,7 @@ export function useNotifications(): UseNotificationsReturn {
   }
 
   const getPermissionStatus = (): string => {
-    if (!('Notification' in window)) return 'unsupported'
+    if (typeof Notification === 'undefined') return 'unsupported'
     return Notification.permission
   }
 
@@ -149,14 +177,14 @@ export function useNotifications(): UseNotificationsReturn {
     }
 
     const notification = new Notification(title, {
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
+      icon: NOTIFICATION_ICON_URL,
+      badge: NOTIFICATION_ICON_URL,
       tag: options.tag || 'task-notification',
       ...options
     })
 
     notification.onclick = () => {
-      window.focus()
+      if (typeof window !== 'undefined') window.focus()
       notification.close()
     }
   }
@@ -165,22 +193,24 @@ export function useNotifications(): UseNotificationsReturn {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
-    const currentDateStr = now.toISOString().split('T')[0]
+    const currentDateStr = formatLocalDateOnly(now)
 
     items.forEach(item => {
-      if (!item.startHour || notifiedTaskIds.value.has(item.id)) {
+      if (item.startHour === undefined || notifiedTaskIds.value.has(item.id)) {
         return
       }
 
       const [hours, minutes] = item.time.split(':').map(Number)
+      if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+        return
+      }
 
       const original = item.original as ScheduleOriginal
-      let itemDateStr: string | undefined
-      if (original?.day) {
-        itemDateStr = new Date(original.day).toISOString().split('T')[0]
-      } else if (original?.start_time) {
-        itemDateStr = new Date(original.start_time).toISOString().split('T')[0]
-      } else {
+      const itemDateStr = item.scheduledDate ||
+        normalizeScheduleDate(original?.day) ||
+        normalizeScheduleDate(original?.start_time)
+
+      if (!itemDateStr) {
         return
       }
 
@@ -209,6 +239,24 @@ export function useNotifications(): UseNotificationsReturn {
     if (checkInterval) return
 
     stopListening()
+
+    if (notificationPermission.value === 'granted' && !swRegistration) {
+      void ensureServiceWorkerRegistration().then(registration => {
+        if (!registration) return
+
+        const items = getScheduleItems()
+        if (items && items.length > 0) {
+          syncTasksToSw(items)
+        }
+
+        const periodicSync = getPeriodicSync(registration)
+        if (periodicSync) {
+          periodicSync.register('check-tasks', {
+            minInterval: 60000
+          }).catch(console.warn)
+        }
+      })
+    }
 
     if (swRegistration) {
       const items = getScheduleItems()
@@ -270,9 +318,11 @@ export function useNotifications(): UseNotificationsReturn {
     notifiedTaskIds.value.clear()
   }
 
-  onUnmounted(() => {
-    stopListening()
-  })
+  if (getCurrentInstance()) {
+    onUnmounted(() => {
+      stopListening()
+    })
+  }
 
   return {
     notificationPermission,

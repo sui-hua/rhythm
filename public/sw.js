@@ -4,6 +4,25 @@
 const CACHE_NAME = 'rhythm-notifications-v1'
 const DB_NAME = 'rhythm-tasks-db'
 const STORE_NAME = 'tasks'
+const NOTIFICATION_ICON_URL = '/notification-icon.png'
+
+// 通知按用户本地自然日匹配，避免 UTC 日期导致凌晨提醒错过
+function formatLocalDateOnly(date) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+// 将 date-only 或时间戳统一归一成本地 YYYY-MM-DD
+function normalizeScheduleDate(value) {
+    if (!value) return null
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return null
+    return formatLocalDateOnly(date)
+}
 
 // 初始化 IndexedDB
 function openDB() {
@@ -60,7 +79,7 @@ async function checkAndNotify() {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
-    const currentDateStr = now.toISOString().split('T')[0]
+    const currentDateStr = formatLocalDateOnly(now)
 
     for (const task of tasks) {
         // 跳过已完成的任务
@@ -71,12 +90,11 @@ async function checkAndNotify() {
         if (isNaN(hours) || isNaN(minutes)) continue
 
         // 获取任务日期（使用序列化后的字段）
-        let itemDateStr
-        if (task.originalDay) {
-            itemDateStr = new Date(task.originalDay).toISOString().split('T')[0]
-        } else if (task.originalStartTime) {
-            itemDateStr = new Date(task.originalStartTime).toISOString().split('T')[0]
-        } else {
+        const itemDateStr = task.scheduledDate ||
+            normalizeScheduleDate(task.originalDay) ||
+            normalizeScheduleDate(task.originalStartTime)
+
+        if (!itemDateStr) {
             continue
         }
 
@@ -91,8 +109,8 @@ async function checkAndNotify() {
 
             // 发送通知
             self.registration.showNotification(title, {
-                icon: '/favicon.ico',
-                badge: '/favicon.ico',
+                icon: NOTIFICATION_ICON_URL,
+                badge: NOTIFICATION_ICON_URL,
                 tag: `task-${task.id}`,
                 body: task.description || '点击查看详情',
                 requireInteraction: false

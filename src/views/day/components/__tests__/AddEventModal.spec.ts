@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, reactive } from 'vue'
 import AddEventModal from '../AddEventModal.vue'
+import { TASK_CATEGORY_STORAGE_KEY } from '@/views/day/composables/useTaskCategories'
 
 const mockIsSubmitting = ref(false)
 
@@ -27,8 +28,12 @@ const stubs = {
   DialogContent: { template: '<div><slot /></div>' },
   DialogTitle: { template: '<div><slot /></div>' },
   DialogDescription: { template: '<div><slot /></div>' },
-  Input: { template: '<input />', props: ['modelValue', 'placeholder', 'disabled'] },
-  Button: { template: '<button :disabled="disabled"><slot /></button>', props: ['variant', 'disabled'] },
+  Input: {
+    template: '<input :value="modelValue" :placeholder="placeholder" :disabled="disabled" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+    props: ['modelValue', 'placeholder', 'disabled'],
+    emits: ['update:modelValue']
+  },
+  Button: { template: '<button :disabled="disabled"><slot /></button>', props: ['variant', 'disabled', 'size'] },
   TimePicker: { template: '<div />', props: ['modelValue', 'label', 'id'] },
   DurationPicker: { template: '<div />', props: ['modelValue', 'label', 'id'] }
 }
@@ -36,6 +41,7 @@ const stubs = {
 describe('AddEventModal', () => {
   beforeEach(() => {
     mockIsSubmitting.value = false
+    localStorage.removeItem(TASK_CATEGORY_STORAGE_KEY)
   })
 
   it('新增模式下显示"新增任务"标题', () => {
@@ -75,6 +81,48 @@ describe('AddEventModal', () => {
     const buttons = wrapper.findAll('button')
     const buttonTexts = buttons.map(b => b.text())
     expect(buttonTexts.some(t => t.includes('工作'))).toBe(true)
+  })
+
+  it('显示分类管理入口', () => {
+    const wrapper = mount(AddEventModal, {
+      props: { show: true, initialData: null },
+      global: { stubs }
+    })
+
+    expect(wrapper.text()).toContain('管理')
+  })
+
+  it('分类管理中可以新增分类', async () => {
+    const wrapper = mount(AddEventModal, {
+      props: { show: true, initialData: null, categories: ['工作'] },
+      global: { stubs }
+    })
+
+    const manageBtn = wrapper.findAll('button').find(b => b.text() === '管理')
+    await manageBtn?.trigger('click')
+
+    const input = wrapper.find('input[placeholder="输入新分类"]')
+    await input.setValue('学习')
+    const addBtn = wrapper.findAll('button').find(b => b.text().includes('添加'))
+    await addBtn?.trigger('click')
+
+    expect(wrapper.text()).toContain('学习')
+    expect(JSON.parse(localStorage.getItem(TASK_CATEGORY_STORAGE_KEY) || '[]')).toEqual(['工作', '学习'])
+  })
+
+  it('分类管理中可以删除分类', async () => {
+    const wrapper = mount(AddEventModal, {
+      props: { show: true, initialData: null, categories: ['工作', '学习'] },
+      global: { stubs }
+    })
+
+    const manageBtn = wrapper.findAll('button').find(b => b.text() === '管理')
+    await manageBtn?.trigger('click')
+
+    const deleteBtn = wrapper.find('[aria-label="删除分类 学习"]')
+    await deleteBtn.trigger('click')
+
+    expect(wrapper.text()).not.toContain('学习')
   })
 
   it('点击取消按钮触发 update:show 事件', async () => {

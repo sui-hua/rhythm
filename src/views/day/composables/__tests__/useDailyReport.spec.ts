@@ -78,6 +78,26 @@ describe('useDailyReport', () => {
     expect(reportStats.value.todayTotal).toBe(1)
   })
 
+  // openIfNeeded：传入已加载的今日任务时，复用该数据避免重复查询今日 task
+  it('openIfNeeded 复用已加载的今日任务统计 todayTotal', async () => {
+    vi.mocked(db.dailyReportLog.getByUserAndDate).mockResolvedValue(null)
+    vi.mocked(db.task.list).mockResolvedValueOnce([
+      { completed: true, created_at: '2026-06-01T10:00:00' },
+      { completed: false, created_at: '2026-06-01T10:00:00' }
+    ])
+
+    const { openIfNeeded, reportStats } = useDailyReport()
+    await openIfNeeded({
+      todayTasks: [
+        { completed: false, created_at: '2026-06-05T10:00:00' },
+        { completed: true, created_at: '2026-06-05T11:00:00' }
+      ]
+    })
+
+    expect(db.task.list).toHaveBeenCalledTimes(1)
+    expect(reportStats.value.todayTotal).toBe(2)
+  })
+
   // buildStats：空数据时统计全为 0
   it('buildStats 空数据时统计全为 0', async () => {
     vi.mocked(db.dailyReportLog.getByUserAndDate).mockResolvedValue(null)

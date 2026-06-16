@@ -43,7 +43,6 @@ import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
 import { useGoalBatchStore } from '@/stores/goalBatchStore'
 import { usePomodoroStore } from '@/stores/pomodoroStore'
-import { useNotifications } from '@/composables/useNotifications'
 
 // ── Store ──
 const route = useRoute()
@@ -54,7 +53,6 @@ const goalDataStore = useGoalDataStore()
 const goalSelectionStore = useGoalSelectionStore()
 const goalBatchStore = useGoalBatchStore()
 const pomodoroStore = usePomodoroStore()
-const { requestPermission } = useNotifications()
 
 // ── 计算属性 ──
 // 根据目标路由路径选择过渡效果：day 路由使用滑动效果，其他使用淡入淡出
@@ -76,8 +74,6 @@ onMounted(async () => {
 
     if (session?.user) {
       authStore.setUser(session.user)
-      // 请求通知权限，用于日程提醒
-      requestPermission()
     } else {
       // 当前没有登录用户，清除状态并重定向到登录页
       authStore.clearAuth()

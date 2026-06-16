@@ -28,7 +28,7 @@
       </PopoverAnchor>
       <!-- 时间选择面板 -->
       <PopoverContent
-        class="w-[var(--radix-popover-trigger-width)] p-0 z-[100]"
+        class="w-[var(--reka-popover-trigger-width)] p-0 z-[320]"
         align="start"
         @open-auto-focus.prevent
         @interact-outside="handleInteractOutside"

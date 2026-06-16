@@ -10,5 +10,14 @@ describe('Day view page chrome', () => {
     expect(dayViewSource).not.toContain('<PageIntroBanner')
     expect(dayViewSource).not.toContain("import PageIntroBanner from '@/components/PageIntroBanner.vue'")
   })
+
+  it('uses the notification prompt card instead of requesting permission on mount', () => {
+    const mountedBlock = dayViewSource.match(/onMounted\((?:async\s*)?\(\) => \{([\s\S]*?)\n\}\)/)?.[1] ?? ''
+
+    expect(dayViewSource).toContain('<NotificationPromptCard')
+    expect(dayViewSource).toContain('@enable="handleEnableNotifications"')
+    expect(dayViewSource).toContain("import NotificationPromptCard from '@/components/notifications/NotificationPromptCard.vue'")
+    expect(mountedBlock).not.toMatch(/requestPermission\(\)/)
+  })
 })
 

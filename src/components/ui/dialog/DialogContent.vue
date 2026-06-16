@@ -44,17 +44,17 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <!-- DialogOverlay: 遮罩层，固定定位覆盖整个视口 -->
     <!-- 样式说明： -->
     <!-- - fixed inset-0: 固定定位，填充整个视口 -->
-    <!-- - z-50: 确保遮罩在最上层 -->
+    <!-- - z-[300]: 高于全局导航，确保模态态下背景完全不可交互 -->
     <!-- - bg-black/80: 80% 透明度的黑色背景 -->
     <!-- - data-[state=open]:animate-in/data-[state=closed]:animate-out: 打开/关闭时的过渡动画 -->
     <DialogOverlay
-      class="fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+      class="fixed inset-0 z-[300] bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
     />
     <!-- DialogContent: 对话框主体内容 -->
     <!-- v-bind="forwarded": 转发所有 props 和事件（支持 v-model:open 等）-->
     <!-- 样式说明： -->
     <!-- - fixed left-1/2 top-1/2: 固定定位，中心点对齐 -->
-    <!-- - z-50: 遮罩层之上 -->
+    <!-- - z-[310]: 位于遮罩之上，并低于弹框内的弹出选择层 -->
     <!-- - grid w-full max-w-lg: 网格布局，最大宽度 32rem -->
     <!-- - -translate-x-1/2 -translate-y-1/2: 自身偏移实现居中 -->
     <!-- - gap-4 border p-6 shadow-lg: 间距、边框、阴影 -->
@@ -65,7 +65,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       :aria-describedby="descriptionId"
       :class="
         cn(
-          'fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-98 data-[state=open]:zoom-in-98 sm:rounded-lg',
+          'fixed left-1/2 top-1/2 z-[310] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-98 data-[state=open]:zoom-in-98 sm:rounded-lg',
           props.class,
         )
       "

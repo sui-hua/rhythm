@@ -14,6 +14,14 @@
         @open-summary="showSummaryModal = true"
       />
 
+      <!-- 通知权限引导：仅在用户尚未处理授权时显示 -->
+      <div
+        v-if="notificationPermission === 'default' && !hasAskedPermission"
+        class="absolute left-4 bottom-28 z-30 w-[280px]"
+      >
+        <NotificationPromptCard @enable="handleEnableNotifications" />
+      </div>
+
       <!-- 时间轴主区域 -->
       <div class="relative flex-1 flex flex-col overflow-hidden">
         <Timeline
@@ -67,6 +75,7 @@ import Timeline from '@/views/day/components/Timeline.vue'
 import DailyReportModal from '@/views/day/components/DailyReportModal.vue'
 import PomodoroTimerModal from '@/views/day/components/PomodoroTimerModal.vue'
 import SummaryModal from '@/views/day/components/SummaryModal.vue'
+import NotificationPromptCard from '@/components/notifications/NotificationPromptCard.vue'
 import { useDayNavigation } from '@/views/day/composables/useDayNavigation'
 import { useDayModal } from '@/views/day/composables/useDayModal'
 import { useDateStore } from '@/stores/dateStore'
@@ -92,13 +101,22 @@ const showSummaryModal = ref(false)
 const { reportVisible, reportStats, closeReport } = useDailyReport()
 const dayStore = useDayStore()
 // 日程通知：监听、停止、清除已通知历史、请求权限
-const { startListening, stopListening, clearNotifiedHistory, requestPermission } = useNotifications()
+const {
+  notificationPermission,
+  hasAskedPermission,
+  startListening,
+  stopListening,
+  clearNotifiedHistory,
+  requestPermission
+} = useNotifications()
+
+// 获取当前日程列表，供通知监听和授权后重新同步复用
+const getCurrentSchedule = () => dayStore.dailySchedule
 
 // ── 生命周期 ──
-// 页面挂载后请求通知权限并启动日程监听
-onMounted(async () => {
-  await requestPermission()
-  startListening(() => dayStore.dailySchedule)
+// 页面挂载后启动日程监听；权限申请由用户点击引导卡片触发
+onMounted(() => {
+  startListening(getCurrentSchedule)
 })
 
 // 日期切换时清除已通知历史，避免跨日期重复通知
@@ -120,6 +138,15 @@ const handleDailyReportConfirm = async () => {
 // 总结保存成功：刷新任务列表以更新总结任务状态
 const handleSummarySaved = async () => {
   await dayStore.fetchTasks({ showLoading: false })
+}
+
+// 用户主动开启提醒：授权成功后重启监听，立即同步当前日程
+const handleEnableNotifications = async () => {
+  const granted = await requestPermission()
+  if (!granted) return
+
+  stopListening()
+  startListening(getCurrentSchedule)
 }
 
 // 顺延未完成任务到今天：先锁定加载状态，顺延完成后刷新任务列表，最后关闭弹窗

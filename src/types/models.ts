@@ -31,6 +31,7 @@ interface DailyScheduleItemBase {
   startHour?: number
   durationHours: number
   rawDuration: number
+  scheduledDate?: string
   time: string
   duration: string
   category: string

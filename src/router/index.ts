@@ -21,6 +21,7 @@ const DayView = () => import('@/views/day/index.vue')
 const HabitsView = () => import('@/views/habits/index.vue')
 const DirectionView = () => import('@/views/direction/index.vue')
 const SummaryView = () => import('@/views/summary/index.vue')
+const NotificationTestView = () => import('@/views/notification-test/index.vue')
 
 // ── 路由配置表 ──
 // 无参数路径（/day、/month、/year）自动重定向到当天/当月/当年
@@ -82,6 +83,11 @@ const routes: RouteRecordRaw[] = [
     path: '/summary',
     name: 'SummaryView',
     component: SummaryView
+  },
+  {
+    path: '/notification-test',
+    name: 'NotificationTestView',
+    component: NotificationTestView
   }
 ]
 
@@ -95,12 +101,13 @@ const router = createRouter({
 // 已登录用户访问 /login 时重定向到首页
 // 首次导航时验证 session 有效性，防止 localStorage 残留过期登录态
 let sessionVerified = false
+const publicPaths = ['/login', '/notification-test']
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
   // 未登录用户访问非登录页，重定向到登录页
-  if (to.path !== '/login' && !authStore.userId) {
+  if (!publicPaths.includes(to.path) && !authStore.userId) {
     return '/login'
   }
 

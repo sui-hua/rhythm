@@ -73,7 +73,20 @@
 
           <!-- 分类选择开始：仅任务类型显示，单选标签组 -->
           <div v-if="!isHabit" class="grid gap-2">
-            <label class="text-sm font-medium leading-none">分类</label>
+            <div class="flex items-center justify-between gap-3">
+              <label class="text-sm font-medium leading-none">分类</label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="h-7 px-2 text-xs gap-1.5 text-muted-foreground"
+                @click="managingCategories = !managingCategories"
+              >
+                <Check v-if="managingCategories" class="w-3.5 h-3.5" />
+                <Settings2 v-else class="w-3.5 h-3.5" />
+                {{ managingCategories ? '完成' : '管理' }}
+              </Button>
+            </div>
             <div class="flex gap-2 flex-wrap">
               <Button
                 v-for="cat in categories"
@@ -90,6 +103,46 @@
                 {{ cat }}
               </Button>
             </div>
+
+            <!-- 分类管理区开始：新增/删除任务快捷分类，分类列表保存到本地 -->
+            <div v-if="managingCategories" class="grid gap-3 rounded-md border border-border bg-muted/30 p-3">
+              <div class="flex gap-2">
+                <Input
+                  v-model="newCategoryName"
+                  placeholder="输入新分类"
+                  class="h-8"
+                  @keyup.enter="addCategory"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  class="h-8 px-3 gap-1.5"
+                  @click="addCategory"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  添加
+                </Button>
+              </div>
+
+              <div class="grid gap-1">
+                <div
+                  v-for="cat in categories"
+                  :key="`manage-${cat}`"
+                  class="flex items-center justify-between gap-3 rounded px-2 py-1.5 text-sm hover:bg-background"
+                >
+                  <span class="font-medium">{{ cat }}</span>
+                  <button
+                    type="button"
+                    class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                    :aria-label="`删除分类 ${cat}`"
+                    @click="removeCategory(cat)"
+                  >
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 分类管理区结束 -->
           </div>
           <!-- 分类选择结束 -->
 
@@ -142,7 +195,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import DurationPicker from '@/components/ui/DurationPicker.vue'
+import { computed } from 'vue'
+import { Check, Plus, Settings2, Trash2 } from 'lucide-vue-next'
 import { useAddEventForm, type InitialEventData } from '@/views/day/composables/useAddEventForm'
+import { DEFAULT_TASK_CATEGORIES, useTaskCategories } from '@/views/day/composables/useTaskCategories'
 
 // ── Props ──
 // show: 控制弹窗显隐 | initialData: 编辑模式下的初始数据，null 表示新增 | categories: 分类标签列表
@@ -154,7 +210,7 @@ const props = defineProps({
   },
   categories: {
     type: Array as () => string[],
-    default: () => ['工作', '个人', '会议', '设计', '其他']
+    default: () => DEFAULT_TASK_CATEGORIES
   }
 })
 
@@ -165,6 +221,23 @@ const emit = defineEmits(['close', 'refresh', 'update:show'])
 // ── Composables ──
 // 表单状态、校验、提交和删除逻辑全部由 composable 管理
 const { eventForm, isHabit, errors, isValid, submit, handleDelete, isSubmitting, markFieldTouched } = useAddEventForm(props, emit)
+
+// 当前选中的任务分类，桥接 eventForm.category 与分类管理 composable
+const selectedCategory = computed({
+  get: () => eventForm.category,
+  set: (value: string) => {
+    eventForm.category = value
+  }
+})
+
+// 任务快捷分类管理：读取本地分类、支持新增删除，并同步当前选中分类
+const {
+  categories,
+  managingCategories,
+  newCategoryName,
+  addCategory,
+  removeCategory
+} = useTaskCategories(props.categories, selectedCategory)
 </script>
 
 <style scoped>
