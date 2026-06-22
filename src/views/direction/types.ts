@@ -113,6 +113,7 @@ export interface DirectionSelectionReturn {
   toggleMonth: (month: number) => void
   selectGoal: (goal: GoalWithMeta) => void
   getMonthOffset: (month: number) => number
+  getDaysInMonthForMonth: (month: number) => number
   selectWeekDay: (month: number, weekIndex: number) => void
   isAllSelectedDatesHaveTask: (month: number) => boolean
 }

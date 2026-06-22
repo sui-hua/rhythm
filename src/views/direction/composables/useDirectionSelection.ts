@@ -4,6 +4,7 @@
  */
 
 import { computed } from 'vue'
+import { getDaysInMonth } from 'date-fns'
 import { getDateOnlyDay, getDateOnlyMonth, getDateOnlyYear } from '@/views/direction/utils/dateOnly'
 import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
@@ -88,20 +89,25 @@ export function useDirectionSelection(): DirectionSelectionReturn {
     selectedDates[selectedMonth.value!] = []
   }
 
-  /** 计算指定月份第一天是星期几（考虑目标的实际年份） */
-  const getMonthOffset = (month: number): number => {
-    if (!selectedGoal.value) {
-      return new Date(new Date().getFullYear(), month - 1, 1).getDay()
-    }
+  /** 获取目标在指定月份的年份，用于日期计算 */
+  const getGoalYear = (month: number): number => {
+    if (!selectedGoal.value) return new Date().getFullYear()
 
     const cached = goalMonthsCache[String(selectedGoal.value.goal_id)] || []
     const mp = cached.find(item => getDateOnlyMonth(item.month) === month)
-    if (!mp) {
-      return new Date(new Date().getFullYear(), month - 1, 1).getDay()
-    }
+    return mp ? (getDateOnlyYear(mp.month) || new Date().getFullYear()) : new Date().getFullYear()
+  }
 
-    const year = getDateOnlyYear(mp.month) || new Date().getFullYear()
+  /** 计算指定月份第一天是星期几（考虑目标的实际年份） */
+  const getMonthOffset = (month: number): number => {
+    const year = getGoalYear(month)
     return new Date(year, month - 1, 1).getDay()
+  }
+
+  /** 计算指定月份的实际天数（考虑目标的年份） */
+  const getDaysInMonthForMonth = (month: number): number => {
+    const year = getGoalYear(month)
+    return getDaysInMonth(new Date(year, month - 1, 1))
   }
 
   /** 选中/取消指定星期几的所有日期 */
@@ -187,6 +193,7 @@ export function useDirectionSelection(): DirectionSelectionReturn {
     toggleMonth,
     selectGoal,
     getMonthOffset,
+    getDaysInMonthForMonth,
     selectWeekDay,
     isAllSelectedDatesHaveTask
   }

@@ -5,6 +5,7 @@
 
 import { useAuthStore } from '@/stores/authStore'
 import { db } from '@/services/database'
+import { isValid, parseISO } from 'date-fns'
 import { getDateOnlyMonth, parseDateOnly } from '@/views/direction/utils/dateOnly'
 import { useGoalDataStore } from '@/stores/goalDataStore'
 import { useGoalSelectionStore } from '@/stores/goalSelectionStore'
@@ -94,10 +95,18 @@ export function useDirectionBatch(): DirectionBatchReturn {
 
       for (const day of daysToUpdate) {
         const existingDailyPlan = existingDailyPlanMap.get(day)
+        const dayStr = `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+        // 验证日期有效性，跳过无效日期（如6月31日）
+        if (!isValid(parseISO(dayStr))) {
+          console.warn(`跳过无效日期: ${dayStr}`)
+          continue
+        }
+
         const payload = {
           goal_month_id: currentMp.id,
           user_id: authStore.userId!,
-          day: `${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+          day: dayStr,
           title: batchInput.value,
           task_time: currentTiming.task_time,
           duration: currentTiming.duration

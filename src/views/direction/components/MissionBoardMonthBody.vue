@@ -15,7 +15,7 @@
       <div v-for="offset in getMonthOffset(month)" :key="`spacer-${month}-${offset}`" class="aspect-square md:h-10"></div>
 
       <div
-        v-for="day in 31"
+        v-for="day in getDaysInMonthForMonth(month)"
         :key="`grid-${day}`"
         class="aspect-square md:h-10 rounded-md border flex items-center justify-center cursor-pointer transition-all select-none text-[10px] font-bold relative bg-background border-border text-muted-foreground hover:border-primary/50"
         :class="[
@@ -95,6 +95,7 @@ const {
   handleMouseEnter,
   endSelection,
   getMonthOffset,
+  getDaysInMonthForMonth,
   selectWeekDay,
   isAllSelectedDatesHaveTask
 } = useDirectionSelection()
