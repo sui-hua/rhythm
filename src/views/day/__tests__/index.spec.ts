@@ -19,5 +19,11 @@ describe('Day view page chrome', () => {
     expect(dayViewSource).toContain("import NotificationPromptCard from '@/components/notifications/NotificationPromptCard.vue'")
     expect(mountedBlock).not.toMatch(/requestPermission\(\)/)
   })
+
+  it('shares one daily report instance between navigation trigger and modal state', () => {
+    expect(dayViewSource).toMatch(/const\s+dailyReport\s*=\s*useDailyReport\(\)/)
+    expect(dayViewSource).toMatch(/useDayNavigation\(\{\s*dailyReport\s*\}\)/)
+    expect(dayViewSource).toContain('const { reportVisible, reportStats, closeReport } = dailyReport')
+  })
 })
 

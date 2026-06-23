@@ -8,18 +8,23 @@ import { buildDayPath, getRouteDateContext } from '@/views/day/utils/routeDateCo
 import { getInitialScrollTarget } from '@/views/day/utils/getInitialScrollTarget'
 import { isSameDay } from '@/utils/dateFormatter'
 
+// useDayNavigation 可接收外部日报实例，避免触发逻辑和弹窗状态分离
+interface UseDayNavigationOptions {
+    dailyReport?: Pick<ReturnType<typeof useDailyReport>, 'openIfNeeded'>
+}
+
 /**
  * 日页面导航 Composable
  *
  * 使用场景：Day 页面的路由校验、日期同步、数据加载、滚动定位
  * 数据流：路由参数 → dateStore → dayStore → 组件
  */
-export function useDayNavigation() {
+export function useDayNavigation(options: UseDayNavigationOptions = {}) {
     const dayStore = useDayStore()
     const router = useRouter()
     const route = useRoute()
     const dateStore = useDateStore()
-    const { openIfNeeded } = useDailyReport()
+    const { openIfNeeded } = options.dailyReport ?? useDailyReport()
 
     // 当前时间的小时数（带小数，如 14:30 → 14.5），用于时间线当前时刻指示器
     const currentHour: Ref<number> = ref(new Date().getHours() + new Date().getMinutes() / 60)
