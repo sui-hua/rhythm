@@ -10,6 +10,18 @@ export interface ReportStats {
     yesterdayUncompleted: number
     todayTotal: number
     carryoverToToday: number
+    yesterdayImprove: string
+}
+
+/** 日报任务统计所需的最小任务结构 */
+interface ReportTaskLike {
+    completed?: boolean
+    created_at?: string | null
+}
+
+/** 打开日报时可复用的外部数据 */
+interface OpenDailyReportOptions {
+    todayTasks?: ReportTaskLike[]
 }
 
 /**
@@ -31,16 +43,33 @@ export const useDailyReport = () => {
         yesterdayCompleted: 0,
         yesterdayUncompleted: 0,
         todayTotal: 0,
-        carryoverToToday: 0
+        carryoverToToday: 0,
+        yesterdayImprove: ''
     })
     // 加载状态，用于控制弹窗显示时机和按钮禁用
     const isLoading: Ref<boolean> = ref(false)
 
     /**
+     * 读取昨日日总结中的改进之处
+     * 失败时返回空字符串，避免影响日报主体统计展示
+     */
+    const fetchYesterdayImprove = async (yesterday: Date): Promise<string> => {
+        try {
+            const yesterdayKey = toDateOnly(yesterday)
+            const yesterdaySummary = await db.summary.getByDateKind(yesterdayKey, 'daily')
+            const improve = yesterdaySummary?.content?.improve
+            return typeof improve === 'string' ? improve.trim() : ''
+        } catch (e) {
+            console.warn('获取昨日改进提醒失败:', e)
+            return ''
+        }
+    }
+
+    /**
      * 构建统计数据
      * 并行拉取昨日和今日的任务，汇总完成/未完成/顺延数量
      */
-    const buildStats = async () => {
+    const buildStats = async (options: OpenDailyReportOptions = {}) => {
         const today = new Date()
         const yesterday = new Date(today)
         yesterday.setDate(today.getDate() - 1)
@@ -48,10 +77,11 @@ export const useDailyReport = () => {
         const { start: yStart, end: yEnd } = getDayRange(yesterday)
         const { start: tStart, end: tEnd } = getDayRange(today)
 
-        // 并行请求减少等待时间
-        const [yesterdayTasks, todayTasks] = await Promise.all([
+        // 并行请求减少等待时间；今日任务已由外部加载时直接复用，避免重复查询
+        const [yesterdayTasks, todayTasks, yesterdayImprove] = await Promise.all([
             db.task.list(yStart, yEnd),
-            db.task.list(tStart, tEnd)
+            options.todayTasks ? Promise.resolve(options.todayTasks) : db.task.list(tStart, tEnd),
+            fetchYesterdayImprove(yesterday)
         ])
 
         const yCompleted = (yesterdayTasks || []).filter(t => t.completed).length
@@ -72,7 +102,8 @@ export const useDailyReport = () => {
             yesterdayCompleted: yCompleted,
             yesterdayUncompleted: yUncompleted,
             todayTotal,
-            carryoverToToday
+            carryoverToToday,
+            yesterdayImprove
         }
     }
 
@@ -80,7 +111,7 @@ export const useDailyReport = () => {
      * 按需打开日报弹窗
      * 先检查 dailyReportLog 表，今日已查看则跳过，避免重复弹窗打扰用户
      */
-    const openIfNeeded = async () => {
+    const openIfNeeded = async (options: OpenDailyReportOptions = {}) => {
         const userId = authStore.userId
         if (!userId) return
 
@@ -92,7 +123,7 @@ export const useDailyReport = () => {
             const existing = await db.dailyReportLog.getByUserAndDate(userId, todayKey)
             if (existing) return
 
-            await buildStats()
+            await buildStats(options)
             reportVisible.value = true
         } catch (e) {
             console.error('获取日报失败:', e)

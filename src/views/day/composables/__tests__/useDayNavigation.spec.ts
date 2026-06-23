@@ -7,6 +7,7 @@ vi.mock('vue', async () => {
   return {
     ...actual,
     onMounted: vi.fn(),
+    onUnmounted: vi.fn(),
     watch: vi.fn(),
     nextTick: vi.fn(() => Promise.resolve())
   }
@@ -111,6 +112,16 @@ describe('useDayNavigation', () => {
 
     expect(result).toBe(true)
     expect(router.replace).not.toHaveBeenCalled()
+  })
+
+  it('传入日报实例时复用该实例，避免导航和页面弹窗状态分离', () => {
+    const dailyReport = {
+      openIfNeeded: vi.fn()
+    }
+
+    useDayNavigation({ dailyReport })
+
+    expect(mockUseDailyReport).not.toHaveBeenCalled()
   })
 
   it('首次挂载时将滚动目标委托给 getInitialScrollTarget', async () => {

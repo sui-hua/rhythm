@@ -6,6 +6,9 @@ vi.mock('@/services/database', () => ({
     task: {
       list: vi.fn()
     },
+    summary: {
+      getByDateKind: vi.fn()
+    },
     dailyReportLog: {
       getByUserAndDate: vi.fn(),
       create: vi.fn()
@@ -37,6 +40,7 @@ describe('useDailyReport', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUserId.value = 'user-123'
+    vi.mocked(db.summary.getByDateKind).mockResolvedValue(null)
   })
 
   // openIfNeeded：userId 为 null 时早返回，不查询数据库
@@ -60,6 +64,9 @@ describe('useDailyReport', () => {
   // openIfNeeded：无记录时构建统计数据并弹窗
   it('openIfNeeded 无记录时构建统计并显示弹窗', async () => {
     vi.mocked(db.dailyReportLog.getByUserAndDate).mockResolvedValue(null)
+    vi.mocked(db.summary.getByDateKind).mockResolvedValue({
+      content: { improve: '减少上午刷手机的时间' }
+    })
     vi.mocked(db.task.list)
       .mockResolvedValueOnce([
         { completed: true, created_at: '2026-06-01T10:00:00' },
@@ -76,6 +83,57 @@ describe('useDailyReport', () => {
     expect(reportStats.value.yesterdayCompleted).toBe(1)
     expect(reportStats.value.yesterdayUncompleted).toBe(1)
     expect(reportStats.value.todayTotal).toBe(1)
+    expect(reportStats.value.yesterdayImprove).toBe('减少上午刷手机的时间')
+    expect(db.summary.getByDateKind).toHaveBeenCalledWith('2026-06-05', 'daily')
+  })
+
+  // openIfNeeded：昨日总结不存在时，昨日改进提醒为空
+  it('openIfNeeded 昨日总结不存在时不显示改进提醒', async () => {
+    vi.mocked(db.dailyReportLog.getByUserAndDate).mockResolvedValue(null)
+    vi.mocked(db.summary.getByDateKind).mockResolvedValue(null)
+    vi.mocked(db.task.list)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    const { openIfNeeded, reportStats } = useDailyReport()
+    await openIfNeeded()
+
+    expect(reportStats.value.yesterdayImprove).toBe('')
+  })
+
+  // openIfNeeded：昨日改进内容会去除首尾空白
+  it('openIfNeeded 去除昨日改进内容首尾空白', async () => {
+    vi.mocked(db.dailyReportLog.getByUserAndDate).mockResolvedValue(null)
+    vi.mocked(db.summary.getByDateKind).mockResolvedValue({
+      content: { improve: '  今天先做最重要的事  ' }
+    })
+    vi.mocked(db.task.list)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    const { openIfNeeded, reportStats } = useDailyReport()
+    await openIfNeeded()
+
+    expect(reportStats.value.yesterdayImprove).toBe('今天先做最重要的事')
+  })
+
+  // openIfNeeded：昨日总结查询失败时仍显示日报
+  it('openIfNeeded 昨日总结查询失败时仍显示日报', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    vi.mocked(db.dailyReportLog.getByUserAndDate).mockResolvedValue(null)
+    vi.mocked(db.summary.getByDateKind).mockRejectedValue(new Error('summary failed'))
+    vi.mocked(db.task.list)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    const { openIfNeeded, reportVisible, reportStats } = useDailyReport()
+    await openIfNeeded()
+
+    expect(reportVisible.value).toBe(true)
+    expect(reportStats.value.yesterdayImprove).toBe('')
+    expect(warnSpy).toHaveBeenCalledWith('获取昨日改进提醒失败:', expect.any(Error))
+
+    warnSpy.mockRestore()
   })
 
   // openIfNeeded：传入已加载的今日任务时，复用该数据避免重复查询今日 task
@@ -110,7 +168,8 @@ describe('useDailyReport', () => {
       yesterdayCompleted: 0,
       yesterdayUncompleted: 0,
       todayTotal: 0,
-      carryoverToToday: 0
+      carryoverToToday: 0,
+      yesterdayImprove: ''
     })
   })
 

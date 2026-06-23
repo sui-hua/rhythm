@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DailyReportModal from '../DailyReportModal.vue'
 
 // stub Dialog 系列组件，仅渲染插槽内容
 const stubs = {
-  Dialog: { template: '<div><slot /></div>' },
+  Dialog: { template: '<div><slot /></div>', props: ['open'] },
   DialogContent: { template: '<div><slot /></div>' },
   DialogTitle: { template: '<div><slot /></div>' },
   DialogDescription: { template: '<div><slot /></div>' },
-  Button: { template: '<button><slot /></button>', props: ['variant'] }
+  Button: { template: '<button><slot /></button>', props: ['variant', 'class'] }
 }
 
 describe('DailyReportModal', () => {
@@ -17,7 +17,8 @@ describe('DailyReportModal', () => {
     yesterdayCompleted: 3,
     yesterdayUncompleted: 1,
     todayTotal: 5,
-    carryoverToToday: 2
+    carryoverToToday: 2,
+    yesterdayImprove: ''
   }
 
   it('显示统计数据', () => {
@@ -48,6 +49,35 @@ describe('DailyReportModal', () => {
       global: { stubs }
     })
     expect(wrapper.text()).toContain('每日日报')
+  })
+
+  it('有昨日改进内容时显示提醒区块', () => {
+    const wrapper = mount(DailyReportModal, {
+      props: {
+        show: true,
+        stats: {
+          ...defaultStats,
+          yesterdayImprove: '先完成最重要的任务\n减少切换上下文'
+        }
+      },
+      global: { stubs }
+    })
+
+    expect(wrapper.text()).toContain('昨日改进提醒')
+    expect(wrapper.text()).toContain('先完成最重要的任务')
+    expect(wrapper.text()).toContain('减少切换上下文')
+  })
+
+  it('没有昨日改进内容时不显示提醒区块', () => {
+    const wrapper = mount(DailyReportModal, {
+      props: {
+        show: true,
+        stats: defaultStats
+      },
+      global: { stubs }
+    })
+
+    expect(wrapper.text()).not.toContain('昨日改进提醒')
   })
 
   it('点击"仅确认"按钮触发 confirm 事件', async () => {

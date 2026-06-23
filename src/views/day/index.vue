@@ -87,8 +87,10 @@ import { useNotifications } from '@/composables/useNotifications'
 const AddEventModal = defineAsyncComponent(() => import('@/views/day/components/AddEventModal.vue'))
 
 // ── Composables ──
+// 日报弹窗：统计数据、显隐控制和首次进入触发逻辑共享同一实例
+const dailyReport = useDailyReport()
 // 时间轴导航：滚动定位、加载状态、当前小时
-const { isReady, isLoading, scrollToTask, currentHour } = useDayNavigation()
+const { isReady, isLoading, scrollToTask, currentHour } = useDayNavigation({ dailyReport })
 // 弹窗控制：添加/编辑事件的显示状态和数据
 const { showAddModal, editingTask, openAddModal, openEditModal } = useDayModal()
 const dateStore = useDateStore()
@@ -98,7 +100,7 @@ const dateStore = useDateStore()
 const showSummaryModal = ref(false)
 
 // 日报弹窗：统计数据和显隐控制
-const { reportVisible, reportStats, closeReport } = useDailyReport()
+const { reportVisible, reportStats, closeReport } = dailyReport
 const dayStore = useDayStore()
 // 日程通知：监听、停止、清除已通知历史、请求权限
 const {
