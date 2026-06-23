@@ -9,7 +9,7 @@
     :class="embedded ? 'w-full h-full' : 'absolute'"
     :style="computedStyle"
     @click="$emit('select', index)"
-    @dblclick="$emit('edit', index)"
+    @dblclick="$emit('edit', task.id)"
   >
     <!-- 卡片实体：圆角根据时长动态变化，防止短任务变成奇怪的半圆 -->
     <div
@@ -40,7 +40,7 @@
           <!-- 悬停编辑按钮：所有中等任务统一显示，提升双击编辑可发现性 -->
           <button
             class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded shrink-0 cursor-pointer hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
-            @click.stop="$emit('edit', index)"
+            @click.stop="$emit('edit', task.id)"
             aria-label="编辑任务"
           >
             <Settings2 class="w-3.5 h-3.5 text-muted-foreground" />
@@ -136,7 +136,7 @@
           <!-- 悬停编辑按钮：所有短任务统一显示，提升双击编辑可发现性 -->
           <button
             class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded shrink-0 cursor-pointer hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
-            @click.stop="$emit('edit', index)"
+            @click.stop="$emit('edit', task.id)"
             aria-label="编辑任务"
           >
             <Settings2 class="w-3 h-3 text-muted-foreground" />
@@ -175,7 +175,7 @@ const props = defineProps({
 })
 
 // ── Emits ──
-// select: 单击选中任务 | edit: 双击编辑任务
+// select: 单击选中任务（使用时间轴索引定位） | edit: 编辑任务（使用任务 ID 打开弹窗）
 const emit = defineEmits(['select', 'edit'])
 
 // ── Store ──
