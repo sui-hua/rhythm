@@ -69,6 +69,8 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
 
     // 判断当前编辑的项目是否为习惯类型
     const isHabit: ComputedRef<boolean> = computed(() => props.initialData?.type === 'habit')
+    // 判断当前编辑的项目是否为目标任务类型，避免误写到 task 表
+    const isGoalDay: ComputedRef<boolean> = computed(() => props.initialData?.type === 'goal_day')
 
     // 表单数据模型（响应式）
     const eventForm: EventFormData = reactive({
@@ -197,6 +199,15 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
                         task_time: taskTimeStr,
                         duration: Math.round(durationValue * 60) || 10  // 转换为分钟存储
                     })
+                } else if (isGoalDay.value) {
+                    // 目标任务：更新 goal_days 表，保留原有日期与状态，只修改展示内容和时间
+                    const taskTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+                    await db.goalDays.update(props.initialData.id, {
+                        title: eventForm.title,
+                        description: eventForm.description,
+                        task_time: taskTimeStr,
+                        duration: Math.round(durationValue * 60) || 10
+                    })
                 } else {
                     // 普通任务：更新任务表（完整时间范围、描述）
                     const year = dateStore.currentDate.getFullYear()
@@ -254,6 +265,8 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
             try {
                 if (isHabit.value) {
                     await db.habit.delete(props.initialData.id)
+                } else if (isGoalDay.value) {
+                    await db.goalDays.delete(props.initialData.id)
                 } else {
                     await db.task.delete(props.initialData.id)
                 }
@@ -269,6 +282,7 @@ export function useAddEventForm(props: AddEventFormProps, emit: AddEventFormEmit
     return {
         eventForm,
         isHabit,
+        isGoalDay,
         errors,
         isValid,
         submit,

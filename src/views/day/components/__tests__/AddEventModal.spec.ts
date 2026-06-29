@@ -6,12 +6,14 @@ import AddEventModal from '../AddEventModal.vue'
 import { TASK_CATEGORY_STORAGE_KEY } from '@/views/day/composables/useTaskCategories'
 
 const mockIsSubmitting = ref(false)
+const mockIsGoalDay = ref(false)
 
 // mock useAddEventForm composable，返回可控的表单状态
 vi.mock('@/views/day/composables/useAddEventForm', () => ({
   useAddEventForm: () => ({
     eventForm: reactive({ title: '', time: '09:00', duration: 0.5, description: '', category: '工作' }),
     isHabit: ref(false),
+    isGoalDay: mockIsGoalDay,
     errors: reactive({ title: '' }),
     isValid: ref(true),
     submit: vi.fn(),
@@ -41,6 +43,7 @@ const stubs = {
 describe('AddEventModal', () => {
   beforeEach(() => {
     mockIsSubmitting.value = false
+    mockIsGoalDay.value = false
     localStorage.removeItem(TASK_CATEGORY_STORAGE_KEY)
   })
 
@@ -66,6 +69,21 @@ describe('AddEventModal', () => {
       global: { stubs }
     })
     expect(wrapper.text()).toContain('确认创建')
+  })
+
+  it('编辑目标任务时显示目标任务文案', () => {
+    mockIsGoalDay.value = true
+
+    const wrapper = mount(AddEventModal, {
+      props: {
+        show: true,
+        initialData: { id: 'goal-day-1', type: 'goal_day', title: '目标任务' }
+      },
+      global: { stubs }
+    })
+
+    expect(wrapper.text()).toContain('编辑目标任务')
+    expect(wrapper.text()).toContain('更新您的目标任务详情')
   })
 
   it('显示分类按钮列表', () => {

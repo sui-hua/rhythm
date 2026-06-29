@@ -6,8 +6,8 @@
   <Dialog :open="show" @update:open="$emit('update:show', $event)">
     <DialogContent class="sm:max-w-[400px] p-6 rounded-xl border shadow-lg bg-background">
       <!-- 语义标题开始：仅供屏幕阅读器访问 -->
-      <DialogTitle class="sr-only">{{ initialData ? (isHabit ? '编辑习惯' : '编辑任务') : '新增任务' }}</DialogTitle>
-      <DialogDescription class="sr-only">{{ initialData ? (isHabit ? '更新您的习惯详情' : '更新您的任务详情') : '填写下方信息以创建新任务' }}</DialogDescription>
+      <DialogTitle class="sr-only">{{ dialogTitle }}</DialogTitle>
+      <DialogDescription class="sr-only">{{ dialogDescription }}</DialogDescription>
       <!-- 语义标题结束 -->
 
       <!-- 弹窗主体开始 -->
@@ -15,10 +15,10 @@
         <!-- 标题区块开始：根据编辑/新增、任务/习惯切换文案 -->
         <div class="flex flex-col gap-2 text-center">
           <h1 class="text-2xl font-semibold tracking-tight">
-            {{ initialData ? (isHabit ? '编辑习惯' : '编辑任务') : '新增任务' }}
+            {{ dialogTitle }}
           </h1>
           <p class="text-sm text-muted-foreground">
-            {{ initialData ? (isHabit ? '更新您的习惯详情' : '更新您的任务详情') : '填写下方信息以创建新任务' }}
+            {{ dialogDescription }}
           </p>
         </div>
         <!-- 标题区块结束 -->
@@ -60,7 +60,7 @@
           <!-- 时间与时长结束 -->
 
           <!-- 任务描述开始：仅任务类型显示，习惯无此字段 -->
-          <div v-if="!isHabit" class="grid gap-2">
+          <div v-if="!isHabit && !isGoalDay" class="grid gap-2">
             <label for="description" class="text-sm font-medium leading-none">任务描述</label>
             <Input
               id="description"
@@ -171,7 +171,7 @@
               :disabled="isSubmitting"
               class="text-xs text-destructive hover:underline underline-offset-4 mt-2"
             >
-              删除此任务
+              {{ isGoalDay ? '删除此目标任务' : '删除此任务' }}
             </button>
           </div>
           <!-- 操作按钮区结束 -->
@@ -220,7 +220,23 @@ const emit = defineEmits(['close', 'refresh', 'update:show'])
 
 // ── Composables ──
 // 表单状态、校验、提交和删除逻辑全部由 composable 管理
-const { eventForm, isHabit, errors, isValid, submit, handleDelete, isSubmitting, markFieldTouched } = useAddEventForm(props, emit)
+const { eventForm, isHabit, isGoalDay, errors, isValid, submit, handleDelete, isSubmitting, markFieldTouched } = useAddEventForm(props, emit)
+
+// 弹窗主标题：根据数据来源区分任务、目标任务和习惯
+const dialogTitle = computed(() => {
+  if (!props.initialData) return '新增任务'
+  if (isHabit.value) return '编辑习惯'
+  if (isGoalDay.value) return '编辑目标任务'
+  return '编辑任务'
+})
+
+// 弹窗说明文字：和标题保持一致，避免编辑目标任务时误导用户
+const dialogDescription = computed(() => {
+  if (!props.initialData) return '填写下方信息以创建新任务'
+  if (isHabit.value) return '更新您的习惯详情'
+  if (isGoalDay.value) return '更新您的目标任务详情'
+  return '更新您的任务详情'
+})
 
 // 当前选中的任务分类，桥接 eventForm.category 与分类管理 composable
 const selectedCategory = computed({

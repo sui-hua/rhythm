@@ -7,7 +7,8 @@ const mockFetchTasks = vi.fn()
 vi.mock('@/services/database', () => ({
   db: {
     task: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-    habit: { update: vi.fn(), delete: vi.fn() }
+    habit: { update: vi.fn(), delete: vi.fn() },
+    goalDays: { update: vi.fn(), delete: vi.fn() }
   }
 }))
 
@@ -112,5 +113,67 @@ describe('useAddEventForm', () => {
 
     expect(db.task.delete).toHaveBeenCalledTimes(1)
     expect(isSubmitting.value).toBe(false)
+  })
+
+  it('编辑目标任务时更新 goal_days 表而不是 task 表', async () => {
+    const gate = deferred()
+    vi.mocked(db.goalDays.update).mockReturnValue(gate.promise)
+    const props = reactive<AddEventFormProps>({
+      show: true,
+      initialData: {
+        id: 'goal-day-1',
+        type: 'goal_day',
+        title: '目标任务',
+        time: '09:00',
+        rawDuration: 0.5,
+        description: '原描述'
+      }
+    })
+    const emit: AddEventFormEmit = vi.fn()
+
+    const { eventForm, submit } = useAddEventForm(props, emit)
+    eventForm.title = '更新后的目标任务'
+    eventForm.time = '10:15'
+    eventForm.duration = 1
+    eventForm.description = '新的描述'
+
+    const pending = submit()
+
+    expect(db.goalDays.update).toHaveBeenCalledTimes(1)
+    expect(db.task.update).not.toHaveBeenCalled()
+    expect(db.goalDays.update).toHaveBeenCalledWith('goal-day-1', {
+      title: '更新后的目标任务',
+      description: '新的描述',
+      task_time: '10:15',
+      duration: 60
+    })
+
+    gate.resolve({ id: 'goal-day-1', title: '更新后的目标任务' })
+    await pending
+  })
+
+  it('删除目标任务时调用 goal_days.delete', async () => {
+    const gate = deferred()
+    vi.mocked(db.goalDays.delete).mockReturnValue(gate.promise)
+    const props = reactive<AddEventFormProps>({
+      show: true,
+      initialData: {
+        id: 'goal-day-1',
+        type: 'goal_day',
+        title: '目标任务',
+        time: '09:00',
+        rawDuration: 0.5
+      }
+    })
+    const emit: AddEventFormEmit = vi.fn()
+
+    const { handleDelete } = useAddEventForm(props, emit)
+    const pending = handleDelete()
+
+    expect(db.goalDays.delete).toHaveBeenCalledTimes(1)
+    expect(db.task.delete).not.toHaveBeenCalled()
+
+    gate.resolve()
+    await pending
   })
 })
