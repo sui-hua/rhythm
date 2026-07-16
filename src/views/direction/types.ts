@@ -54,6 +54,8 @@ export interface GoalFormData {
   carry_over_lookback_days?: number
   startMonth?: number
   endMonth?: number
+  /** 是否强制覆盖子级时间（编辑模式使用） */
+  forceOverwriteTiming?: boolean
 }
 
 /** useDirectionFetch 返回值接口 */

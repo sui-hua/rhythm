@@ -157,4 +157,35 @@ test.describe('Direction 页面 — 编辑目标', () => {
       await expect(page.getByText('删除此目标')).toBeVisible()
     }
   })
+
+  test('编辑目标 — 同步更新子级时间复选框', async ({ authPage: page }) => {
+    await page.goto('/direction')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForFunction(() => {
+      const skeleton = document.querySelector('.animate-pulse')
+      return !skeleton || skeleton.offsetParent === null
+    }, { timeout: 15000 })
+
+    // 双击打开编辑弹窗
+    const goalItem = page.locator('.direction-content').locator('..').locator('> div').first().locator('[class*="cursor"]').first()
+    if (await goalItem.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await goalItem.dblclick()
+      await expect(page.getByText('编辑目标')).toBeVisible({ timeout: 5000 })
+
+      // 验证复选框存在
+      await expect(page.getByText('同步更新子级时间')).toBeVisible()
+
+      // 验证复选框默认未勾选
+      const checkbox = page.getByRole('checkbox', { name: '同步更新子级时间' })
+      await expect(checkbox).not.toBeChecked()
+
+      // 勾选复选框
+      await checkbox.check()
+      await expect(checkbox).toBeChecked()
+
+      // 取消勾选
+      await checkbox.uncheck()
+      await expect(checkbox).not.toBeChecked()
+    }
+  })
 })

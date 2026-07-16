@@ -111,7 +111,8 @@ export function useDirectionGoals(): DirectionGoalsReturn {
     newDuration?: number,
     newCarryOverLookbackDays?: number,
     newStartMonth?: number,
-    newEndMonth?: number
+    newEndMonth?: number,
+    forceOverwriteTiming?: boolean
   ): Promise<boolean> => {
     try {
       const goalId = goalToUpdate.goal_id
@@ -179,8 +180,13 @@ export function useDirectionGoals(): DirectionGoalsReturn {
         .map(mp => {
           const payload: UpdateGoalMonthPayload = {} as UpdateGoalMonthPayload
           if (newTitle !== undefined) payload.title = newTitle
-          if (newTaskTime !== undefined && !mp.task_time) payload.task_time = currentTiming.task_time
-          if (newDuration !== undefined && !mp.duration) payload.duration = currentTiming.duration
+          // 强制覆盖模式或子级未设置时间时才更新
+          if (newTaskTime !== undefined && (forceOverwriteTiming || !mp.task_time)) {
+            payload.task_time = currentTiming.task_time
+          }
+          if (newDuration !== undefined && (forceOverwriteTiming || !mp.duration)) {
+            payload.duration = currentTiming.duration
+          }
           return Object.keys(payload).length > 0 ? db.goalMonths.update(mp.id, payload) : null
         })
         .filter((p): p is Promise<GoalMonth> => p !== null)
@@ -215,7 +221,8 @@ export function useDirectionGoals(): DirectionGoalsReturn {
       updatedGoal.duration,
       updatedGoal.carry_over_lookback_days,
       updatedGoal.startMonth,
-      updatedGoal.endMonth
+      updatedGoal.endMonth,
+      updatedGoal.forceOverwriteTiming
     )
     isSubmitting.value = false
 

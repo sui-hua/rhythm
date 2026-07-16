@@ -83,6 +83,19 @@
           <DurationPicker v-model="form.duration" label="预计时长" id="task-duration" />
         </div>
 
+        <!-- 同步更新子级时间选项（仅编辑模式显示） -->
+        <div v-if="isEdit" class="form-group">
+          <div class="flex items-center gap-2">
+            <Checkbox id="force-overwrite-timing" v-model:checked="form.forceOverwriteTiming" />
+            <Label for="force-overwrite-timing" class="text-sm font-medium cursor-pointer">
+              同步更新子级时间
+            </Label>
+          </div>
+          <p class="text-xs text-muted-foreground pl-6">
+            勾选后，所有月度计划的时间将同步更新
+          </p>
+        </div>
+
         <div class="form-group gap-3">
           <div class="carry-over-row">
             <Label class="carry-over-label">未完成延后展示</Label>
@@ -146,6 +159,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -200,7 +214,8 @@ const form = reactive({
   task_time: '09:00',
   duration: 0.5,
   carryOverEnabled: false,
-  carryOverLookbackDays: 1
+  carryOverLookbackDays: 1,
+  forceOverwriteTiming: false
 })
 
 watch(() => showAddModal.value, (newVal) => {
@@ -214,6 +229,7 @@ watch(() => showAddModal.value, (newVal) => {
       form.duration = editingGoal.value.duration ? editingGoal.value.duration / 60 : 0.5
       form.carryOverEnabled = Number(editingGoal.value.carry_over_lookback_days || 0) > 0
       form.carryOverLookbackDays = Math.max(1, Number(editingGoal.value.carry_over_lookback_days || 1))
+      form.forceOverwriteTiming = false
     } else {
       form.title = ''
       form.category_id = 'none'
@@ -223,6 +239,7 @@ watch(() => showAddModal.value, (newVal) => {
       form.duration = 0.5
       form.carryOverEnabled = false
       form.carryOverLookbackDays = 1
+      form.forceOverwriteTiming = false
     }
   }
 })
@@ -250,6 +267,7 @@ const submit = withLoadingLock(async () => {
       ? Math.max(1, Number(form.carryOverLookbackDays || 1))
       : 0,
     status: 'active',
+    forceOverwriteTiming: form.forceOverwriteTiming,
   }
 
   if (isEdit.value) {
