@@ -1,53 +1,164 @@
-# 项目经历：节律 Rhythm - 个人效能管理系统
+# Rhythm
 
-**项目描述**：
-一款基于 Vue 3 + Supabase + Tailwind CSS 开发的个人效能管理应用。不同于传统的 To-Do List，本项目基于“目标-关键结果-日程”的效能逻辑，通过 Direction（方向）、Habits（习惯）、Timeline（时序）三个维度的视图，实现了从宏观年度目标到微观分钟级日程的闭环管理。
+一款面向个人使用的效能与生活规划 Web 应用。Rhythm 将长期目标、周期习惯、每日任务和阶段总结组织到同一套工作流中，帮助用户完成从“确定方向”到“安排时间、持续执行、定期复盘”的闭环。
 
-**技术栈**：
-- **前端**：Vue 3 (Composition API), Vite, Pinia
-- **UI**：Tailwind CSS (JIT 模式), Radix Vue (Headless UI)
-- **后端服务**：Supabase (PostgreSQL, Row Level Security)
-- **工具库**：VueUse
+> 当前项目处于持续开发阶段，以桌面端 Web 体验为主；移动端将作为独立项目规划。
 
-**核心模块与技术实现**：
+## 功能概览
 
-1.  **时序 (Timeline) - 把时间具象化**
-    *   **可视化日程管理**：将一天 24 小时映射为垂直时间轴，直观展示任务的时间跨度与冲突情况。
-    *   **智能视口跟随**：进入页面自动定位到当前时间点，让用户能立刻关注当下的任务进度。
+| 模块 | 路由 | 核心能力 |
+| --- | --- | --- |
+| 时序 | `/day/:year/:month/:day` | 24 小时时间线、任务拖拽与缩放、番茄钟、多来源执行项聚合、日终报告 |
+| 所向 | `/direction` | 长期目标 → 月计划 → 日任务三级拆解、日期拖选、批量排期、分类与归档 |
+| 习惯 | `/habits` | 每日 / 每周 / 每月频率、快捷打卡、热力日历、连续打卡与完成率统计 |
+| 月视图 | `/month/:year/:month` | 按月聚合任务、目标日计划和习惯记录，支持快速下钻到日视图 |
+| 年视图 | `/year/:year` | 全年习惯热力概览与月份导航 |
+| 总结 | `/summary` | 日 / 周 / 月 / 年总结的创建、编辑、删除与周期导航 |
 
-2.  **习惯 (Habits) - 数据的可视化驱动**
-    *   **多维度数据统计**：自动计算“连续打卡天数”、“月度完成率”等核心指标，帮助用户量化坚持的成果。
-    *   **打卡热力图**：以日历热力图的形式直观呈现每月的打卡记录，通过颜色的深浅给予用户即时的正向反馈。
+每日时间线会统一聚合三类数据：独立任务、从长期目标拆解出的日计划，以及当天需要执行的习惯。
 
-3.  **所向 (Direction) - 复杂状态的联动**
-    *   **全链路目标拆解**：实现了从“年度目标 (Direction)”到“月度规划 (Month)”再到“每日执行 (Day)”的层级联动，保证宏观目标能通过每日行动落地。
-    *   **高效任务分配**：在月度看板中实现了类似 Excel 的“鼠标拖拽批量选中”功能，可以快速将一个任务分配给多个日期。
-    *   **灵活的周期规划**：支持可视化拖拽调整目标的起止月份，方便用户灵活制定季度或月度计划。
+## 界面预览
 
-**项目难点解决**：
-- **数据安全**：在数据库层面配置了 **RLS (行级安全策略)**，简单说就是“谁的数据谁才能看”，在后端层面保证了每个用户的数据隔离。
-- **性能优化**：针对复杂的日历交互，使用了 Vue 的 `TransitionGroup` 处理列表动画，并配合 `v-memo` 减少不必要的 DOM 重绘，确保在拖拽选区时始终保持流畅。
+### 时序
 
----
+![Rhythm 时序页面](screenshots/01-day-full.png)
 
-## 模块亮点
+### 所向
 
-这三个模块分别代表了系统里“**长期宏观规划**”、“**周期性行为追踪**”和“**每日高精度执行**”的三阶核心逻辑。构成了“**自上而下的目标拆解**”与“**自下而上的执行反馈**”的业务闭环。
+![Rhythm 所向页面](screenshots/03-direction.png)
 
-### 1. 所向（Direction）模块 —— 长期目标与宏观拆解
-*   **业务作用**：系统顶层模块，负责将抽象的“长期目标 (Plan)”拆落实为“月度计划 (MonthlyPlan)”，并最终分发指派到具体的“每一天 (DailyPlan)”。
-    *   **三级级联架构**：设计并实现了 `长期目标 -> 月度计划 -> 日常任务` 的三级连动数据视图结构，支持多维度的目标追踪与下钻查看。
-    *   **高级交互开发（亮点）**：负责开发任务核心排期视板（Mission Board），自行封装基于事件监听的“画笔拖拽式”多选交互组件。通过维护全局选区状态并拦截 `mousedown/mouseenter/mouseup` 轨迹，实现跨天日期的批量滑动选中、以及任务的“批量下派 / 删除”，大幅度降低了用户管理复杂日程的操作成本。
-    *   **局部状态一致性处理**：对批量操作进行防错校验，实现了拖拽多选时的严格类型判定（防止同时选中已排期和未排期日期），保障数据状态的一致流转。
+更多页面截图可在 [`screenshots/`](screenshots/) 中查看。
 
-### 2. 习惯（Habits）模块 —— 周期行为与可视化数据反馈
-*   **业务作用**：用于周期性行为习惯的打卡积累，提供数据可视化和结构化的快速心得记录。
-    *   **多维数据统计与视图渲染**：基于原生 JS 日期 API 编写自定义日历网格算法（Calendar Grid），计算每月前后偏移量，实现高低频打卡行为“热力可视化日历图”渲染；在前端实时处理日志数组，计算并派生出“当前连续打卡（Streak）”、“月度完成率”、“年度总计”等统计指标。
-    *   **闭环交互流**：通过组合式 UI 设计打卡流与日志联动区域（Quick Log Card），允许用户在极简的点按操作外，便捷挂载每日打卡心得。
-    *   **状态与数据解耦**：从底层重构习惯的状态计算逻辑，在拉取习惯主表数据后，将历史 Log 日志记录按月度区间实施前端过滤，确保组件重新渲染时不卡顿。
+## 技术栈
 
-### 3. 时序（Timeline）模块 —— 每日待办的统一时间轴调度
-*   **业务作用**：作为每日执行的主线，将多个割裂模块（独立任务、日计划任务、日常习惯）在一天的时间轴上进行统一渲染收口与集中调度。
-    *   **多源异构数据聚合（亮点）**：在前端封装数据适配器（Adapter层），利用 Vue 的 `computed` 将底层结构差异极大的三张数据表（Task, DailyPlan, Habit）统一转换为标准化的时间流维度模型，抹平异构数据并在时间轴（Timeline）上实现统一渲染与排序。
-    *   **动态可视化时间定位**：封装基于实时时间驱动的动态刻度线轮询（`setInterval` 计算时分比例）；并结合 DOM `scrollIntoView` API 实现初始化页面及路由跳转时，智能判断并平滑滚动（Smooth Scroll）至自动首个待办事项。
-    *   **视图通信与组件通信**：通过组件的高度拆分解耦主时间轴（Timeline）、控制面板（Sidebar）与事件弹窗（Modal），规范化 `emit` 和 `props` 处理局部刷新，完成修改数据的视图无缝更新。
+- Vue 3.5、TypeScript、Composition API 与 `<script setup>`
+- Vite 7
+- Pinia 3 与持久化插件
+- Tailwind CSS 4
+- Supabase（PostgreSQL、Auth、Row Level Security）
+- Reka UI、Lucide Vue Next
+- VueUse、date-fns、TanStack Virtual
+- Vitest、Vue Test Utils、Playwright
+
+## 快速开始
+
+### 环境要求
+
+- Node.js `^20.19.0` 或 `>=22.12.0`
+- pnpm 10
+- 一个可用的 Supabase 项目
+
+### 安装与运行
+
+```bash
+pnpm install
+```
+
+复制环境变量模板：
+
+```bash
+cp .env.example .env
+```
+
+Windows PowerShell 可使用：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+在 `.env` 中填写 Supabase 配置：
+
+```env
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_KEY=your_supabase_anon_key_here
+```
+
+启动开发服务器：
+
+```bash
+pnpm dev
+```
+
+默认访问地址为 `http://localhost:5173`。
+
+## 常用命令
+
+| 命令 | 说明 |
+| --- | --- |
+| `pnpm dev` | 启动 Vite 开发服务器 |
+| `pnpm build` | 生成生产构建 |
+| `pnpm preview` | 本地预览生产构建 |
+| `pnpm type-check` | 运行 Vue / TypeScript 类型检查 |
+| `pnpm test:unit` | 运行 Vitest 单元测试 |
+| `pnpm test:e2e` | 运行 Playwright 端到端测试 |
+| `pnpm test:e2e:ui` | 使用 Playwright UI 模式运行测试 |
+| `pnpm test:e2e:report` | 打开 Playwright HTML 报告 |
+
+## 项目结构
+
+```text
+rhythm/
+├── database/              # 数据库结构快照与维护约定
+├── docs/                  # 功能文档、设计规格与实施计划
+├── e2e/                   # Playwright 端到端测试
+├── public/                # 公共静态资源与通知 Service Worker
+├── screenshots/           # 主要页面截图
+└── src/
+    ├── assets/            # 全局样式、Tailwind 设计令牌与音频资源
+    ├── components/        # 全局组件与基础 UI 组件
+    ├── composables/       # 跨模块复用逻辑
+    ├── router/            # 路由配置与登录守卫
+    ├── services/          # Supabase 客户端与数据访问层
+    ├── stores/            # Pinia 状态管理
+    ├── types/             # 共享 TypeScript 类型
+    ├── utils/             # 日期、时长、状态等纯工具函数
+    └── views/             # Day、Direction、Habits、Summary 等页面模块
+```
+
+业务逻辑优先收敛在对应模块的 `composables/` 中，组件主要负责界面展示和交互；数据访问统一通过 `src/services/` 管理。
+
+## 数据库与认证
+
+- 用户认证由 Supabase Auth 提供。
+- 登录状态保存在 Pinia 中，路由守卫会在首次导航时校验 Supabase Session。
+- 业务表均启用 RLS，并通过 `user_id` 隔离用户数据。
+- 数据库真实结构以远程 Supabase 为准，本地不维护 `schema.sql`。
+
+数据库维护方式和当前结构快照见：
+
+- [`database/README.md`](database/README.md)
+- [`database/current-structure.md`](database/current-structure.md)
+
+## 测试与质量检查
+
+提交改动前建议依次运行：
+
+```bash
+pnpm type-check
+pnpm test:unit
+pnpm build
+```
+
+涉及核心用户流程时，再运行：
+
+```bash
+pnpm test:e2e
+```
+
+Playwright 默认使用 Chromium，并会自动启动 `http://localhost:5173` 上的开发服务器。部分登录流程测试依赖可访问的 Supabase 服务和仓库中配置的演示账号。
+
+## 相关文档
+
+- [`docs/功能全景文档.md`](docs/功能全景文档.md)：当前功能与交互全景
+- [`docs/二期功能完善清单.md`](docs/二期功能完善清单.md)：后续功能与产品决策
+- [`DESIGN.md`](DESIGN.md)：视觉语言与界面设计规范
+- [`database/current-structure.md`](database/current-structure.md)：Supabase 数据库结构快照
+
+## 构建与部署
+
+```bash
+pnpm build
+pnpm preview
+```
+
+生产产物输出到 `dist/`。仓库已包含 Vercel 的 Vite 构建与 SPA 路由重写配置。
