@@ -2,8 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native'
 import { PortalHost } from '@rn-primitives/portal'
 import { DayScreen } from '../screens/DayScreen'
 
-const mockToggleItem = jest.fn()
-
+// DayScreen 已切换到内存假数据（src/mocks），断言基于种子数据
 function renderDayScreen() {
   return render(
     <>
@@ -13,65 +12,13 @@ function renderDayScreen() {
   )
 }
 
-jest.mock('../hooks/useDayExecutionItems', () => ({
-  useDayExecutionItems: () => ({
-    scheduledItems: [
-      {
-        id: 'task-1',
-        source: 'task',
-        title: '晨间整理',
-        description: '确认今天安排',
-        startAt: '09:00',
-        endAt: '09:30',
-        startMinutes: 540,
-        durationMinutes: 30,
-        completed: false,
-        categoryLabel: '个人任务',
-        readonly: false,
-        original: {
-          id: 'task-1',
-          title: '晨间整理',
-          startAt: '2026-04-28T01:00:00.000Z',
-          endAt: '2026-04-28T01:30:00.000Z',
-          notes: '确认今天安排',
-          completed: false
-        }
-      }
-    ],
-    unscheduledItems: [],
-    isLoading: false,
-    errors: [],
-    refetchAll: jest.fn()
-  })
-}))
-
-jest.mock('../hooks/useExecutionItemToggle', () => ({
-  useExecutionItemToggle: () => ({
-    toggleItem: mockToggleItem,
-    isPending: false
-  })
-}))
-
-jest.mock('../hooks/useTaskMutations', () => ({
-  useTaskMutations: () => ({
-    createTask: jest.fn(),
-    updateTask: jest.fn(),
-    deleteTask: jest.fn(),
-    isSaving: false
-  })
-}))
-
 describe('DayScreen', () => {
-  beforeEach(() => {
-    mockToggleItem.mockClear()
-  })
-
-  it('renders today header, scheduled item and add task button', () => {
+  it('renders date header, scheduled item and add task button', () => {
     renderDayScreen()
 
     // 日期栏按设计稿展示「M月D日 周X」，正则匹配避免依赖运行日期
     expect(screen.getByText(/月\d+日 周/)).toBeTruthy()
-    expect(screen.getByText('晨间整理')).toBeTruthy()
+    expect(screen.getByText('晨间阅读')).toBeTruthy()
     expect(screen.getByLabelText('新增任务')).toBeTruthy()
   })
 
@@ -86,8 +33,10 @@ describe('DayScreen', () => {
   it('toggles an execution item from the card check control', () => {
     renderDayScreen()
 
-    fireEvent.press(screen.getByLabelText('完成晨间整理'))
+    // 项目复盘会在种子里为未完成态
+    fireEvent.press(screen.getByLabelText('完成项目复盘会'))
 
-    expect(mockToggleItem).toHaveBeenCalledTimes(1)
+    // 假数据切换后变为已完成态，勾选标签反转为「取消完成」
+    expect(screen.getByLabelText('取消完成项目复盘会')).toBeTruthy()
   })
 })

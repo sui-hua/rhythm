@@ -11,10 +11,9 @@ import { ExecutionTimeline } from '../components/ExecutionTimeline'
 import { TaskEditorSheet } from '../components/TaskEditorSheet'
 import { TodayProgressCard } from '../components/TodayProgressCard'
 import { UnscheduledSection } from '../components/UnscheduledSection'
-import { useDayExecutionItems } from '../hooks/useDayExecutionItems'
 import { useDayScreenState } from '../hooks/useDayScreenState'
-import { useExecutionItemToggle } from '../hooks/useExecutionItemToggle'
-import { useTaskMutations } from '../hooks/useTaskMutations'
+// 假数据 hooks：签名与真实数据层一致，后续接回 Supabase 时仅需换回原 hooks
+import { useMockDayExecutionItems, useMockExecutionItemToggle, useMockTaskMutations } from '@/mocks/useMockDayData'
 
 export function DayScreen() {
   const currentDate = useDayScreenState((state) => state.currentDate)
@@ -29,9 +28,9 @@ export function DayScreen() {
   const openReadonlyItem = useDayScreenState((state) => state.openReadonlyItem)
   const closeReadonlySheet = useDayScreenState((state) => state.closeReadonlySheet)
 
-  const { scheduledItems, unscheduledItems, isLoading, errors, refetchAll } = useDayExecutionItems(currentDate)
-  const { toggleItem } = useExecutionItemToggle(currentDate)
-  const { createTask, updateTask, deleteTask, isSaving } = useTaskMutations(currentDate)
+  const { scheduledItems, unscheduledItems, isLoading, errors, refetchAll } = useMockDayExecutionItems(currentDate)
+  const { toggleItem } = useMockExecutionItemToggle(currentDate)
+  const { createTask, updateTask, deleteTask, isSaving } = useMockTaskMutations(currentDate)
 
   // 进度统计涵盖时间轴与收集箱全部条目
   const allItems = [...scheduledItems, ...unscheduledItems]
