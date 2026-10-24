@@ -5,22 +5,33 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      // 与 apps/web/src/assets/index.css 的 zinc 设计令牌对齐（oklch → hex）
+      // 命名与 shadcn/ui / React Native Reusables 约定一致，键名带连字符生成 text-muted-foreground 等类
       colors: {
-        background: '#faf8f2',
-        foreground: '#171717',
-        card: '#fffdf8',
-        border: '#ddd6c8',
-        muted: '#6b665d',
-        accent: '#1f1f1f',
-        task: '#e6efd8',
-        plan: '#dce7f2',
-        habit: '#efe0bf',
-        danger: '#b42318'
-      },
-      borderRadius: {
-        lg: '8px',
-        md: '6px',
-        sm: '4px'
+        background: '#ffffff',
+        foreground: '#09090b',
+        card: '#ffffff',
+        'card-foreground': '#09090b',
+        popover: '#ffffff',
+        'popover-foreground': '#09090b',
+        primary: '#18181b',
+        'primary-foreground': '#fafafa',
+        secondary: '#f4f4f5',
+        'secondary-foreground': '#18181b',
+        muted: '#f4f4f5',
+        'muted-foreground': '#71717a',
+        accent: '#f4f4f5',
+        'accent-foreground': '#18181b',
+        destructive: '#dc2626',
+        'destructive-foreground': '#ffffff',
+        border: '#e4e4e7',
+        input: '#e4e4e7',
+        ring: '#a1a1aa',
+        // 语义色：错误提示沿用 destructive；分类底色统一归入 zinc-100（设计稿为中性灰徽章）
+        danger: '#dc2626',
+        task: '#f4f4f5',
+        plan: '#f4f4f5',
+        habit: '#f4f4f5'
       }
     }
   },
