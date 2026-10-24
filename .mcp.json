@@ -1,14 +1,5 @@
 {
   "mcpServers": {
-    "shadcn-ui": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@jpisnice/shadcn-ui-mcp-server",
-        "--framework",
-        "vue"
-      ]
-    },
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=jkqriqqiedrhhlzgzjww"
