@@ -6,23 +6,33 @@
 
 ## 项目概况
 
-- 项目名称：`rhythm`
-- 前端框架：Vue 3（Composition API + `<script setup>`）
-- 构建工具：Vite 7
-- 样式体系：Tailwind CSS 4（设计令牌在 `src/assets/index.css`）
-- 状态管理：Pinia（`authStore` 启用持久化）
-- 数据服务：Supabase
-- UI / 工具库：VueUse、Radix Vue、Reka UI
+- 项目名称：`rhythm`（pnpm monorepo）
+- 仓库结构：`apps/web` 桌面端（Vue 3 + Vite）、`apps/mobile` 移动端（Expo + React Native）、`packages/` 预留共享包
+- 桌面端框架：Vue 3（Composition API + `<script setup>`）
+- 桌面端构建：Vite 7
+- 样式体系：Tailwind CSS 4（桌面端设计令牌在 `apps/web/src/assets/index.css`，移动端为 Tailwind 3 + NativeWind）
+- 状态管理：桌面端 Pinia（`authStore` 启用持久化），移动端 Zustand + TanStack Query
+- 数据服务：Supabase（两端共用同一线上项目）
+- UI / 工具库：VueUse、Radix Vue、Reka UI（web）；RN Primitives、NativeWind（mobile）
 - 语言现状：TypeScript
 
 ### 常用命令
 
+在仓库根目录执行（通过 `--filter` 转发到对应子包）：
+
 ```bash
-pnpm dev       # 启动开发服务器（修改代码后自动热更新）
-pnpm build     # 生产构建（用于验证打包是否正常）
-pnpm preview   # 预览生产构建
-pnpm vue-tsc   # TypeScript 类型检查（提交前必须通过）
+pnpm install          # 根目录统一安装全部依赖（唯一 lockfile 在根）
+pnpm dev              # 桌面端 Vite 开发服务器（修改代码后自动热更新）
+pnpm build            # 桌面端生产构建（用于验证打包是否正常）
+pnpm preview          # 桌面端预览生产构建
+pnpm type-check       # 桌面端 TypeScript 类型检查（提交前必须通过）
+pnpm web:test         # 桌面端 vitest 单测
+pnpm mobile           # 移动端 Expo 开发服务器
+pnpm mobile:typecheck # 移动端 TypeScript 类型检查
+pnpm mobile:test      # 移动端 jest 单测
 ```
+
+也可以进入子包目录直接执行其脚本（如 `cd apps/web && pnpm dev`）。
 
 ### 命令执行环境
 
@@ -31,7 +41,12 @@ pnpm vue-tsc   # TypeScript 类型检查（提交前必须通过）
 
 ### 环境变量
 
-复制 `.env.example` 为 `.env`，填入：
+桌面端：复制 `apps/web/.env.example` 为 `apps/web/.env`，填入：
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_KEY`
+
+移动端：`apps/mobile/.env`（不提交到 git），含 Supabase 连接信息。
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_KEY`
@@ -40,40 +55,59 @@ pnpm vue-tsc   # TypeScript 类型检查（提交前必须通过）
 
 ## 关键目录结构
 
+> 本文后续提到的 `src/` 前缀路径均指 `apps/web/src/`。
+
 ```
-src/
-├── assets/              # 静态资源、主题配置
-│   └── index.css     # Tailwind 主题定义
-├── composables/         # 全局可复用逻辑
-├── components/          # 全局通用组件
-├── router/              # 路由配置与守卫
-│   └── index.ts         # 路由守卫逻辑
-├── services/            # 数据库访问服务
-│   ├── supabase.ts      # Supabase 客户端配置与 createBase 泛型工厂函数
-│   ├── database.ts      # 底层直连与 RPC
-│   └── db/              # 各表 CRUD 操作模块
-├── stores/              # Pinia 状态管理
-│   ├── authStore.ts     # 用户认证（persist: true）
-│   ├── dateStore.ts     # 日期状态
-│   ├── uiStore.ts       # 界面状态
-│   ├── pomodoroStore.ts # 番茄钟状态
-│   ├── goalDataStore.ts     # Direction 数据缓存（目标/月度/日计划）
-│   ├── goalSelectionStore.ts # Direction 选中与编辑状态
-│   └── goalBatchStore.ts    # Direction 批量编辑状态
-├── utils/               # 纯工具函数
-│   ├── dateFormatter.ts     # 日期格式化
-│   ├── formatDuration.ts    # 时长格式化
-│   ├── habitFrequency.ts    # 习惯频率匹配
-│   ├── dayExecutionItems.ts # 日程条目聚合构建
-│   ├── safeAction.ts        # 异步操作统一错误处理
-│   ├── audio.ts             # 音效播放
-│   ├── throttle.ts          # 节流工具
-│   └── goalDayStatus.ts     # 目标日状态计算
-└── views/               # 页面视图
-    ├── [module]/        # 各业务模块
-    │   ├── composables/ # 模块专属逻辑
-    │   └── *.vue        # 页面组件
-    └── ...
+rhythm/                        # monorepo 根
+├── package.json               # 根配置（pnpm workspace + --filter 脚本）
+├── pnpm-workspace.yaml        # workspace 定义：apps/*、packages/*
+├── .npmrc                     # node-linker=hoisted（Expo/Metro 必需）
+├── pnpm-lock.yaml             # 唯一 lockfile（所有子包共享）
+├── AGENTS.md / CLAUDE.md      # 仓库级代理说明
+├── .claude/ .codex/ .mcp.json # 代理与 IDE 配置
+├── apps/
+│   ├── web/                   # 桌面端（Vue 3 + Vite），下述 src/ 即此目录
+│   │   ├── src/
+│   │   │   ├── assets/              # 静态资源、主题配置
+│   │   │   │   └── index.css        # Tailwind 主题定义
+│   │   │   ├── composables/         # 全局可复用逻辑
+│   │   │   ├── components/          # 全局通用组件
+│   │   │   ├── router/              # 路由配置与守卫
+│   │   │   │   └── index.ts         # 路由守卫逻辑
+│   │   │   ├── services/            # 数据库访问服务
+│   │   │   │   ├── supabase.ts      # Supabase 客户端配置与 createBase 泛型工厂函数
+│   │   │   │   ├── database.ts      # 底层直连与 RPC
+│   │   │   │   └── db/              # 各表 CRUD 操作模块
+│   │   │   ├── stores/              # Pinia 状态管理
+│   │   │   │   ├── authStore.ts     # 用户认证（persist: true）
+│   │   │   │   ├── dateStore.ts     # 日期状态
+│   │   │   │   ├── uiStore.ts       # 界面状态
+│   │   │   │   ├── pomodoroStore.ts # 番茄钟状态
+│   │   │   │   ├── goalDataStore.ts     # Direction 数据缓存（目标/月度/日计划）
+│   │   │   │   ├── goalSelectionStore.ts # Direction 选中与编辑状态
+│   │   │   │   └── goalBatchStore.ts    # Direction 批量编辑状态
+│   │   │   ├── utils/               # 纯工具函数
+│   │   │   │   ├── dateFormatter.ts     # 日期格式化
+│   │   │   │   ├── formatDuration.ts    # 时长格式化
+│   │   │   │   ├── habitFrequency.ts    # 习惯频率匹配
+│   │   │   │   ├── dayExecutionItems.ts # 日程条目聚合构建
+│   │   │   │   ├── safeAction.ts        # 异步操作统一错误处理
+│   │   │   │   ├── audio.ts             # 音效播放
+│   │   │   │   ├── throttle.ts          # 节流工具
+│   │   │   │   └── goalDayStatus.ts     # 目标日状态计算
+│   │   │   └── views/               # 页面视图
+│   │   │       └── [module]/        # 各业务模块（composables/ + *.vue）
+│   │   ├── e2e/               # Playwright 端到端测试
+│   │   ├── docs/              # 桌面端模块与计划文档
+│   │   └── vercel.json        # Vercel 部署配置（Root Directory 指向 apps/web）
+│   └── mobile/                # 移动端（Expo + React Native，2026-10 subtree 合入）
+│       ├── app/               # expo-router 路由页面
+│       ├── src/
+│       │   ├── components/ui/ # RN Primitives 封装的 UI 组件
+│       │   ├── features/      # 业务模块（day、auth 等）
+│       │   └── domain/        # 纯逻辑（tasks、day 领域模型）
+│       └── docs/              # 移动端迁移计划与设计文档
+└── packages/                  # 预留：跨端共享包（如共享类型、Supabase 客户端）
 ```
 
 ---
@@ -91,7 +125,9 @@ src/
 | `/year/:year` | Year | 年度总览 |
 | `/summary` | Summary | 日 / 周 / 月 / 年总结 |
 
-模块文档位于 `docs/modules/`。
+移动端（`apps/mobile`）对应迁移中：Day 页已有 Expo 实现（`src/features/day/`），登录页在 `app/(auth)/login.tsx`。
+
+模块文档位于 `apps/web/docs/modules/`。
 
 ### 模块内部架构
 
@@ -435,6 +471,6 @@ export function getFirstDayOffset(year: number, month: number): number {
 
 ### 修改后
 
-- 运行 `pnpm vue-tsc` 确认类型检查通过
-- 运行 `pnpm build` 确认打包正常
+- 运行 `pnpm type-check` 确认桌面端类型检查通过（移动端改动则运行 `pnpm mobile:typecheck`）
+- 运行 `pnpm build` 确认桌面端打包正常
 - 验证功能在浏览器中正常工作
