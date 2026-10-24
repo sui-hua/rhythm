@@ -39,12 +39,15 @@ export function useDirectionTasks(): DirectionTasksReturn {
         const index = cachedDays.findIndex(item => item.id === task.id)
         if (index === -1) continue
 
-        cachedDays[index] = { ...cachedDays[index], ...payload }
+        // 先取出目标项收窄类型（noUncheckedIndexedAccess 下索引访问返回 undefined 联合）
+        const target = cachedDays[index]
+        if (!target) continue
+        cachedDays[index] = { ...target, ...payload }
         break
       }
 
-      // 归档视图依赖 archiveVersion 触发派生数据刷新
-      dataStore.archiveVersion.value++
+      // 归档视图依赖 archiveVersion 触发派生数据刷新（Pinia setup store 自动解包 ref，无需 .value）
+      dataStore.archiveVersion++
     } catch (e) {
       console.error('Failed to update task', e)
     }
