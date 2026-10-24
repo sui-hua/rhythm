@@ -1,4 +1,5 @@
-import { ActivityIndicator, SafeAreaView, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, View } from 'react-native'
+import { Plus } from 'lucide-react-native'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Text } from '@/components/ui/text'
@@ -8,6 +9,7 @@ import { DateSwitcher } from '../components/DateSwitcher'
 import { ExecutionReadonlySheet } from '../components/ExecutionReadonlySheet'
 import { ExecutionTimeline } from '../components/ExecutionTimeline'
 import { TaskEditorSheet } from '../components/TaskEditorSheet'
+import { TodayProgressCard } from '../components/TodayProgressCard'
 import { UnscheduledSection } from '../components/UnscheduledSection'
 import { useDayExecutionItems } from '../hooks/useDayExecutionItems'
 import { useDayScreenState } from '../hooks/useDayScreenState'
@@ -31,6 +33,11 @@ export function DayScreen() {
   const { toggleItem } = useExecutionItemToggle(currentDate)
   const { createTask, updateTask, deleteTask, isSaving } = useTaskMutations(currentDate)
 
+  // 进度统计涵盖时间轴与收集箱全部条目
+  const allItems = [...scheduledItems, ...unscheduledItems]
+  const totalCount = allItems.length
+  const completedCount = allItems.filter((item) => item.completed).length
+
   function handlePressItem(item: DayExecutionItem) {
     if (item.source === 'task') {
       openEditTask(item.original as TaskRecord)
@@ -51,11 +58,13 @@ export function DayScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      {/* 顶部日期栏 */}
       <DateSwitcher date={currentDate} onChange={setCurrentDate} />
 
+      {/* 数据同步异常提示 */}
       {errors.length > 0 ? (
-        <Card className="mx-5 mb-2 border-danger/30 bg-[#FFF0ED] py-0 shadow-none">
-          <CardContent className="flex-row items-center justify-between px-3 py-3">
+        <Card className="mx-5 mb-2 border-destructive/20 bg-destructive/5 py-0 shadow-none">
+          <CardContent className="flex-row items-center justify-between px-3 py-2.5">
             <Text className="font-semibold text-danger">部分数据同步失败</Text>
             <Button onPress={refetchAll} size="sm" variant="ghost">
               <Text className="text-danger">重试</Text>
@@ -64,20 +73,24 @@ export function DayScreen() {
         </Card>
       ) : null}
 
+      {/* 主体：进度卡 + 时间轴 + 收集箱 */}
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {isLoading ? <ActivityIndicator /> : null}
+
+        {totalCount > 0 ? <TodayProgressCard total={totalCount} completed={completedCount} /> : null}
 
         <ExecutionTimeline items={scheduledItems} onPressItem={handlePressItem} onToggleItem={toggleItem} />
         <UnscheduledSection items={unscheduledItems} onPressItem={handlePressItem} onToggleItem={toggleItem} />
       </ScrollView>
 
-      <Button
+      {/* 新建任务悬浮按钮 */}
+      <Pressable
         accessibilityLabel="新增任务"
-        className="absolute bottom-6 right-5"
         onPress={openNewTask}
+        className="absolute bottom-8 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-black/25 active:bg-primary/90"
       >
-        <Text>＋新建任务</Text>
-      </Button>
+        <Plus size={26} strokeWidth={2.5} className="text-primary-foreground" />
+      </Pressable>
 
       <TaskEditorSheet
         visible={isTaskEditorOpen}

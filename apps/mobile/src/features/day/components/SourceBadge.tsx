@@ -1,29 +1,17 @@
 import type { DayExecutionItem } from '@/domain/day/types'
 import { Badge } from '@/components/ui/badge'
 import { Text } from '@/components/ui/text'
-import { cn } from '@/lib/utils'
 
 type SourceBadgeProps = {
   source: DayExecutionItem['source']
   label: DayExecutionItem['categoryLabel']
 }
 
-const variantMap = {
-  task: 'bg-task border-transparent',
-  daily_plan: 'bg-plan border-transparent',
-  habit: 'bg-habit border-transparent'
-} satisfies Record<DayExecutionItem['source'], string>
-
-const textMap = {
-  task: 'text-[#31451F]',
-  daily_plan: 'text-[#263E57]',
-  habit: 'text-[#5B4320]'
-} satisfies Record<DayExecutionItem['source'], string>
-
-export function SourceBadge({ source, label }: SourceBadgeProps) {
+// 设计稿中三类来源统一为中性灰徽章，靠文字区分个人任务/今日计划/日常习惯
+export function SourceBadge({ label }: SourceBadgeProps) {
   return (
-    <Badge className={cn('rounded-md px-2 py-1', variantMap[source])}>
-      <Text className={cn('text-[11px] font-bold', textMap[source])}>{label}</Text>
+    <Badge className="self-start rounded-md bg-secondary px-2 py-1">
+      <Text className="text-[11px] font-semibold text-secondary-foreground">{label}</Text>
     </Badge>
   )
 }

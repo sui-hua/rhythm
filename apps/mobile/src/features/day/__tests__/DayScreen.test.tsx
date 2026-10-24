@@ -69,7 +69,8 @@ describe('DayScreen', () => {
   it('renders today header, scheduled item and add task button', () => {
     renderDayScreen()
 
-    expect(screen.getByText('今天')).toBeTruthy()
+    // 日期栏按设计稿展示「M月D日 周X」，正则匹配避免依赖运行日期
+    expect(screen.getByText(/月\d+日 周/)).toBeTruthy()
     expect(screen.getByText('晨间整理')).toBeTruthy()
     expect(screen.getByLabelText('新增任务')).toBeTruthy()
   })
