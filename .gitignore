@@ -9,7 +9,6 @@ lerna-debug.log*
 
 # Dependencies
 node_modules
-pnpm-lock.yaml
 
 # Build outputs
 dist
@@ -45,12 +44,8 @@ coverage
 .eslintcache
 .parcel-cache
 
-# Test
-/cypress/videos/
-/cypress/screenshots/
+# Test（web 端测试产物条目在 apps/web/.gitignore）
 __screenshots__/
-/test-results/
-/playwright-report/
 
 # Misc
 .temp

@@ -1,0 +1,5 @@
+# 测试产物（目录重构后从根 .gitignore 迁入，路径相对 apps/web）
+test-results/
+playwright-report/
+coverage/
+cypress/
