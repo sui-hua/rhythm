@@ -14,6 +14,7 @@
     "web:test": "pnpm --filter @rhythm/web test:unit",
     "web:test:e2e": "pnpm --filter @rhythm/web test:e2e",
     "mobile": "pnpm --filter @rhythm/mobile start",
+    "mobile:web": "pnpm --filter @rhythm/mobile web",
     "mobile:typecheck": "pnpm --filter @rhythm/mobile typecheck",
     "mobile:test": "pnpm --filter @rhythm/mobile test"
   }
