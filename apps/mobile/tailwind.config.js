@@ -27,8 +27,9 @@ module.exports = {
         border: '#e4e4e7',
         input: '#e4e4e7',
         ring: '#a1a1aa',
-        // 语义色：错误提示沿用 destructive；分类底色统一归入 zinc-100（设计稿为中性灰徽章）
+        // 语义色：错误提示沿用 destructive；打卡坚持等正向状态用设计稿的柔和绿
         danger: '#dc2626',
+        success: '#4d7c0f',
         task: '#f4f4f5',
         plan: '#f4f4f5',
         habit: '#f4f4f5'
