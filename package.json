@@ -16,6 +16,14 @@
     "mobile": "pnpm --filter @rhythm/mobile start",
     "mobile:web": "pnpm --filter @rhythm/mobile web",
     "mobile:typecheck": "pnpm --filter @rhythm/mobile typecheck",
-    "mobile:test": "pnpm --filter @rhythm/mobile test"
+    "mobile:test": "pnpm --filter @rhythm/mobile test",
+    "api": "pnpm --filter @rhythm/api start:dev",
+    "api:build": "pnpm --filter @rhythm/api build",
+    "api:start": "pnpm --filter @rhythm/api start:prod",
+    "api:test": "pnpm --filter @rhythm/api test:e2e",
+    "db:seed": "pnpm --filter @rhythm/api db:seed",
+    "next:dev": "pnpm --filter @rhythm/web-next dev",
+    "next:build": "pnpm --filter @rhythm/web-next build",
+    "next:typecheck": "pnpm --filter @rhythm/web-next typecheck"
   }
 }

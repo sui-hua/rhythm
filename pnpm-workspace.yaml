@@ -1,3 +1,8 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# sharp / unrs-resolver 的原生构建脚本不执行，避免 CI 与本地环境差异
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

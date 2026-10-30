@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: '123456'
+      POSTGRES_DB: rhythm
+      # 按北京时间算自然日，避免 UTC 下凌晨的日期偏移
+      TZ: Asia/Shanghai
+      PGTZ: Asia/Shanghai
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+volumes:
+  postgres:
+    name: postgres

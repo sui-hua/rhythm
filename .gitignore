@@ -51,3 +51,6 @@ __screenshots__/
 .temp
 *.bak
 .worktrees/
+
+# AI 本地工作目录（agents 记忆与临时上下文，不入库）
+.workbuddy/
