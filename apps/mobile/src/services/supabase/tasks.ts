@@ -33,7 +33,7 @@ export async function listTasksForDate(date: Date): Promise<TaskRecord[]> {
   end.setHours(23, 59, 59, 999)
 
   const { data, error } = await supabase
-    .from('tasks')
+    .from('task')
     .select('id,title,start_time,end_time,description,completed')
     .gte('start_time', start.toISOString())
     .lte('start_time', end.toISOString())
@@ -46,7 +46,7 @@ export async function listTasksForDate(date: Date): Promise<TaskRecord[]> {
 
 export async function createTask(input: TaskFormInput) {
   const { data, error } = await supabase
-    .from('tasks')
+    .from('task')
     .insert(toPayload(input))
     .select('id,title,start_time,end_time,description,completed')
     .single()
@@ -66,7 +66,7 @@ export async function updateTask(taskId: string, input: Partial<TaskFormInput>) 
   if (input.completed !== undefined) payload.completed = input.completed
 
   const { data, error } = await supabase
-    .from('tasks')
+    .from('task')
     .update(payload)
     .eq('id', taskId)
     .select('id,title,start_time,end_time,description,completed')

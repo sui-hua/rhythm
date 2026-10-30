@@ -17,7 +17,7 @@ function mapHabit(row: any): HabitRecord {
     taskTime: row.task_time,
     duration: row.duration,
     frequency: mapFrequency(row.frequency),
-    isArchived: Boolean(row.is_archived ?? row.archived)
+    isArchived: Boolean(row.is_archived)
   }
 }
 
@@ -31,8 +31,8 @@ function mapLog(row: any): HabitLogRecord {
 
 export async function listHabitsForDate(_date: Date) {
   const { data, error } = await supabase
-    .from('habits')
-    .select('id,title,target_value,task_time,duration,frequency,archived,is_archived')
+    .from('habit')
+    .select('id,title,target_value,task_time,duration,frequency,is_archived')
     .order('created_at', { ascending: true })
 
   if (error) throw error

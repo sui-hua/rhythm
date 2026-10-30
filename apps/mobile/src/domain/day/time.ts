@@ -40,3 +40,24 @@ export function addMinutes(minutes: number | null, duration: number | null) {
   if (minutes === null || duration === null) return null
   return minutes + duration
 }
+
+/** 日期加减天数，返回新 Date，不修改入参 */
+export function addDays(date: Date, amount: number) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + amount)
+  return next
+}
+
+/** 所在周的周一 00:00（中文习惯以周一为一周起点） */
+export function getWeekStart(date: Date) {
+  const next = new Date(date)
+  const weekday = next.getDay()
+  const offset = weekday === 0 ? 6 : weekday - 1
+  next.setDate(next.getDate() - offset)
+  next.setHours(0, 0, 0, 0)
+  return next
+}
+
+export function isSameDay(a: Date, b: Date) {
+  return toDateKey(a) === toDateKey(b)
+}

@@ -1,61 +1,43 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native'
-
-const mockGetCurrentSession = jest.fn()
-const mockSubscribeToAuthChanges = jest.fn()
-const authModulePath = require.resolve('../../../services/supabase/auth')
-
-jest.doMock(authModulePath, () => ({
-  getCurrentSession: (...args: unknown[]) => mockGetCurrentSession(...args),
-  subscribeToAuthChanges: (...args: unknown[]) => mockSubscribeToAuthChanges(...args)
-}))
-
-const { useAuthSession } = require('../useAuthSession')
+import { setSession, signInLocal, signOutLocal, type AppSession } from '@/services/api/session'
+import { useAuthSession } from '../useAuthSession'
 
 describe('useAuthSession', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    mockGetCurrentSession.mockResolvedValue(null)
-    mockSubscribeToAuthChanges.mockReturnValue(() => {})
+    signOutLocal()
   })
 
-  it('exposes unauthenticated state when there is no session', async () => {
+  it('未登录时暴露未认证状态', () => {
     const { result } = renderHook(() => useAuthSession())
 
+    expect(result.current.isReady).toBe(true)
+    expect(result.current.session).toBeNull()
+    expect(result.current.isAuthenticated).toBe(false)
+  })
+
+  it('本地登录后同步会话状态', async () => {
+    const { result } = renderHook(() => useAuthSession())
+
+    act(() => {
+      signInLocal('dev@localhost')
+    })
+
     await waitFor(() => {
-      expect(result.current.isReady).toBe(true)
-      expect(result.current.session).toBeNull()
-      expect(result.current.isAuthenticated).toBe(false)
+      expect(result.current.isAuthenticated).toBe(true)
+      expect(result.current.session?.user.email).toBe('dev@localhost')
     })
   })
 
-  it('updates state from auth subscription and unsubscribes on cleanup', async () => {
-    const unsubscribe = jest.fn()
-    let onAuthChange: ((session: unknown) => void) | undefined
-
-    mockSubscribeToAuthChanges.mockImplementation((callback) => {
-      onAuthChange = callback
-      return unsubscribe
-    })
-
-    const { result, unmount } = renderHook(() => useAuthSession())
-
-    await waitFor(() => {
-      expect(result.current.isReady).toBe(true)
-    })
-
-    const session = { user: { id: 'user-1' } } as never
+  it('外部直接设置会话时也能收到通知', async () => {
+    const { result } = renderHook(() => useAuthSession())
+    const session: AppSession = { user: { id: 'user-1', email: 'a@b.c' } }
 
     act(() => {
-      onAuthChange?.(session)
+      setSession(session)
     })
 
     await waitFor(() => {
-      expect(result.current.session).toBe(session)
-      expect(result.current.isAuthenticated).toBe(true)
+      expect(result.current.session).toEqual(session)
     })
-
-    unmount()
-
-    expect(unsubscribe).toHaveBeenCalledTimes(1)
   })
 })

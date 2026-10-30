@@ -6,8 +6,7 @@ import { Eye, EyeOff, Lock, Mail, Sparkles } from 'lucide-react-native'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Text } from '@/components/ui/text'
-import { setDevMockSession } from '@/features/auth/useAuthSession'
-import { signInWithPassword } from '@/services/supabase/auth'
+import { signInLocal } from '@/features/auth/useAuthSession'
 
 // 设计稿（UI/登录.png）标注的访客演示账号
 const DEMO_EMAIL = '123456@163.com'
@@ -27,18 +26,19 @@ export default function LoginPage() {
     setSubmitting(true)
     setErrorMessage(null)
     try {
-      await signInWithPassword(email, password)
+      // 后端认证模块尚未落地，这里只建立本地会话并带上固定 user_id
+      signInLocal(email)
       router.replace('/(app)/day')
     } catch {
-      setErrorMessage('登录失败，请检查邮箱与密码')
+      setErrorMessage('登录失败，请稍后重试')
     } finally {
       setSubmitting(false)
     }
   }
 
-  // 本地 mock 会话，无 Supabase 账号时体验与联调用
+  // 免登录体验：用一个本地开发账号进入
   function handleMockLogin() {
-    setDevMockSession({ id: 'dev', email: 'dev@localhost', user: {} } as any)
+    signInLocal('dev@localhost')
     router.replace('/(app)/day')
   }
 

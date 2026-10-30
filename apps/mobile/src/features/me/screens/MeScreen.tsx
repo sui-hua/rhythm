@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { SafeAreaView, ScrollView, View } from 'react-native'
 import { User as UserIcon } from 'lucide-react-native'
@@ -5,9 +6,8 @@ import { AppHeader } from '@/components/layout/AppHeader'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Text } from '@/components/ui/text'
-import { useAuthSession, setDevMockSession } from '@/features/auth/useAuthSession'
-import { signOut } from '@/services/supabase/auth'
-import { useMockStore } from '@/mocks/store'
+import { signOutLocal, useAuthSession } from '@/features/auth/useAuthSession'
+import { API_BASE_URL } from '@/services/api'
 
 // 设置行：左侧标题 + 右侧内容
 function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -19,23 +19,17 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
   )
 }
 
-// 我的页：账户信息 + 偏好设置（假数据开关）+ 退出登录
+// 我的页：账户信息 + 偏好设置 + 退出登录
 export function MeScreen() {
   const router = useRouter()
   const { session } = useAuthSession()
-  const reminderEnabled = useMockStore((state) => state.reminderEnabled)
-  const setReminderEnabled = useMockStore((state) => state.setReminderEnabled)
+  // 偏好设置还没有对应的数据表，先用本地状态占位（不落盘）
+  const [reminderEnabled, setReminderEnabled] = useState(false)
 
-  const email = session?.user?.email ?? '未登录'
+  const email = session?.user.email ?? '未登录'
 
-  async function handleLogout() {
-    // 同时清理本地 mock 会话与真实 Supabase 会话
-    setDevMockSession(null)
-    try {
-      await signOut()
-    } catch {
-      // 真实会话不存在时忽略
-    }
+  function handleLogout() {
+    signOutLocal()
     router.replace('/(auth)/login')
   }
 
@@ -64,8 +58,11 @@ export function MeScreen() {
           <SettingRow label="深色模式">
             <Switch checked={false} onCheckedChange={() => {}} />
           </SettingRow>
+          <SettingRow label="数据源">
+            <Text className="text-xs text-muted-foreground">{API_BASE_URL}</Text>
+          </SettingRow>
           <SettingRow label="关于">
-            <Text className="text-sm text-muted-foreground">Rhythm v1.0（演示数据）</Text>
+            <Text className="text-sm text-muted-foreground">Rhythm v1.0</Text>
           </SettingRow>
         </View>
 

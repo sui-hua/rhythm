@@ -29,7 +29,7 @@ describe('buildDayExecutionItems', () => {
           day: '2026-04-28',
           taskTime: '10:30',
           duration: 90,
-          status: 0,
+          status: 'active',
           monthlyPlan: {
             id: 'month-1',
             taskTime: null,

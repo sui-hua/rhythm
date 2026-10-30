@@ -1,31 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Check, ChevronDown } from 'lucide-react-native'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Text } from '@/components/ui/text'
+import { goalMonthProgress, goalProgress, isGoalDayCompleted } from '@/domain/direction/progress'
 import { cn } from '@/lib/utils'
-import { goalProgress, type MockGoal } from '@/mocks/data'
-import { useMockStore } from '@/mocks/store'
+import type { GoalItem } from '@/services/api/goals'
+
+type GoalDetailSheetProps = {
+  goal: GoalItem | null
+  isSaving: boolean
+  onToggleDay: (goalDayId: string, completed: boolean) => Promise<void>
+  onClose: () => void
+}
+
+/** 月份标题：库里 month 是 date，展示成「2026 年 10 月」 */
+function formatMonthLabel(month: string | null): string {
+  if (!month) return '未命名月份'
+  const [year, monthPart] = month.split('-')
+  return `${year} 年 ${Number(monthPart)} 月`
+}
 
 // 目标详情：总进度 + 月度 → 日计划两级展开，日计划可直接勾选
-export function GoalDetailSheet({ goal, onClose }: { goal: MockGoal | null; onClose: () => void }) {
-  const dayOverrides = useMockStore((state) => state.goalDayOverrides)
-  const toggleGoalDay = useMockStore((state) => state.toggleGoalDay)
-  // 默认展开第一个月
-  const [openMonthId, setOpenMonthId] = useState<string | null>(goal?.months[0]?.id ?? null)
+export function GoalDetailSheet({ goal, isSaving, onToggleDay, onClose }: GoalDetailSheetProps) {
+  const [openMonthId, setOpenMonthId] = useState<string | null>(null)
 
-  const percent = goal ? Math.round(goalProgress(goal, dayOverrides) * 100) : 0
+  // 切换目标时默认展开第一个月
+  useEffect(() => {
+    setOpenMonthId(goal?.months[0]?.id ?? null)
+  }, [goal?.id])
 
-  function handleOpenChange(open: boolean) {
-    if (!open) {
-      setOpenMonthId(goal?.months[0]?.id ?? null)
-      onClose()
-    }
-  }
+  const percent = goal ? Math.round(goalProgress(goal) * 100) : 0
+  const stage = goal?.status === 'completed' ? '已完成' : percent > 0 ? '进行中' : '待开始'
 
   return (
-    <Dialog open={Boolean(goal)} onOpenChange={handleOpenChange}>
+    <Dialog open={Boolean(goal)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="rounded-2xl">
         {goal ? (
           <>
@@ -33,11 +43,9 @@ export function GoalDetailSheet({ goal, onClose }: { goal: MockGoal | null; onCl
               <DialogTitle className="text-left text-xl font-bold tracking-tight">{goal.title}</DialogTitle>
               <View className="flex-row items-center gap-2">
                 <Badge variant="secondary" className="rounded-md">
-                  <Text className="text-[11px] font-semibold text-secondary-foreground">
-                    {goal.status === 'completed' ? '已完成' : percent > 0 ? '进行中' : '待开始'}
-                  </Text>
+                  <Text className="text-[11px] font-semibold text-secondary-foreground">{stage}</Text>
                 </Badge>
-                <Text className="text-sm text-muted-foreground">{goal.description}</Text>
+                <Text className="flex-1 text-sm text-muted-foreground">{goal.description || '暂无描述'}</Text>
               </View>
             </DialogHeader>
 
@@ -60,7 +68,7 @@ export function GoalDetailSheet({ goal, onClose }: { goal: MockGoal | null; onCl
               ) : null}
               {goal.months.map((month) => {
                 const open = openMonthId === month.id
-                const done = month.days.filter((day) => dayOverrides[day.id] ?? day.done).length
+                const { done, total } = goalMonthProgress(month)
                 return (
                   <View key={month.id} className="overflow-hidden rounded-xl border border-border">
                     <Pressable
@@ -68,9 +76,9 @@ export function GoalDetailSheet({ goal, onClose }: { goal: MockGoal | null; onCl
                       className="flex-row items-center justify-between bg-secondary/50 px-3.5 py-2.5 active:opacity-80"
                     >
                       <View className="flex-row items-center gap-2">
-                        <Text className="text-sm font-semibold">{month.label}</Text>
+                        <Text className="text-sm font-semibold">{formatMonthLabel(month.month)}</Text>
                         <Text className="text-xs text-muted-foreground">
-                          {done}/{month.days.length} 天
+                          {done}/{total} 天
                         </Text>
                       </View>
                       <ChevronDown
@@ -83,28 +91,32 @@ export function GoalDetailSheet({ goal, onClose }: { goal: MockGoal | null; onCl
                     {open ? (
                       <View className="gap-1 px-3 py-2">
                         {month.days.map((day) => {
-                          const done = dayOverrides[day.id] ?? day.done
+                          const completed = isGoalDayCompleted(day.status)
                           return (
                             <Pressable
                               key={day.id}
-                              onPress={() => toggleGoalDay(day.id)}
+                              disabled={isSaving}
+                              onPress={() => void onToggleDay(day.id, !completed)}
                               className="flex-row items-center gap-2.5 py-1.5 active:opacity-70"
                             >
                               {/* 勾选圆钮 */}
                               <View
                                 className={cn(
                                   'h-5 w-5 items-center justify-center rounded-full',
-                                  done ? 'bg-primary' : 'border-[1.5px] border-zinc-300 bg-background'
+                                  completed ? 'bg-primary' : 'border-[1.5px] border-zinc-300 bg-background'
                                 )}
                               >
-                                {done ? <Check size={12} strokeWidth={3} className="text-primary-foreground" /> : null}
+                                {completed ? <Check size={12} strokeWidth={3} className="text-primary-foreground" /> : null}
                               </View>
-                              <Text className={cn('flex-1 text-sm', done && 'text-muted-foreground line-through')}>
+                              <Text className={cn('flex-1 text-sm', completed && 'text-muted-foreground line-through')}>
                                 {day.title}
                               </Text>
                             </Pressable>
                           )
                         })}
+                        {month.days.length === 0 ? (
+                          <Text className="py-2 text-xs text-muted-foreground">该月还没有日计划</Text>
+                        ) : null}
                       </View>
                     ) : null}
                   </View>

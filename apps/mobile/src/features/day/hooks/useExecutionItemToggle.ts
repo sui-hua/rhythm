@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { DayExecutionItem, HabitLogRecord } from '@/domain/day/types'
 import { toDateKey } from '@/domain/day/time'
-import { toggleDailyPlanComplete } from '@/services/supabase/dailyPlans'
-import { createHabitLog, deleteHabitLog, listHabitLogsForDate } from '@/services/supabase/habits'
-import { toggleTaskComplete } from '@/services/supabase/tasks'
+import { toggleDailyPlanComplete } from '@/services/api/dailyPlans'
+import { createHabitLog, deleteHabitLog, listHabitLogsForDate } from '@/services/api/habits'
+import { toggleTaskComplete } from '@/services/api/tasks'
 
 export function useExecutionItemToggle(date: Date) {
   const queryClient = useQueryClient()

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TaskFormInput } from '@/domain/tasks/types'
 import { toDateKey } from '@/domain/day/time'
-import { createTask, deleteTask, toggleTaskComplete, updateTask } from '@/services/supabase/tasks'
+import { createTask, deleteTask, toggleTaskComplete, updateTask } from '@/services/api/tasks'
 
 export function useTaskMutations(date: Date) {
   const queryClient = useQueryClient()

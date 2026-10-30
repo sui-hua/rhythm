@@ -16,7 +16,7 @@ const sourceRank = {
 } satisfies Record<DayExecutionItem['source'], number>
 
 export function isDailyPlanCompleted(status: DailyPlanRecord['status']) {
-  return status === 1 || status === true || status === 'done'
+  return status === 'completed'
 }
 
 export function buildDayExecutionItems(input: BuildInput) {

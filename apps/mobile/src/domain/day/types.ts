@@ -2,7 +2,8 @@ import type { TaskRecord } from '@/domain/tasks/types'
 
 export type ExecutionSource = 'task' | 'daily_plan' | 'habit'
 
-export type DailyPlanStatus = 0 | 1 | 'pending' | 'done' | boolean | null
+// goal_days.status 在数据库中是 varchar 枚举，取值 active / completed / archived
+export type DailyPlanStatus = 'active' | 'completed' | 'archived' | null
 
 export type DailyPlanRecord = {
   id: string

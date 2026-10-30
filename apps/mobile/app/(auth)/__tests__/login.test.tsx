@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import LoginPage from '../login'
 import { router } from 'expo-router'
-import { setDevMockSession } from '@/features/auth/useAuthSession'
+import { signInLocal } from '@/features/auth/useAuthSession'
 
 jest.mock('expo-router', () => ({
   router: {
@@ -10,14 +10,14 @@ jest.mock('expo-router', () => ({
 }))
 
 jest.mock('@/features/auth/useAuthSession', () => ({
-  setDevMockSession: jest.fn()
-}))
-
-jest.mock('@/services/supabase/auth', () => ({
-  signInWithPassword: jest.fn()
+  signInLocal: jest.fn()
 }))
 
 describe('LoginPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   it('renders form-based login page per design', () => {
     render(<LoginPage />)
 
@@ -39,12 +39,12 @@ describe('LoginPage', () => {
     expect(screen.getByDisplayValue('123456')).toBeTruthy()
   })
 
-  it('enters app via mock session without Supabase', () => {
+  it('creates a local session without leaving the app', () => {
     render(<LoginPage />)
 
     fireEvent.press(screen.getByText('不登录，直接体验'))
 
-    expect(setDevMockSession).toHaveBeenCalled()
+    expect(signInLocal).toHaveBeenCalledWith('dev@localhost')
     expect(router.replace).toHaveBeenCalledWith('/(app)/day')
   })
 })

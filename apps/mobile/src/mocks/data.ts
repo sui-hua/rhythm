@@ -305,7 +305,7 @@ export function selectDayItems(
       day: dateKey,
       taskTime: plan.taskTime,
       duration: plan.durationMinutes,
-      status: completed ? 'done' : 'pending',
+      status: completed ? 'completed' : 'active',
       monthlyPlan: null
     }
     const item: DayExecutionItem = {

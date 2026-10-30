@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { buildDayExecutionItems, splitExecutionItems } from '@/domain/day/buildDayExecutionItems'
 import { toDateKey } from '@/domain/day/time'
-import { listDailyPlansForDate } from '@/services/supabase/dailyPlans'
-import { listHabitLogsForDate, listHabitsForDate } from '@/services/supabase/habits'
-import { listTasksForDate } from '@/services/supabase/tasks'
+import { listDailyPlansForDate } from '@/services/api/dailyPlans'
+import { listHabitLogsForDate, listHabits } from '@/services/api/habits'
+import { listTasksForDate } from '@/services/api/tasks'
 
 export function useDayExecutionItems(date: Date) {
   const dateKey = toDateKey(date)
@@ -21,8 +21,8 @@ export function useDayExecutionItems(date: Date) {
   })
 
   const habitsQuery = useQuery({
-    queryKey: ['day-habits', dateKey],
-    queryFn: () => listHabitsForDate(date),
+    queryKey: ['habits'],
+    queryFn: () => listHabits(),
     retry: false
   })
 

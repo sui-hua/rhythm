@@ -1,42 +1,32 @@
 import { useEffect, useState } from 'react'
-import { getCurrentSession, subscribeToAuthChanges } from '@/services/supabase/auth'
+import {
+  getSession,
+  signInLocal,
+  signOutLocal,
+  subscribeSession,
+  type AppSession
+} from '@/services/api/session'
 
-type AuthSession = Awaited<ReturnType<typeof getCurrentSession>>
-
-// Dev mock session - set this to bypass auth in development
-let _devMockSession: AuthSession | null = null
-
-export function setDevMockSession(session: AuthSession | null) {
-  _devMockSession = session
-}
-
+/**
+ * 会话 hook。
+ *
+ * 由 Supabase Auth 改为本地会话：登录只记下邮箱与固定 user_id，
+ * 请求时通过 `x-user-id` 传给 Nest。等后端补上 JWT 后，
+ * 只需把 signInLocal / signOutLocal 换成真实接口，本 hook 不用动。
+ *
+ * 会话不落盘，重启 App 需重新登录 —— 这是认证模块落地前的临时行为。
+ */
 export function useAuthSession() {
-  const [session, setSession] = useState<AuthSession>(null)
-  const [isReady, setIsReady] = useState(false)
+  const [session, setSession] = useState<AppSession | null>(() => getSession())
 
-  useEffect(() => {
-    let mounted = true
-
-    getCurrentSession().then((nextSession) => {
-      if (!mounted) return
-      setSession(nextSession)
-      setIsReady(true)
-    })
-
-    const unsubscribe = subscribeToAuthChanges((nextSession) => {
-      setSession(nextSession)
-      setIsReady(true)
-    })
-
-    return () => {
-      mounted = false
-      unsubscribe()
-    }
-  }, [])
+  useEffect(() => subscribeSession(setSession), [])
 
   return {
-    session: _devMockSession ?? session,
-    isReady,
-    isAuthenticated: Boolean(_devMockSession ?? session)
+    session,
+    isReady: true,
+    isAuthenticated: Boolean(session)
   }
 }
+
+export { signInLocal, signOutLocal }
+export type { AppSession }

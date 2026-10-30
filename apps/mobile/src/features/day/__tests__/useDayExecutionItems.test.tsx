@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react-native'
 
-jest.mock('@/services/supabase/tasks', () => ({
+jest.mock('@/services/api/tasks', () => ({
   listTasksForDate: jest.fn().mockResolvedValue([
     {
       id: 'task-1',
@@ -15,12 +15,12 @@ jest.mock('@/services/supabase/tasks', () => ({
   ])
 }))
 
-jest.mock('@/services/supabase/dailyPlans', () => ({
+jest.mock('@/services/api/dailyPlans', () => ({
   listDailyPlansForDate: jest.fn().mockResolvedValue([])
 }))
 
-jest.mock('@/services/supabase/habits', () => ({
-  listHabitsForDate: jest.fn().mockResolvedValue([]),
+jest.mock('@/services/api/habits', () => ({
+  listHabits: jest.fn().mockResolvedValue([]),
   listHabitLogsForDate: jest.fn().mockResolvedValue([])
 }))
 

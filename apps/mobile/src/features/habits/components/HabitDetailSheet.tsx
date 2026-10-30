@@ -2,19 +2,19 @@ import { View } from 'react-native'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
-import { cn } from '@/lib/utils'
+import type { HabitRecord } from '@/domain/day/types'
 import {
+  formatHabitFrequency,
   habitHeatmap,
   habitStatusText,
   habitStreak,
   habitTotalCount,
   habitWeekCount,
-  toDateKey,
-  type MockHabit
-} from '@/mocks/data'
-import { useMockStore } from '@/mocks/store'
-
-const HEATMAP_WEEKS = 15
+  hasLogOn,
+  type HabitLogIndex
+} from '@/domain/habits/stats'
+import { HABIT_HEATMAP_WEEKS } from '../hooks/useHabits'
+import { cn } from '@/lib/utils'
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
@@ -25,15 +25,19 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   )
 }
 
-// 习惯详情：统计 + 打卡热力图 + 今日打卡切换
-export function HabitDetailSheet({ habit, onClose }: { habit: MockHabit | null; onClose: () => void }) {
-  const habitLogs = useMockStore((state) => state.habitLogs)
-  const toggleHabitCheckin = useMockStore((state) => state.toggleHabitCheckin)
+type HabitDetailSheetProps = {
+  habit: HabitRecord | null
+  logIndex: HabitLogIndex
+  today: Date
+  isSaving: boolean
+  onToggle: (habit: HabitRecord, checked: boolean) => Promise<void>
+  onClose: () => void
+}
 
-  const today = new Date()
-  const todayKey = toDateKey(today)
-  const checkedToday = habit ? Boolean(habitLogs[`${habit.id}:${todayKey}`]) : false
-  const heatmap = habit ? habitHeatmap(habit.id, habitLogs, today, HEATMAP_WEEKS) : []
+// 习惯详情：统计 + 打卡热力图 + 今日打卡切换
+export function HabitDetailSheet({ habit, logIndex, today, isSaving, onToggle, onClose }: HabitDetailSheetProps) {
+  const checkedToday = habit ? hasLogOn(logIndex, habit.id, today) : false
+  const heatmap = habit ? habitHeatmap(logIndex, habit.id, today, HABIT_HEATMAP_WEEKS) : []
 
   return (
     <Dialog open={Boolean(habit)} onOpenChange={(open) => !open && onClose()}>
@@ -42,16 +46,19 @@ export function HabitDetailSheet({ habit, onClose }: { habit: MockHabit | null; 
           <>
             <DialogHeader>
               <DialogTitle className="text-left text-xl font-bold tracking-tight">{habit.title}</DialogTitle>
-              <Text className="text-sm text-muted-foreground">{habit.description}</Text>
+              <Text className="text-sm text-muted-foreground">
+                {formatHabitFrequency(habit.frequency)}
+                {habit.targetValue ? ` · 目标 ${habit.targetValue}` : ''}
+              </Text>
             </DialogHeader>
 
             {/* 统计行 */}
             <View className="flex-row items-center rounded-2xl border border-border bg-card px-2 py-3">
-              <Stat label="已坚持" value={`${habitStreak(habit.id, habitLogs, today)} 天`} />
+              <Stat label="已坚持" value={`${habitStreak(logIndex, habit.id, today)} 天`} />
               <View className="h-8 w-px bg-border" />
-              <Stat label="累计" value={`${habitTotalCount(habit.id, habitLogs)} 次`} />
+              <Stat label="累计" value={`${habitTotalCount(logIndex, habit.id)} 次`} />
               <View className="h-8 w-px bg-border" />
-              <Stat label="本周" value={`${habitWeekCount(habit.id, habitLogs, today)} 次`} />
+              <Stat label="本周" value={`${habitWeekCount(logIndex, habit.id, today)} 次`} />
             </View>
 
             {/* 打卡热力图：近 15 周，列为周、行为星期 */}
@@ -74,10 +81,14 @@ export function HabitDetailSheet({ habit, onClose }: { habit: MockHabit | null; 
               </View>
             </View>
 
-            <Button className="h-12 rounded-xl" onPress={() => toggleHabitCheckin(habit.id, todayKey)}>
+            <Button
+              className="h-12 rounded-xl"
+              disabled={isSaving}
+              onPress={() => void onToggle(habit, !checkedToday)}
+            >
               <Text className="text-base font-semibold">{checkedToday ? '取消今日打卡' : '今日打卡'}</Text>
             </Button>
-            <Text className="text-center text-xs text-muted-foreground">{habitStatusText(habit, habitLogs, today)}</Text>
+            <Text className="text-center text-xs text-muted-foreground">{habitStatusText(habit, logIndex, today)}</Text>
           </>
         ) : null}
       </DialogContent>

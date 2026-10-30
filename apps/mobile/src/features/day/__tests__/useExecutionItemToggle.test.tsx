@@ -2,15 +2,15 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react-native'
 
-jest.mock('@/services/supabase/tasks', () => ({
+jest.mock('@/services/api/tasks', () => ({
   toggleTaskComplete: jest.fn().mockResolvedValue({})
 }))
 
-jest.mock('@/services/supabase/dailyPlans', () => ({
+jest.mock('@/services/api/dailyPlans', () => ({
   toggleDailyPlanComplete: jest.fn().mockResolvedValue({})
 }))
 
-jest.mock('@/services/supabase/habits', () => ({
+jest.mock('@/services/api/habits', () => ({
   listHabitLogsForDate: jest.fn().mockResolvedValue([]),
   createHabitLog: jest.fn().mockResolvedValue({ id: 'log-new', habitId: 'habit-1', completedAt: new Date().toISOString() }),
   deleteHabitLog: jest.fn().mockResolvedValue(undefined)
@@ -65,7 +65,7 @@ describe('useExecutionItemToggle', () => {
     })
     await waitFor(() => expect(result.current.isPending).toBe(false))
 
-    const { toggleTaskComplete } = require('@/services/supabase/tasks')
+    const { toggleTaskComplete } = require('@/services/api/tasks')
     expect(toggleTaskComplete).toHaveBeenCalledWith('task-1', true)
     queryClient.clear()
   })
