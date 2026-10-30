@@ -7,12 +7,12 @@
 ## 项目概况
 
 - 项目名称：`rhythm`（pnpm monorepo）
-- 仓库结构：`apps/web` 桌面端（Vue 3 + Vite）、`apps/mobile` 移动端（Expo + React Native）、`packages/` 预留共享包
+- 仓库结构：`apps/web` 桌面端（Vue 3 + Vite）、`apps/mobile` 移动端（Expo + React Native）、`apps/web-next` Next.js 端（Next 16 + React 19）、`apps/api` 后端服务（NestJS 12 + ESM + Prisma 7）、`packages/` 预留共享包
 - 桌面端框架：Vue 3（Composition API + `<script setup>`）
 - 桌面端构建：Vite 7
 - 样式体系：Tailwind CSS 4（桌面端设计令牌在 `apps/web/src/assets/index.css`，移动端为 Tailwind 3 + NativeWind）
 - 状态管理：桌面端 Pinia（`authStore` 启用持久化），移动端 Zustand + TanStack Query
-- 数据服务：Supabase（两端共用同一线上项目）
+- 数据服务：Supabase（`apps/web` 仍直连）；`apps/mobile` 与 `apps/web-next` 已改为调用 `apps/api`（Nest + Prisma + 本地 Postgres）
 - UI / 工具库：VueUse、Radix Vue、Reka UI（web）；RN Primitives、NativeWind（mobile）
 - 语言现状：TypeScript
 
@@ -30,6 +30,14 @@ pnpm web:test         # 桌面端 vitest 单测
 pnpm mobile           # 移动端 Expo 开发服务器
 pnpm mobile:typecheck # 移动端 TypeScript 类型检查
 pnpm mobile:test      # 移动端 jest 单测
+pnpm api              # 后端 NestJS 开发服务器（start --watch，默认 3001）
+pnpm api:build        # 后端生产构建
+pnpm api:start        # 后端运行已构建产物（node dist/main）
+pnpm api:test         # 后端 e2e（vitest + supertest，需本地 Postgres）
+pnpm db:seed          # 写入演示数据（apps/api/prisma/seed.mjs）
+pnpm next:dev         # Next 端开发服务器（默认 3000）
+pnpm next:build       # Next 端生产构建
+pnpm next:typecheck   # Next 端类型检查
 ```
 
 也可以进入子包目录直接执行其脚本（如 `cd apps/web && pnpm dev`）。
@@ -100,13 +108,17 @@ rhythm/                        # monorepo 根
 │   │   ├── e2e/               # Playwright 端到端测试
 │   │   ├── docs/              # 桌面端模块与计划文档
 │   │   └── vercel.json        # Vercel 部署配置（Root Directory 指向 apps/web）
-│   └── mobile/                # 移动端（Expo + React Native，2026-10 subtree 合入）
-│       ├── app/               # expo-router 路由页面
-│       ├── src/
-│       │   ├── components/ui/ # RN Primitives 封装的 UI 组件
-│       │   ├── features/      # 业务模块（day、auth 等）
-│       │   └── domain/        # 纯逻辑（tasks、day 领域模型）
-│       └── docs/              # 移动端迁移计划与设计文档
+│   ├── mobile/                # 移动端（Expo + React Native，2026-10 subtree 合入）
+│   │   ├── app/               # expo-router 路由页面
+│   │   ├── src/
+│   │   │   ├── components/ui/ # RN Primitives 封装的 UI 组件
+│   │   │   ├── features/      # 业务模块（day、auth 等）
+│   │   │   └── domain/        # 纯逻辑（tasks、day 领域模型）
+│   │   └── docs/              # 移动端迁移计划与设计文档
+│   └── api/                   # 后端服务（NestJS 12 + ESM + vitest）
+│       ├── src/               # main.ts / app.module.ts / setup-app.ts / health
+│       ├── test/              # e2e 测试（supertest，内存内起应用）
+│       └── vitest.config*.ts  # 单测与 e2e 配置（swc 转译保留装饰器元数据）
 └── packages/                  # 预留：跨端共享包（如共享类型、Supabase 客户端）
 ```
 
