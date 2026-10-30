@@ -1,0 +1,161 @@
+// Rhythm 数据库 schema
+//
+// 由 Supabase 线上库 introspect 而来，相对原库做了四处调整以便本地自托管：
+// 1. 移除 auth schema（36 张 Supabase 认证表）及指向 auth.users 的外键关系
+// 2. uuid_generate_v4() 改为 gen_random_uuid()，免去 uuid-ossp 扩展依赖
+// 3. habit_logs.user_id 默认值 auth.uid() 已移除，改为由应用层写入
+// 4. RLS 策略与 check 约束未纳入（Prisma 不管理这两类对象），需要时用 SQL 迁移补
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model daily_report_log {
+  id          String    @id(map: "daily_report_views_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String    @db.Uuid
+  report_date DateTime  @db.Date
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, report_date], map: "daily_report_views_user_date_unique")
+}
+
+model goal {
+  id                       String           @id(map: "plans_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                  String           @db.Uuid
+  title                    String
+  description              String?
+  status                   String?          @default("active") @db.VarChar(50)
+  priority                 Int?             @default(2)
+  created_at               DateTime?        @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?        @default(now()) @db.Timestamptz(6)
+  year                     DateTime?        @db.Date
+  category_id              String?          @db.Uuid
+  task_time                DateTime?        @db.Time(6)
+  duration                 Int?             @default(30)
+  carry_over_lookback_days Int              @default(0)
+  goal_categories          goal_categories? @relation(fields: [category_id], references: [id], onUpdate: NoAction, map: "plans_category_id_fkey")
+  goal_months              goal_months[]
+
+  @@index([category_id], map: "idx_plans_category_id")
+  @@index([user_id], map: "idx_plans_user_id")
+}
+
+model goal_categories {
+  id         String    @id(map: "plans_category_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @db.Uuid
+  name       String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  sort_order Int       @default(0)
+  goal       goal[]
+
+  @@index([user_id], map: "idx_plans_category_user_id")
+  @@index([user_id, sort_order], map: "idx_plans_category_user_sort_order")
+}
+
+model goal_days {
+  id            String       @id(map: "daily_plans_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  goal_month_id String?      @db.Uuid
+  user_id       String       @db.Uuid
+  title         String
+  description   String?
+  priority      Int?         @default(2)
+  created_at    DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime?    @default(now()) @db.Timestamptz(6)
+  day           DateTime     @db.Date
+  task_time     DateTime?    @db.Time(6)
+  duration      Int?         @default(30)
+  status        String?      @default("active") @db.VarChar
+  goal_months   goal_months? @relation(fields: [goal_month_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "daily_plans_monthly_plan_id_fkey")
+
+  @@index([day], map: "idx_daily_plans_day")
+  @@index([goal_month_id], map: "idx_daily_plans_monthly_plan_id")
+  @@index([user_id], map: "idx_daily_plans_user_id")
+  @@index([user_id, day], map: "idx_goal_days_user_day")
+}
+
+model goal_months {
+  id          String      @id(map: "monthly_plans_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  goal_id     String?     @db.Uuid
+  user_id     String      @db.Uuid
+  title       String
+  description String?
+  status      String?     @default("active") @db.VarChar(50)
+  priority    Int?        @default(2)
+  created_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  month       DateTime?   @db.Date
+  task_time   DateTime?   @db.Time(6)
+  duration    Int?        @default(30)
+  goal_days   goal_days[]
+  goal        goal?       @relation(fields: [goal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "monthly_plans_plan_id_fkey")
+
+  @@index([goal_id], map: "idx_monthly_plans_plan_id")
+  @@index([user_id], map: "idx_monthly_plans_user_id")
+}
+
+model habit {
+  id           String       @id(map: "habits_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String       @db.Uuid
+  title        String
+  frequency    Json         @default("{\"type\": \"daily\"}")
+  target_value Int?         @default(1)
+  created_at   DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?    @default(now()) @db.Timestamptz(6)
+  task_time    DateTime?    @db.Time(6)
+  duration     Int?         @default(10)
+  is_archived  Boolean?     @default(false)
+  habit_logs   habit_logs[]
+
+  @@index([user_id], map: "idx_habits_user_id")
+}
+
+model habit_logs {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  habit_id     String?   @db.Uuid
+  value        Int?      @default(1)
+  completed_at DateTime? @default(now()) @db.Timestamptz(6)
+  user_id      String?   @db.Uuid
+  log          String?
+  habit        habit?    @relation(fields: [habit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([habit_id, completed_at], map: "idx_habit_logs_completed")
+  @@index([habit_id], map: "idx_habit_logs_habit_id")
+}
+
+model summary {
+  id           String    @id(map: "summaries_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String    @db.Uuid
+  title        String?
+  content      Json?
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kind         String?
+  period_start DateTime? @db.Timestamptz(6)
+  period_end   DateTime? @db.Timestamptz(6)
+  updated_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([user_id], map: "idx_summaries_user_id")
+}
+
+model task {
+  id                String    @id(map: "tasks_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String    @db.Uuid
+  title             String
+  description       String?
+  start_time        DateTime? @db.Timestamptz(6)
+  end_time          DateTime? @db.Timestamptz(6)
+  completed         Boolean?  @default(false)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  actual_start_time DateTime? @db.Timestamptz(6)
+  actual_end_time   DateTime? @db.Timestamptz(6)
+
+  @@index([start_time, end_time], map: "asks_time_index")
+  @@index([user_id, start_time], map: "idx_task_user_start")
+  @@index([user_id], map: "idx_tasks_user_id")
+}
