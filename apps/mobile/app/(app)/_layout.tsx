@@ -15,19 +15,19 @@ export default function AppLayout() {
     >
       <Tabs.Screen
         name="day"
-        options={{ title: 'Day', tabBarIcon: ({ color }) => <Calendar size={22} strokeWidth={2} color={color} /> }}
+        options={{ title: '时序', tabBarIcon: ({ color }) => <Calendar size={22} strokeWidth={2} color={color} /> }}
       />
       <Tabs.Screen
         name="habits"
-        options={{ title: 'Habits', tabBarIcon: ({ color }) => <CircleDot size={22} strokeWidth={2} color={color} /> }}
+        options={{ title: '习惯', tabBarIcon: ({ color }) => <CircleDot size={22} strokeWidth={2} color={color} /> }}
       />
       <Tabs.Screen
         name="direction"
-        options={{ title: 'Direction', tabBarIcon: ({ color }) => <Compass size={22} strokeWidth={2} color={color} /> }}
+        options={{ title: '所向', tabBarIcon: ({ color }) => <Compass size={22} strokeWidth={2} color={color} /> }}
       />
       <Tabs.Screen
         name="summary"
-        options={{ title: 'Summary', tabBarIcon: ({ color }) => <BarChart3 size={22} strokeWidth={2} color={color} /> }}
+        options={{ title: '总结', tabBarIcon: ({ color }) => <BarChart3 size={22} strokeWidth={2} color={color} /> }}
       />
       <Tabs.Screen
         name="me"
