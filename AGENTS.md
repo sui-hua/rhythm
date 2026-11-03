@@ -201,6 +201,14 @@ rhythm/                        # monorepo 根
 
 ## 代码规范
 
+### 分层规范（api / web-next / mobile）
+
+**完整规范见 `docs/代码规范.md`，新增代码必须先读。** 本节只摘三条不可妥协的红线：
+
+- 后端一个模块固定四件套：`xxx.module.ts` / `xxx.controller.ts` / `xxx.service.ts` / `dto/xxx.dto.ts`。**`prisma` 只允许出现在 service**，controller 不 import `Prisma`、不写业务判断、不做 `new Date()`。
+- service 的 public 方法第一个参数永远是 `userId`，每个查询的 `where` 都带 `user_id`；改 / 删前先用 `getById` 校验归属。
+- 前端是三层（视图 / hooks / 接口层）+ 可选纯逻辑区（`domain/`、`lib/`）。**`snake_case` 不许越过接口层**，请求只写在 `services/api/` 或 `lib/api/`，且接口层返回领域模型而非后端 row。
+
 ### 通用原则
 
 - **绝对不重复写轮子**：修改或新增功能前，必须先排查仓库内是否有可复用的代码、Composable、组件或工具函数，同时检查是否有成熟的第三方库可以解决，确认不存在后才考虑自行实现
