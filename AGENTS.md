@@ -205,8 +205,8 @@ rhythm/                        # monorepo 根
 
 **完整规范见 `docs/代码规范.md`，新增代码必须先读。** 本节只摘三条不可妥协的红线：
 
-- 后端一个模块固定四件套：`xxx.module.ts` / `xxx.controller.ts` / `xxx.service.ts` / `dto/xxx.dto.ts`。**`prisma` 只允许出现在 service**，controller 不 import `Prisma`、不写业务判断、不做 `new Date()`。
-- service 的 public 方法第一个参数永远是 `userId`，每个查询的 `where` 都带 `user_id`；改 / 删前先用 `getById` 校验归属。
+- 后端一个模块固定五件套：`xxx.module.ts` / `xxx.controller.ts` / `xxx.service.ts` / `xxx.mapper.ts` / `dto/xxx.dto.ts`。**`prisma` 只允许出现在 service**，controller 不 import `Prisma`、不写业务判断、不做 `new Date()`；字段映射与序列化只写在 mapper。
+- service 的 public 方法第一个参数永远是 `userId`，每个查询的 `where` 都带 `user_id`；改 / 删用 `where: { id, user_id }` 单查询校验归属，命中不到由全局过滤器转 404，不要写成「先查一遍再改」。失败一律抛异常，不在 service 里拼错误响应。
 - 前端是三层（视图 / hooks / 接口层）+ 可选纯逻辑区（`domain/`、`lib/`）。**`snake_case` 不许越过接口层**，请求只写在 `services/api/` 或 `lib/api/`，且接口层返回领域模型而非后端 row。
 
 ### 通用原则
