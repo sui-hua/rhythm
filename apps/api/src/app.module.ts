@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
 import { DailyReportsModule } from './daily-reports/daily-reports.module.js';
 import { DirectionModule } from './direction/direction.module.js';
 import { HabitsModule } from './habits/habits.module.js';
@@ -26,7 +24,5 @@ import { TasksModule } from './tasks/tasks.module.js';
     SummariesModule,
     DailyReportsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
