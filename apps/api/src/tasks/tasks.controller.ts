@@ -1,6 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { CurrentUserId } from '../common/current-user-id.decorator.js';
-import { CreateTaskDto, ListTaskQueryDto, UpdateTaskDto } from './dto/task.dto.js';
+import { Body, Controller, Delete, Get, Patch, Post, Query } from '@nestjs/common';
+import { CurrentUserId, UuidParam } from '../common/index.js';
+import {
+  CreateTaskDto,
+  ListTaskQueryDto,
+  UpdateTaskDto,
+} from './dto/task.dto.js';
 import { TasksService } from './tasks.service.js';
 
 @Controller('tasks')
@@ -19,7 +23,7 @@ export class TasksController {
   }
 
   @Get(':id')
-  detail(@CurrentUserId() userId: string, @Param('id') id: string) {
+  detail(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.tasksService.getById(userId, id);
   }
 
@@ -31,14 +35,14 @@ export class TasksController {
   @Patch(':id')
   update(
     @CurrentUserId() userId: string,
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() dto: UpdateTaskDto,
   ) {
     return this.tasksService.update(userId, id, dto);
   }
 
   @Delete(':id')
-  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
+  remove(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.tasksService.remove(userId, id);
   }
 }

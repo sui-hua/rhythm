@@ -42,7 +42,11 @@ describe('数据层 e2e', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tasks')
         .set('x-user-id', userId)
-        .send({ title: '写 e2e 测试', start_time: startTime, end_time: endTime })
+        .send({
+          title: '写 e2e 测试',
+          start_time: startTime,
+          end_time: endTime,
+        })
         .expect(201);
 
       expect(response.body.title).toBe('写 e2e 测试');
@@ -55,7 +59,10 @@ describe('数据层 e2e', () => {
     it('按时间区间能查到刚创建的任务', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/tasks')
-        .query({ start: '2026-10-30T00:00:00.000Z', end: '2026-10-30T23:59:59.000Z' })
+        .query({
+          start: '2026-10-30T00:00:00.000Z',
+          end: '2026-10-30T23:59:59.000Z',
+        })
         .set('x-user-id', userId)
         .expect(200);
 
@@ -66,7 +73,10 @@ describe('数据层 e2e', () => {
     it('区间之外查不到', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/tasks')
-        .query({ start: '2026-11-01T00:00:00.000Z', end: '2026-11-02T00:00:00.000Z' })
+        .query({
+          start: '2026-11-01T00:00:00.000Z',
+          end: '2026-11-02T00:00:00.000Z',
+        })
         .set('x-user-id', userId)
         .expect(200);
 
@@ -155,7 +165,10 @@ describe('数据层 e2e', () => {
     it('区间查询能命中当天记录（热力图数据源）', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/habits/logs')
-        .query({ start: '2026-10-30T00:00:00.000Z', end: '2026-10-30T15:59:59.000Z' })
+        .query({
+          start: '2026-10-30T00:00:00.000Z',
+          end: '2026-10-30T15:59:59.000Z',
+        })
         .set('x-user-id', userId)
         .expect(200);
 
@@ -198,7 +211,12 @@ describe('数据层 e2e', () => {
       const goalDay = await request(app.getHttpServer())
         .post('/api/goal-days')
         .set('x-user-id', userId)
-        .send({ goal_month_id: monthId, title: 'e2e 日计划', day: '2026-10-30', task_time: '09:00' })
+        .send({
+          goal_month_id: monthId,
+          title: 'e2e 日计划',
+          day: '2026-10-30',
+          task_time: '09:00',
+        })
         .expect(201);
 
       expect(goalDay.body.day).toBe('2026-10-30');
@@ -263,7 +281,12 @@ describe('数据层 e2e', () => {
           period_start: '2026-10-30',
           period_end: '2026-10-30',
           title: 'e2e 总结',
-          content: { done: '写完了', improve: '再快点', tomorrow: '继续', mood: '4' },
+          content: {
+            done: '写完了',
+            improve: '再快点',
+            tomorrow: '继续',
+            mood: '4',
+          },
         })
         .expect(201);
 

@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { CurrentUserId } from '../common/current-user-id.decorator.js';
+import { Body, Controller, Delete, Get, Patch, Post } from '@nestjs/common';
+import { CurrentUserId, UuidParam } from '../common/index.js';
 import { CreateGoalDto, UpdateGoalDto } from './dto/direction.dto.js';
 import { GoalsService } from './goals.service.js';
 
@@ -19,7 +19,7 @@ export class GoalsController {
   }
 
   @Get(':id')
-  detail(@CurrentUserId() userId: string, @Param('id') id: string) {
+  detail(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.goalsService.getById(userId, id);
   }
 
@@ -31,14 +31,14 @@ export class GoalsController {
   @Patch(':id')
   update(
     @CurrentUserId() userId: string,
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() dto: UpdateGoalDto,
   ) {
     return this.goalsService.update(userId, id, dto);
   }
 
   @Delete(':id')
-  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
+  remove(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.goalsService.remove(userId, id);
   }
 }

@@ -1,39 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '../generated/prisma/client.js';
-import { parseTimeOfDay, serializeRow, serializeRows } from '../common/index.js';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import type { CreateGoalMonthDto, UpdateGoalMonthDto } from './dto/direction.dto.js';
-
-function toCreateData(dto: CreateGoalMonthDto, userId: string): Prisma.goal_monthsCreateInput {
-  return {
-    user_id: userId,
-    title: dto.title,
-    description: dto.description ?? null,
-    status: dto.status ?? 'active',
-    priority: dto.priority ?? 2,
-    ...(dto.month !== undefined ? { month: dto.month ? new Date(dto.month) : null } : {}),
-    task_time: parseTimeOfDay(dto.task_time ?? null),
-    duration: dto.duration ?? 30,
-    ...(dto.goal_id ? { goal: { connect: { id: dto.goal_id } } } : {}),
-  };
-}
-
-function toUpdateData(dto: UpdateGoalMonthDto): Prisma.goal_monthsUpdateInput {
-  const data: Prisma.goal_monthsUpdateInput = {};
-
-  if (dto.title !== undefined) data.title = dto.title;
-  if (dto.description !== undefined) data.description = dto.description;
-  if (dto.status !== undefined) data.status = dto.status;
-  if (dto.priority !== undefined) data.priority = dto.priority;
-  if (dto.month !== undefined) data.month = dto.month ? new Date(dto.month) : null;
-  if (dto.task_time !== undefined) data.task_time = parseTimeOfDay(dto.task_time);
-  if (dto.duration !== undefined) data.duration = dto.duration;
-  if (dto.goal_id !== undefined) {
-    data.goal = dto.goal_id ? { connect: { id: dto.goal_id } } : { disconnect: true };
-  }
-
-  return data;
-}
+import type {
+  CreateGoalMonthDto,
+  UpdateGoalMonthDto,
+} from './dto/direction.dto.js';
+import {
+  goalMonthSerializer,
+  toCreateData,
+  toUpdateData,
+} from './mappers/goal-month.mapper.js';
 
 @Injectable()
 export class GoalMonthsService {
@@ -46,38 +21,36 @@ export class GoalMonthsService {
       orderBy: { month: 'asc' },
     });
 
-    return serializeRows(rows);
+    return goalMonthSerializer.many(rows);
   }
 
   async getById(userId: string, id: string) {
-    const row = await this.prisma.goal_months.findFirst({
+    const row = await this.prisma.goal_months.findUniqueOrThrow({
       where: { id, user_id: userId },
     });
 
-    if (!row) throw new NotFoundException('月度目标不存在');
-
-    return row;
+    return goalMonthSerializer.one(row);
   }
 
   async create(userId: string, dto: CreateGoalMonthDto) {
-    const row = await this.prisma.goal_months.create({ data: toCreateData(dto, userId) });
-    return serializeRow(row);
+    const row = await this.prisma.goal_months.create({
+      data: toCreateData(dto, userId),
+    });
+
+    return goalMonthSerializer.one(row);
   }
 
   async update(userId: string, id: string, dto: UpdateGoalMonthDto) {
-    await this.getById(userId, id);
-
     const row = await this.prisma.goal_months.update({
-      where: { id },
+      where: { id, user_id: userId },
       data: toUpdateData(dto),
     });
 
-    return serializeRow(row);
+    return goalMonthSerializer.one(row);
   }
 
   async remove(userId: string, id: string) {
-    await this.getById(userId, id);
-    await this.prisma.goal_months.delete({ where: { id } });
+    await this.prisma.goal_months.delete({ where: { id, user_id: userId } });
 
     return { success: true };
   }

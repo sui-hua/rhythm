@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CurrentUserId } from '../common/current-user-id.decorator.js';
+import { CurrentUserId, UuidParam } from '../common/index.js';
 import {
   CreateHabitDto,
   CreateHabitLogDto,
@@ -30,7 +30,10 @@ export class HabitsController {
 
   /** 静态路径要排在 :id 之前 */
   @Get('logs')
-  listLogs(@CurrentUserId() userId: string, @Query() query: ListHabitLogQueryDto) {
+  listLogs(
+    @CurrentUserId() userId: string,
+    @Query() query: ListHabitLogQueryDto,
+  ) {
     return this.habitsService.listLogsBetween(userId, query.start, query.end);
   }
 
@@ -43,12 +46,12 @@ export class HabitsController {
   }
 
   @Get(':id/logs')
-  listLogsByHabit(@CurrentUserId() userId: string, @Param('id') id: string) {
+  listLogsByHabit(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.habitsService.listLogsByHabit(userId, id);
   }
 
   @Get(':id')
-  detail(@CurrentUserId() userId: string, @Param('id') id: string) {
+  detail(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.habitsService.getById(userId, id);
   }
 
@@ -60,28 +63,31 @@ export class HabitsController {
   @Patch(':id')
   update(
     @CurrentUserId() userId: string,
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() dto: UpdateHabitDto,
   ) {
     return this.habitsService.update(userId, id, dto);
   }
 
   @Delete(':id')
-  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
+  remove(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.habitsService.remove(userId, id);
   }
 
   @Post(':id/logs')
   log(
     @CurrentUserId() userId: string,
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() dto: CreateHabitLogDto,
   ) {
     return this.habitsService.log(userId, id, dto);
   }
 
   @Delete('logs/:logId')
-  deleteLog(@CurrentUserId() userId: string, @Param('logId') logId: string) {
+  deleteLog(
+    @CurrentUserId() userId: string,
+    @UuidParam('logId') logId: string,
+  ) {
     return this.habitsService.deleteLog(userId, logId);
   }
 }

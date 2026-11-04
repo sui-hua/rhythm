@@ -16,6 +16,11 @@ import { GoalsService } from './goals.service.js';
     GoalMonthsController,
     GoalDaysController,
   ],
-  providers: [GoalsService, GoalCategoriesService, GoalMonthsService, GoalDaysService],
+  providers: [
+    GoalsService,
+    GoalCategoriesService,
+    GoalMonthsService,
+    GoalDaysService,
+  ],
 })
 export class DirectionModule {}

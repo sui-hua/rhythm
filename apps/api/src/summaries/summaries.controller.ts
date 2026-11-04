@@ -1,5 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { CurrentUserId } from '../common/current-user-id.decorator.js';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { CurrentUserId, UuidParam } from '../common/index.js';
 import {
   CreateSummaryDto,
   ListSummaryQueryDto,
@@ -19,12 +27,15 @@ export class SummariesController {
 
   /** 静态路径排在 :id 之前 */
   @Get('by-date')
-  byDate(@CurrentUserId() userId: string, @Query() query: SummaryByDateQueryDto) {
+  byDate(
+    @CurrentUserId() userId: string,
+    @Query() query: SummaryByDateQueryDto,
+  ) {
     return this.summariesService.getByDateKind(userId, query.date, query.kind);
   }
 
   @Get(':id')
-  detail(@CurrentUserId() userId: string, @Param('id') id: string) {
+  detail(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.summariesService.getById(userId, id);
   }
 
@@ -36,14 +47,14 @@ export class SummariesController {
   @Patch(':id')
   update(
     @CurrentUserId() userId: string,
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() dto: UpdateSummaryDto,
   ) {
     return this.summariesService.update(userId, id, dto);
   }
 
   @Delete(':id')
-  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
+  remove(@CurrentUserId() userId: string, @UuidParam() id: string) {
     return this.summariesService.remove(userId, id);
   }
 }

@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { serializeRow, serializeRows } from '../common/index.js';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import type { CreateGoalCategoryDto, UpdateGoalCategoryDto } from './dto/direction.dto.js';
+import type {
+  CreateGoalCategoryDto,
+  UpdateGoalCategoryDto,
+} from './dto/direction.dto.js';
+import {
+  goalCategorySerializer,
+  toCreateData,
+  toUpdateData,
+} from './mappers/goal-category.mapper.js';
 
 @Injectable()
 export class GoalCategoriesService {
@@ -14,49 +21,31 @@ export class GoalCategoriesService {
       orderBy: { name: 'asc' },
     });
 
-    return serializeRows(rows);
+    return goalCategorySerializer.many(rows);
   }
 
   async create(userId: string, dto: CreateGoalCategoryDto) {
     const row = await this.prisma.goal_categories.create({
-      data: {
-        user_id: userId,
-        name: dto.name,
-        sort_order: dto.sort_order ?? 0,
-      },
+      data: toCreateData(dto, userId),
     });
 
-    return serializeRow(row);
+    return goalCategorySerializer.one(row);
   }
 
   async update(userId: string, id: string, dto: UpdateGoalCategoryDto) {
-    await this.getById(userId, id);
-
     const row = await this.prisma.goal_categories.update({
-      where: { id },
-      data: {
-        ...(dto.name !== undefined ? { name: dto.name } : {}),
-        ...(dto.sort_order !== undefined ? { sort_order: dto.sort_order } : {}),
-      },
+      where: { id, user_id: userId },
+      data: toUpdateData(dto),
     });
 
-    return serializeRow(row);
+    return goalCategorySerializer.one(row);
   }
 
   async remove(userId: string, id: string) {
-    await this.getById(userId, id);
-    await this.prisma.goal_categories.delete({ where: { id } });
-
-    return { success: true };
-  }
-
-  async getById(userId: string, id: string) {
-    const row = await this.prisma.goal_categories.findFirst({
+    await this.prisma.goal_categories.delete({
       where: { id, user_id: userId },
     });
 
-    if (!row) throw new NotFoundException('分类不存在');
-
-    return row;
+    return { success: true };
   }
 }
