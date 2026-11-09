@@ -1,6 +1,0 @@
-# Prisma 生成的客户端代码，不要格式化也不要 lint
-src/generated/
-
-# 构建产物
-dist/
-coverage/
