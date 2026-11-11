@@ -6,7 +6,6 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: '123456'
       POSTGRES_DB: rhythm
-      # 按北京时间算自然日，避免 UTC 下凌晨的日期偏移
       TZ: Asia/Shanghai
       PGTZ: Asia/Shanghai
     ports:
