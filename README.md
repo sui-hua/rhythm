@@ -1,7 +1,5 @@
 # rhythm
 
-个人日程管理系统，pnpm monorepo。
-
 ## 结构
 
 | 目录 | 说明 |
@@ -13,9 +11,6 @@
 | `packages/` | 预留跨端共享包 |
 
 ## 常用命令
-
-在根目录执行：
-
 ```bash
 pnpm install          # 安装全部依赖
 
@@ -36,21 +31,8 @@ pnpm db:seed          # 写入演示数据
 ```
 
 ## 本地数据库
-
 ```bash
 docker compose up -d   # 启动 Postgres（容器 postgres，库 rhythm，端口 5432）
 pnpm db:seed           # 可选：灌入演示数据
 ```
 
-## 环境变量
-
-| 端 | 文件 | 关键变量 |
-|---|---|---|
-| 桌面端 | `apps/web/.env` | Supabase URL / anon key |
-| 移动端 | `apps/mobile/.env` | `EXPO_PUBLIC_API_BASE_URL`、`EXPO_PUBLIC_API_USER_ID` |
-| Next 端 | `apps/web-next/.env.local` | `NEXT_PUBLIC_API_BASE_URL`、`NEXT_PUBLIC_API_USER_ID` |
-| 后端 | `apps/api/.env` | `DATABASE_URL`、`PORT`、`CORS_ORIGINS` |
-
-`apps/web` 仍直连 Supabase；移动端与 Next 端已改为调用 `apps/api`。
-
-详细开发约定见 [AGENTS.md](./AGENTS.md)。
