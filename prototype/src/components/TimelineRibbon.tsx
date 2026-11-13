@@ -13,7 +13,6 @@ interface TimelineRibbonProps {
 const STEP_MINUTES = 5
 const TOTAL_TICKS = (24 * 60) / STEP_MINUTES // 288
 const TICK_WIDTH = 14 // 每个刻度占据 14px 宽度，滑动阻尼细腻
-const CURVE_RADIUS = 110 // 「中间高两边低」凸透镜波峰半径 (px)
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90]
 
@@ -67,14 +66,19 @@ const getPeriodLabel = (timeStr: string): string => {
   return '晚间'
 }
 
-// 计算每个刻度距离中央的凸透镜高度系数 (0.0 ~ 1.0)
+// 强烈波峰衰减函数：锐利陡峭曲线，半径缩小为 42px (正中央左右各 3 个刻度内形成强烈尖锐波峰)
+const PEAK_RADIUS = 42
+
 const getCurveFactor = (tickIndex: number, currentScrollLeft: number): number => {
   const tickX = tickIndex * TICK_WIDTH
   const dist = Math.abs(tickX - currentScrollLeft)
-  if (dist >= CURVE_RADIUS) return 0
-  // 余弦平滑钟形曲线: cos(dist / RADIUS * π/2)，顶点平滑，两端自然收拢
-  const normalized = dist / CURVE_RADIUS
-  return Math.cos(normalized * (Math.PI / 2))
+  if (dist >= PEAK_RADIUS) return 0
+  const ratio = dist / PEAK_RADIUS
+  // 陡峭幂函数：(1 - ratio)^2.2
+  // dist = 0 时为 1.0 (34px 绝对波峰)
+  // dist = 14px (第一邻居) 剧降到 ~0.41 (约 17.5px，只有中心一半高)
+  // dist = 28px (第二邻居) 剧降到 ~0.09 (约 8.5px，迅速融入基线)
+  return Math.pow(1 - ratio, 2.2)
 }
 
 export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
@@ -232,24 +236,24 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
             const factor = getCurveFactor(i, scrollLeft)
             const isPeak = factor > 0.95
 
-            // 核心规范：中间必须是绝对最高最粗；整点仅比普通刻度稍粗一点点
-            const PEAK_HEIGHT = 32 // 正中央波峰最高高度 (32px)
-            const PEAK_WIDTH = isHour ? 3.0 : 2.7 // 正中央波峰最粗宽度
+            // 核心规范：强烈锐利波峰，中间绝对最高最粗；整点仅比普通刻度微粗一点点
+            const PEAK_HEIGHT = 34 // 正中央尖峰最高高度 (34px)
+            const PEAK_WIDTH = isHour ? 3.0 : 2.8 // 正中央尖峰最粗宽度
 
-            // 两侧边缘基础高度 (整点 9px, 半点 7px, 普通 5px)
-            const baseHeight = isHour ? 9 : isHalf ? 7 : 5
-            // 两侧边缘基础宽度 (整点 1.6px 比普通 1.2px 略粗一点)
-            const baseWidth = isHour ? 1.6 : 1.2
+            // 两侧边缘基础高度 (整点 8px, 半点 6px, 普通 5px)
+            const baseHeight = isHour ? 8 : isHalf ? 6 : 5
+            // 两侧边缘基础宽度 (整点 1.5px 比普通 1.1px 略粗一点)
+            const baseWidth = isHour ? 1.5 : 1.1
 
-            // 高度与粗细受中央距离 factor 全面主导（中间必然最高最粗）
-            const height = Math.round(baseHeight + (PEAK_HEIGHT - baseHeight) * Math.pow(factor, 1.1))
+            // 高度与粗细受中央距离 factor 全面主导（中间单点鹤立鸡群，尖锐耸立）
+            const height = Math.round(baseHeight + (PEAK_HEIGHT - baseHeight) * factor)
             const width = +(baseWidth + (PEAK_WIDTH - baseWidth) * factor).toFixed(1)
 
-            // 颜色：正中纯黑，两侧递减为浅灰
-            const bgClass = factor > 0.85
+            // 颜色：正中独享纯黑高光 (#09090b)，仅中心峰值为纯黑，第一邻居迅速变灰
+            const bgClass = factor > 0.8
               ? 'bg-zinc-950'
-              : factor > 0.5
-                ? 'bg-zinc-700'
+              : factor > 0.35
+                ? 'bg-zinc-500'
                 : isHour
                   ? 'bg-zinc-400'
                   : 'bg-zinc-300'
