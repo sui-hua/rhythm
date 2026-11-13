@@ -8,9 +8,10 @@ import { DirectionView } from './components/DirectionView'
 import { SummaryView } from './components/SummaryView'
 import { DatePickerDrawer } from './components/DatePickerDrawer'
 import { HabitDetailModal } from './components/HabitDetailModal'
-import { TaskModal } from './components/Modals/TaskModal'
-import { HabitModal } from './components/Modals/HabitModal'
-import { SummaryModal } from './components/Modals/SummaryModal'
+import { TaskModal, type TaskSavePayload } from './components/Modals/TaskModal'
+import { HabitModal, type HabitSavePayload } from './components/Modals/HabitModal'
+import { GoalModal, type GoalSavePayload } from './components/Modals/GoalModal'
+import { SummaryModal, type SummarySavePayload } from './components/Modals/SummaryModal'
 import {
   NAV_ITEMS,
   INITIAL_HABITS,
@@ -18,7 +19,7 @@ import {
   INITIAL_SUMMARIES,
   getInitialTasksByDate
 } from './data/mockData'
-import type { Habit, PeriodType, TabKey, Task } from './types'
+import type { Goal, Habit, PeriodType, TabKey, Task } from './types'
 import { cn } from './lib/utils'
 
 export function App() {
@@ -105,13 +106,20 @@ export function App() {
     setShowTaskModal(true)
   }
 
-  const handleSaveTask = (data: { id: number | null; title: string; time: string; duration: number }) => {
+  const handleSaveTask = (data: TaskSavePayload) => {
     setTasksByDate((prev) => {
       const list = prev[currentDateKey] || []
       if (data.id) {
         const nextList = list.map((item) =>
           item.id === data.id
-            ? { ...item, title: data.title, time: data.time, duration: data.duration }
+            ? {
+                ...item,
+                title: data.title,
+                time: data.time,
+                duration: data.duration,
+                description: data.description,
+                category: data.category
+              }
             : item
         )
         return { ...prev, [currentDateKey]: nextList }
@@ -121,7 +129,9 @@ export function App() {
           title: data.title,
           time: data.time || '09:00',
           duration: data.duration || 30,
-          completed: false
+          completed: false,
+          description: data.description,
+          category: data.category
         }
         return { ...prev, [currentDateKey]: [...list, newTask] }
       }
@@ -198,12 +208,24 @@ export function App() {
     showToast(willBeCompleted ? '已打卡' : '已撤销')
   }
 
-  // 新增或保存习惯
-  const handleSaveHabit = (data: { id?: number; title: string; frequency: string }) => {
+  // 新增或保存习惯（完全对齐 Web 端字段）
+  const handleSaveHabit = (data: HabitSavePayload) => {
     if (data.id) {
       setHabits((prev) =>
         prev.map((item) =>
-          item.id === data.id ? { ...item, title: data.title, frequency: data.frequency } : item
+          item.id === data.id
+            ? {
+                ...item,
+                title: data.title,
+                frequency: data.frequency,
+                frequencyType: data.frequencyType,
+                weekdays: data.weekdays,
+                monthDays: data.monthDays,
+                time: data.time,
+                duration: data.duration,
+                isArchived: data.isArchived ?? item.isArchived
+              }
+            : item
         )
       )
       showToast('习惯已更新')
@@ -213,6 +235,12 @@ export function App() {
         title: data.title,
         streak: 0,
         frequency: data.frequency,
+        frequencyType: data.frequencyType,
+        weekdays: data.weekdays,
+        monthDays: data.monthDays,
+        time: data.time,
+        duration: data.duration,
+        isArchived: false,
         completedToday: false,
         completedDays: [],
         totalYear: 0,
@@ -223,17 +251,30 @@ export function App() {
       showToast('习惯已添加')
     }
     setShowHabitModal(false)
+    setEditingHabit(null)
+  }
+
+  const handleToggleArchiveHabit = (id: number, willArchive: boolean) => {
+    setHabits((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isArchived: willArchive } : item))
+    )
+    if (selectedHabitId === id) setSelectedHabitId(null)
+    showToast(willArchive ? '已归档' : '已取消归档')
   }
 
   const handleDeleteHabit = (id: number) => {
     setHabits((prev) => prev.filter((item) => item.id !== id))
     if (selectedHabitId === id) setSelectedHabitId(null)
     setShowHabitModal(false)
+    setEditingHabit(null)
     showToast('习惯已删除')
   }
 
   // ── 3. 所向 (Direction) 状态 ──
-  const [goals] = useState(INITIAL_GOALS)
+  const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS)
+  const [showGoalModal, setShowGoalModal] = useState(false)
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
+
   const averageGoalProgress = useMemo(() => {
     if (!goals.length) return 0
     return Math.round(goals.reduce((acc, g) => acc + g.progress, 0) / goals.length)
@@ -244,8 +285,57 @@ export function App() {
     return 88 * (1 - progress)
   }, [averageGoalProgress])
 
-  const handleClickGoal = (goal: (typeof goals)[0]) => {
-    showToast(`目标进度：${goal.progress}%`)
+  const handleClickGoal = (goal: Goal) => {
+    setEditingGoal(goal)
+    setShowGoalModal(true)
+  }
+
+  const handleSaveGoal = (data: GoalSavePayload) => {
+    if (data.id) {
+      setGoals((prev) =>
+        prev.map((g) =>
+          g.id === data.id
+            ? {
+                ...g,
+                title: data.title,
+                category: data.category,
+                startMonth: data.startMonth,
+                endMonth: data.endMonth,
+                time: data.time,
+                duration: data.duration,
+                carryOverEnabled: data.carryOverEnabled,
+                carryOverDays: data.carryOverDays
+              }
+            : g
+        )
+      )
+      showToast('目标已更新')
+    } else {
+      const newGoal: Goal = {
+        id: Date.now(),
+        title: data.title,
+        category: data.category,
+        milestone: `${data.startMonth}月 ~ ${data.endMonth}月 周期规划`,
+        progress: 0,
+        startMonth: data.startMonth,
+        endMonth: data.endMonth,
+        time: data.time,
+        duration: data.duration,
+        carryOverEnabled: data.carryOverEnabled,
+        carryOverDays: data.carryOverDays
+      }
+      setGoals((prev) => [...prev, newGoal])
+      showToast('目标已创建')
+    }
+    setShowGoalModal(false)
+    setEditingGoal(null)
+  }
+
+  const handleDeleteGoal = (id: number) => {
+    setGoals((prev) => prev.filter((g) => g.id !== id))
+    setShowGoalModal(false)
+    setEditingGoal(null)
+    showToast('目标已删除')
   }
 
   // ── 4. 总结 (Summary) 状态 ──
@@ -257,27 +347,37 @@ export function App() {
     return summaries.filter((s) => s.period === activePeriod)
   }, [summaries, activePeriod])
 
-  const handleSaveSummary = (data: { text: string; period: PeriodType }) => {
+  const handleSaveSummary = (data: SummarySavePayload) => {
     setSummaries((prev) => [
       {
         id: Date.now(),
         period: data.period,
         date: '5月11日 今天',
-        text: data.text
+        text: data.text,
+        done: data.done,
+        improve: data.improve,
+        tomorrow: data.tomorrow,
+        taskCompletionRate:
+          currentTasks.length > 0 ? Math.round((completedTasksCount / currentTasks.length) * 100) : 0,
+        completedHabitCount: completedHabitsCount
       },
       ...prev
     ])
-    showToast('已记录')
+    showToast('复盘已记录')
   }
 
-  // ── FAB 点击响应 ──
+  // ── FAB 点击响应（全模块对齐 Web 端添加交互） ──
   const handleFabClick = () => {
     if (currentTab === 'day') handleOpenAddTask()
     else if (currentTab === 'habits') {
       setEditingHabit(null)
       setShowHabitModal(true)
-    } else if (currentTab === 'direction') showToast('所向目标请长按或点击查看')
-    else if (currentTab === 'summary') setShowSummaryModal(true)
+    } else if (currentTab === 'direction') {
+      setEditingGoal(null)
+      setShowGoalModal(true)
+    } else if (currentTab === 'summary') {
+      setShowSummaryModal(true)
+    }
   }
 
   // ── 重置数据 ──
@@ -543,13 +643,31 @@ export function App() {
             }}
             onSave={handleSaveHabit}
             onDelete={handleDeleteHabit}
+            onToggleArchive={handleToggleArchiveHabit}
           />
         )}
 
-        {/* 复盘新增弹窗 */}
+        {/* 目标新增/编辑弹窗 (所向模块，对齐 Web 端) */}
+        {showGoalModal && (
+          <GoalModal
+            goal={editingGoal}
+            onClose={() => {
+              setShowGoalModal(false)
+              setEditingGoal(null)
+            }}
+            onSave={handleSaveGoal}
+            onDelete={handleDeleteGoal}
+          />
+        )}
+
+        {/* 复盘新增弹窗 (三段式深度反思 + 自动数据卡) */}
         {showSummaryModal && (
           <SummaryModal
             period={activePeriod}
+            completedTasksCount={completedTasksCount}
+            totalTasksCount={currentTasks.length}
+            completedHabitsCount={completedHabitsCount}
+            completedTaskTitles={currentTasks.filter((t) => t.completed).map((t) => t.title)}
             onClose={() => setShowSummaryModal(false)}
             onSave={handleSaveSummary}
           />
