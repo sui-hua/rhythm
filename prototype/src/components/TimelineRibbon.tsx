@@ -219,7 +219,7 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
           onScroll={handleScroll}
           onMouseDown={handleMouseDown}
           onWheel={handleWheel}
-          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing h-12"
+          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing h-14"
           style={{
             paddingLeft: 'calc(50% - 7px)',
             paddingRight: 'calc(50% - 7px)'
@@ -229,41 +229,30 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
             const slotTime = getTimeFromIndex(i)
             const isHour = i % 12 === 0
             const isHalf = i % 6 === 0 && !isHour
-            const isQuarter = i % 3 === 0 && !isHour && !isHalf
             const factor = getCurveFactor(i, scrollLeft)
             const isPeak = factor > 0.95
 
-            // 动态高度与粗细（中间高两边低）
-            let height = 3
-            let width = 1.5
-            let bgClass = 'bg-zinc-300'
-            let isDot = false
+            // 核心规范：中间必须是绝对最高最粗；整点仅比普通刻度稍粗一点点
+            const PEAK_HEIGHT = 32 // 正中央波峰最高高度 (32px)
+            const PEAK_WIDTH = isHour ? 3.0 : 2.7 // 正中央波峰最粗宽度
 
-            if (isHour) {
-              height = Math.round(10 + 18 * factor) // 10px -> 28px
-              width = factor > 0.5 ? 2.2 : 1.6
-              bgClass = factor > 0.6 ? 'bg-zinc-950' : factor > 0.3 ? 'bg-zinc-700' : 'bg-zinc-300'
-            } else if (isHalf) {
-              height = Math.round(8 + 15 * factor) // 8px -> 23px
-              width = factor > 0.5 ? 1.8 : 1.3
-              bgClass = factor > 0.6 ? 'bg-zinc-900' : factor > 0.3 ? 'bg-zinc-600' : 'bg-zinc-300'
-            } else if (isQuarter) {
-              height = Math.round(6 + 13 * factor) // 6px -> 19px
-              width = factor > 0.5 ? 1.5 : 1.0
-              bgClass = factor > 0.6 ? 'bg-zinc-900' : factor > 0.3 ? 'bg-zinc-500' : 'bg-zinc-300'
-            } else {
-              // 5 分钟微刻度
-              if (factor < 0.25) {
-                isDot = true
-                height = 3
-                width = 3
-                bgClass = 'bg-zinc-300'
-              } else {
-                height = Math.round(3 + 14 * factor) // 3px -> 17px
-                width = factor > 0.6 ? 1.8 : 1.5
-                bgClass = factor > 0.6 ? 'bg-zinc-950' : factor > 0.4 ? 'bg-zinc-600' : 'bg-zinc-300'
-              }
-            }
+            // 两侧边缘基础高度 (整点 9px, 半点 7px, 普通 5px)
+            const baseHeight = isHour ? 9 : isHalf ? 7 : 5
+            // 两侧边缘基础宽度 (整点 1.6px 比普通 1.2px 略粗一点)
+            const baseWidth = isHour ? 1.6 : 1.2
+
+            // 高度与粗细受中央距离 factor 全面主导（中间必然最高最粗）
+            const height = Math.round(baseHeight + (PEAK_HEIGHT - baseHeight) * Math.pow(factor, 1.1))
+            const width = +(baseWidth + (PEAK_WIDTH - baseWidth) * factor).toFixed(1)
+
+            // 颜色：正中纯黑，两侧递减为浅灰
+            const bgClass = factor > 0.85
+              ? 'bg-zinc-950'
+              : factor > 0.5
+                ? 'bg-zinc-700'
+                : isHour
+                  ? 'bg-zinc-400'
+                  : 'bg-zinc-300'
 
             return (
               <div
@@ -275,7 +264,7 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
                 {/* 整点小时微标标注 (例如 09, 10, 11) */}
                 {isHour && (
                   <span
-                    className="text-[9px] font-mono mb-1 pointer-events-none transition-all duration-75"
+                    className="text-[9.5px] font-mono mb-1.5 pointer-events-none transition-all duration-75"
                     style={{
                       opacity: Math.max(0.3, factor),
                       fontWeight: factor > 0.5 ? 700 : 500,
@@ -286,7 +275,7 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
                   </span>
                 )}
 
-                {/* 刻度本尊：中间波峰处最高最黑，向两侧平滑降高变淡 */}
+                {/* 刻度本尊：中间绝对最高最粗 (32px / 2.7~3px)，两侧平滑收拢 */}
                 <span
                   className={cn(
                     'transition-all duration-75 rounded-full shrink-0',
@@ -295,8 +284,7 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
                   )}
                   style={{
                     height: `${height}px`,
-                    width: `${width}px`,
-                    marginBottom: isDot ? '2px' : '0px'
+                    width: `${width}px`
                   }}
                 />
               </div>
