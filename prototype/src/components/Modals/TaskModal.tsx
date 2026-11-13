@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { X } from 'lucide-react'
 import type { Task } from '../../types'
 import { cn } from '../../lib/utils'
@@ -19,15 +19,67 @@ interface TaskModalProps {
   onDelete?: (taskId: number) => void
 }
 
-const CATEGORIES = ['工作', '学习', '健康', '生活', '未分类']
 const QUICK_DURATIONS = [15, 30, 45, 60]
 
 export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onDelete }) => {
   const [title, setTitle] = useState(task?.title ?? '')
   const [time, setTime] = useState(task?.time ?? '09:00')
   const [duration, setDuration] = useState(task?.duration ?? 30)
-  const [description, setDescription] = useState(task?.description ?? '')
-  const [category, setCategory] = useState(task?.category ?? '工作')
+
+  // 下拉关闭手势状态
+  const [dragY, setDragY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const touchStartY = useRef<number>(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return
+    const currentY = e.touches[0].clientY
+    const deltaY = currentY - touchStartY.current
+    if (deltaY > 0) {
+      setDragY(deltaY)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    if (dragY > 60) {
+      onClose()
+    }
+    setDragY(0)
+    setIsDragging(false)
+  }
+
+  // 支持桌面端鼠标拖拽手柄下拉关闭
+  const handleMouseDown = (e: React.MouseEvent) => {
+    touchStartY.current = e.clientY
+    setIsDragging(true)
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const deltaY = ev.clientY - touchStartY.current
+      if (deltaY > 0) {
+        setDragY(deltaY)
+      }
+    }
+
+    const onMouseUp = () => {
+      setDragY((curr) => {
+        if (curr > 60) {
+          onClose()
+        }
+        return 0
+      })
+      setIsDragging(false)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
 
   const canSubmit = title.trim().length > 0
 
@@ -38,8 +90,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
       title: title.trim(),
       time: time || '09:00',
       duration: Number(duration) || 30,
-      description: description.trim() || undefined,
-      category
+      description: task?.description,
+      category: task?.category ?? '未分类'
     })
     onClose()
   }
@@ -58,19 +110,35 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col">
-        {/* 顶部手柄 */}
-        <div className="w-9 h-1 bg-zinc-200 rounded-full mx-auto shrink-0" />
+      <div
+        className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 pt-3 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col"
+        style={{
+          transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+          transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* 顶部轻量手柄与关闭区（去除冗余大标题，支持下拉关闭与右上角点击关闭） */}
+        <div
+          className="relative flex items-center justify-center py-2 shrink-0 select-none cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+        >
+          {/* 下拉手柄条 */}
+          <div
+            className="w-10 h-1 bg-zinc-200 hover:bg-zinc-300 rounded-full cursor-pointer transition-colors"
+            onClick={onClose}
+            title="下拉或点击关闭"
+          />
 
-        {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between pb-0.5 shrink-0">
-          <h2 className="text-base font-bold tracking-tight text-zinc-900 font-sans">
-            {task ? '编辑日程事项' : '新建日程事项'}
-          </h2>
+          {/* 右上角关闭按钮 */}
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
+            onMouseDown={(e) => e.stopPropagation()}
+            aria-label="关闭"
+            className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 p-1.5 rounded-full transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -78,7 +146,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
 
         {/* 表单内容 */}
         <div className="space-y-3 shrink-0">
-          {/* 事项标题输入 */}
+          {/* 任务标题输入 */}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -86,11 +154,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
               if (e.key === 'Enter') handleSave()
             }}
             type="text"
-            placeholder="写下你想做的事 (例如: 准备架构评审材料)"
+            autoFocus
+            placeholder="任务标题"
             className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400"
           />
 
-          {/* 微卡片 1：时间与时长 */}
+          {/* 微卡片：时间与时长 */}
           <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
             <span className="text-[11px] font-semibold text-zinc-400 block">开始时间与时长</span>
             <div className="flex items-center justify-between gap-3">
@@ -121,37 +190,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
               </div>
             </div>
           </div>
-
-          {/* 微卡片 2：分类标签选择 */}
-          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
-            <span className="text-[11px] font-semibold text-zinc-400 block">事项分类</span>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border',
-                    category === cat
-                      ? 'bg-zinc-900 border-zinc-900 text-white shadow-xs'
-                      : 'bg-white border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
-                  )}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 备忘录 (可选) */}
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="添加备忘或细节描述 (可选)..."
-            className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none font-normal placeholder:text-zinc-400 leading-relaxed"
-          />
         </div>
 
         {/* 底部操作区 */}
