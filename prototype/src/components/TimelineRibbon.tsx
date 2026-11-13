@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Zap } from 'lucide-react'
+import React, { useRef, useEffect, useCallback } from 'react'
+import { Zap } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface TimelineRibbonProps {
@@ -9,24 +9,36 @@ interface TimelineRibbonProps {
   onChangeDuration: (duration: number) => void
 }
 
-// 生成一天内以 15 分钟为间隔的所有时刻 (00:00 ~ 23:45, 共 96 个刻度)
-const TIME_SLOTS: string[] = []
-for (let h = 0; h < 24; h++) {
-  for (let m = 0; m < 60; m += 15) {
-    const hh = String(h).padStart(2, '0')
-    const mm = String(m).padStart(2, '0')
-    TIME_SLOTS.push(`${hh}:${mm}`)
-  }
-}
+// 刻度步长：5 分钟一个刻度，全天 24 小时共 288 个刻度
+const STEP_MINUTES = 5
+const TOTAL_TICKS = (24 * 60) / STEP_MINUTES // 288
+const TICK_WIDTH = 14 // 每个刻度占据 14px 宽度，滑动阻尼细腻
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90]
 
-// 获取最接近当前时间的 15 分钟刻度
+// 时间与序号双向转换
+const getTimeFromIndex = (index: number): string => {
+  const totalMinutes = index * STEP_MINUTES
+  const h = Math.floor(totalMinutes / 60) % 24
+  const m = totalMinutes % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+const getIndexFromTime = (timeStr: string): number => {
+  if (!timeStr) return 0
+  const [hStr, mStr] = timeStr.split(':')
+  const h = parseInt(hStr, 10) || 0
+  const m = parseInt(mStr, 10) || 0
+  const totalMinutes = h * 60 + m
+  return Math.round(totalMinutes / STEP_MINUTES)
+}
+
+// 获取最接近当前时间的 5 分钟刻度
 export const getNearestCurrentTime = (): string => {
   const now = new Date()
   const hours = now.getHours()
   const minutes = now.getMinutes()
-  const rounded = Math.round(minutes / 15) * 15
+  const rounded = Math.round(minutes / 5) * 5
   const finalH = (hours + Math.floor(rounded / 60)) % 24
   const finalM = rounded % 60
   return `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`
@@ -44,82 +56,131 @@ export const calculateEndTime = (startTime: string, durationMin: number): string
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
 }
 
+// 获取时段标签 (凌晨 / 上午 / 下午 / 晚间)
+const getPeriodLabel = (timeStr: string): string => {
+  const h = parseInt(timeStr.split(':')[0], 10) || 0
+  if (h < 6) return '凌晨'
+  if (h < 12) return '上午'
+  if (h < 14) return '中午'
+  if (h < 18) return '下午'
+  return '晚间'
+}
+
 export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
   time,
   duration,
   onChangeTime,
   onChangeDuration
 }) => {
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const isProgrammaticScrollRef = useRef(false)
+  const isMouseDownRef = useRef(false)
+  const startXRef = useRef(0)
+  const startScrollLeftRef = useRef(0)
 
-  // 结束时间计算
   const endTime = calculateEndTime(time, duration)
 
-  // 滚动并居中当前选中的时间槽
-  const scrollToActiveSlot = (targetTime: string, smooth = true) => {
-    if (!scrollRef.current) return
-    const el = scrollRef.current.querySelector(`[data-time="${targetTime}"]`) as HTMLElement | null
-    if (el) {
-      const container = scrollRef.current
-      const left = el.offsetLeft - container.clientWidth / 2 + el.clientWidth / 2
-      container.scrollTo({
-        left,
-        behavior: smooth ? 'smooth' : 'auto'
-      })
-    }
-  }
+  // 滚动并居中指定时间槽
+  const scrollToTime = useCallback((targetTime: string, smooth = true) => {
+    if (!scrollContainerRef.current) return
+    const index = getIndexFromTime(targetTime)
+    const targetScrollLeft = index * TICK_WIDTH
+    scrollContainerRef.current.scrollTo({
+      left: targetScrollLeft,
+      behavior: smooth ? 'smooth' : 'auto'
+    })
+  }, [])
 
-  // 初次渲染以及外部 time 变化时居中
+  // 页面加载或切换编辑任务时，初始居中到初始时间（兼顾弹窗出现动画的时序）
   useEffect(() => {
-    scrollToActiveSlot(time, false)
-  }, [time])
-
-  // 快调步进（以 15 分钟为一步）
-  const handleStep = (direction: -1 | 1) => {
-    const currentIndex = TIME_SLOTS.indexOf(time)
-    if (currentIndex === -1) {
-      onChangeTime(TIME_SLOTS[0])
-      return
+    isProgrammaticScrollRef.current = true
+    scrollToTime(time, false)
+    const rAF = requestAnimationFrame(() => {
+      scrollToTime(time, false)
+    })
+    const timer = setTimeout(() => {
+      scrollToTime(time, false)
+      isProgrammaticScrollRef.current = false
+    }, 220)
+    return () => {
+      cancelAnimationFrame(rAF)
+      clearTimeout(timer)
     }
-    const nextIndex = (currentIndex + direction + TIME_SLOTS.length) % TIME_SLOTS.length
-    const nextTime = TIME_SLOTS[nextIndex]
-    onChangeTime(nextTime)
-    scrollToActiveSlot(nextTime, true)
+  }, [])
+
+  // 核心交互：滑动中直接选择！无需二次点击，滑动位置对齐正中央游标时即刻生效
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isProgrammaticScrollRef.current) return
+    const scrollLeft = e.currentTarget.scrollLeft
+    const index = Math.round(scrollLeft / TICK_WIDTH)
+    const clampedIndex = Math.max(0, Math.min(index, TOTAL_TICKS - 1))
+    const newTime = getTimeFromIndex(clampedIndex)
+    if (newTime !== time) {
+      onChangeTime(newTime)
+    }
   }
 
-  // 跳转到当下时刻
+  // 桌面端鼠标拖拽支持
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isMouseDownRef.current = true
+    startXRef.current = e.clientX
+    startScrollLeftRef.current = scrollContainerRef.current?.scrollLeft || 0
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isMouseDownRef.current || !scrollContainerRef.current) return
+      const dx = ev.clientX - startXRef.current
+      scrollContainerRef.current.scrollLeft = startScrollLeftRef.current - dx
+    }
+
+    const onMouseUp = () => {
+      isMouseDownRef.current = false
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  // 鼠标滚轮水平横滑
+  const handleWheel = (e: React.WheelEvent) => {
+    if (scrollContainerRef.current && e.deltaY !== 0) {
+      scrollContainerRef.current.scrollLeft += e.deltaY
+    }
+  }
+
+  // 快速定位「现在」
   const handleJumpToNow = () => {
     const nowTime = getNearestCurrentTime()
     onChangeTime(nowTime)
-    scrollToActiveSlot(nowTime, true)
+    isProgrammaticScrollRef.current = true
+    scrollToTime(nowTime, true)
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false
+    }, 350)
   }
 
-  // 支持鼠标滚轮水平滑动
-  const handleWheel = (e: React.WheelEvent) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft += e.deltaY
-    }
+  // 点击某个具体刻度直接居中选中
+  const handleTickClick = (targetTime: string) => {
+    onChangeTime(targetTime)
+    isProgrammaticScrollRef.current = true
+    scrollToTime(targetTime, true)
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false
+    }, 300)
   }
 
   return (
-    <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-3 select-none">
-      {/* 顶部行：时间段显示 + 现在时刻快捷定位 */}
+    <div className="p-4 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-3.5 select-none">
+      {/* 顶部轻量栏 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-semibold text-zinc-400">时序区间</span>
-          <div className="flex items-center gap-1 bg-white border border-zinc-200/80 px-2 py-0.5 rounded-lg shadow-2xs">
-            <span className="text-xs font-mono font-bold text-zinc-900">{time}</span>
-            <ArrowRight size={11} className="text-zinc-400 stroke-[2.5]" />
-            <span className="text-xs font-mono font-bold text-zinc-600">{endTime}</span>
-            <span className="text-[10px] font-mono font-medium text-zinc-400 ml-0.5">({duration}m)</span>
-          </div>
-        </div>
-
-        {/* 快速定位「当下时刻」按钮 */}
+        <span className="text-[11px] font-semibold text-zinc-400 tracking-wider">
+          时序标尺
+        </span>
         <button
           type="button"
           onClick={handleJumpToNow}
-          className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 bg-white border border-zinc-200/80 hover:bg-zinc-100 text-zinc-700 rounded-lg shadow-2xs transition-colors cursor-pointer active:scale-95"
+          className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 bg-white border border-zinc-200/80 hover:bg-zinc-100 text-zinc-700 rounded-lg shadow-2xs transition-colors cursor-pointer active:scale-95"
           title="跳转至当前时间"
         >
           <Zap size={11} className="text-zinc-800 fill-zinc-800" />
@@ -127,88 +188,87 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
         </button>
       </div>
 
-      {/* 中部：横向时序刻度滑尺 (Timeline Ribbon) */}
-      <div className="relative group">
-        {/* 左边缘淡出渐变 */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-zinc-50 to-transparent pointer-events-none z-10" />
+      {/* 刻度滑尺区域：中央游标 + 两端渐变遮罩 + 纯粹刻度带 */}
+      <div className="relative py-1">
+        {/* 左边缘淡出渐变遮罩 */}
+        <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-zinc-50 to-transparent pointer-events-none z-10" />
 
-        {/* 右边缘淡出渐变 */}
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-50 to-transparent pointer-events-none z-10" />
+        {/* 右边缘淡出渐变遮罩 */}
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-zinc-50 to-transparent pointer-events-none z-10" />
 
-        {/* 刻度滑尺容器（支持移动端惯性滑动与居中吸附） */}
+        {/* 正中央固定基准游标 (Needle) */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-zinc-950 z-20 pointer-events-none rounded-full shadow-xs">
+          {/* 顶部小倒三角指示游标 */}
+          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-t-[5px] border-t-zinc-950" />
+        </div>
+
+        {/* 纯粹横向时间刻度线：| · · · | · · · | · · · | · · · | */}
         <div
-          ref={scrollRef}
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          onMouseDown={handleMouseDown}
           onWheel={handleWheel}
-          className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 px-[calc(50%-28px)] scroll-smooth snap-x snap-mandatory"
+          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing h-11"
+          style={{
+            paddingLeft: 'calc(50% - 7px)',
+            paddingRight: 'calc(50% - 7px)'
+          }}
         >
-          {TIME_SLOTS.map((slot) => {
-            const isSelected = slot === time
-            const isHour = slot.endsWith(':00')
-            const isHalf = slot.endsWith(':30')
+          {Array.from({ length: TOTAL_TICKS }).map((_, i) => {
+            const slotTime = getTimeFromIndex(i)
+            const isHour = i % 12 === 0
+            const isHalf = i % 6 === 0 && !isHour
+            const isQuarter = i % 3 === 0 && !isHour && !isHalf
 
             return (
-              <button
-                key={slot}
-                type="button"
-                data-time={slot}
-                onClick={() => {
-                  onChangeTime(slot)
-                  scrollToActiveSlot(slot, true)
-                }}
-                className={cn(
-                  'shrink-0 snap-center flex flex-col items-center justify-center transition-all cursor-pointer rounded-xl',
-                  isSelected
-                    ? 'bg-zinc-900 text-white font-mono font-bold px-3 py-1.5 shadow-xs scale-105'
-                    : isHour
-                      ? 'bg-white border border-zinc-200/90 text-zinc-800 font-mono font-semibold px-2.5 py-1 hover:border-zinc-400 hover:bg-zinc-100/60 shadow-2xs'
-                      : isHalf
-                        ? 'bg-white/60 border border-zinc-200/60 text-zinc-600 font-mono text-xs px-2 py-1 hover:bg-white hover:text-zinc-900'
-                        : 'text-zinc-400 hover:text-zinc-700 font-mono text-[11px] px-1.5 py-1 hover:bg-zinc-100/70'
-                )}
+              <div
+                key={i}
+                onClick={() => handleTickClick(slotTime)}
+                className="shrink-0 snap-center flex flex-col items-center justify-end h-full cursor-pointer group"
+                style={{ width: `${TICK_WIDTH}px` }}
               >
-                {/* 刻度小触点 */}
-                <span
-                  className={cn(
-                    'w-1 h-1 rounded-full mb-0.5 transition-colors',
-                    isSelected
-                      ? 'bg-white'
-                      : isHour
-                        ? 'bg-zinc-900'
-                        : isHalf
-                          ? 'bg-zinc-400'
-                          : 'bg-zinc-200'
-                  )}
-                />
-                <span className="text-[11px] tracking-tight">{slot}</span>
-              </button>
+                {/* 整点上方的微型数字标注 (例如 09, 10, 11) */}
+                {isHour && (
+                  <span className="text-[9px] font-mono text-zinc-400 font-semibold mb-1 pointer-events-none">
+                    {slotTime.split(':')[0]}
+                  </span>
+                )}
+
+                {/* 刻度本尊：整点/半点为竖线 |，其余为点 · */}
+                {isHour ? (
+                  <span className="w-[1.8px] h-5 bg-zinc-800 rounded-full transition-transform group-hover:scale-y-110" />
+                ) : isHalf ? (
+                  <span className="w-[1.4px] h-3.5 bg-zinc-500 rounded-full transition-transform group-hover:scale-y-110" />
+                ) : isQuarter ? (
+                  <span className="w-[1px] h-2.5 bg-zinc-400 rounded-full transition-transform group-hover:scale-y-110" />
+                ) : (
+                  <span className="w-[3px] h-[3px] bg-zinc-300 rounded-full mb-1 transition-transform group-hover:scale-125" />
+                )}
+              </div>
             )
           })}
         </div>
-
-        {/* 左右步进快捷小按钮 */}
-        <div className="flex items-center justify-between pt-1 px-1">
-          <button
-            type="button"
-            onClick={() => handleStep(-1)}
-            className="flex items-center gap-0.5 text-[10px] font-mono text-zinc-400 hover:text-zinc-800 transition-colors cursor-pointer py-0.5 px-1 rounded active:scale-95"
-          >
-            <ChevronLeft size={12} />
-            <span>-15分</span>
-          </button>
-          <span className="text-[10px] text-zinc-400 font-normal">滑动刻度或点击选取时刻</span>
-          <button
-            type="button"
-            onClick={() => handleStep(1)}
-            className="flex items-center gap-0.5 text-[10px] font-mono text-zinc-400 hover:text-zinc-800 transition-colors cursor-pointer py-0.5 px-1 rounded active:scale-95"
-          >
-            <span>+15分</span>
-            <ChevronRight size={12} />
-          </button>
-        </div>
       </div>
 
-      {/* 底部行：持续时长胶囊选择 */}
-      <div className="flex items-center justify-between pt-1 border-t border-zinc-200/50">
+      {/* 刻度线下方：时间大字数值与起止联动显示 */}
+      <div className="flex flex-col items-center justify-center pt-1 select-none">
+        <div className="flex items-baseline gap-2">
+          {/* 大号当前选中时间 */}
+          <span className="text-3xl font-mono font-bold tracking-tight text-zinc-950">
+            {time}
+          </span>
+          {/* 联动结束时刻 */}
+          <span className="text-xs font-mono font-semibold text-zinc-400">
+            ➔ {endTime}
+          </span>
+        </div>
+        <span className="text-[11px] text-zinc-400 font-normal mt-0.5">
+          {getPeriodLabel(time)} · 持续 {duration} 分钟
+        </span>
+      </div>
+
+      {/* 底部：持续时长胶囊选择 */}
+      <div className="flex items-center justify-between pt-2 border-t border-zinc-200/50">
         <span className="text-[11px] font-semibold text-zinc-400">持续时长</span>
         <div className="flex items-center gap-1.5">
           {DURATION_OPTIONS.map((dur) => (
