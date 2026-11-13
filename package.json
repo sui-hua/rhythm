@@ -21,6 +21,6 @@
     "api:build": "pnpm --filter @rhythm/api build",
     "api:start": "pnpm --filter @rhythm/api start:prod",
     "api:test": "pnpm --filter @rhythm/api test:e2e",
-    "db:seed": "pnpm --filter @rhythm/api db:seed",
+    "db:seed": "pnpm --filter @rhythm/api db:seed"
   }
 }
