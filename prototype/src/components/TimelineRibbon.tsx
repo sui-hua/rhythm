@@ -56,16 +56,6 @@ export const calculateEndTime = (startTime: string, durationMin: number): string
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
 }
 
-// 获取时段标签 (凌晨 / 上午 / 下午 / 晚间)
-const getPeriodLabel = (timeStr: string): string => {
-  const h = parseInt(timeStr.split(':')[0], 10) || 0
-  if (h < 6) return '凌晨'
-  if (h < 12) return '上午'
-  if (h < 14) return '中午'
-  if (h < 18) return '下午'
-  return '晚间'
-}
-
 // 优美舒展的波峰衰减函数：波峰半径放宽至 70px (左右各约 5 个刻度，展宽舒展自然，中心单点依然稳居最高)
 const PEAK_RADIUS = 70
 
@@ -98,8 +88,6 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
 
   // 记录当前实时滚动位置，用于渲染「中间高两边低」的物理波峰特效
   const [scrollLeft, setScrollLeft] = useState(() => getIndexFromTime(time) * TICK_WIDTH)
-
-  const endTime = calculateEndTime(time, duration)
 
   // 滚动并居中指定时间槽
   const scrollToTime = useCallback((targetTime: string, smooth = true) => {
@@ -302,20 +290,10 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
         </div>
       </div>
 
-      {/* 刻度线下方：时间大字数值与起止联动显示 */}
-      <div className="flex flex-col items-center justify-center pt-1 select-none">
-        <div className="flex items-baseline gap-2">
-          {/* 大号当前选中时间 */}
-          <span className="text-3xl font-mono font-bold tracking-tight text-zinc-950">
-            {time}
-          </span>
-          {/* 联动结束时刻 */}
-          <span className="text-xs font-mono font-semibold text-zinc-400">
-            ➔ {endTime}
-          </span>
-        </div>
-        <span className="text-[11px] text-zinc-400 font-normal mt-0.5">
-          {getPeriodLabel(time)} · 持续 {duration} 分钟
+      {/* 刻度线下方：仅保留选中时间大字 */}
+      <div className="flex items-center justify-center py-1 select-none">
+        <span className="text-3xl font-mono font-bold tracking-tight text-zinc-950">
+          {time}
         </span>
       </div>
 
