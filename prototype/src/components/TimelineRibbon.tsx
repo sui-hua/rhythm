@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { Zap } from 'lucide-react'
 import { cn } from '../lib/utils'
 
@@ -13,6 +13,7 @@ interface TimelineRibbonProps {
 const STEP_MINUTES = 5
 const TOTAL_TICKS = (24 * 60) / STEP_MINUTES // 288
 const TICK_WIDTH = 14 // 每个刻度占据 14px 宽度，滑动阻尼细腻
+const CURVE_RADIUS = 110 // 「中间高两边低」凸透镜波峰半径 (px)
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90]
 
@@ -66,6 +67,16 @@ const getPeriodLabel = (timeStr: string): string => {
   return '晚间'
 }
 
+// 计算每个刻度距离中央的凸透镜高度系数 (0.0 ~ 1.0)
+const getCurveFactor = (tickIndex: number, currentScrollLeft: number): number => {
+  const tickX = tickIndex * TICK_WIDTH
+  const dist = Math.abs(tickX - currentScrollLeft)
+  if (dist >= CURVE_RADIUS) return 0
+  // 余弦平滑钟形曲线: cos(dist / RADIUS * π/2)，顶点平滑，两端自然收拢
+  const normalized = dist / CURVE_RADIUS
+  return Math.cos(normalized * (Math.PI / 2))
+}
+
 export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
   time,
   duration,
@@ -78,6 +89,9 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
   const startXRef = useRef(0)
   const startScrollLeftRef = useRef(0)
 
+  // 记录当前实时滚动位置，用于渲染「中间高两边低」的物理波峰特效
+  const [scrollLeft, setScrollLeft] = useState(() => getIndexFromTime(time) * TICK_WIDTH)
+
   const endTime = calculateEndTime(time, duration)
 
   // 滚动并居中指定时间槽
@@ -89,9 +103,10 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
       left: targetScrollLeft,
       behavior: smooth ? 'smooth' : 'auto'
     })
+    setScrollLeft(targetScrollLeft)
   }, [])
 
-  // 页面加载或切换编辑任务时，初始居中到初始时间（兼顾弹窗出现动画的时序）
+  // 页面加载或切换编辑任务时，初始居中到初始时间
   useEffect(() => {
     isProgrammaticScrollRef.current = true
     scrollToTime(time, false)
@@ -108,11 +123,13 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
     }
   }, [])
 
-  // 核心交互：滑动中直接选择！无需二次点击，滑动位置对齐正中央游标时即刻生效
+  // 核心交互：滑动中直接选择！波峰中心对准的刻度即为当前选中时间，毫秒级响应
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollLeft = e.currentTarget.scrollLeft
+    setScrollLeft(currentScrollLeft)
+
     if (isProgrammaticScrollRef.current) return
-    const scrollLeft = e.currentTarget.scrollLeft
-    const index = Math.round(scrollLeft / TICK_WIDTH)
+    const index = Math.round(currentScrollLeft / TICK_WIDTH)
     const clampedIndex = Math.max(0, Math.min(index, TOTAL_TICKS - 1))
     const newTime = getTimeFromIndex(clampedIndex)
     if (newTime !== time) {
@@ -188,7 +205,7 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
         </button>
       </div>
 
-      {/* 刻度滑尺区域：中央游标 + 两端渐变遮罩 + 纯粹刻度带 */}
+      {/* 刻度滑尺区域：中间高两边低波峰效果，无遮挡黑线 */}
       <div className="relative py-1">
         {/* 左边缘淡出渐变遮罩 */}
         <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-zinc-50 to-transparent pointer-events-none z-10" />
@@ -196,19 +213,13 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
         {/* 右边缘淡出渐变遮罩 */}
         <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-zinc-50 to-transparent pointer-events-none z-10" />
 
-        {/* 正中央固定基准游标 (Needle) */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-zinc-950 z-20 pointer-events-none rounded-full shadow-xs">
-          {/* 顶部小倒三角指示游标 */}
-          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-t-[5px] border-t-zinc-950" />
-        </div>
-
-        {/* 纯粹横向时间刻度线：| · · · | · · · | · · · | · · · | */}
+        {/* 纯粹横向时间刻度线（中间高两边低 · 凸透镜波峰曲线） */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           onMouseDown={handleMouseDown}
           onWheel={handleWheel}
-          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing h-11"
+          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing h-12"
           style={{
             paddingLeft: 'calc(50% - 7px)',
             paddingRight: 'calc(50% - 7px)'
@@ -219,6 +230,40 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
             const isHour = i % 12 === 0
             const isHalf = i % 6 === 0 && !isHour
             const isQuarter = i % 3 === 0 && !isHour && !isHalf
+            const factor = getCurveFactor(i, scrollLeft)
+            const isPeak = factor > 0.95
+
+            // 动态高度与粗细（中间高两边低）
+            let height = 3
+            let width = 1.5
+            let bgClass = 'bg-zinc-300'
+            let isDot = false
+
+            if (isHour) {
+              height = Math.round(10 + 18 * factor) // 10px -> 28px
+              width = factor > 0.5 ? 2.2 : 1.6
+              bgClass = factor > 0.6 ? 'bg-zinc-950' : factor > 0.3 ? 'bg-zinc-700' : 'bg-zinc-300'
+            } else if (isHalf) {
+              height = Math.round(8 + 15 * factor) // 8px -> 23px
+              width = factor > 0.5 ? 1.8 : 1.3
+              bgClass = factor > 0.6 ? 'bg-zinc-900' : factor > 0.3 ? 'bg-zinc-600' : 'bg-zinc-300'
+            } else if (isQuarter) {
+              height = Math.round(6 + 13 * factor) // 6px -> 19px
+              width = factor > 0.5 ? 1.5 : 1.0
+              bgClass = factor > 0.6 ? 'bg-zinc-900' : factor > 0.3 ? 'bg-zinc-500' : 'bg-zinc-300'
+            } else {
+              // 5 分钟微刻度
+              if (factor < 0.25) {
+                isDot = true
+                height = 3
+                width = 3
+                bgClass = 'bg-zinc-300'
+              } else {
+                height = Math.round(3 + 14 * factor) // 3px -> 17px
+                width = factor > 0.6 ? 1.8 : 1.5
+                bgClass = factor > 0.6 ? 'bg-zinc-950' : factor > 0.4 ? 'bg-zinc-600' : 'bg-zinc-300'
+              }
+            }
 
             return (
               <div
@@ -227,23 +272,33 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
                 className="shrink-0 snap-center flex flex-col items-center justify-end h-full cursor-pointer group"
                 style={{ width: `${TICK_WIDTH}px` }}
               >
-                {/* 整点上方的微型数字标注 (例如 09, 10, 11) */}
+                {/* 整点小时微标标注 (例如 09, 10, 11) */}
                 {isHour && (
-                  <span className="text-[9px] font-mono text-zinc-400 font-semibold mb-1 pointer-events-none">
+                  <span
+                    className="text-[9px] font-mono mb-1 pointer-events-none transition-all duration-75"
+                    style={{
+                      opacity: Math.max(0.3, factor),
+                      fontWeight: factor > 0.5 ? 700 : 500,
+                      color: factor > 0.5 ? '#09090b' : '#a1a1aa'
+                    }}
+                  >
                     {slotTime.split(':')[0]}
                   </span>
                 )}
 
-                {/* 刻度本尊：整点/半点为竖线 |，其余为点 · */}
-                {isHour ? (
-                  <span className="w-[1.8px] h-5 bg-zinc-800 rounded-full transition-transform group-hover:scale-y-110" />
-                ) : isHalf ? (
-                  <span className="w-[1.4px] h-3.5 bg-zinc-500 rounded-full transition-transform group-hover:scale-y-110" />
-                ) : isQuarter ? (
-                  <span className="w-[1px] h-2.5 bg-zinc-400 rounded-full transition-transform group-hover:scale-y-110" />
-                ) : (
-                  <span className="w-[3px] h-[3px] bg-zinc-300 rounded-full mb-1 transition-transform group-hover:scale-125" />
-                )}
+                {/* 刻度本尊：中间波峰处最高最黑，向两侧平滑降高变淡 */}
+                <span
+                  className={cn(
+                    'transition-all duration-75 rounded-full shrink-0',
+                    bgClass,
+                    isPeak && 'shadow-xs'
+                  )}
+                  style={{
+                    height: `${height}px`,
+                    width: `${width}px`,
+                    marginBottom: isDot ? '2px' : '0px'
+                  }}
+                />
               </div>
             )
           })}
