@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { X } from 'lucide-react'
 import type { Task } from '../../types'
-import { cn } from '../../lib/utils'
+import { TimelineRibbon, getNearestCurrentTime } from '../TimelineRibbon'
 
 export interface TaskSavePayload {
   id: number | null
@@ -19,11 +19,9 @@ interface TaskModalProps {
   onDelete?: (taskId: number) => void
 }
 
-const QUICK_DURATIONS = [15, 30, 45, 60]
-
 export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onDelete }) => {
   const [title, setTitle] = useState(task?.title ?? '')
-  const [time, setTime] = useState(task?.time ?? '09:00')
+  const [time, setTime] = useState(task?.time ?? getNearestCurrentTime())
   const [duration, setDuration] = useState(task?.duration ?? 30)
 
   // 下拉关闭手势状态
@@ -159,37 +157,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
             className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400"
           />
 
-          {/* 微卡片：时间与时长 */}
-          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
-            <span className="text-[11px] font-semibold text-zinc-400 block">开始时间与时长</span>
-            <div className="flex items-center justify-between gap-3">
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="bg-white border border-zinc-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-zinc-900 focus:outline-none cursor-pointer shadow-2xs"
-              />
-
-              {/* 快捷时长胶囊 */}
-              <div className="flex items-center gap-1.5">
-                {QUICK_DURATIONS.map((dur) => (
-                  <button
-                    key={dur}
-                    type="button"
-                    onClick={() => setDuration(dur)}
-                    className={cn(
-                      'px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer',
-                      duration === dur
-                        ? 'bg-zinc-900 text-white font-bold shadow-xs'
-                        : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
-                    )}
-                  >
-                    {dur}分
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* 横向时序刻度滑尺与时长选择 */}
+          <TimelineRibbon
+            time={time}
+            duration={duration}
+            onChangeTime={setTime}
+            onChangeDuration={setDuration}
+          />
         </div>
 
         {/* 底部操作区 */}
