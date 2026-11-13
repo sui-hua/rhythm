@@ -66,19 +66,22 @@ const getPeriodLabel = (timeStr: string): string => {
   return '晚间'
 }
 
-// 强烈波峰衰减函数：锐利陡峭曲线，半径缩小为 42px (正中央左右各 3 个刻度内形成强烈尖锐波峰)
-const PEAK_RADIUS = 42
+// 优美舒展的波峰衰减函数：波峰半径放宽至 70px (左右各约 5 个刻度，展宽舒展自然，中心单点依然稳居最高)
+const PEAK_RADIUS = 70
 
 const getCurveFactor = (tickIndex: number, currentScrollLeft: number): number => {
   const tickX = tickIndex * TICK_WIDTH
   const dist = Math.abs(tickX - currentScrollLeft)
   if (dist >= PEAK_RADIUS) return 0
   const ratio = dist / PEAK_RADIUS
-  // 陡峭幂函数：(1 - ratio)^2.2
-  // dist = 0 时为 1.0 (34px 绝对波峰)
-  // dist = 14px (第一邻居) 剧降到 ~0.41 (约 17.5px，只有中心一半高)
-  // dist = 28px (第二邻居) 剧降到 ~0.09 (约 8.5px，迅速融入基线)
-  return Math.pow(1 - ratio, 2.2)
+  // 优雅幂函数：(1 - ratio)^1.6
+  // dist = 0: 1.0 (34px 绝对中央峰值)
+  // dist = 14px: ~0.70 (约 25.3px，与中心保持约 8.7px 显著落差，峰值清晰且过渡优美)
+  // dist = 28px: ~0.44 (约 17.8px)
+  // dist = 42px: ~0.23 (约 11.7px)
+  // dist = 56px: ~0.08 (约 7.3px)
+  // dist >= 70px: 归入 5px 平缓基线
+  return Math.pow(1 - ratio, 1.6)
 }
 
 export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
@@ -249,14 +252,16 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
             const height = Math.round(baseHeight + (PEAK_HEIGHT - baseHeight) * factor)
             const width = +(baseWidth + (PEAK_WIDTH - baseWidth) * factor).toFixed(1)
 
-            // 颜色：正中独享纯黑高光 (#09090b)，仅中心峰值为纯黑，第一邻居迅速变灰
-            const bgClass = factor > 0.8
+            // 颜色：正中独享纯黑高光 (#09090b)，两侧平滑递减淡出
+            const bgClass = factor > 0.85
               ? 'bg-zinc-950'
-              : factor > 0.35
-                ? 'bg-zinc-500'
-                : isHour
-                  ? 'bg-zinc-400'
-                  : 'bg-zinc-300'
+              : factor > 0.55
+                ? 'bg-zinc-800'
+                : factor > 0.3
+                  ? 'bg-zinc-500'
+                  : isHour
+                    ? 'bg-zinc-400'
+                    : 'bg-zinc-300'
 
             return (
               <div
