@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Clock, Timer, Repeat, Archive, Trash2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import type { FrequencyType, Habit } from '../../types'
 import { cn } from '../../lib/utils'
 
@@ -34,7 +34,6 @@ const WEEKDAY_OPTIONS = [
 ]
 
 const QUICK_DURATIONS = [15, 30, 45, 60]
-const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
 
 export const HabitModal: React.FC<HabitModalProps> = ({
   habit,
@@ -46,11 +45,17 @@ export const HabitModal: React.FC<HabitModalProps> = ({
   const [title, setTitle] = useState(habit?.title ?? '')
   const [time, setTime] = useState(habit?.time ?? '07:00')
   const [duration, setDuration] = useState(habit?.duration ?? 30)
-  const [frequencyType, setFrequencyType] = useState<FrequencyType>(
-    habit?.frequencyType ?? (habit?.frequency?.includes('周') ? 'weekly' : 'daily')
-  )
-  const [weekdays, setWeekdays] = useState<number[]>(habit?.weekdays ?? [1, 2, 3, 4, 5])
-  const [monthDays, setMonthDays] = useState<number[]>(habit?.monthDays ?? [1, 15])
+
+  // 快捷频次预设模式：'daily' | 'workdays' | 'custom'
+  const getInitialPreset = (): 'daily' | 'workdays' | 'custom' => {
+    if (!habit) return 'daily'
+    if (habit.frequency === '工作日') return 'workdays'
+    if (habit.frequency === '每日') return 'daily'
+    return 'custom'
+  }
+
+  const [preset, setPreset] = useState<'daily' | 'workdays' | 'custom'>(getInitialPreset)
+  const [weekdays, setWeekdays] = useState<number[]>(habit?.weekdays ?? [1, 3, 5])
 
   const toggleWeekday = (val: number) => {
     setWeekdays((prev) =>
@@ -58,45 +63,42 @@ export const HabitModal: React.FC<HabitModalProps> = ({
     )
   }
 
-  const toggleMonthDay = (val: number) => {
-    setMonthDays((prev) =>
-      prev.includes(val) ? prev.filter((d) => d !== val) : [...prev, val].sort((a, b) => a - b)
-    )
-  }
-
+  // 智能计算标准描述文本
   const getFrequencyLabel = (): string => {
-    if (frequencyType === 'daily') return '每日'
-    if (frequencyType === 'weekly') {
-      if (weekdays.length === 7) return '每日'
-      if (weekdays.length === 5 && weekdays.every((d) => d >= 1 && d <= 5)) return '工作日'
-      if (weekdays.length === 2 && weekdays.includes(6) && weekdays.includes(7)) return '周末'
-      const names = weekdays.map((d) => WEEKDAY_OPTIONS.find((w) => w.value === d)?.label).filter(Boolean)
-      return `每周${names.join('/')}`
-    }
-    if (frequencyType === 'monthly') {
-      if (monthDays.length <= 4) {
-        return `每月${monthDays.join(',')}日`
-      }
-      return `每月 ${monthDays.length} 天`
-    }
-    return '每日'
+    if (preset === 'daily') return '每日'
+    if (preset === 'workdays') return '工作日'
+    if (weekdays.length === 7) return '每日'
+    if (weekdays.length === 5 && weekdays.every((d) => d >= 1 && d <= 5)) return '工作日'
+    if (weekdays.length === 2 && weekdays.includes(6) && weekdays.includes(7)) return '周末'
+    if (weekdays.length === 0) return '未选'
+    const names = weekdays.map((d) => WEEKDAY_OPTIONS.find((w) => w.value === d)?.label).filter(Boolean)
+    return `每周${names.join('/')}`
   }
 
-  const canSubmit =
-    title.trim().length > 0 &&
-    (frequencyType === 'daily' ||
-      (frequencyType === 'weekly' && weekdays.length > 0) ||
-      (frequencyType === 'monthly' && monthDays.length > 0))
+  const canSubmit = title.trim().length > 0 && (preset !== 'custom' || weekdays.length > 0)
 
   const handleSave = () => {
     if (!canSubmit) return
+
+    let finalWeekdays: number[] | undefined = undefined
+    let finalType: FrequencyType = 'daily'
+
+    if (preset === 'daily') {
+      finalType = 'daily'
+    } else if (preset === 'workdays') {
+      finalType = 'weekly'
+      finalWeekdays = [1, 2, 3, 4, 5]
+    } else {
+      finalType = 'weekly'
+      finalWeekdays = weekdays
+    }
+
     onSave({
       id: habit ? habit.id : undefined,
       title: title.trim(),
       frequency: getFrequencyLabel(),
-      frequencyType,
-      weekdays: frequencyType === 'weekly' ? weekdays : undefined,
-      monthDays: frequencyType === 'monthly' ? monthDays : undefined,
+      frequencyType: finalType,
+      weekdays: finalWeekdays,
       time: time || '07:00',
       duration: Number(duration) || 30,
       isArchived: habit?.isArchived ?? false
@@ -125,76 +127,51 @@ export const HabitModal: React.FC<HabitModalProps> = ({
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-[390px] max-h-[90vh] bg-[#f2f2f7] rounded-t-[32px] shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-200 flex flex-col overflow-hidden">
-        {/* iOS 经典手柄 */}
-        <div className="pt-2.5 pb-1 flex justify-center shrink-0">
-          <div className="w-9 h-1 bg-zinc-300 rounded-full" />
-        </div>
+      {/* 贴底大卡片 · 延续 Rhythm 纯白与半深灰设计 */}
+      <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col">
+        {/* 顶部手柄 */}
+        <div className="w-9 h-1 bg-zinc-200 rounded-full mx-auto shrink-0" />
 
-        {/* iOS 原生导航栏：取消 · 标题 · 完成/添加 */}
-        <div className="px-4 py-2 flex items-center justify-between shrink-0 border-b border-zinc-200/60 bg-[#f2f2f7]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-[16px] text-zinc-500 hover:text-zinc-800 active:opacity-60 transition-opacity cursor-pointer font-normal"
-          >
-            取消
-          </button>
-          <h2 className="text-[16.5px] font-semibold tracking-tight text-zinc-900 font-sans">
-            {habit ? '编辑习惯' : '新建习惯'}
+        {/* 顶部标题栏 */}
+        <div className="flex items-center justify-between pb-0.5 shrink-0">
+          <h2 className="text-base font-bold tracking-tight text-zinc-900 font-sans">
+            {habit ? '编辑习惯' : '添加日常习惯'}
           </h2>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!canSubmit}
-            className="text-[16px] font-semibold text-zinc-900 disabled:text-zinc-300 active:opacity-60 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+            onClick={onClose}
+            className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
           >
-            {habit ? '完成' : '添加'}
+            <X size={16} />
           </button>
         </div>
 
-        {/* 滚动内容区 */}
-        <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
-          {/* Group 1：顶格无边框大字标题岛屿 */}
-          <div className="bg-white rounded-2xl p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04]">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave()
-              }}
-              placeholder="习惯名称 (如：早起晨读 30分钟)"
-              className="w-full bg-transparent text-[17px] font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
-            />
-          </div>
+        {/* 表单内容 */}
+        <div className="space-y-3 shrink-0">
+          {/* 纯净大字标题输入框 (无废话 Label) */}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave()
+            }}
+            type="text"
+            placeholder="写下你想培养的习惯 (例如: 早起晨读 30分钟)"
+            className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400"
+          />
 
-          {/* Group 2：时间与时长 Inset Grouped 岛屿 */}
-          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] divide-y divide-zinc-100 overflow-hidden text-[15px]">
-            {/* 时间行 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
-                  <Clock size={16} />
-                </div>
-                <span className="font-normal text-zinc-900">执行时间</span>
-              </div>
+          {/* 微卡片 1：时间与时长 */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
+            <span className="text-[11px] font-semibold text-zinc-400 block">执行时间与时长</span>
+            <div className="flex items-center justify-between gap-3">
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="bg-zinc-100/80 px-2.5 py-1 rounded-lg text-sm font-mono font-medium text-zinc-800 focus:outline-none cursor-pointer"
+                className="bg-white border border-zinc-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-zinc-900 focus:outline-none cursor-pointer shadow-2xs"
               />
-            </div>
 
-            {/* 时长行 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                  <Timer size={16} />
-                </div>
-                <span className="font-normal text-zinc-900">预计时长</span>
-              </div>
+              {/* 快捷时长胶囊 */}
               <div className="flex items-center gap-1.5">
                 {QUICK_DURATIONS.map((dur) => (
                   <button
@@ -202,10 +179,10 @@ export const HabitModal: React.FC<HabitModalProps> = ({
                     type="button"
                     onClick={() => setDuration(dur)}
                     className={cn(
-                      'px-2 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer',
+                      'px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer',
                       duration === dur
-                        ? 'bg-zinc-900 text-white font-bold'
-                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200/70'
+                        ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                        : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
                     )}
                   >
                     {dur}分
@@ -215,49 +192,44 @@ export const HabitModal: React.FC<HabitModalProps> = ({
             </div>
           </div>
 
-          {/* Group 3：重复频次 Inset Grouped 岛屿 */}
-          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] divide-y divide-zinc-100 overflow-hidden text-[15px]">
-            {/* 重复频次类型切换 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <Repeat size={16} />
-                </div>
-                <span className="font-normal text-zinc-900">重复频次</span>
-              </div>
-              <div className="flex bg-zinc-100 p-0.5 rounded-lg text-xs font-medium">
-                {(
-                  [
-                    { key: 'daily', label: '每日' },
-                    { key: 'weekly', label: '每周' },
-                    { key: 'monthly', label: '每月' }
-                  ] as const
-                ).map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setFrequencyType(item.key)}
-                    className={cn(
-                      'px-2.5 py-1 rounded-md transition-all cursor-pointer',
-                      frequencyType === item.key
-                        ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                        : 'text-zinc-500 hover:text-zinc-800'
-                    )}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+          {/* 微卡片 2：重复频次 */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-zinc-400">重复频次</span>
+              <span className="text-[11px] font-mono font-bold text-zinc-800">
+                {getFrequencyLabel()}
+              </span>
             </div>
 
-            {/* 每周内联展开：7 天星期药丸 */}
-            {frequencyType === 'weekly' && (
-              <div className="px-4 py-3 space-y-2 bg-zinc-50/50 animate-in fade-in-50 duration-150">
-                <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>选择执行日</span>
-                  <span className="font-mono text-zinc-600 font-semibold">{getFrequencyLabel()}</span>
-                </div>
-                <div className="grid grid-cols-7 gap-1.5">
+            {/* 三大快捷胶囊 */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {(
+                [
+                  { key: 'daily', label: '每日' },
+                  { key: 'workdays', label: '工作日' },
+                  { key: 'custom', label: '每周...' }
+                ] as const
+              ).map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setPreset(item.key)}
+                  className={cn(
+                    'py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border',
+                    preset === item.key
+                      ? 'bg-zinc-900 border-zinc-900 text-white shadow-xs'
+                      : 'bg-white border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 仅在选自定义每周时，丝滑滑出 7 个黑白极简微钮 */}
+            {preset === 'custom' && (
+              <div className="pt-1.5 border-t border-zinc-200/50 animate-in fade-in-50 duration-150">
+                <div className="grid grid-cols-7 gap-1">
                   {WEEKDAY_OPTIONS.map((w) => {
                     const isSelected = weekdays.includes(w.value)
                     return (
@@ -266,10 +238,10 @@ export const HabitModal: React.FC<HabitModalProps> = ({
                         type="button"
                         onClick={() => toggleWeekday(w.value)}
                         className={cn(
-                          'h-9 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-center',
+                          'h-8 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-center',
                           isSelected
-                            ? 'bg-zinc-900 text-white shadow-xs scale-102'
-                            : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
+                            ? 'bg-zinc-900 text-white shadow-xs'
+                            : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-100'
                         )}
                         title={w.full}
                       >
@@ -280,62 +252,36 @@ export const HabitModal: React.FC<HabitModalProps> = ({
                 </div>
               </div>
             )}
-
-            {/* 每月内联展开：1~31 号微型网格 */}
-            {frequencyType === 'monthly' && (
-              <div className="px-4 py-3 space-y-2 bg-zinc-50/50 animate-in fade-in-50 duration-150">
-                <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>选择每月日期</span>
-                  <span className="font-mono text-zinc-600 font-semibold">{getFrequencyLabel()}</span>
-                </div>
-                <div className="grid grid-cols-7 gap-1 max-h-36 overflow-y-auto no-scrollbar p-0.5">
-                  {MONTH_DAYS.map((d) => {
-                    const isSelected = monthDays.includes(d)
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => toggleMonthDay(d)}
-                        className={cn(
-                          'h-7 rounded-lg font-mono text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center',
-                          isSelected
-                            ? 'bg-zinc-900 text-white shadow-xs'
-                            : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
-                        )}
-                      >
-                        {d}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
+        </div>
 
-          {/* Group 4（编辑模式专属）：独立危险操作卡片 */}
+        {/* 底部操作区 */}
+        <div className="space-y-2 pt-1 shrink-0">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSubmit}
+            className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
+          >
+            {habit ? '保存修改' : '确认添加'}
+          </button>
+
           {habit && (
-            <div className="space-y-2.5 pt-2">
-              <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] overflow-hidden">
-                <button
-                  type="button"
-                  onClick={handleArchive}
-                  className="w-full flex items-center justify-center gap-2 p-3.5 text-[15px] font-medium text-zinc-700 hover:bg-zinc-50 active:bg-zinc-100 transition-colors cursor-pointer"
-                >
-                  <Archive size={16} className="text-zinc-400" />
-                  {habit.isArchived ? '恢复此习惯' : '归档此习惯'}
-                </button>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] overflow-hidden">
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="w-full flex items-center justify-center gap-2 p-3.5 text-[15px] font-medium text-rose-600 hover:bg-rose-50/50 active:bg-rose-100/50 transition-colors cursor-pointer"
-                >
-                  <Trash2 size={16} />
-                  删除此习惯
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={handleArchive}
+                className="py-2 text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors cursor-pointer"
+              >
+                {habit.isArchived ? '取消归档' : '归档该习惯'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              >
+                删除此习惯
+              </button>
             </div>
           )}
         </div>
