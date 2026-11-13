@@ -151,6 +151,12 @@ export function App() {
     return habits.filter((h) => h.completedToday).length
   }, [habits])
 
+  const habitRingOffset = useMemo(() => {
+    if (!habits.length) return 88
+    const progress = completedHabitsCount / habits.length
+    return 88 * (1 - progress)
+  }, [completedHabitsCount, habits])
+
   // 今日一秒打卡 / 撤销
   const handleToggleHabit = (habit: Habit) => {
     const todayStr = '2026-05-11'
@@ -228,6 +234,16 @@ export function App() {
 
   // ── 3. 所向 (Direction) 状态 ──
   const [goals] = useState(INITIAL_GOALS)
+  const averageGoalProgress = useMemo(() => {
+    if (!goals.length) return 0
+    return Math.round(goals.reduce((acc, g) => acc + g.progress, 0) / goals.length)
+  }, [goals])
+
+  const goalRingOffset = useMemo(() => {
+    const progress = averageGoalProgress / 100
+    return 88 * (1 - progress)
+  }, [averageGoalProgress])
+
   const handleClickGoal = (goal: (typeof goals)[0]) => {
     showToast(`目标进度：${goal.progress}%`)
   }
@@ -310,43 +326,48 @@ export function App() {
     return undefined
   }
 
+  const renderProgressRing = (offset: number, tooltip: string) => {
+    return (
+      <div
+        className="relative w-7 h-7 flex items-center justify-center shrink-0 cursor-default"
+        title={tooltip}
+      >
+        <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="14" stroke="#e4e4e7" strokeWidth="2.8" fill="none" />
+          <circle
+            cx="18"
+            cy="18"
+            r="14"
+            stroke="#18181b"
+            strokeWidth="2.8"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray="88"
+            strokeDashoffset={offset}
+            className="transition-all duration-500 ease-out"
+          />
+        </svg>
+      </div>
+    )
+  }
+
   const renderHeaderRightSlot = () => {
     if (currentTab === 'day') {
-      return (
-        <div
-          className="relative w-7 h-7 flex items-center justify-center shrink-0 cursor-default"
-          title={`今日进度：${completedTasksCount}/${currentTasks.length}`}
-        >
-          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
-            <circle cx="18" cy="18" r="14" stroke="#e4e4e7" strokeWidth="2.8" fill="none" />
-            <circle
-              cx="18"
-              cy="18"
-              r="14"
-              stroke="#18181b"
-              strokeWidth="2.8"
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray="88"
-              strokeDashoffset={taskRingOffset}
-              className="transition-all duration-500 ease-out"
-            />
-          </svg>
-        </div>
+      return renderProgressRing(
+        taskRingOffset,
+        `今日进度：${completedTasksCount}/${currentTasks.length}`
       )
     }
     if (currentTab === 'habits') {
-      return (
-        <span className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600">
-          已打卡 {completedHabitsCount} / {habits.length}
-        </span>
+      return renderProgressRing(
+        habitRingOffset,
+        `今日习惯打卡：${completedHabitsCount}/${habits.length}`
       )
     }
     if (currentTab === 'direction') {
-      return (
-        <span className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600">
-          {goals.length} 个里程碑
-        </span>
+      return renderProgressRing(
+        goalRingOffset,
+        `所向目标综合推进：${averageGoalProgress}%`
       )
     }
     if (currentTab === 'summary') {
