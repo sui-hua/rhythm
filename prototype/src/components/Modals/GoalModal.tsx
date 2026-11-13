@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CalendarRange, Clock, Tag, RotateCw, Trash2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import type { Goal } from '../../types'
 import { cn } from '../../lib/utils'
 
@@ -29,30 +29,7 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   label: `${i + 1 < 10 ? '0' + (i + 1) : i + 1}月`
 }))
 const CARRY_OVER_OPTIONS = [1, 3, 5, 7]
-
-// iOS 原生开关组件
-const IOSSwitch: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({
-  checked,
-  onChange
-}) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    onClick={() => onChange(!checked)}
-    className={cn(
-      'w-[51px] h-[31px] rounded-full p-[2px] transition-colors duration-200 cursor-pointer flex items-center focus:outline-none shrink-0',
-      checked ? 'bg-zinc-900' : 'bg-zinc-200'
-    )}
-  >
-    <div
-      className={cn(
-        'w-[27px] h-[27px] bg-white rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.2),0_1px_1px_rgba(0,0,0,0.1)] transition-transform duration-200 ease-out',
-        checked ? 'translate-x-[20px]' : 'translate-x-0'
-      )}
-    />
-  </button>
-)
+const QUICK_DURATIONS = [30, 45, 60, 90]
 
 export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onDelete }) => {
   const [title, setTitle] = useState(goal?.title ?? '')
@@ -105,65 +82,47 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-[390px] max-h-[90vh] bg-[#f2f2f7] rounded-t-[32px] shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-200 flex flex-col overflow-hidden">
-        {/* iOS 经典手柄 */}
-        <div className="pt-2.5 pb-1 flex justify-center shrink-0">
-          <div className="w-9 h-1 bg-zinc-300 rounded-full" />
-        </div>
+      <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col">
+        {/* 顶部手柄 */}
+        <div className="w-9 h-1 bg-zinc-200 rounded-full mx-auto shrink-0" />
 
-        {/* iOS 原生导航栏：取消 · 标题 · 完成/添加 */}
-        <div className="px-4 py-2 flex items-center justify-between shrink-0 border-b border-zinc-200/60 bg-[#f2f2f7]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-[16px] text-zinc-500 hover:text-zinc-800 active:opacity-60 transition-opacity cursor-pointer font-normal"
-          >
-            取消
-          </button>
-          <h2 className="text-[16.5px] font-semibold tracking-tight text-zinc-900 font-sans">
-            {goal ? '编辑目标' : '新建目标'}
+        {/* 顶部标题栏 */}
+        <div className="flex items-center justify-between pb-0.5 shrink-0">
+          <h2 className="text-base font-bold tracking-tight text-zinc-900 font-sans">
+            {goal ? '编辑目标' : '添加长期目标'}
           </h2>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!canSubmit}
-            className="text-[16px] font-semibold text-zinc-900 disabled:text-zinc-300 active:opacity-60 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+            onClick={onClose}
+            className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
           >
-            {goal ? '完成' : '添加'}
+            <X size={16} />
           </button>
         </div>
 
-        {/* 滚动内容区 */}
-        <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
-          {/* Group 1：顶格无边框大字标题岛屿 */}
-          <div className="bg-white rounded-2xl p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04]">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave()
-              }}
-              placeholder="长期目标名称 (如：掌握 Rust 异步系统编程)"
-              className="w-full bg-transparent text-[17px] font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
-            />
-          </div>
+        {/* 表单内容 */}
+        <div className="space-y-3 shrink-0">
+          {/* 目标标题输入 */}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave()
+            }}
+            type="text"
+            placeholder="写下你的战略目标 (例如: 掌握 Rust 异步编程)"
+            className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400"
+          />
 
-          {/* Group 2：执行时轴与分类 Inset Grouped 岛屿 */}
-          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] divide-y divide-zinc-100 overflow-hidden text-[15px]">
-            {/* 执行起止月份 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-                  <CalendarRange size={16} />
-                </div>
-                <span className="font-normal text-zinc-900">执行时轴</span>
-              </div>
+          {/* 微卡片 1：执行时轴与分类 */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-zinc-400">执行起止时轴</span>
               <div className="flex items-center gap-1.5 font-mono text-xs">
                 <select
                   value={startMonth}
                   onChange={(e) => handleStartMonthChange(Number(e.target.value))}
-                  className="bg-zinc-100/80 px-2 py-1 rounded-lg font-bold text-zinc-800 focus:outline-none cursor-pointer"
+                  className="bg-white border border-zinc-200/80 px-2 py-1 rounded-lg font-bold text-zinc-900 focus:outline-none cursor-pointer"
                 >
                   {MONTHS.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -175,7 +134,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
                 <select
                   value={endMonth}
                   onChange={(e) => setEndMonth(Number(e.target.value))}
-                  className="bg-zinc-100/80 px-2 py-1 rounded-lg font-bold text-zinc-800 focus:outline-none cursor-pointer"
+                  className="bg-white border border-zinc-200/80 px-2 py-1 rounded-lg font-bold text-zinc-900 focus:outline-none cursor-pointer"
                 >
                   {MONTHS.map((m) => (
                     <option key={m.value} value={m.value} disabled={m.value < startMonth}>
@@ -187,62 +146,47 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
             </div>
 
             {/* 目标分类 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <Tag size={16} />
-                </div>
-                <span className="font-normal text-zinc-900">目标分类</span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={cn(
-                      'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer',
-                      category === cat
-                        ? 'bg-zinc-900 text-white shadow-xs'
-                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200/70'
-                    )}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-zinc-200/50">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={cn(
+                    'px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer border',
+                    category === cat
+                      ? 'bg-zinc-900 border-zinc-900 text-white shadow-xs'
+                      : 'bg-white border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* 默认排期与时长 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
-                  <Clock size={16} />
-                </div>
-                <span className="font-normal text-zinc-900">默认时间</span>
-              </div>
+          {/* 微卡片 2：默认执行时间与时长 */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
+            <span className="text-[11px] font-semibold text-zinc-400 block">默认执行时间与单次时长</span>
+            <div className="flex items-center justify-between gap-3">
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="bg-zinc-100/80 px-2.5 py-1 rounded-lg text-xs font-mono font-medium text-zinc-800 focus:outline-none cursor-pointer"
+                className="bg-white border border-zinc-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-zinc-900 focus:outline-none cursor-pointer shadow-2xs"
               />
-            </div>
 
-            {/* 预计时长 */}
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <span className="text-zinc-500 text-xs ml-9">单次时长</span>
               <div className="flex items-center gap-1.5">
-                {[30, 45, 60, 90].map((dur) => (
+                {QUICK_DURATIONS.map((dur) => (
                   <button
                     key={dur}
                     type="button"
                     onClick={() => setDuration(dur)}
                     className={cn(
-                      'px-2 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer',
+                      'px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer',
                       duration === dur
-                        ? 'bg-zinc-900 text-white font-bold'
-                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200/70'
+                        ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                        : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
                     )}
                   >
                     {dur}分
@@ -252,24 +196,40 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
             </div>
           </div>
 
-          {/* Group 3：未完成延后展示 Carry-Over（iOS Switch 触感开关） */}
-          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] divide-y divide-zinc-100 overflow-hidden text-[15px]">
-            <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                  <RotateCw size={16} />
-                </div>
-                <div>
-                  <span className="font-normal text-zinc-900 block leading-tight">未完成延后展示</span>
-                  <span className="text-[11px] text-zinc-400 font-normal">过期自动在时序中向后顺延</span>
-                </div>
+          {/* 微卡片 3：未完成延后展示 Carry-Over */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-zinc-800 block">未完成延后展示 (Carry-Over)</span>
+                <span className="text-[10.5px] text-zinc-400">过期自动在时序日程轴中向后顺延</span>
               </div>
-              <IOSSwitch checked={carryOverEnabled} onChange={setCarryOverEnabled} />
+              <div className="flex bg-zinc-200/70 p-0.5 rounded-xl text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setCarryOverEnabled(false)}
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-lg text-xs transition-all cursor-pointer',
+                    !carryOverEnabled ? 'bg-white text-zinc-900 font-bold shadow-xs' : 'text-zinc-500'
+                  )}
+                >
+                  关闭
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCarryOverEnabled(true)}
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-lg text-xs transition-all cursor-pointer',
+                    carryOverEnabled ? 'bg-zinc-900 text-white font-bold shadow-xs' : 'text-zinc-500'
+                  )}
+                >
+                  开启
+                </button>
+              </div>
             </div>
 
             {carryOverEnabled && (
-              <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/50 animate-in fade-in-50 duration-150">
-                <span className="text-xs text-zinc-500 font-medium">顺延展示天数</span>
+              <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200/50">
+                <span className="text-[11px] text-zinc-500 font-medium">顺延天数</span>
                 <div className="flex items-center gap-1.5">
                   {CARRY_OVER_OPTIONS.map((days) => (
                     <button
@@ -277,9 +237,9 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
                       type="button"
                       onClick={() => setCarryOverDays(days)}
                       className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer',
+                        'px-2.5 py-1 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer',
                         carryOverDays === days
-                          ? 'bg-zinc-900 text-white font-bold'
+                          ? 'bg-zinc-900 text-white font-bold shadow-xs'
                           : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-100'
                       )}
                     >
@@ -291,32 +251,39 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
             )}
           </div>
 
-          {/* Group 4（编辑模式）：同步子级战役安排 */}
           {goal && (
-            <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] divide-y divide-zinc-100 overflow-hidden text-[15px]">
-              <div className="flex items-center justify-between px-4 py-3 min-h-[48px]">
-                <div>
-                  <span className="font-normal text-zinc-900 block leading-tight">同步子级时间</span>
-                  <span className="text-[11px] text-zinc-400 font-normal">覆盖各月度战役的默认时间</span>
-                </div>
-                <IOSSwitch checked={forceOverwriteTiming} onChange={setForceOverwriteTiming} />
-              </div>
-            </div>
+            <label className="flex items-center gap-2 px-1 cursor-pointer select-none text-xs text-zinc-500">
+              <input
+                type="checkbox"
+                checked={forceOverwriteTiming}
+                onChange={(e) => setForceOverwriteTiming(e.target.checked)}
+                className="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+              />
+              <span>同步更新子级月度战役的执行时间</span>
+            </label>
           )}
+        </div>
 
-          {/* Group 5（编辑模式专属）：独立删除行 */}
+        {/* 底部操作区 */}
+        <div className="space-y-2 pt-1 shrink-0">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSubmit}
+            className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
+          >
+            {goal ? '保存修改' : '确认创建'}
+          </button>
+
           {goal && (
-            <div className="pt-2">
-              <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-black/[0.04] overflow-hidden">
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="w-full flex items-center justify-center gap-2 p-3.5 text-[15px] font-medium text-rose-600 hover:bg-rose-50/50 active:bg-rose-100/50 transition-colors cursor-pointer"
-                >
-                  <Trash2 size={16} />
-                  删除目标
-                </button>
-              </div>
+            <div className="pt-0.5">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="w-full py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              >
+                删除此目标
+              </button>
             </div>
           )}
         </div>
