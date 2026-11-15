@@ -112,10 +112,168 @@ export const INITIAL_HABITS: Habit[] = [
 ]
 
 export const INITIAL_GOALS: Goal[] = [
-  { id: 201, title: '掌握现代化全栈与 AI 架构', category: '学习', milestone: '5月：完成高保真原型交互演进与规范核验', progress: 75 },
-  { id: 202, title: '心肺耐力提升 20km/周', category: '健康', milestone: '5月：周跑量稳定 20km，配速 5:30', progress: 60 },
-  { id: 203, title: '个人财务被动储蓄计划', category: '财务', milestone: '5月：结余转入指数基金标的', progress: 40 },
-  { id: 204, title: '深度阅读人文沉淀', category: '思维', milestone: '5月：精读《思考，快与慢》全本', progress: 85 }
+  {
+    id: 201,
+    title: '掌握现代化全栈与 AI 架构',
+    category: '学习',
+    milestone: '5月：完成高保真原型交互演进与规范核验',
+    progress: 60,
+    startMonth: 5,
+    endMonth: 8,
+    time: '09:00',
+    duration: 45,
+    carryOverEnabled: true,
+    carryOverDays: 3,
+    months: [
+      {
+        id: 20105,
+        goalId: 201,
+        month: 5,
+        title: '完成高保真原型交互演进与规范核验',
+        time: '09:00',
+        duration: 45,
+        days: [
+          { id: '201-05-10', day: 10, date: '2026-05-10', title: 'TimelineRibbon 标尺组件重构与核验', completed: true, time: '09:00', duration: 45 },
+          { id: '201-05-11', day: 11, date: '2026-05-11', title: '习惯与目标新增弹窗对齐 Web 规范', completed: true, time: '09:00', duration: 45 },
+          { id: '201-05-12', day: 12, date: '2026-05-12', title: '月度战役与天目标级联看板实现', completed: true, time: '09:00', duration: 45 },
+          { id: '201-05-14', day: 14, date: '2026-05-14', title: '多端手势与自适应交互审查', completed: false, time: '09:00', duration: 45 },
+          { id: '201-05-16', day: 16, date: '2026-05-16', title: '端到端体验核验与性能优化', completed: false, time: '09:00', duration: 45 }
+        ]
+      },
+      {
+        id: 20106,
+        goalId: 201,
+        month: 6,
+        title: 'Nest.js 与 Prisma 领域实体建模',
+        time: '09:30',
+        duration: 60,
+        days: [
+          { id: '201-06-05', day: 5, date: '2026-06-05', title: 'Goal 与 GoalMonth 领域仓储层改造', completed: false, time: '09:30', duration: 60 },
+          { id: '201-06-12', day: 12, date: '2026-06-12', title: 'Carry-over 延迟顺延调度服务联调', completed: false, time: '09:30', duration: 60 }
+        ]
+      },
+      {
+        id: 20107,
+        goalId: 201,
+        month: 7,
+        title: 'React Native 移动端全链路端到端联调',
+        time: '10:00',
+        duration: 45,
+        days: [
+          { id: '201-07-08', day: 8, date: '2026-07-08', title: '离线离散缓存与状态同步验证', completed: false, time: '10:00', duration: 45 }
+        ]
+      },
+      {
+        id: 20108,
+        goalId: 201,
+        month: 8,
+        title: '生产环境发布与首批用户内测',
+        time: '09:00',
+        duration: 30,
+        days: []
+      }
+    ]
+  },
+  {
+    id: 202,
+    title: '心肺耐力提升 20km/周',
+    category: '健康',
+    milestone: '5月：周跑量稳定 20km，配速 5:30',
+    progress: 80,
+    startMonth: 5,
+    endMonth: 7,
+    time: '18:00',
+    duration: 40,
+    carryOverEnabled: false,
+    carryOverDays: 1,
+    months: [
+      {
+        id: 20205,
+        goalId: 202,
+        month: 5,
+        title: '周跑量稳定 20km，配速 5:30',
+        time: '18:00',
+        duration: 40,
+        days: [
+          { id: '202-05-02', day: 2, date: '2026-05-02', title: '户外 5km 变速跑训练', completed: true, time: '18:00', duration: 40 },
+          { id: '202-05-05', day: 5, date: '2026-05-05', title: '户外 5km 间歇跑训练', completed: true, time: '18:00', duration: 40 },
+          { id: '202-05-08', day: 8, date: '2026-05-08', title: '户外 6km 节奏跑训练', completed: true, time: '18:00', duration: 40 },
+          { id: '202-05-11', day: 11, date: '2026-05-11', title: '户外 5km 轻松恢复跑', completed: true, time: '18:00', duration: 40 },
+          { id: '202-05-15', day: 15, date: '2026-05-15', title: '周末 10km 长距离拉练', completed: false, time: '18:00', duration: 60 }
+        ]
+      },
+      {
+        id: 20206,
+        goalId: 202,
+        month: 6,
+        title: '尝试半马配速体验，间歇跑提速',
+        time: '18:00',
+        duration: 45,
+        days: []
+      },
+      {
+        id: 20207,
+        goalId: 202,
+        month: 7,
+        title: '完成首次 15km 连续越野拉练',
+        time: '07:00',
+        duration: 90,
+        days: []
+      }
+    ]
+  },
+  {
+    id: 203,
+    title: '个人财务被动储蓄计划',
+    category: '财务',
+    milestone: '5月：结余转入指数基金标的',
+    progress: 40,
+    startMonth: 5,
+    endMonth: 10,
+    time: '20:00',
+    duration: 20,
+    carryOverEnabled: true,
+    carryOverDays: 5,
+    months: [
+      {
+        id: 20305,
+        goalId: 203,
+        month: 5,
+        title: '结余转入指数基金标的',
+        days: [
+          { id: '203-05-01', day: 1, date: '2026-05-01', title: '月初固定资产账户盘点', completed: true },
+          { id: '203-05-15', day: 15, date: '2026-05-15', title: '月中定投执行与账目核实', completed: false }
+        ]
+      }
+    ]
+  },
+  {
+    id: 204,
+    title: '深度阅读人文沉淀',
+    category: '思维',
+    milestone: '5月：精读《思考，快与慢》全本',
+    progress: 85,
+    startMonth: 5,
+    endMonth: 6,
+    time: '21:30',
+    duration: 30,
+    carryOverEnabled: false,
+    carryOverDays: 1,
+    months: [
+      {
+        id: 20405,
+        goalId: 204,
+        month: 5,
+        title: '精读《思考，快与慢》全本',
+        days: [
+          { id: '204-05-03', day: 3, date: '2026-05-03', title: '阅读第一部分：系统 1 与系统 2', completed: true },
+          { id: '204-05-07', day: 7, date: '2026-05-07', title: '阅读第二部分：启发法与偏差', completed: true },
+          { id: '204-05-11', day: 11, date: '2026-05-11', title: '阅读第三部分：过度自信', completed: true },
+          { id: '204-05-16', day: 16, date: '2026-05-16', title: '阅读第四部分：选择与风险偏好', completed: false }
+        ]
+      }
+    ]
+  }
 ]
 
 export const INITIAL_SUMMARIES: Summary[] = [

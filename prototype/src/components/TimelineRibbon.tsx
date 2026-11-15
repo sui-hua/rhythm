@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react'
-import { Zap } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface TimelineRibbonProps {
@@ -9,12 +9,35 @@ interface TimelineRibbonProps {
   onChangeDuration: (duration: number) => void
 }
 
+// ─────────────────────────────────────────────────────────────
+// 🎛️ 标尺比例与视觉微调参数配置中心（在这里改数值，保存立即生效！）
+// ─────────────────────────────────────────────────────────────
+const SCALE_CONFIG = {
+  // 1. 红针总高度（从底部基线向上算，单位 px）
+  needleHeight: 44,
+
+  // 2. 各级刻度高度（从底部基线向上算，单位 px）
+  hourHeight: 28,        // 整点黑色大刻度
+  halfHourHeight: 24,    // 30分钟半点刻度
+  quarterHourHeight: 18, // 15 / 45 分钟一刻刻度
+  minorHeight: 14,       // 5分钟小刻度
+
+  // 3. 刻度线粗细
+  hourWidth: '1.5px',
+  halfHourWidth: '1.2px',
+  minorWidth: '1.0px',
+
+  // 4. 刻度间距（每个 5 分钟占的水平像素宽度）
+  tickWidth: 14,
+
+  // 5. 标尺滚动画布总高度（单位 px）
+  trackHeight: 54,
+}
+
 // 刻度步长：5 分钟一个刻度，全天 24 小时共 288 个刻度
 const STEP_MINUTES = 5
 const TOTAL_TICKS = (24 * 60) / STEP_MINUTES // 288
-const TICK_WIDTH = 14 // 每个刻度占据 14px 宽度，滑动阻尼细腻
-
-const DURATION_OPTIONS = [15, 30, 45, 60, 90]
+const TICK_WIDTH = SCALE_CONFIG.tickWidth // 每个刻度占据的像素宽度
 
 // 时间与序号双向转换
 const getTimeFromIndex = (index: number): string => {
@@ -44,7 +67,7 @@ export const getNearestCurrentTime = (): string => {
   return `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`
 }
 
-// 计算结束时间
+// 计算结束时间 (保留兼容性)
 export const calculateEndTime = (startTime: string, durationMin: number): string => {
   if (!startTime) return '09:30'
   const [hStr, mStr] = startTime.split(':')
@@ -56,24 +79,6 @@ export const calculateEndTime = (startTime: string, durationMin: number): string
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
 }
 
-// 优美舒展的波峰衰减函数：波峰半径放宽至 70px (左右各约 5 个刻度，展宽舒展自然，中心单点依然稳居最高)
-const PEAK_RADIUS = 70
-
-const getCurveFactor = (tickIndex: number, currentScrollLeft: number): number => {
-  const tickX = tickIndex * TICK_WIDTH
-  const dist = Math.abs(tickX - currentScrollLeft)
-  if (dist >= PEAK_RADIUS) return 0
-  const ratio = dist / PEAK_RADIUS
-  // 优雅幂函数：(1 - ratio)^1.6
-  // dist = 0: 1.0 (34px 绝对中央峰值)
-  // dist = 14px: ~0.70 (约 25.3px，与中心保持约 8.7px 显著落差，峰值清晰且过渡优美)
-  // dist = 28px: ~0.44 (约 17.8px)
-  // dist = 42px: ~0.23 (约 11.7px)
-  // dist = 56px: ~0.08 (约 7.3px)
-  // dist >= 70px: 归入 5px 平缓基线
-  return Math.pow(1 - ratio, 1.6)
-}
-
 export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
   time,
   duration,
@@ -81,12 +86,11 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
   onChangeDuration
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const isProgrammaticScrollRef = useRef(false)
   const isMouseDownRef = useRef(false)
   const startXRef = useRef(0)
   const startScrollLeftRef = useRef(0)
 
-  // 记录当前实时滚动位置，用于渲染「中间高两边低」的物理波峰特效
+  // 记录当前实时滚动位置
   const [scrollLeft, setScrollLeft] = useState(() => getIndexFromTime(time) * TICK_WIDTH)
 
   // 滚动并居中指定时间槽
@@ -101,29 +105,20 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
     setScrollLeft(targetScrollLeft)
   }, [])
 
-  // 页面加载或切换编辑任务时，初始居中到初始时间
+  // 初始加载时居中当前时间
   useEffect(() => {
-    isProgrammaticScrollRef.current = true
     scrollToTime(time, false)
     const rAF = requestAnimationFrame(() => {
       scrollToTime(time, false)
     })
-    const timer = setTimeout(() => {
-      scrollToTime(time, false)
-      isProgrammaticScrollRef.current = false
-    }, 220)
-    return () => {
-      cancelAnimationFrame(rAF)
-      clearTimeout(timer)
-    }
+    return () => cancelAnimationFrame(rAF)
   }, [])
 
-  // 核心交互：滑动中直接选择！波峰中心对准的刻度即为当前选中时间，毫秒级响应
+  // 核心交互：滑动中 0 延迟实时跟随选择
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const currentScrollLeft = e.currentTarget.scrollLeft
     setScrollLeft(currentScrollLeft)
 
-    if (isProgrammaticScrollRef.current) return
     const index = Math.round(currentScrollLeft / TICK_WIDTH)
     const clampedIndex = Math.max(0, Math.min(index, TOTAL_TICKS - 1))
     const newTime = getTimeFromIndex(clampedIndex)
@@ -161,61 +156,112 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
     }
   }
 
-  // 快速定位「现在」
-  const handleJumpToNow = () => {
-    const nowTime = getNearestCurrentTime()
-    onChangeTime(nowTime)
-    isProgrammaticScrollRef.current = true
-    scrollToTime(nowTime, true)
-    setTimeout(() => {
-      isProgrammaticScrollRef.current = false
-    }, 350)
-  }
-
-  // 点击某个具体刻度直接居中选中
+  // 点击某一刻度直接对齐居中
   const handleTickClick = (targetTime: string) => {
     onChangeTime(targetTime)
-    isProgrammaticScrollRef.current = true
     scrollToTime(targetTime, true)
-    setTimeout(() => {
-      isProgrammaticScrollRef.current = false
-    }, 300)
+  }
+
+  // 联动结束时刻
+  const endTime = calculateEndTime(time, duration)
+
+  // 手动输入时长状态（单位：分钟）
+  const [prevDuration, setPrevDuration] = useState(duration)
+  const [inputValue, setInputValue] = useState(String(duration))
+
+  // 当外部 duration 属性改变时，同步更新输入框状态（React 官方推荐的无 Effect 同步范式）
+  if (prevDuration !== duration) {
+    setPrevDuration(duration)
+    setInputValue(String(duration))
+  }
+
+  // 手动输入变化处理
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '')
+    setInputValue(raw)
+    const val = parseInt(raw, 10)
+    if (!isNaN(val) && val > 0) {
+      const clamped = Math.min(720, val)
+      onChangeDuration(clamped)
+    }
+  }
+
+  // 输入框失焦校验
+  const handleDurationBlur = () => {
+    const val = parseInt(inputValue, 10)
+    if (isNaN(val) || val <= 0) {
+      setInputValue('30')
+      onChangeDuration(30)
+    } else {
+      const clamped = Math.min(720, Math.max(5, val))
+      setInputValue(String(clamped))
+      onChangeDuration(clamped)
+    }
+  }
+
+  // 回车确认输入
+  const handleDurationKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur()
+    }
+  }
+
+  // 时长微调（15分以内每次步进5分，15分以上每次步进15分）
+  const handleDecreaseDuration = () => {
+    let next: number
+    if (duration <= 15) {
+      next = Math.max(5, duration - 5)
+    } else if (duration % 15 !== 0) {
+      next = Math.floor((duration - 1) / 15) * 15
+    } else {
+      next = Math.max(15, duration - 15)
+    }
+    onChangeDuration(next)
+    setInputValue(String(next))
+  }
+
+  const handleIncreaseDuration = () => {
+    let next: number
+    if (duration < 15) {
+      next = duration + 5
+    } else if (duration % 15 !== 0) {
+      next = Math.ceil((duration + 1) / 15) * 15
+    } else {
+      next = Math.min(720, duration + 15)
+    }
+    onChangeDuration(next)
+    setInputValue(String(next))
   }
 
   return (
-    <div className="p-4 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-3.5 select-none">
-      {/* 顶部轻量栏 */}
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-zinc-400 tracking-wider">
-          时序标尺
-        </span>
-        <button
-          type="button"
-          onClick={handleJumpToNow}
-          className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 bg-white border border-zinc-200/80 hover:bg-zinc-100 text-zinc-700 rounded-lg shadow-2xs transition-colors cursor-pointer active:scale-95"
-          title="跳转至当前时间"
+    <div className="p-4 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-4 select-none">
+      {/* 刻度滑尺区域：Rauno 同款极简精密游标尺 (Precision Vernier Scale) */}
+      <div className="relative py-1 overflow-hidden">
+        {/* 灵魂核心：正中央固定发丝级亮橙红游标指针 + 微型倒三角 (Vernier Needle) */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 bottom-0 z-20 pointer-events-none flex flex-col items-center"
+          style={{ height: `${SCALE_CONFIG.needleHeight}px` }}
         >
-          <Zap size={11} className="text-zinc-800 fill-zinc-800" />
-          <span>现在</span>
-        </button>
-      </div>
+          {/* 精致微型倒三角指示器 (▼) */}
+          <svg
+            className="w-2.5 h-2 text-[#ff3b00] fill-current drop-shadow-[0_1px_2px_rgba(255,59,0,0.3)] shrink-0"
+            viewBox="0 0 10 7"
+          >
+            <path d="M0 0 L10 0 L5 7 Z" />
+          </svg>
+          {/* 发丝级垂直游标指针线 */}
+          <div className="w-[1.5px] flex-1 bg-[#ff3b00] shadow-[0_0_6px_rgba(255,59,0,0.45)] rounded-full" />
+        </div>
 
-      {/* 刻度滑尺区域：中间高两边低波峰效果，无遮挡黑线 */}
-      <div className="relative py-1">
-        {/* 左边缘淡出渐变遮罩 */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-zinc-50 to-transparent pointer-events-none z-10" />
-
-        {/* 右边缘淡出渐变遮罩 */}
-        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-zinc-50 to-transparent pointer-events-none z-10" />
-
-        {/* 纯粹横向时间刻度线（中间高两边低 · 凸透镜波峰曲线） */}
+        {/* 横向滚动发丝级精密刻度带 */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           onMouseDown={handleMouseDown}
           onWheel={handleWheel}
-          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing h-14"
+          className="flex items-end overflow-x-auto no-scrollbar snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
           style={{
+            height: `${SCALE_CONFIG.trackHeight}px`,
             paddingLeft: 'calc(50% - 7px)',
             paddingRight: 'calc(50% - 7px)'
           }}
@@ -223,33 +269,29 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
           {Array.from({ length: TOTAL_TICKS }).map((_, i) => {
             const slotTime = getTimeFromIndex(i)
             const isHour = i % 12 === 0
-            const isHalf = i % 6 === 0 && !isHour
-            const factor = getCurveFactor(i, scrollLeft)
-            const isPeak = factor > 0.95
+            const isHalfHour = i % 6 === 0 && !isHour
+            const isQuarterHour = i % 3 === 0 && !isHour && !isHalfHour
 
-            // 核心规范：强烈锐利波峰，中间绝对最高最粗；整点仅比普通刻度微粗一点点
-            const PEAK_HEIGHT = 34 // 正中央尖峰最高高度 (34px)
-            const PEAK_WIDTH = isHour ? 3.0 : 2.8 // 正中央尖峰最粗宽度
+            const tickX = i * TICK_WIDTH
+            const dist = Math.abs(tickX - scrollLeft)
+            const isNearCenter = dist < 24
 
-            // 两侧边缘基础高度 (整点 8px, 半点 6px, 普通 5px)
-            const baseHeight = isHour ? 8 : isHalf ? 6 : 5
-            // 两侧边缘基础宽度 (整点 1.5px 比普通 1.1px 略粗一点)
-            const baseWidth = isHour ? 1.5 : 1.1
+            // 从顶部 SCALE_CONFIG 动态读取四级高度与粗细：
+            const tickHeight = isHour
+              ? SCALE_CONFIG.hourHeight
+              : isHalfHour
+                ? SCALE_CONFIG.halfHourHeight
+                : isQuarterHour
+                  ? SCALE_CONFIG.quarterHourHeight
+                  : SCALE_CONFIG.minorHeight
 
-            // 高度与粗细受中央距离 factor 全面主导（中间单点鹤立鸡群，尖锐耸立）
-            const height = Math.round(baseHeight + (PEAK_HEIGHT - baseHeight) * factor)
-            const width = +(baseWidth + (PEAK_WIDTH - baseWidth) * factor).toFixed(1)
-
-            // 颜色：正中独享纯黑高光 (#09090b)，两侧平滑递减淡出
-            const bgClass = factor > 0.85
-              ? 'bg-zinc-950'
-              : factor > 0.55
-                ? 'bg-zinc-800'
-                : factor > 0.3
-                  ? 'bg-zinc-500'
-                  : isHour
-                    ? 'bg-zinc-400'
-                    : 'bg-zinc-300'
+            const tickWidth = isHour
+              ? SCALE_CONFIG.hourWidth
+              : isHalfHour
+                ? SCALE_CONFIG.halfHourWidth
+                : SCALE_CONFIG.minorWidth
+            // 颜色统一为黑色，纯粹通过四级高度梯度区分层级
+            const tickColor = 'bg-zinc-900'
 
             return (
               <div
@@ -259,29 +301,30 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
                 style={{ width: `${TICK_WIDTH}px` }}
               >
                 {/* 整点小时微标标注 (例如 09, 10, 11) */}
-                {isHour && (
+                {isHour ? (
                   <span
-                    className="text-[9.5px] font-mono mb-1.5 pointer-events-none transition-all duration-75"
-                    style={{
-                      opacity: Math.max(0.3, factor),
-                      fontWeight: factor > 0.5 ? 700 : 500,
-                      color: factor > 0.5 ? '#09090b' : '#a1a1aa'
-                    }}
+                    className={cn(
+                      'text-[9px] font-mono mb-1.5 pointer-events-none select-none transition-colors duration-150',
+                      isNearCenter ? 'text-zinc-950 font-bold' : 'text-zinc-700 font-medium'
+                    )}
                   >
                     {slotTime.split(':')[0]}
                   </span>
+                ) : (
+                  <span className="text-[9px] font-mono mb-1.5 invisible select-none">
+                    00
+                  </span>
                 )}
 
-                {/* 刻度本尊：中间绝对最高最粗 (32px / 2.7~3px)，两侧平滑收拢 */}
-                <span
+                {/* 极简发丝级刻度线本尊 */}
+                <div
                   className={cn(
-                    'transition-all duration-75 rounded-full shrink-0',
-                    bgClass,
-                    isPeak && 'shadow-xs'
+                    'rounded-full shrink-0 transition-colors duration-100',
+                    tickColor
                   )}
                   style={{
-                    height: `${height}px`,
-                    width: `${width}px`
+                    height: `${tickHeight}px`,
+                    width: tickWidth
                   }}
                 />
               </div>
@@ -290,33 +333,59 @@ export const TimelineRibbon: React.FC<TimelineRibbonProps> = ({
         </div>
       </div>
 
-      {/* 刻度线下方：仅保留选中时间大字 */}
-      <div className="flex items-center justify-center py-1 select-none">
-        <span className="text-3xl font-mono font-bold tracking-tight text-zinc-950">
+      {/* 联动起止中轴线：纯净极简单行 [ 开始时间 ] ── [ 时长胶囊 ] ── [ 结束时间 ] */}
+      <div className="flex items-center justify-between px-3 pt-2.5 pb-1 select-none">
+        {/* 左侧：开始时刻 */}
+        <span className="text-[22px] font-mono font-bold tracking-tight text-zinc-950 tabular-nums shrink-0">
           {time}
         </span>
-      </div>
 
-      {/* 底部：持续时长胶囊选择 */}
-      <div className="flex items-center justify-between pt-2 border-t border-zinc-200/50">
-        <span className="text-[11px] font-semibold text-zinc-400">持续时长</span>
-        <div className="flex items-center gap-1.5">
-          {DURATION_OPTIONS.map((dur) => (
-            <button
-              key={dur}
-              type="button"
-              onClick={() => onChangeDuration(dur)}
-              className={cn(
-                'px-2.5 py-1 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer',
-                duration === dur
-                  ? 'bg-zinc-900 text-white font-bold shadow-xs'
-                  : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-              )}
-            >
-              {dur}分
-            </button>
-          ))}
+        {/* 中间：时长微调与手动输入胶囊（单位：分钟） */}
+        <div className="flex items-center bg-white border border-zinc-200/90 rounded-full px-2 py-1 shadow-2xs shrink-0 focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-zinc-900/10 transition-all">
+          <button
+            type="button"
+            onClick={handleDecreaseDuration}
+            disabled={duration <= 5}
+            className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-20 disabled:pointer-events-none active:scale-90 transition-all cursor-pointer shrink-0"
+            title="减少时长"
+          >
+            <Minus size={11} strokeWidth={2.5} />
+          </button>
+          <div className="flex items-center justify-center px-1">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={inputValue}
+              onChange={handleDurationChange}
+              onBlur={handleDurationBlur}
+              onKeyDown={handleDurationKeyDown}
+              onFocus={(e) => e.target.select()}
+              style={{
+                width: `${Math.max(2, inputValue.length) * 8.5 + 4}px`
+              }}
+              className="text-center text-xs font-mono font-bold text-zinc-900 bg-transparent focus:outline-none select-all cursor-text"
+              title="点击手动输入时长（单位：分钟）"
+            />
+            <span className="text-[11px] font-medium text-zinc-400 select-none pointer-events-none pr-0.5">
+              分钟
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleIncreaseDuration}
+            disabled={duration >= 720}
+            className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-20 disabled:pointer-events-none active:scale-90 transition-all cursor-pointer shrink-0"
+            title="增加时长"
+          >
+            <Plus size={11} strokeWidth={2.5} />
+          </button>
         </div>
+
+        {/* 右侧：结束时刻 */}
+        <span className="text-[22px] font-mono font-bold tracking-tight text-zinc-950 tabular-nums shrink-0">
+          {endTime}
+        </span>
       </div>
     </div>
   )

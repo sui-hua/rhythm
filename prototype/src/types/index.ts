@@ -44,6 +44,26 @@ export interface Habit {
   logs: HabitLog[]
 }
 
+export interface GoalDay {
+  id: number | string
+  day: number // 1~31
+  date: string // '2026-05-11'
+  title: string
+  completed: boolean
+  time?: string
+  duration?: number
+}
+
+export interface GoalMonth {
+  id: number | string
+  goalId: number
+  month: number // 1~12
+  title: string // 月度核心战役
+  time?: string
+  duration?: number
+  days: GoalDay[]
+}
+
 export interface Goal {
   id: number
   title: string
@@ -56,6 +76,7 @@ export interface Goal {
   duration?: number
   carryOverEnabled?: boolean
   carryOverDays?: number
+  months?: GoalMonth[]
 }
 
 export type PeriodType = '日' | '周' | '月' | '年'

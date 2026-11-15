@@ -143,7 +143,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
         </div>
 
         {/* 表单内容 */}
-        <div className="space-y-3 shrink-0">
+        <div className="space-y-3 shrink-0 px-0.5 pt-0.5">
           {/* 任务标题输入 */}
           <input
             value={title}
@@ -154,7 +154,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
             type="text"
             autoFocus
             placeholder="任务标题"
-            className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400"
+            className="w-full bg-zinc-50 border border-zinc-200/80 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400 transition-all"
           />
 
           {/* 横向时序刻度滑尺与时长选择 */}

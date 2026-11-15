@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { X } from 'lucide-react'
 import type { Goal } from '../../types'
 import { cn } from '../../lib/utils'
+import { TimelineRibbon } from '../TimelineRibbon'
 
 export interface GoalSavePayload {
   id?: number
@@ -24,12 +25,8 @@ interface GoalModalProps {
 }
 
 const CATEGORIES = ['学习', '健康', '工作', '生活', '未分类']
-const MONTHS = Array.from({ length: 12 }, (_, i) => ({
-  value: i + 1,
-  label: `${i + 1 < 10 ? '0' + (i + 1) : i + 1}月`
-}))
 const CARRY_OVER_OPTIONS = [1, 3, 5, 7]
-const QUICK_DURATIONS = [30, 45, 60, 90]
+const MONTH_LIST = Array.from({ length: 12 }, (_, i) => i + 1)
 
 export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onDelete }) => {
   const [title, setTitle] = useState(goal?.title ?? '')
@@ -42,10 +39,73 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
   const [carryOverDays, setCarryOverDays] = useState(goal?.carryOverDays ?? 3)
   const [forceOverwriteTiming, setForceOverwriteTiming] = useState(false)
 
-  const handleStartMonthChange = (val: number) => {
-    setStartMonth(val)
-    if (endMonth < val) {
-      setEndMonth(val)
+  // 下拉滑动手势交互
+  const [dragY, setDragY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const touchStartY = useRef(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const delta = e.touches[0].clientY - touchStartY.current
+    if (delta > 0) {
+      setDragY(delta)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    if (dragY > 120) {
+      onClose()
+    } else {
+      setDragY(0)
+    }
+    setIsDragging(false)
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const startY = e.clientY
+    setIsDragging(true)
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientY - startY
+      if (delta > 0) {
+        setDragY(delta)
+      }
+    }
+
+    const onMouseUp = (upEvent: MouseEvent) => {
+      const delta = upEvent.clientY - startY
+      if (delta > 120) {
+        onClose()
+      } else {
+        setDragY(0)
+      }
+      setIsDragging(false)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  // 12 个月微矩阵点击交互：智能选择起始与结束月份
+  const handleSelectMonth = (m: number) => {
+    // 如果当前选中的已经是单个月，且再次点击该月，保持该月
+    if (startMonth === endMonth && startMonth === m) return
+
+    // 如果点击的月份比当前起始月小，将起始月前移
+    if (m < startMonth) {
+      setStartMonth(m)
+    } else if (m === startMonth) {
+      // 点击了起始月，且已有区间，则收缩到单月
+      setEndMonth(m)
+    } else {
+      // 点击了大于起始月的月份，将结束月扩展/调整为该月
+      setEndMonth(m)
     }
   }
 
@@ -75,6 +135,8 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
     onClose()
   }
 
+  const monthSpanCount = Math.max(1, endMonth - startMonth + 1)
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center"
@@ -82,27 +144,40 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col">
-        {/* 顶部手柄 */}
-        <div className="w-9 h-1 bg-zinc-200 rounded-full mx-auto shrink-0" />
-
-        {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between pb-0.5 shrink-0">
-          <h2 className="text-base font-bold tracking-tight text-zinc-900 font-sans">
-            {goal ? '编辑目标' : '添加长期目标'}
-          </h2>
+      {/* 贴底大卡片 · 延续 Rhythm 纯白与半深灰工业极简设计 */}
+      <div
+        className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 pt-3 space-y-3.5 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col max-h-[92vh]"
+        style={{
+          transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+          transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* 顶部手柄条与关闭按钮 (无冗余大标题) */}
+        <div
+          className="relative flex items-center justify-center py-2 shrink-0 select-none cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+        >
+          <div
+            className="w-10 h-1 bg-zinc-200 hover:bg-zinc-300 rounded-full cursor-pointer transition-colors"
+            onClick={onClose}
+            title="下拉或点击关闭"
+          />
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
+            onMouseDown={(e) => e.stopPropagation()}
+            aria-label="关闭"
+            className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 p-1.5 rounded-full transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* 表单内容 */}
-        <div className="space-y-3 shrink-0">
-          {/* 目标标题输入 */}
+        {/* 纯净目标标题输入 (固定置顶，脱离滚动截断) */}
+        <div className="shrink-0 px-0.5 pt-0.5">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -110,43 +185,84 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
               if (e.key === 'Enter') handleSave()
             }}
             type="text"
-            placeholder="写下你的战略目标 (例如: 掌握 Rust 异步编程)"
-            className="w-full bg-zinc-50 border border-zinc-200/70 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400"
+            autoFocus
+            placeholder="目标名称"
+            className="w-full bg-zinc-50 border border-zinc-200/80 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 font-medium placeholder:text-zinc-400 transition-all"
+          />
+        </div>
+
+        {/* 可滚动表单区域 */}
+        <div className="space-y-3 overflow-y-auto no-scrollbar px-0.5 py-1">
+          {/* 高精度时间标尺与时长联动轴 (与任务/习惯完全统一) */}
+          <TimelineRibbon
+            time={time}
+            duration={duration}
+            onChangeTime={setTime}
+            onChangeDuration={setDuration}
           />
 
-          {/* 微卡片 1：执行时轴与分类 */}
-          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2.5">
+          {/* 微卡片 1：周期规划与目标分类 */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-3">
+            {/* 月份周期标头 */}
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-zinc-400">执行起止时轴</span>
-              <div className="flex items-center gap-1.5 font-mono text-xs">
-                <select
-                  value={startMonth}
-                  onChange={(e) => handleStartMonthChange(Number(e.target.value))}
-                  className="bg-white border border-zinc-200/80 px-2 py-1 rounded-lg font-bold text-zinc-900 focus:outline-none cursor-pointer"
-                >
-                  {MONTHS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-zinc-400 font-sans">至</span>
-                <select
-                  value={endMonth}
-                  onChange={(e) => setEndMonth(Number(e.target.value))}
-                  className="bg-white border border-zinc-200/80 px-2 py-1 rounded-lg font-bold text-zinc-900 focus:outline-none cursor-pointer"
-                >
-                  {MONTHS.map((m) => (
-                    <option key={m.value} value={m.value} disabled={m.value < startMonth}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <span className="text-[11px] font-semibold text-zinc-400 tracking-wider">执行时轴</span>
+              <span className="text-[11px] font-mono font-bold text-zinc-900 bg-white px-2 py-0.5 rounded-md border border-zinc-200/60 shadow-2xs">
+                {startMonth}月 ~ {endMonth}月 ({monthSpanCount}个月)
+              </span>
             </div>
 
-            {/* 目标分类 */}
-            <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-zinc-200/50">
+            {/* 12 个月微矩阵：支持两端点击连结成纯黑胶囊 */}
+            <div className="grid grid-cols-6 gap-y-1 gap-x-0 py-0.5 select-none">
+              {MONTH_LIST.map((m) => {
+                const isSelected = m >= startMonth && m <= endMonth
+                const colIndex = (m - 1) % 6 // 0 ~ 5
+
+                // 连通胶囊边界判断
+                const hasLeft = colIndex > 0 && m - 1 >= startMonth && m - 1 <= endMonth
+                const hasRight = colIndex < 5 && m + 1 >= startMonth && m + 1 <= endMonth
+
+                let rounding = 'rounded-full'
+                if (hasLeft && hasRight) {
+                  rounding = 'rounded-none'
+                } else if (!hasLeft && hasRight) {
+                  rounding = 'rounded-l-full'
+                } else if (hasLeft && !hasRight) {
+                  rounding = 'rounded-r-full'
+                }
+
+                return (
+                  <div
+                    key={m}
+                    onClick={() => handleSelectMonth(m)}
+                    className="h-7.5 flex items-center justify-center relative cursor-pointer"
+                  >
+                    <div
+                      className={cn(
+                        'absolute inset-y-0.5 flex items-center justify-center transition-colors duration-100',
+                        isSelected
+                          ? 'bg-zinc-900 text-white shadow-xs z-10'
+                          : 'bg-transparent text-zinc-600 hover:bg-zinc-200/60 rounded-full',
+                        rounding,
+                        hasLeft ? 'left-0' : 'left-0.5',
+                        hasRight ? 'right-0' : 'right-0.5'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'font-mono text-[11px] leading-none tabular-nums',
+                          isSelected ? 'font-bold text-white' : 'font-medium'
+                        )}
+                      >
+                        {m}月
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* 目标分类药丸 */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-zinc-200/50">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
@@ -165,45 +281,14 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
             </div>
           </div>
 
-          {/* 微卡片 2：默认执行时间与时长 */}
-          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
-            <span className="text-[11px] font-semibold text-zinc-400 block">默认执行时间与单次时长</span>
-            <div className="flex items-center justify-between gap-3">
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="bg-white border border-zinc-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-zinc-900 focus:outline-none cursor-pointer shadow-2xs"
-              />
-
-              <div className="flex items-center gap-1.5">
-                {QUICK_DURATIONS.map((dur) => (
-                  <button
-                    key={dur}
-                    type="button"
-                    onClick={() => setDuration(dur)}
-                    className={cn(
-                      'px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer',
-                      duration === dur
-                        ? 'bg-zinc-900 text-white font-bold shadow-xs'
-                        : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
-                    )}
-                  >
-                    {dur}分
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* 微卡片 3：未完成延后展示 Carry-Over */}
-          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2">
+          {/* 微卡片 2：未完成顺延 Carry-Over */}
+          <div className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-2.5">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-zinc-800 block">未完成延后展示 (Carry-Over)</span>
-                <span className="text-[10.5px] text-zinc-400">过期自动在时序日程轴中向后顺延</span>
+                <span className="text-xs font-bold text-zinc-800 block">未完成顺延</span>
+                <span className="text-[10px] text-zinc-400">当日未完成则次日时序日程自动延后提醒</span>
               </div>
-              <div className="flex bg-zinc-200/70 p-0.5 rounded-xl text-xs font-medium">
+              <div className="flex bg-zinc-200/60 p-0.5 rounded-xl text-xs font-medium">
                 <button
                   type="button"
                   onClick={() => setCarryOverEnabled(false)}
@@ -212,7 +297,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
                     !carryOverEnabled ? 'bg-white text-zinc-900 font-bold shadow-xs' : 'text-zinc-500'
                   )}
                 >
-                  关闭
+                  关
                 </button>
                 <button
                   type="button"
@@ -222,14 +307,14 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
                     carryOverEnabled ? 'bg-zinc-900 text-white font-bold shadow-xs' : 'text-zinc-500'
                   )}
                 >
-                  开启
+                  开
                 </button>
               </div>
             </div>
 
             {carryOverEnabled && (
-              <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200/50">
-                <span className="text-[11px] text-zinc-500 font-medium">顺延天数</span>
+              <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200/50 animate-in fade-in-50 duration-150">
+                <span className="text-[11px] text-zinc-500 font-medium">顺延周期</span>
                 <div className="flex items-center gap-1.5">
                   {CARRY_OVER_OPTIONS.map((days) => (
                     <button
@@ -259,7 +344,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
                 onChange={(e) => setForceOverwriteTiming(e.target.checked)}
                 className="rounded border-zinc-300 text-zinc-900 focus:ring-0"
               />
-              <span>同步更新子级月度战役的执行时间</span>
+              <span>同步更新月度战役的执行时间</span>
             </label>
           )}
         </div>
@@ -270,7 +355,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ goal, onClose, onSave, onD
             type="button"
             onClick={handleSave}
             disabled={!canSubmit}
-            className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
+            className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
             {goal ? '保存修改' : '确认创建'}
           </button>

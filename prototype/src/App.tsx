@@ -8,6 +8,7 @@ import { DirectionView } from './components/DirectionView'
 import { SummaryView } from './components/SummaryView'
 import { DatePickerDrawer } from './components/DatePickerDrawer'
 import { HabitDetailModal } from './components/HabitDetailModal'
+import { GoalDetailModal } from './components/GoalDetailModal'
 import { TaskModal, type TaskSavePayload } from './components/Modals/TaskModal'
 import { HabitModal, type HabitSavePayload } from './components/Modals/HabitModal'
 import { GoalModal, type GoalSavePayload } from './components/Modals/GoalModal'
@@ -272,8 +273,13 @@ export function App() {
 
   // ── 3. 所向 (Direction) 状态 ──
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS)
+  const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null)
   const [showGoalModal, setShowGoalModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
+
+  const selectedGoal = useMemo(() => {
+    return goals.find((g) => g.id === selectedGoalId) || null
+  }, [goals, selectedGoalId])
 
   const averageGoalProgress = useMemo(() => {
     if (!goals.length) return 0
@@ -286,8 +292,72 @@ export function App() {
   }, [averageGoalProgress])
 
   const handleClickGoal = (goal: Goal) => {
-    setEditingGoal(goal)
-    setShowGoalModal(true)
+    setSelectedGoalId(goal.id)
+  }
+
+  // 天目标勾选/撤销打卡 (实时向上联动推导月度与总进度)
+  const handleToggleGoalDay = (goalId: number, monthId: number | string, dayId: number | string) => {
+    setGoals((prev) =>
+      prev.map((g) => {
+        if (g.id !== goalId) return g
+        const nextMonths = (g.months || []).map((m) => {
+          if (m.id !== monthId) return m
+          const nextDays = (m.days || []).map((d) => {
+            if (d.id !== dayId) return d
+            return { ...d, completed: !d.completed }
+          })
+          return { ...m, days: nextDays }
+        })
+        const allD = nextMonths.flatMap((m) => m.days || [])
+        const done = allD.filter((d) => d.completed).length
+        const total = allD.length
+        const newProgress = total > 0 ? Math.round((done / total) * 100) : g.progress
+        return { ...g, months: nextMonths, progress: newProgress }
+      })
+    )
+    showToast('天目标状态已更新')
+  }
+
+  // 更新月度战役主要标题
+  const handleUpdateMonthTitle = (goalId: number, monthId: number | string, newTitle: string) => {
+    setGoals((prev) =>
+      prev.map((g) => {
+        if (g.id !== goalId) return g
+        const nextMonths = (g.months || []).map((m) => {
+          if (m.id !== monthId) return m
+          return { ...m, title: newTitle }
+        })
+        return { ...g, months: nextMonths }
+      })
+    )
+    showToast('月度战役已更新')
+  }
+
+  // 添加具体天目标 (Day Plan)
+  const handleAddGoalDay = (
+    goalId: number,
+    monthId: number | string,
+    newDay: { day: number; date: string; title: string; completed: boolean; time?: string; duration?: number }
+  ) => {
+    setGoals((prev) =>
+      prev.map((g) => {
+        if (g.id !== goalId) return g
+        const nextMonths = (g.months || []).map((m) => {
+          if (m.id !== monthId) return m
+          const newDayItem = {
+            ...newDay,
+            id: `${goalId}-${monthId}-${Date.now()}`
+          }
+          return { ...m, days: [...(m.days || []), newDayItem] }
+        })
+        const allD = nextMonths.flatMap((m) => m.days || [])
+        const done = allD.filter((d) => d.completed).length
+        const total = allD.length
+        const newProgress = total > 0 ? Math.round((done / total) * 100) : g.progress
+        return { ...g, months: nextMonths, progress: newProgress }
+      })
+    )
+    showToast('天目标已规划')
   }
 
   const handleSaveGoal = (data: GoalSavePayload) => {
@@ -311,8 +381,24 @@ export function App() {
       )
       showToast('目标已更新')
     } else {
+      const newGoalId = Date.now()
+      const start = data.startMonth || 5
+      const end = data.endMonth || 8
+      const initialMonths = []
+      for (let m = start; m <= end; m++) {
+        initialMonths.push({
+          id: `${newGoalId}-${m}`,
+          goalId: newGoalId,
+          month: m,
+          title: m === start ? `${data.title} 第一阶段攻坚` : '',
+          time: data.time || '09:00',
+          duration: data.duration || 45,
+          days: []
+        })
+      }
+
       const newGoal: Goal = {
-        id: Date.now(),
+        id: newGoalId,
         title: data.title,
         category: data.category,
         milestone: `${data.startMonth}月 ~ ${data.endMonth}月 周期规划`,
@@ -322,7 +408,8 @@ export function App() {
         time: data.time,
         duration: data.duration,
         carryOverEnabled: data.carryOverEnabled,
-        carryOverDays: data.carryOverDays
+        carryOverDays: data.carryOverDays,
+        months: initialMonths
       }
       setGoals((prev) => [...prev, newGoal])
       showToast('目标已创建')
@@ -620,6 +707,21 @@ export function App() {
               setEditingHabit(h)
               setShowHabitModal(true)
             }}
+          />
+        )}
+
+        {/* 目标详情与月度战役/天目标看板 */}
+        {selectedGoal && (
+          <GoalDetailModal
+            goal={selectedGoal}
+            onClose={() => setSelectedGoalId(null)}
+            onEditGoal={(g) => {
+              setEditingGoal(g)
+              setShowGoalModal(true)
+            }}
+            onToggleGoalDay={handleToggleGoalDay}
+            onAddGoalDay={handleAddGoalDay}
+            onUpdateMonthTitle={handleUpdateMonthTitle}
           />
         )}
 
