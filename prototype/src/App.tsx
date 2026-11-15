@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Plus, ArrowLeft, SlidersHorizontal } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { AppHeader } from './components/AppHeader'
 import { TabBar } from './components/TabBar'
 import { DayView } from './components/DayView'
@@ -482,91 +482,7 @@ export function App() {
     showToast('数据已重置')
   }
 
-  // ── 顶栏配置渲染 ──
-  const renderHeaderTitleSlot = () => {
-    if (currentTab === 'day') {
-      return (
-        <button
-          type="button"
-          onClick={() => setShowDatePicker(true)}
-          className="group flex items-center gap-1.5 text-left text-zinc-900 active:scale-[0.98] transition-all select-none"
-          title="点击选择日期"
-        >
-          <h1 className="text-[22px] font-bold tracking-tight font-sans group-hover:text-zinc-600 transition-colors">
-            {selectedDateLine}
-          </h1>
-          <div className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 group-hover:text-zinc-800 group-hover:bg-zinc-100 transition-all">
-            <ChevronDown size={13} strokeWidth={2.5} />
-          </div>
-          {!isToday && (
-            <span
-              onClick={(e) => {
-                e.stopPropagation()
-                setDayOffset(0)
-                showToast('已回到今天')
-              }}
-              className="text-[10px] font-mono font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2 py-0.5 rounded-full transition-colors active:scale-95 ml-0.5 cursor-pointer"
-              title="点击直接返回今天"
-            >
-              今
-            </span>
-          )}
-        </button>
-      )
-    }
-    if (currentTab === 'direction') {
-      if (activeGoal && activeMonth) {
-        // 第三层：天目标行动清单顶栏 ( Things 3 风格：返回 + 月份战役标题，绝无冗余重复 )
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <button
-              type="button"
-              onClick={() => setActiveMonthId(null)}
-              className="p-1 -ml-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer shrink-0"
-              title="返回月度战役"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-white shrink-0">
-              {activeMonth.month < 10 ? '0' + activeMonth.month : activeMonth.month}月
-            </span>
-            <h1
-              onClick={() => {
-                const next = window.prompt('修改本月核心战役标题：', activeMonth.title || '')
-                if (next && next.trim()) {
-                  handleUpdateMonthTitle(activeGoal.id, activeMonth.id, next.trim())
-                }
-              }}
-              className="text-[15px] font-bold tracking-tight text-zinc-900 truncate cursor-pointer hover:text-zinc-600 transition-colors"
-              title="点击修改月度战役名称"
-            >
-              {activeMonth.title || '核心战役'}
-            </h1>
-          </div>
-        )
-      }
-      if (activeGoal) {
-        // 第二层：月度战役分解顶栏 ( Things 3 风格：返回 + 目标名称，绝无冗余重复 )
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <button
-              type="button"
-              onClick={() => setActiveGoalId(null)}
-              className="p-1 -ml-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer shrink-0"
-              title="返回全部目标"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <h1 className="text-[16px] font-bold tracking-tight text-zinc-900 truncate">
-              {activeGoal.title}
-            </h1>
-          </div>
-        )
-      }
-    }
-    return undefined
-  }
-
+  // ── 进度环辅助渲染 ──
   const renderProgressRing = (offset: number, tooltip: string) => {
     return (
       <div
@@ -590,92 +506,6 @@ export function App() {
         </svg>
       </div>
     )
-  }
-
-  const renderHeaderRightSlot = () => {
-    if (currentTab === 'day') {
-      return renderProgressRing(
-        taskRingOffset,
-        `今日进度：${completedTasksCount}/${currentTasks.length}`
-      )
-    }
-    if (currentTab === 'habits') {
-      return renderProgressRing(
-        habitRingOffset,
-        `今日习惯打卡：${completedHabitsCount}/${habits.length}`
-      )
-    }
-    if (currentTab === 'direction') {
-      if (activeGoal && activeMonth) {
-        const mDays = activeMonth.days || []
-        const completedCount = mDays.filter((d) => d.completed).length
-        return (
-          <span className="text-xs font-mono font-bold text-zinc-500">
-            {completedCount}/{mDays.length} 天
-          </span>
-        )
-      }
-      if (activeGoal) {
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-zinc-500">
-              {activeGoal.progress}%
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingGoal(activeGoal)
-                setShowGoalModal(true)
-              }}
-              className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
-              title="编辑目标周期与属性"
-            >
-              <SlidersHorizontal size={14} />
-            </button>
-          </div>
-        )
-      }
-      return renderProgressRing(
-        goalRingOffset,
-        `所向目标综合推进：${averageGoalProgress}%`
-      )
-    }
-    if (currentTab === 'summary') {
-      return (
-        <div className="flex bg-zinc-100 p-0.5 rounded-full text-xs font-semibold">
-          {(['日', '周', '月', '年'] as PeriodType[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setActivePeriod(t)}
-              className={cn(
-                'px-2.5 py-0.5 transition-all',
-                activePeriod === t
-                  ? 'bg-white text-zinc-900 shadow-xs rounded-full font-bold'
-                  : 'text-zinc-500 hover:text-zinc-900'
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      )
-    }
-    return null
-  }
-
-  const getHeaderProps = () => {
-    switch (currentTab) {
-      case 'habits':
-        // 彻底砍掉冗余口号“微小动作 · 积聚复利”，只留纯正大标题
-        return { title: '日常习惯', subtitle: '' }
-      case 'direction':
-        return { title: '长期目标', subtitle: '' }
-      case 'summary':
-        return { title: '复盘总结', subtitle: '' }
-      default:
-        return { title: '', subtitle: '' }
-    }
   }
 
   return (
@@ -714,12 +544,50 @@ export function App() {
             : 'md:rounded-none'
         )}
       >
-        {/* 吸顶导航栏 */}
+        {/* 吸顶导航栏 (统一由 AppHeader 单一组件托管，固定高度 92px) */}
         <AppHeader
           time="09:41"
-          {...getHeaderProps()}
-          titleSlot={renderHeaderTitleSlot()}
-          rightSlot={renderHeaderRightSlot()}
+          currentTab={currentTab}
+          // Day Tab
+          selectedDateLine={selectedDateLine}
+          isToday={isToday}
+          onOpenDatePicker={() => setShowDatePicker(true)}
+          onBackToToday={() => {
+            setDayOffset(0)
+            showToast('已回到今天')
+          }}
+          taskProgressRing={renderProgressRing(
+            taskRingOffset,
+            `今日进度：${completedTasksCount}/${currentTasks.length}`
+          )}
+          // Habits Tab
+          habitProgressRing={renderProgressRing(
+            habitRingOffset,
+            `今日习惯打卡：${completedHabitsCount}/${habits.length}`
+          )}
+          // Direction Tab (Things 3 三层推入导航)
+          activeGoal={activeGoal}
+          activeMonth={activeMonth}
+          onBackFromGoal={() => setActiveGoalId(null)}
+          onBackFromMonth={() => setActiveMonthId(null)}
+          onEditGoal={() => {
+            if (activeGoal) {
+              setEditingGoal(activeGoal)
+              setShowGoalModal(true)
+            }
+          }}
+          onUpdateMonthTitle={(newTitle) => {
+            if (activeGoal && activeMonth) {
+              handleUpdateMonthTitle(activeGoal.id, activeMonth.id, newTitle)
+            }
+          }}
+          goalProgressRing={renderProgressRing(
+            goalRingOffset,
+            `所向目标综合推进：${averageGoalProgress}%`
+          )}
+          // Summary Tab
+          activePeriod={activePeriod}
+          onSelectPeriod={(p) => setActivePeriod(p)}
         />
 
         {/* 滚动内容区 */}

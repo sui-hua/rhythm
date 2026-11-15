@@ -1,28 +1,269 @@
 import React from 'react'
+import { ChevronDown, ArrowLeft, SlidersHorizontal } from 'lucide-react'
+import type { TabKey, PeriodType, Goal, GoalMonth } from '../types'
+import { cn } from '../lib/utils'
 
 interface AppHeaderProps {
   time?: string
+  currentTab: TabKey
+
+  // Day Tab 属性
+  selectedDateLine?: string
+  isToday?: boolean
+  onOpenDatePicker?: () => void
+  onBackToToday?: () => void
+  taskProgressRing?: React.ReactNode
+
+  // Habits Tab 属性
+  habitProgressRing?: React.ReactNode
+
+  // Direction Tab 属性 (Things 3 三层推入导航)
+  activeGoal?: Goal | null
+  activeMonth?: GoalMonth | null
+  onBackFromGoal?: () => void
+  onBackFromMonth?: () => void
+  onEditGoal?: () => void
+  onUpdateMonthTitle?: (newTitle: string) => void
+  goalProgressRing?: React.ReactNode
+
+  // Summary Tab 属性
+  activePeriod?: PeriodType
+  onSelectPeriod?: (period: PeriodType) => void
+
+  // 兼容自定义插槽 (可选扩展)
   title?: string
-  subtitle?: string
   titleSlot?: React.ReactNode
   rightSlot?: React.ReactNode
 }
 
+/**
+ * AppHeader: 吸顶导航栏统一独立组件 (Fixed Height: 92px)
+ * - 灵动岛状态栏: 固定 40px
+ * - 核心导航微控行: 固定 52px
+ * 彻底消除切换 Tab 或下钻层级时的任何高度抖动，严格保持原生对齐基准
+ */
 export const AppHeader: React.FC<AppHeaderProps> = ({
   time = '09:41',
-  title = '',
-  subtitle = '',
+  currentTab,
+  selectedDateLine = '',
+  isToday = true,
+  onOpenDatePicker,
+  onBackToToday,
+  taskProgressRing,
+  habitProgressRing,
+  activeGoal,
+  activeMonth,
+  onBackFromGoal,
+  onBackFromMonth,
+  onEditGoal,
+  onUpdateMonthTitle,
+  goalProgressRing,
+  activePeriod = '日',
+  onSelectPeriod,
+  title,
   titleSlot,
   rightSlot
 }) => {
+  // ── 渲染左侧标题 / 返回区 ──
+  const renderNavLeft = () => {
+    // 允许自定义插槽覆盖
+    if (titleSlot) return titleSlot
+
+    switch (currentTab) {
+      case 'day':
+        return (
+          <button
+            type="button"
+            onClick={onOpenDatePicker}
+            className="group flex items-center gap-1.5 text-left text-zinc-900 active:scale-[0.98] transition-all select-none cursor-pointer"
+            title="点击选择日期"
+          >
+            <h1 className="text-[20px] font-bold tracking-tight font-sans group-hover:text-zinc-600 transition-colors">
+              {selectedDateLine}
+            </h1>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 group-hover:text-zinc-800 group-hover:bg-zinc-100 transition-all">
+              <ChevronDown size={13} strokeWidth={2.5} />
+            </div>
+            {!isToday && onBackToToday && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onBackToToday()
+                }}
+                className="text-[10px] font-mono font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2 py-0.5 rounded-full transition-colors active:scale-95 ml-0.5 cursor-pointer"
+                title="点击直接返回今天"
+              >
+                今
+              </span>
+            )}
+          </button>
+        )
+
+      case 'habits':
+        return (
+          <h1 className="text-[20px] font-bold tracking-tight text-zinc-900 leading-none">
+            日常习惯
+          </h1>
+        )
+
+      case 'direction':
+        // 第三层：天目标行动清单 (Things 3 纯粹标头)
+        if (activeGoal && activeMonth) {
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={onBackFromMonth}
+                className="p-1 -ml-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer shrink-0"
+                title="返回月度战役"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-white shrink-0">
+                {activeMonth.month < 10 ? '0' + activeMonth.month : activeMonth.month}月
+              </span>
+              <h1
+                onClick={() => {
+                  if (onUpdateMonthTitle && activeGoal && activeMonth) {
+                    const next = window.prompt('修改本月核心战役标题：', activeMonth.title || '')
+                    if (next && next.trim()) {
+                      onUpdateMonthTitle(next.trim())
+                    }
+                  }
+                }}
+                className="text-[15px] font-bold tracking-tight text-zinc-900 truncate cursor-pointer hover:text-zinc-600 transition-colors"
+                title="点击修改月度战役名称"
+              >
+                {activeMonth.title || '核心战役'}
+              </h1>
+            </div>
+          )
+        }
+
+        // 第二层：月度战役分解 (Things 3 纯粹标头)
+        if (activeGoal) {
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={onBackFromGoal}
+                className="p-1 -ml-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer shrink-0"
+                title="返回全部目标"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <h1 className="text-[16px] font-bold tracking-tight text-zinc-900 truncate">
+                {activeGoal.title}
+              </h1>
+            </div>
+          )
+        }
+
+        // 第一层：长期目标总览
+        return (
+          <h1 className="text-[20px] font-bold tracking-tight text-zinc-900 leading-none">
+            长期目标
+          </h1>
+        )
+
+      case 'summary':
+        return (
+          <h1 className="text-[20px] font-bold tracking-tight text-zinc-900 leading-none">
+            复盘总结
+          </h1>
+        )
+
+      default:
+        return title ? (
+          <h1 className="text-[20px] font-bold tracking-tight text-zinc-900 leading-none">
+            {title}
+          </h1>
+        ) : null
+    }
+  }
+
+  // ── 渲染右侧微控区 ──
+  const renderNavRight = () => {
+    // 允许自定义插槽覆盖
+    if (rightSlot) return rightSlot
+
+    switch (currentTab) {
+      case 'day':
+        return taskProgressRing
+
+      case 'habits':
+        return habitProgressRing
+
+      case 'direction':
+        // 第三层：天目标统计
+        if (activeGoal && activeMonth) {
+          const mDays = activeMonth.days || []
+          const completedCount = mDays.filter((d) => d.completed).length
+          return (
+            <span className="text-xs font-mono font-bold text-zinc-500">
+              {completedCount}/{mDays.length} 天
+            </span>
+          )
+        }
+
+        // 第二层：目标总进度 + 属性编辑
+        if (activeGoal) {
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold text-zinc-500">
+                {activeGoal.progress}%
+              </span>
+              {onEditGoal && (
+                <button
+                  type="button"
+                  onClick={onEditGoal}
+                  className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
+                  title="编辑目标周期与属性"
+                >
+                  <SlidersHorizontal size={14} />
+                </button>
+              )}
+            </div>
+          )
+        }
+
+        // 第一层：全局推进度
+        return goalProgressRing
+
+      case 'summary':
+        return (
+          <div className="flex bg-zinc-100 p-0.5 rounded-full text-xs font-semibold">
+            {(['日', '周', '月', '年'] as PeriodType[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onSelectPeriod?.(t)}
+                className={cn(
+                  'px-2.5 py-0.5 transition-all cursor-pointer',
+                  activePeriod === t
+                    ? 'bg-white text-zinc-900 shadow-xs rounded-full font-bold'
+                    : 'text-zinc-500 hover:text-zinc-900'
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-zinc-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-all">
-      {/* 极简灵动岛与原生状态栏 */}
-      <div className="pt-3 pb-2 px-7 flex items-center justify-between text-xs font-semibold tracking-tight">
+    <header className="sticky top-0 z-50 h-[92px] shrink-0 bg-white/85 backdrop-blur-xl border-b border-zinc-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-none select-none">
+      {/* 1. 灵动岛与原生状态栏 (严格固定高度 40px) */}
+      <div className="h-10 px-7 flex items-center justify-between text-xs font-semibold tracking-tight">
         <span className="font-mono text-[13px] text-zinc-800">{time}</span>
         <div className="w-22 h-4.5 bg-black rounded-full flex items-center justify-center gap-1.5 shadow-xs">
-          <div className="w-1.5 h-1.5 rounded-full bg-zinc-700"></div>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/90 animate-pulse"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/90 animate-pulse" />
         </div>
         <div className="flex items-center gap-1.5 text-zinc-700">
           <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -34,19 +275,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       </div>
 
-      {/* 统一导航插槽行：左侧自定义标题 + 右侧操作微控 */}
-      <div className="px-6 pt-1 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {titleSlot ? (
-            titleSlot
-          ) : (
-            <div>
-              {title && <h1 className="text-[22px] font-bold tracking-tight text-zinc-900 leading-none">{title}</h1>}
-              {subtitle && <p className="text-[11px] font-mono text-zinc-400 mt-1">{subtitle}</p>}
-            </div>
-          )}
+      {/* 2. 核心导航插槽行 (严格固定高度 52px) */}
+      <div className="h-[52px] px-6 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 h-full">
+          {renderNavLeft()}
         </div>
-        <div className="shrink-0 flex items-center">{rightSlot}</div>
+        <div className="shrink-0 flex items-center justify-end h-full">
+          {renderNavRight()}
+        </div>
       </div>
     </header>
   )
