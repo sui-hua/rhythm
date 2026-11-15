@@ -8,7 +8,6 @@ import { DirectionView } from './components/DirectionView'
 import { SummaryView } from './components/SummaryView'
 import { DatePickerDrawer } from './components/DatePickerDrawer'
 import { HabitDetailModal } from './components/HabitDetailModal'
-import { GoalDetailModal } from './components/GoalDetailModal'
 import { TaskModal, type TaskSavePayload } from './components/Modals/TaskModal'
 import { HabitModal, type HabitSavePayload } from './components/Modals/HabitModal'
 import { GoalModal, type GoalSavePayload } from './components/Modals/GoalModal'
@@ -273,13 +272,8 @@ export function App() {
 
   // ── 3. 所向 (Direction) 状态 ──
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS)
-  const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null)
   const [showGoalModal, setShowGoalModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
-
-  const selectedGoal = useMemo(() => {
-    return goals.find((g) => g.id === selectedGoalId) || null
-  }, [goals, selectedGoalId])
 
   const averageGoalProgress = useMemo(() => {
     if (!goals.length) return 0
@@ -291,9 +285,7 @@ export function App() {
     return 88 * (1 - progress)
   }, [averageGoalProgress])
 
-  const handleClickGoal = (goal: Goal) => {
-    setSelectedGoalId(goal.id)
-  }
+
 
   // 天目标勾选/撤销打卡 (实时向上联动推导月度与总进度)
   const handleToggleGoalDay = (goalId: number, monthId: number | string, dayId: number | string) => {
@@ -659,7 +651,16 @@ export function App() {
           )}
 
           {currentTab === 'direction' && (
-            <DirectionView goals={goals} onClickGoal={handleClickGoal} />
+            <DirectionView
+              goals={goals}
+              onEditGoal={(g) => {
+                setEditingGoal(g)
+                setShowGoalModal(true)
+              }}
+              onToggleGoalDay={handleToggleGoalDay}
+              onAddGoalDay={handleAddGoalDay}
+              onUpdateMonthTitle={handleUpdateMonthTitle}
+            />
           )}
 
           {currentTab === 'summary' && (
@@ -710,20 +711,7 @@ export function App() {
           />
         )}
 
-        {/* 目标详情与月度战役/天目标看板 */}
-        {selectedGoal && (
-          <GoalDetailModal
-            goal={selectedGoal}
-            onClose={() => setSelectedGoalId(null)}
-            onEditGoal={(g) => {
-              setEditingGoal(g)
-              setShowGoalModal(true)
-            }}
-            onToggleGoalDay={handleToggleGoalDay}
-            onAddGoalDay={handleAddGoalDay}
-            onUpdateMonthTitle={handleUpdateMonthTitle}
-          />
-        )}
+
 
         {/* 任务新增/编辑弹窗 */}
         {showTaskModal && (
