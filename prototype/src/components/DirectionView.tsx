@@ -1,36 +1,37 @@
-import React, { useState } from 'react'
+import React from 'react'
 import type { Goal } from '../types'
 import { GoalListLayer, GoalMonthsLayer, GoalDaysLayer } from './Direction'
 
 interface DirectionViewProps {
   goals: Goal[]
-  onEditGoal: (goal: Goal) => void
+  activeGoalId: number | null
+  activeMonthId: number | string | null
+  onSelectGoal: (goalId: number) => void
+  onSelectMonth: (monthId: number | string) => void
   onToggleGoalDay: (goalId: number, monthId: number | string, dayId: number | string) => void
   onAddGoalDay: (
     goalId: number,
     monthId: number | string,
     newDay: { day: number; date: string; title: string; completed: boolean; time?: string; duration?: number }
   ) => void
-  onUpdateMonthTitle: (goalId: number, monthId: number | string, newTitle: string) => void
 }
 
 /**
- * DirectionView: Things 3 风格目标三层推入控制器
+ * DirectionView: Things 3 风格目标三层推入内容分发器
  * - 第一层: GoalListLayer (战略目标总览)
  * - 第二层: GoalMonthsLayer (月度战役分解)
  * - 第三层: GoalDaysLayer (每日天目标行动清单)
+ * 注：吸顶面包屑与大标题统一由 AppHeader 接管，此处内容纯粹展示各层级核心清单
  */
 export const DirectionView: React.FC<DirectionViewProps> = ({
   goals,
-  onEditGoal,
+  activeGoalId,
+  activeMonthId,
+  onSelectGoal,
+  onSelectMonth,
   onToggleGoalDay,
-  onAddGoalDay,
-  onUpdateMonthTitle
+  onAddGoalDay
 }) => {
-  // 导航路由状态
-  const [activeGoalId, setActiveGoalId] = useState<number | null>(null)
-  const [activeMonthId, setActiveMonthId] = useState<number | string | null>(null)
-
   const activeGoal = goals.find((g) => g.id === activeGoalId) || null
   const activeMonth = activeGoal?.months?.find((m) => m.id === activeMonthId) || null
 
@@ -40,10 +41,8 @@ export const DirectionView: React.FC<DirectionViewProps> = ({
       <GoalDaysLayer
         goal={activeGoal}
         month={activeMonth}
-        onBack={() => setActiveMonthId(null)}
         onToggleDay={(dayId) => onToggleGoalDay(activeGoal.id, activeMonth.id, dayId)}
         onAddDay={(newDay) => onAddGoalDay(activeGoal.id, activeMonth.id, newDay)}
-        onUpdateMonthTitle={(newTitle) => onUpdateMonthTitle(activeGoal.id, activeMonth.id, newTitle)}
       />
     )
   }
@@ -53,9 +52,7 @@ export const DirectionView: React.FC<DirectionViewProps> = ({
     return (
       <GoalMonthsLayer
         goal={activeGoal}
-        onBack={() => setActiveGoalId(null)}
-        onEditGoal={onEditGoal}
-        onSelectMonth={(monthId) => setActiveMonthId(monthId)}
+        onSelectMonth={onSelectMonth}
       />
     )
   }
@@ -64,7 +61,7 @@ export const DirectionView: React.FC<DirectionViewProps> = ({
   return (
     <GoalListLayer
       goals={goals}
-      onSelectGoal={(goalId) => setActiveGoalId(goalId)}
+      onSelectGoal={onSelectGoal}
     />
   )
 }

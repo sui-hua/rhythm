@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Plus } from 'lucide-react'
+import { ChevronDown, Plus, ArrowLeft, SlidersHorizontal } from 'lucide-react'
 import { AppHeader } from './components/AppHeader'
 import { TabBar } from './components/TabBar'
 import { DayView } from './components/DayView'
@@ -275,6 +275,18 @@ export function App() {
   const [showGoalModal, setShowGoalModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
 
+  // 所向 (Direction) 三层推入导航状态 (Things 3 原生吸顶联动)
+  const [activeGoalId, setActiveGoalId] = useState<number | null>(null)
+  const [activeMonthId, setActiveMonthId] = useState<number | string | null>(null)
+
+  const activeGoal = useMemo(() => {
+    return goals.find((g) => g.id === activeGoalId) || null
+  }, [goals, activeGoalId])
+
+  const activeMonth = useMemo(() => {
+    return activeGoal?.months?.find((m) => m.id === activeMonthId) || null
+  }, [activeGoal, activeMonthId])
+
   const averageGoalProgress = useMemo(() => {
     if (!goals.length) return 0
     return Math.round(goals.reduce((acc, g) => acc + g.progress, 0) / goals.length)
@@ -502,6 +514,56 @@ export function App() {
         </button>
       )
     }
+    if (currentTab === 'direction') {
+      if (activeGoal && activeMonth) {
+        // 第三层：天目标行动清单顶栏 ( Things 3 风格：返回 + 月份战役标题，绝无冗余重复 )
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setActiveMonthId(null)}
+              className="p-1 -ml-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer shrink-0"
+              title="返回月度战役"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-white shrink-0">
+              {activeMonth.month < 10 ? '0' + activeMonth.month : activeMonth.month}月
+            </span>
+            <h1
+              onClick={() => {
+                const next = window.prompt('修改本月核心战役标题：', activeMonth.title || '')
+                if (next && next.trim()) {
+                  handleUpdateMonthTitle(activeGoal.id, activeMonth.id, next.trim())
+                }
+              }}
+              className="text-[15px] font-bold tracking-tight text-zinc-900 truncate cursor-pointer hover:text-zinc-600 transition-colors"
+              title="点击修改月度战役名称"
+            >
+              {activeMonth.title || '核心战役'}
+            </h1>
+          </div>
+        )
+      }
+      if (activeGoal) {
+        // 第二层：月度战役分解顶栏 ( Things 3 风格：返回 + 目标名称，绝无冗余重复 )
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setActiveGoalId(null)}
+              className="p-1 -ml-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer shrink-0"
+              title="返回全部目标"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <h1 className="text-[16px] font-bold tracking-tight text-zinc-900 truncate">
+              {activeGoal.title}
+            </h1>
+          </div>
+        )
+      }
+    }
     return undefined
   }
 
@@ -544,6 +606,35 @@ export function App() {
       )
     }
     if (currentTab === 'direction') {
+      if (activeGoal && activeMonth) {
+        const mDays = activeMonth.days || []
+        const completedCount = mDays.filter((d) => d.completed).length
+        return (
+          <span className="text-xs font-mono font-bold text-zinc-500">
+            {completedCount}/{mDays.length} 天
+          </span>
+        )
+      }
+      if (activeGoal) {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold text-zinc-500">
+              {activeGoal.progress}%
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingGoal(activeGoal)
+                setShowGoalModal(true)
+              }}
+              className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
+              title="编辑目标周期与属性"
+            >
+              <SlidersHorizontal size={14} />
+            </button>
+          </div>
+        )
+      }
       return renderProgressRing(
         goalRingOffset,
         `所向目标综合推进：${averageGoalProgress}%`
@@ -579,7 +670,7 @@ export function App() {
         // 彻底砍掉冗余口号“微小动作 · 积聚复利”，只留纯正大标题
         return { title: '日常习惯', subtitle: '' }
       case 'direction':
-        return { title: '长期目标', subtitle: '保持方向感 · 步步为营' }
+        return { title: '长期目标', subtitle: '' }
       case 'summary':
         return { title: '复盘总结', subtitle: '' }
       default:
@@ -653,13 +744,12 @@ export function App() {
           {currentTab === 'direction' && (
             <DirectionView
               goals={goals}
-              onEditGoal={(g) => {
-                setEditingGoal(g)
-                setShowGoalModal(true)
-              }}
+              activeGoalId={activeGoalId}
+              activeMonthId={activeMonthId}
+              onSelectGoal={(id) => setActiveGoalId(id)}
+              onSelectMonth={(id) => setActiveMonthId(id)}
               onToggleGoalDay={handleToggleGoalDay}
               onAddGoalDay={handleAddGoalDay}
-              onUpdateMonthTitle={handleUpdateMonthTitle}
             />
           )}
 

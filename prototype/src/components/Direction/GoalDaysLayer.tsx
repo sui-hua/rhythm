@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Check, Plus, Edit2 } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import type { Goal, GoalMonth } from '../../types'
 import { cn } from '../../lib/utils'
 
 interface GoalDaysLayerProps {
   goal: Goal
   month: GoalMonth
-  onBack: () => void
   onToggleDay: (dayId: number | string) => void
   onAddDay: (newDay: {
     day: number
@@ -16,41 +15,24 @@ interface GoalDaysLayerProps {
     time?: string
     duration?: number
   }) => void
-  onUpdateMonthTitle: (newTitle: string) => void
 }
 
 /**
  * 第三层：每日天目标行动清单 (Things 3 Daily Actions)
- * 不重复展示第二层的月度战役概览卡片，直接聚焦于天目标行动项
+ * 标题与返回统一由吸顶 AppHeader 托管，内容区 100% 聚焦于天目标清单，绝无冗余重复
  */
 export const GoalDaysLayer: React.FC<GoalDaysLayerProps> = ({
   goal,
   month,
-  onBack,
   onToggleDay,
-  onAddDay,
-  onUpdateMonthTitle
+  onAddDay
 }) => {
-  // 内联编辑月度战役标题
-  const [isEditingTitle, setIsEditingTitle] = useState(false)
-  const [titleDraft, setTitleDraft] = useState('')
-
   // 快捷添加天目标
   const [isAddingDay, setIsAddingDay] = useState(false)
   const [newDayNum, setNewDayNum] = useState<number>(12)
   const [newDayTitle, setNewDayTitle] = useState('')
 
   const monthDays = month.days || []
-  const completedCount = monthDays.filter((d) => d.completed).length
-  const totalCount = monthDays.length
-  const monthProgress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-
-  const handleSaveTitle = () => {
-    if (titleDraft.trim()) {
-      onUpdateMonthTitle(titleDraft.trim())
-    }
-    setIsEditingTitle(false)
-  }
 
   const handleCreateDay = () => {
     if (!newDayTitle.trim()) return
@@ -69,78 +51,10 @@ export const GoalDaysLayer: React.FC<GoalDaysLayerProps> = ({
   }
 
   return (
-    <div className="px-5 pt-2 pb-16 space-y-3.5 animate-in slide-in-from-right duration-200">
-      {/* 顶部面包屑返回条 */}
-      <div className="flex items-center justify-between pb-1">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition-colors cursor-pointer py-1"
-        >
-          <ArrowLeft size={14} />
-          <span className="truncate max-w-[200px]">{goal.title}</span>
-        </button>
-        <span className="text-[11px] font-mono text-zinc-400 font-medium">
-          {completedCount}/{totalCount} 天
-        </span>
-      </div>
-
-      {/* 标题区 (非卡片，支持直接编辑本月战役名称，不重复展示月目标卡片) */}
-      <div className="pt-0.5 pb-0.5">
-        {isEditingTitle ? (
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSaveTitle()
-              }}
-              autoFocus
-              placeholder="分配本月核心战役目标..."
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-lg px-2.5 py-1 text-xs font-semibold text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-            />
-            <button
-              type="button"
-              onClick={handleSaveTitle}
-              className="p-1.5 bg-zinc-900 text-white rounded-lg text-xs cursor-pointer shrink-0"
-            >
-              <Check size={12} />
-            </button>
-          </div>
-        ) : (
-          <div
-            onClick={() => {
-              setTitleDraft(month.title || '')
-              setIsEditingTitle(true)
-            }}
-            className="flex items-baseline justify-between gap-2 cursor-pointer group/title"
-            title="点击修改月度战役"
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-zinc-900 text-white shrink-0">
-                {month.month < 10 ? '0' + month.month : month.month}月
-              </span>
-              <h1
-                className={cn(
-                  'text-base font-bold tracking-tight truncate',
-                  month.title ? 'text-zinc-900' : 'text-zinc-400 italic font-normal'
-                )}
-              >
-                {month.title || '点击设置月度战役...'}
-              </h1>
-              <Edit2 size={12} className="text-zinc-400 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
-            </div>
-            <span className="text-xs font-mono font-semibold text-zinc-400 shrink-0">
-              {monthProgress}%
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* 每日天目标待办清单 (Things 3 经典纯粹清单) */}
+    <div className="px-5 pt-3 pb-16 space-y-2.5 animate-in slide-in-from-right duration-200">
+      {/* 每日天目标待办清单 (Things 3 经典纯粹清单，直接呈现) */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between px-1 pb-0.5">
           <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
             天目标行动清单 ({monthDays.length})
           </span>
@@ -153,7 +67,7 @@ export const GoalDaysLayer: React.FC<GoalDaysLayerProps> = ({
               key={day.id}
               onClick={() => onToggleDay(day.id)}
               className={cn(
-                'p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all cursor-pointer select-none active:scale-[0.99]',
+                'p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all cursor-pointer select-none active:scale-[0.99]',
                 day.completed
                   ? 'bg-zinc-50 border-zinc-200/50 opacity-70'
                   : 'bg-white border-zinc-200/80 shadow-2xs hover:border-zinc-300'
