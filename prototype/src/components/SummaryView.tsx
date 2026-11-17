@@ -18,8 +18,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 }) => {
   return (
     <section className="px-5 pt-3 space-y-3 pb-24">
-      {/* 方案 A：轻盈无框 Text Filter (日 · 周 · 月 · 年) */}
-      <div className="flex items-center gap-6 px-1 pt-0.5 pb-1">
+      {/* 方案 1：水平撑满的高级内嵌分段滑块 (日 · 周 · 月 · 年) */}
+      <div className="w-full bg-zinc-200/60 p-1 rounded-2xl flex items-center shadow-2xs">
         {(['日', '周', '月', '年'] as PeriodType[]).map((p) => {
           const isActive = activePeriod === p
           return (
@@ -28,16 +28,13 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
               type="button"
               onClick={() => onSelectPeriod(p)}
               className={cn(
-                'text-[13.5px] transition-all cursor-pointer select-none relative pb-1',
+                'flex-1 py-1.5 text-center text-[13px] rounded-xl transition-all duration-200 cursor-pointer select-none active:scale-[0.98]',
                 isActive
-                  ? 'font-bold text-zinc-950'
-                  : 'font-medium text-zinc-400 hover:text-zinc-600'
+                  ? 'bg-white text-zinc-950 font-bold shadow-xs'
+                  : 'text-zinc-500 font-medium hover:text-zinc-800'
               )}
             >
               {p}
-              {isActive && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3.5 h-[2px] bg-zinc-950 rounded-full" />
-              )}
             </button>
           )
         })}
