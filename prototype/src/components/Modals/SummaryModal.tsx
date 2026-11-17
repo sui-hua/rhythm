@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { X } from 'lucide-react'
 import type { PeriodType } from '../../types'
 
 export interface SummarySavePayload {
@@ -66,21 +65,18 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
       }}
     >
       <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col">
-        {/* 顶部手柄 */}
-        <div className="w-9 h-1 bg-zinc-200 rounded-full mx-auto shrink-0" />
+        {/* 顶部下拉手柄 */}
+        <div
+          onClick={onClose}
+          className="w-10 h-1 bg-zinc-200 hover:bg-zinc-300 rounded-full mx-auto shrink-0 cursor-pointer transition-colors"
+          title="点击或遮罩关闭"
+        />
 
         {/* 顶部标题栏 */}
         <div className="flex items-center justify-between pb-0.5 shrink-0">
           <h2 className="text-base font-bold tracking-tight text-zinc-900 font-sans">
             {period === '日' ? '今日深度复盘' : `${period}度复盘反思`}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
-          >
-            <X size={16} />
-          </button>
         </div>
 
         {/* 滚动内容区 */}

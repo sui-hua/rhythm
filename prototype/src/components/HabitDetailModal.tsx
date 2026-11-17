@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import React, { useMemo, useState, useRef } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Habit } from '../types'
 import { cn } from '../lib/utils'
 
@@ -30,16 +30,53 @@ export const HabitDetailModal: React.FC<HabitDetailModalProps> = ({
     return habit.logs.find((l) => l.date === selectedDateStr) || null
   }, [habit.logs, selectedDateStr])
 
-  const isSelectedDateCompleted = useMemo(() => {
-    return habit.completedDays.includes(selectedDateStr)
-  }, [habit.completedDays, selectedDateStr])
 
-  const selectedDateLabel = useMemo(() => {
-    if (!selectedDateStr) return ''
-    const [, m, d] = selectedDateStr.split('-')
-    const isToday = selectedDateStr === '2026-05-11'
-    return `${Number(m)}月${Number(d)}日${isToday ? ' (今天)' : ''}`
-  }, [selectedDateStr])
+  // 下拉关闭手势状态
+  const [dragY, setDragY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const touchStartY = useRef<number>(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const delta = e.touches[0].clientY - touchStartY.current
+    if (delta > 0) {
+      setDragY(delta)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+    if (dragY > 60) {
+      onClose()
+    }
+    setDragY(0)
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const startY = e.clientY
+    const onMouseMove = (ev: MouseEvent) => {
+      const delta = ev.clientY - startY
+      if (delta > 0) {
+        setDragY(delta)
+      }
+    }
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+      setDragY((cur) => {
+        if (cur > 60) {
+          onClose()
+        }
+        return 0
+      })
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
 
   const changeMonth = (delta: number) => {
     let nextM = pickerMonth + delta
@@ -125,22 +162,33 @@ export const HabitDetailModal: React.FC<HabitDetailModalProps> = ({
       }}
     >
       {/* 底部贴底原生大卡片 (Page Sheet 架构 · 视觉饱满舒展) */}
-      <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col">
-        {/* 顶部手柄 (iOS Sheet 特色) */}
-        <div className="w-9 h-1 bg-zinc-200 rounded-full mx-auto shrink-0"></div>
+      <div
+        className="w-full max-w-[390px] bg-white rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-zinc-100 flex flex-col"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* 顶部下拉手柄（支持手势下拉与点击关闭） */}
+        <div
+          className="flex items-center justify-center -mt-2 pb-1 shrink-0 select-none cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+        >
+          <div
+            className="w-10 h-1 bg-zinc-200 hover:bg-zinc-300 rounded-full cursor-pointer transition-colors"
+            onClick={onClose}
+            title="下拉关闭"
+          />
+        </div>
 
         {/* 顶部标题栏 */}
         <div className="flex items-center justify-between pb-0.5 shrink-0">
           <h2 className="text-[18px] font-bold tracking-tight text-zinc-900 leading-tight">
             {habit.title}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
-          >
-            <X size={16} />
-          </button>
         </div>
 
         {/* 4 维指标微卡片（无冗余大标题，紧凑精致） */}
@@ -239,36 +287,16 @@ export const HabitDetailModal: React.FC<HabitDetailModalProps> = ({
           </div>
         </div>
 
-        {/* 方案 1 联动卡片：只展示当前选中日期的详情（高度严格固定！） */}
-        <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/60 shrink-0 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-zinc-900 font-sans">{selectedDateLabel}</span>
-            <div className="flex items-center gap-1.5 font-mono text-[11px]">
-              <span
-                className={cn(
-                  'w-1.5 h-1.5 rounded-full',
-                  isSelectedDateCompleted ? 'bg-emerald-500' : 'bg-zinc-300'
-                )}
-              ></span>
-              <span className={isSelectedDateCompleted ? 'text-zinc-700 font-medium' : 'text-zinc-400'}>
-                {isSelectedDateCompleted ? (selectedLog?.time ? `${selectedLog.time} 已打卡` : '已打卡') : '未打卡'}
-              </span>
-            </div>
-          </div>
-
-          {isSelectedDateCompleted && selectedLog?.note ? (
-            <p className="text-[11px] text-zinc-600 leading-relaxed pt-0.5 border-t border-zinc-200/40">
-              备忘：{selectedLog.note}
-            </p>
-          ) : isSelectedDateCompleted ? (
-            <p className="text-[11px] text-zinc-400 leading-relaxed pt-0.5 border-t border-zinc-200/40">
-              达成坚持 · 步步为营
-            </p>
-          ) : (
-            <p className="text-[11px] text-zinc-400 leading-relaxed pt-0.5 border-t border-zinc-200/40">
-              当日暂无打卡记录
-            </p>
-          )}
+        {/* 底部备注区域：纯粹直接展示备注内容 */}
+        <div className="px-3.5 py-3 min-h-[44px] flex items-center rounded-2xl bg-zinc-50 border border-zinc-200/60 shrink-0">
+          <p
+            className={cn(
+              'text-xs leading-relaxed',
+              selectedLog?.note ? 'text-zinc-800 font-medium' : 'text-zinc-400'
+            )}
+          >
+            {selectedLog?.note || '暂无备注'}
+          </p>
         </div>
 
         {/* 底部操作按钮 */}

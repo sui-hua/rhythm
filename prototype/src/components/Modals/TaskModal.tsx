@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react'
-import { X } from 'lucide-react'
 import type { Task } from '../../types'
 import { TimelineRibbon, getNearestCurrentTime } from '../TimelineRibbon'
 
@@ -118,28 +117,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, onD
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* 顶部轻量手柄与关闭区（去除冗余大标题，支持下拉关闭与右上角点击关闭） */}
+        {/* 顶部下拉手柄（支持下拉手势滑动关闭与点击手柄/遮罩关闭） */}
         <div
-          className="relative flex items-center justify-center py-2 shrink-0 select-none cursor-grab active:cursor-grabbing"
+          className="flex items-center justify-center py-2 shrink-0 select-none cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
         >
           {/* 下拉手柄条 */}
           <div
             className="w-10 h-1 bg-zinc-200 hover:bg-zinc-300 rounded-full cursor-pointer transition-colors"
             onClick={onClose}
-            title="下拉或点击关闭"
+            title="下拉关闭"
           />
-
-          {/* 右上角关闭按钮 */}
-          <button
-            type="button"
-            onClick={onClose}
-            onMouseDown={(e) => e.stopPropagation()}
-            aria-label="关闭"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 p-1.5 rounded-full transition-colors cursor-pointer"
-          >
-            <X size={16} />
-          </button>
         </div>
 
         {/* 表单内容 */}

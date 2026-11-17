@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react'
-import { X } from 'lucide-react'
 import type { FrequencyType, Habit } from '../../types'
 import { cn, formatMonthlyDays } from '../../lib/utils'
 import { TimelineRibbon } from '../TimelineRibbon'
@@ -206,25 +205,16 @@ export const HabitModal: React.FC<HabitModalProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* 顶部手柄条与关闭按钮 */}
+        {/* 顶部下拉手柄（支持下拉手势滑动关闭与点击手柄/遮罩关闭） */}
         <div
-          className="relative flex items-center justify-center py-2 shrink-0 select-none cursor-grab active:cursor-grabbing"
+          className="flex items-center justify-center py-2 shrink-0 select-none cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
         >
           <div
             className="w-10 h-1 bg-zinc-200 hover:bg-zinc-300 rounded-full cursor-pointer transition-colors"
             onClick={onClose}
-            title="下拉或点击关闭"
+            title="下拉关闭"
           />
-          <button
-            type="button"
-            onClick={onClose}
-            onMouseDown={(e) => e.stopPropagation()}
-            aria-label="关闭"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 p-1.5 rounded-full transition-colors cursor-pointer"
-          >
-            <X size={16} />
-          </button>
         </div>
 
         {/* 纯净习惯标题输入框 (固定置顶，脱离滚动截断) */}
