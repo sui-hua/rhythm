@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { AppHeader } from './components/AppHeader'
 import { TabBar } from './components/TabBar'
@@ -8,6 +8,7 @@ import { DirectionView } from './components/DirectionView'
 import { SummaryView } from './components/SummaryView'
 import { DatePickerDrawer } from './components/DatePickerDrawer'
 import { HabitDetailModal } from './components/HabitDetailModal'
+import { LoginView } from './components/LoginView'
 import { TaskModal, type TaskSavePayload } from './components/Modals/TaskModal'
 import { HabitModal, type HabitSavePayload } from './components/Modals/HabitModal'
 import { GoalModal, type GoalSavePayload } from './components/Modals/GoalModal'
@@ -26,8 +27,53 @@ export function App() {
   // ── 全局状态 ──
   const [currentTab, setCurrentTab] = useState<TabKey>('day')
   const [showFrame, setShowFrame] = useState(true)
+  const [isViewingLogin, setIsViewingLogin] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('rhythm_is_logged_in') === 'true'
+    }
+    return false
+  })
   const [toastMessage, setToastMessage] = useState('')
   const [categories, setCategories] = useState<string[]>(['学习', '健康', '工作', '生活', '未分类'])
+
+  // ── 原生 Hash 路由直达支持（支持 #login / #day / #habits / #direction / #summary） ──
+  useEffect(() => {
+    const syncRouteFromHash = () => {
+      const hash = window.location.hash.toLowerCase()
+      if (hash.includes('login')) {
+        setIsViewingLogin(true)
+      } else {
+        setIsViewingLogin(false)
+        if (hash.includes('habits')) setCurrentTab('habits')
+        else if (hash.includes('direction')) setCurrentTab('direction')
+        else if (hash.includes('summary')) setCurrentTab('summary')
+        else if (hash.includes('day')) setCurrentTab('day')
+      }
+    }
+
+    syncRouteFromHash()
+    window.addEventListener('hashchange', syncRouteFromHash)
+    return () => window.removeEventListener('hashchange', syncRouteFromHash)
+  }, [])
+
+  const handleTabChange = (tab: TabKey) => {
+    setCurrentTab(tab)
+    setIsViewingLogin(false)
+    window.location.hash = `#${tab}`
+  }
+
+  const handleLogin = () => {
+    setIsLoggedIn(true)
+    setIsViewingLogin(false)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rhythm_is_logged_in', 'true')
+      window.location.hash = '#day'
+    }
+    showToast('登录成功，欢迎使用 Rhythm')
+  }
+
+  const shouldShowLogin = isViewingLogin || !isLoggedIn
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -518,13 +564,32 @@ export function App() {
           <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
           <span className="font-medium text-zinc-800 tracking-tight">Rhythm Mobile</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* 页面快速直达路由 */}
+          <button
+            type="button"
+            onClick={() => {
+              if (shouldShowLogin) {
+                window.location.hash = '#day'
+              } else {
+                window.location.hash = '#login'
+              }
+            }}
+            className={cn(
+              "font-medium transition-colors cursor-pointer px-2 py-0.5 rounded-md text-[11px]",
+              shouldShowLogin ? "bg-zinc-900 text-white" : "hover:text-zinc-900 bg-zinc-100 text-zinc-600"
+            )}
+            title="点击切换登录页 / 主界面"
+          >
+            {shouldShowLogin ? '进入主界面' : '前往登录页'}
+          </button>
+          <span>•</span>
           <button
             type="button"
             onClick={handleResetSampleData}
             className="hover:text-zinc-900 transition-colors font-medium cursor-pointer"
           >
-            重置数据
+            重置
           </button>
           <span>•</span>
           <button
@@ -532,7 +597,7 @@ export function App() {
             onClick={() => setShowFrame((prev) => !prev)}
             className="hover:text-zinc-900 transition-colors font-medium cursor-pointer"
           >
-            {showFrame ? '全屏查看' : '机壳查看'}
+            {showFrame ? '全屏' : '机壳'}
           </button>
         </div>
       </header>
@@ -546,8 +611,12 @@ export function App() {
             : 'md:rounded-none'
         )}
       >
-        {/* 吸顶导航栏 (统一由 AppHeader 单一组件托管，固定高度 92px) */}
-        <AppHeader
+        {shouldShowLogin ? (
+          <LoginView onLogin={handleLogin} showToast={showToast} />
+        ) : (
+          <>
+            {/* 吸顶导航栏 (统一由 AppHeader 单一组件托管，固定高度 92px) */}
+            <AppHeader
           time="09:41"
           currentTab={currentTab}
           // Day Tab
@@ -645,14 +714,14 @@ export function App() {
         <button
           type="button"
           onClick={handleFabClick}
-          className="absolute bottom-[78px] right-6 w-12 h-12 rounded-full bg-zinc-900 text-white shadow-fab hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center z-40 cursor-pointer"
+          className="absolute bottom-[100px] right-5 w-12 h-12 rounded-full bg-zinc-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.18)] hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center z-40 cursor-pointer"
           title="新建"
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
 
         {/* 底部原生毛玻璃 TabBar */}
-        <TabBar currentTab={currentTab} items={NAV_ITEMS} onChangeTab={setCurrentTab} />
+        <TabBar currentTab={currentTab} items={NAV_ITEMS} onChangeTab={handleTabChange} />
 
         {/* 日历选择抽屉 */}
         {showDatePicker && (
@@ -723,17 +792,19 @@ export function App() {
           />
         )}
 
-        {/* 复盘新增弹窗 (三段式深度反思 + 自动数据卡) */}
-        {showSummaryModal && (
-          <SummaryModal
-            period={activePeriod}
-            completedTasksCount={completedTasksCount}
-            totalTasksCount={currentTasks.length}
-            completedHabitsCount={completedHabitsCount}
-            completedTaskTitles={currentTasks.filter((t) => t.completed).map((t) => t.title)}
-            onClose={() => setShowSummaryModal(false)}
-            onSave={handleSaveSummary}
-          />
+            {/* 复盘新增弹窗 (三段式深度反思 + 自动数据卡) */}
+            {showSummaryModal && (
+              <SummaryModal
+                period={activePeriod}
+                completedTasksCount={completedTasksCount}
+                totalTasksCount={currentTasks.length}
+                completedHabitsCount={completedHabitsCount}
+                completedTaskTitles={currentTasks.filter((t) => t.completed).map((t) => t.title)}
+                onClose={() => setShowSummaryModal(false)}
+                onSave={handleSaveSummary}
+              />
+            )}
+          </>
         )}
 
         {/* 轻量优雅 Toast 提示 */}
