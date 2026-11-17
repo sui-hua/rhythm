@@ -1,7 +1,6 @@
 import React from 'react'
-import { ChevronDown, ArrowLeft, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, ArrowLeft } from 'lucide-react'
 import type { TabKey, PeriodType, Goal, GoalMonth } from '../types'
-import { cn } from '../lib/utils'
 
 interface AppHeaderProps {
   time?: string
@@ -58,8 +57,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onEditGoal,
   onUpdateMonthTitle,
   goalProgressRing,
-  activePeriod = '日',
-  onSelectPeriod,
   title,
   titleSlot,
   rightSlot
@@ -107,8 +104,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         )
 
       case 'direction':
-        // 第三层：天目标行动清单 (Things 3 纯粹标头)
+        // 第三层：天目标行动清单 (方案 A 纯粹标头)
         if (activeGoal && activeMonth) {
+          const monthText = activeMonth.month < 10 ? '0' + activeMonth.month : activeMonth.month
           return (
             <div className="flex items-center gap-2 min-w-0">
               <button
@@ -119,9 +117,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               >
                 <ArrowLeft size={16} />
               </button>
-              <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-white shrink-0">
-                {activeMonth.month < 10 ? '0' + activeMonth.month : activeMonth.month}月
-              </span>
               <h1
                 onClick={() => {
                   if (onUpdateMonthTitle && activeGoal && activeMonth) {
@@ -134,6 +129,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 className="text-[15px] font-bold tracking-tight text-zinc-900 truncate cursor-pointer hover:text-zinc-600 transition-colors"
                 title="点击修改月度战役名称"
               >
+                <span className="text-zinc-400 font-mono font-semibold mr-1.5">
+                  {monthText}月 ·
+                </span>
                 {activeMonth.title || '核心战役'}
               </h1>
             </div>
@@ -152,7 +150,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               >
                 <ArrowLeft size={16} />
               </button>
-              <h1 className="text-[16px] font-bold tracking-tight text-zinc-900 truncate">
+              <h1
+                onClick={() => onEditGoal?.()}
+                className="text-[16px] font-bold tracking-tight text-zinc-900 truncate cursor-pointer hover:text-zinc-600 transition-colors"
+                title="点击编辑总目标设置"
+              >
                 {activeGoal.title}
               </h1>
             </div>
@@ -195,61 +197,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         return habitProgressRing
 
       case 'direction':
-        // 第三层：天目标统计
+        // 第三层：天目标行动页 (右上角留白，给标题最大呼吸空间)
         if (activeGoal && activeMonth) {
-          const mDays = activeMonth.days || []
-          const completedCount = mDays.filter((d) => d.completed).length
-          return (
-            <span className="text-xs font-mono font-bold text-zinc-500">
-              {completedCount}/{mDays.length} 天
-            </span>
-          )
+          return null
         }
 
-        // 第二层：目标总进度 + 属性编辑
+        // 第二层：月度战役分解 (右上角留白，总目标长按/点击打开设置抽屉)
         if (activeGoal) {
-          return (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-zinc-500">
-                {activeGoal.progress}%
-              </span>
-              {onEditGoal && (
-                <button
-                  type="button"
-                  onClick={onEditGoal}
-                  className="text-zinc-400 hover:text-zinc-900 p-1 rounded-full transition-colors cursor-pointer"
-                  title="编辑目标周期与属性"
-                >
-                  <SlidersHorizontal size={14} />
-                </button>
-              )}
-            </div>
-          )
+          return null
         }
 
         // 第一层：全局推进度
         return goalProgressRing
 
       case 'summary':
-        return (
-          <div className="flex bg-zinc-100 p-0.5 rounded-full text-xs font-semibold">
-            {(['日', '周', '月', '年'] as PeriodType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onSelectPeriod?.(t)}
-                className={cn(
-                  'px-2.5 py-0.5 transition-all cursor-pointer',
-                  activePeriod === t
-                    ? 'bg-white text-zinc-900 shadow-xs rounded-full font-bold'
-                    : 'text-zinc-500 hover:text-zinc-900'
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )
+        // 方案 A：右上角完全留白，切换移至内容区顶部
+        return null
 
       default:
         return null

@@ -618,12 +618,18 @@ export function App() {
               onSelectMonth={(id) => setActiveMonthId(id)}
               onToggleGoalDay={handleToggleGoalDay}
               onAddGoalDay={handleAddGoalDay}
+              onEditGoal={(goal) => {
+                setEditingGoal(goal)
+                setShowGoalModal(true)
+              }}
             />
           )}
 
           {currentTab === 'summary' && (
             <SummaryView
               summaries={currentSummaries}
+              activePeriod={activePeriod}
+              onSelectPeriod={setActivePeriod}
               onClickSummary={() => showToast('点击查看复盘详情')}
             />
           )}
