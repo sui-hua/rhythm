@@ -9,8 +9,11 @@ interface GoalMonthsLayerProps {
 }
 
 /**
- * 第二层：月度战役分解列表 (Things 3 Monthly Campaigns)
- * 标题与返回统一由吸顶 AppHeader 托管，内容区 100% 聚焦于月度战役列表，绝无冗余重复
+ * 第二层：月度战役路线图
+ * 像外层一样独立成卡 (space-y-3)，最左侧贯穿发丝级时间轴与节点：
+ * ● 05月  战役主标题                           60% >
+ * │
+ * ○ 06月  战役主标题                               >
  */
 export const GoalMonthsLayer: React.FC<GoalMonthsLayerProps> = ({
   goal,
@@ -19,73 +22,82 @@ export const GoalMonthsLayer: React.FC<GoalMonthsLayerProps> = ({
   const months = goal.months || []
 
   return (
-    <div className="px-5 pt-3 pb-16 space-y-2.5 animate-in slide-in-from-right duration-200">
-      {/* 栏目标题 */}
-      <div className="flex items-center justify-between px-1 pb-0.5">
-        <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-          月度战役分解 ({months.length} 个阶段)
-        </span>
-        <span className="text-[10px] text-zinc-400">点击进入执行清单</span>
-      </div>
+    <div className="px-5 pt-3.5 pb-24 space-y-3 animate-in slide-in-from-right duration-200">
+      {months.map((month, idx) => {
+        const isLast = idx === months.length - 1
+        const isMay = month.month === 5 // 模拟当前基准月份为 5 月
+        const mDays = month.days || []
+        const completedCount = mDays.filter((d) => d.completed).length
+        const totalCount = mDays.length
+        const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+        const hasProgress = progress > 0
 
-      {/* 月度战役阶段列表 */}
-      <div className="space-y-2">
-        {months.map((month) => {
-          const mDays = month.days || []
-          const completedCount = mDays.filter((d) => d.completed).length
-          const totalCount = mDays.length
-          const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-          const isMay = month.month === 5 // 当前模拟基准月份为 5 月
+        return (
+          <div
+            key={month.id}
+            onClick={() => onSelectMonth(month.id)}
+            className="group relative px-4.5 py-4 rounded-2xl bg-white border border-transparent shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04),0_1px_2px_0_rgba(0,0,0,0.02)] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)] transition-all duration-200 cursor-pointer active:scale-[0.99] flex items-center justify-between gap-3"
+          >
+            {/* 时间轴垂直线：从当前卡片节点中心无缝穿过间隙连接到下一张卡片节点 */}
+            {!isLast && (
+              <div className="absolute left-[22.25px] top-1/2 h-[calc(100%+12px)] w-[1.5px] bg-zinc-200 pointer-events-none z-0" />
+            )}
 
-          return (
-            <div
-              key={month.id}
-              onClick={() => onSelectMonth(month.id)}
-              className="group p-4 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs hover:shadow-xs hover:border-zinc-300 transition-all cursor-pointer active:scale-[0.99] flex items-center justify-between gap-3"
-            >
-              <div className="flex items-start gap-3 min-w-0 flex-1">
-                {/* 月份徽标 */}
-                <span
-                  className={cn(
-                    'text-xs font-mono font-bold px-2 py-0.5 rounded-lg shrink-0 transition-colors',
-                    isMay ? 'bg-zinc-900 text-white shadow-xs' : 'bg-zinc-100 text-zinc-700'
-                  )}
-                >
-                  {month.month < 10 ? '0' + month.month : month.month}月
-                </span>
-
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <h3
-                      className={cn(
-                        'text-sm font-semibold tracking-tight truncate',
-                        month.title ? 'text-zinc-900' : 'text-zinc-400 italic font-normal'
-                      )}
-                    >
-                      {month.title || '点此分配本月核心战役...'}
-                    </h3>
-                    {isMay && (
-                      <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700 shrink-0">
-                        进行中
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
-                    <span>
-                      {totalCount > 0 ? `已达成 ${completedCount}/${totalCount} 天` : '暂未规划任务'}
-                    </span>
-                    {totalCount > 0 && <span>·</span>}
-                    {totalCount > 0 && <span className="font-semibold text-zinc-700">{progress}%</span>}
-                  </div>
-                </div>
-              </div>
-
-              <ChevronRight size={16} className="text-zinc-300 group-hover:text-zinc-900 transition-colors shrink-0" />
+            {/* 左侧：时间轴节点 + 月份 */}
+            <div className="relative z-10 flex items-center gap-2.5 shrink-0">
+              <div
+                className={cn(
+                  'w-2.5 h-2.5 rounded-full transition-transform group-hover:scale-125 shrink-0',
+                  isMay
+                    ? 'bg-zinc-950 ring-4 ring-white shadow-xs'
+                    : 'border-[1.5px] border-zinc-300 bg-white ring-4 ring-white group-hover:border-zinc-500'
+                )}
+              />
+              <span
+                className={cn(
+                  'text-[13px] font-mono font-bold transition-colors',
+                  isMay ? 'text-zinc-950' : 'text-zinc-400 group-hover:text-zinc-700'
+                )}
+              >
+                {String(month.month).padStart(2, '0')}月
+              </span>
             </div>
-          )
-        })}
-      </div>
+
+            {/* 中间：战役主名称 (单行展开，纯粹舒展) */}
+            <h3
+              className={cn(
+                'text-[15px] font-medium tracking-tight truncate flex-1 transition-colors pr-1',
+                month.title
+                  ? isMay
+                    ? 'text-zinc-950 font-semibold'
+                    : 'text-zinc-800 group-hover:text-black'
+                  : 'text-zinc-400 italic font-normal'
+              )}
+            >
+              {month.title || '点此规划本月战役...'}
+            </h3>
+
+            {/* 右侧：纯净等宽完成度 + 轻量推进箭头 */}
+            <div className="relative z-10 flex items-center gap-2 shrink-0">
+              {hasProgress && (
+                <span className="text-[13px] font-mono font-bold text-zinc-950">
+                  {progress}%
+                </span>
+              )}
+              <ChevronRight
+                size={15}
+                className="text-zinc-300 group-hover:text-zinc-500 group-hover:translate-x-0.5 transition-all"
+              />
+            </div>
+          </div>
+        )
+      })}
+
+      {months.length === 0 && (
+        <div className="py-16 text-center">
+          <p className="text-xs text-zinc-400 font-medium tracking-tight">暂无月度战役划分</p>
+        </div>
+      )}
     </div>
   )
 }

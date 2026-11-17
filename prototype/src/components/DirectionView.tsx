@@ -14,6 +14,7 @@ interface DirectionViewProps {
     monthId: number | string,
     newDay: { day: number; date: string; title: string; completed: boolean; time?: string; duration?: number }
   ) => void
+  onEditGoal?: (goal: Goal) => void
 }
 
 /**
@@ -30,7 +31,8 @@ export const DirectionView: React.FC<DirectionViewProps> = ({
   onSelectGoal,
   onSelectMonth,
   onToggleGoalDay,
-  onAddGoalDay
+  onAddGoalDay,
+  onEditGoal
 }) => {
   const activeGoal = goals.find((g) => g.id === activeGoalId) || null
   const activeMonth = activeGoal?.months?.find((m) => m.id === activeMonthId) || null
@@ -62,6 +64,7 @@ export const DirectionView: React.FC<DirectionViewProps> = ({
     <GoalListLayer
       goals={goals}
       onSelectGoal={onSelectGoal}
+      onEditGoal={onEditGoal}
     />
   )
 }
