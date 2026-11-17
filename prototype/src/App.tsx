@@ -27,6 +27,7 @@ export function App() {
   const [currentTab, setCurrentTab] = useState<TabKey>('day')
   const [showFrame, setShowFrame] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
+  const [categories, setCategories] = useState<string[]>(['学习', '健康', '工作', '生活', '未分类'])
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -477,6 +478,7 @@ export function App() {
     setTasksByDate(getInitialTasksByDate())
     setHabits(INITIAL_HABITS)
     setSummaries(INITIAL_SUMMARIES)
+    setCategories(['学习', '健康', '工作', '生活', '未分类'])
     setActivePeriod('日')
     setSelectedHabitId(null)
     showToast('数据已重置')
@@ -604,8 +606,12 @@ export function App() {
           {currentTab === 'habits' && (
             <HabitsView
               habits={habits}
-              onToggleHabit={handleToggleHabit}
               onClickHabit={(habit) => setSelectedHabitId(habit.id)}
+              onToggleHabit={handleToggleHabit}
+              onEditHabit={(habit) => {
+                setEditingHabit(habit)
+                setShowHabitModal(true)
+              }}
             />
           )}
 
@@ -705,6 +711,9 @@ export function App() {
         {showGoalModal && (
           <GoalModal
             goal={editingGoal}
+            categories={categories}
+            onAddCategory={(cat) => setCategories((prev) => [...prev, cat])}
+            onDeleteCategory={(cat) => setCategories((prev) => prev.filter((c) => c !== cat))}
             onClose={() => {
               setShowGoalModal(false)
               setEditingGoal(null)

@@ -49,7 +49,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenDatePicker,
   onBackToToday,
   taskProgressRing,
-  habitProgressRing,
+  habitProgressRing: _habitProgressRing,
   activeGoal,
   activeMonth,
   onBackFromGoal,
@@ -194,7 +194,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         return taskProgressRing
 
       case 'habits':
-        return habitProgressRing
+        // 习惯为长期资产概览中心（打卡于 Day 完成），顶栏右上角保持留白纯净
+        return null
 
       case 'direction':
         // 第三层：天目标行动页 (右上角留白，给标题最大呼吸空间)
