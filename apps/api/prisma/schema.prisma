@@ -1,13 +1,244 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+/// 用户
+model SysUser {
+  id              String            @id @default(uuid()) @db.Uuid
+  email           String            @unique
+  passwordHash    String            @map("password_hash")
+  name            String?
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  refreshTokens   SysRefreshToken[]
+  tasks           Task[]
+  habits          Habit[]
+  habitLogs       HabitLog[]
+  categories      Category[]
+  goals           Goal[]
+  goalMonths      GoalMonth[]
+  goalDays        GoalDay[]
+  summaries       Summary[]
+  dailyReportLogs DailyReportLog[]
+
+  @@map("sys_user")
+}
+
+/// 令牌表
+model SysRefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  user      SysUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sys_refresh_token")
+}
+
+/// 任务
+model Task {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  categoryId      String?   @map("category_id") @db.Uuid
+  title           String
+  description     String?
+  startTime       DateTime? @map("start_time") @db.Timestamptz
+  endTime         DateTime? @map("end_time") @db.Timestamptz
+  actualStartTime DateTime? @map("actual_start_time") @db.Timestamptz
+  actualEndTime   DateTime? @map("actual_end_time") @db.Timestamptz
+  completed       Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  user            SysUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startTime])
+  @@index([userId, completed])
+  @@index([categoryId])
+  @@map("task")
+}
+
+/// 习惯重复类型
+enum HabitRepeatType {
+  DAILY   @map("daily")
+  WEEKLY  @map("weekly")
+  MONTHLY @map("monthly")
+
+  @@map("habit_repeat_type")
+}
+
+/// 习惯
+model Habit {
+  id         String          @id @default(uuid()) @db.Uuid
+  userId     String          @map("user_id") @db.Uuid
+  title      String
+  repeatType HabitRepeatType @map("repeat_type")
+  repeatDays Int[]           @default([]) @map("repeat_days")
+  planTime   DateTime?       @map("plan_time") @db.Time
+  duration   Int?
+  archived   Boolean         @default(false)
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+  user       SysUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs       HabitLog[]
+
+  @@index([userId, archived])
+  @@map("habit")
+}
+
+/// 习惯日志
+model HabitLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  habitId     String   @map("habit_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz
+  value       Int?
+  remark      String?
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user        SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([habitId, completedAt])
+  @@index([userId, completedAt])
+  @@map("habit_log")
+}
+
+/// 分类
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  user      SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goals     Goal[]
+  tasks     Task[]
+
+  @@unique([userId, name])
+  @@map("category")
+}
+
+enum GoalStatus {
+  ACTIVE    @map("active")
+  COMPLETED @map("completed")
+  ARCHIVED  @map("archived")
+
+  @@map("goal_status")
+}
+
+/// 目标
+model Goal {
+  id                    String      @id @default(uuid()) @db.Uuid
+  userId                String      @map("user_id") @db.Uuid
+  categoryId            String?     @map("category_id") @db.Uuid
+  title                 String
+  description           String?
+  year                  DateTime?   @db.Date
+  startMonth            Int         @map("start_month")
+  endMonth              Int         @map("end_month")
+  planTime              DateTime?   @map("plan_time") @db.Time
+  duration              Int?
+  carryOverLookbackDays Int         @map("carry_over_lookback_days")
+  priority              Int?        @default(0)
+  status                GoalStatus  @default(ACTIVE)
+  createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+  user                  SysUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category              Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  months                GoalMonth[]
+
+  @@index([userId, status])
+  @@map("goal")
+}
+
+/// 月目标
+model GoalMonth {
+  id          String     @id @default(uuid()) @db.Uuid
+  goalId      String     @map("goal_id") @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  title       String
+  description String?
+  month       DateTime?  @db.Date
+  planTime    DateTime?  @map("plan_time") @db.Time
+  duration    Int?
+  priority    Int?       @default(0)
+  status      GoalStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  goal        Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user        SysUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days        GoalDay[]
+
+  @@index([goalId])
+  @@index([userId])
+  @@map("goal_month")
+}
+
+/// 日目标
+model GoalDay {
+  id          String     @id @default(uuid()) @db.Uuid
+  goalMonthId String?    @map("goal_month_id") @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  title       String
+  description String?
+  date        DateTime   @db.Date
+  planTime    DateTime?  @map("plan_time") @db.Time
+  duration    Int?
+  priority    Int?       @default(0)
+  status      GoalStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  goalMonth   GoalMonth? @relation(fields: [goalMonthId], references: [id], onDelete: Cascade)
+  user        SysUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([goalMonthId])
+  @@map("goal_day")
+}
+
+/// 总结周期类型
+enum SummaryPeriodType {
+  DAILY   @map("daily")
+  WEEKLY  @map("weekly")
+  MONTHLY @map("monthly")
+  YEARLY  @map("yearly")
+
+  @@map("summary_period_type")
+}
+
+/// 总结
+model Summary {
+  id          String            @id @default(uuid()) @db.Uuid
+  userId      String            @map("user_id") @db.Uuid
+  title       String?
+  periodType  SummaryPeriodType @map("period_type")
+  periodStart DateTime          @map("period_start") @db.Timestamptz
+  periodEnd   DateTime          @map("period_end") @db.Timestamptz
+  content     Json              @default("{}")
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  user        SysUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, periodType, periodStart])
+  @@map("summary")
+}
+
+/// 日报
+model DailyReportLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  reportDate DateTime @map("report_date") @db.Date
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user       SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reportDate])
+  @@map("daily_report_log")
 }

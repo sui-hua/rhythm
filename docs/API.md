@@ -90,7 +90,11 @@
       "planTime": "07:30",
       "duration": 45,
       "completed": true,
-      "category": "学习",
+      "categoryId": "uuid",
+      "category": {
+        "id": "uuid",
+        "name": "学习"
+      },
       "description": "阅读第4章"
     }
   ]
@@ -109,7 +113,7 @@
     "title": "移动端交互演进",
     "planTime": "09:00",
     "duration": 60,
-    "category": "工作",
+    "categoryId": "uuid",
     "description": "细节核对"
   }
   ```
@@ -147,8 +151,8 @@
     {
       "id": "uuid",
       "title": "早起晨读 30分钟",
-      "frequencyType": "daily",
-      "frequencyDays": [],
+      "repeatType": "daily",
+      "repeatDays": [],
       "planTime": "07:00",
       "duration": 30,
       "archived": false,
@@ -166,8 +170,8 @@
   ```json
   {
     "title": "跑步健身 5km",
-    "frequencyType": "weekly",
-    "frequencyDays": [1, 3, 5],
+    "repeatType": "weekly",
+    "repeatDays": [1, 3, 5],
     "planTime": "17:30",
     "duration": 45
   }
@@ -239,7 +243,11 @@
       {
         "id": "uuid",
         "title": "掌握现代化全栈与 AI 架构",
-        "category": "学习",
+        "categoryId": "uuid",
+      "category": {
+        "id": "uuid",
+        "name": "学习"
+      },
         "milestone": "5月：完成高保真原型交互演进",
         "progress": 60,
         "startMonth": 5,

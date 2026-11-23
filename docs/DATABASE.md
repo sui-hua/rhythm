@@ -10,12 +10,13 @@ erDiagram
     sys_user ||--o{ task : "创建任务"
     sys_user ||--o{ habit : "制定习惯"
     sys_user ||--o{ habit_log : "打卡记录"
-    sys_user ||--o{ goal_category : "定义分类"
+    sys_user ||--o{ category : "定义分类"
     sys_user ||--o{ goal : "确立总目标"
     sys_user ||--o{ summary : "沉淀复盘"
     sys_user ||--o{ daily_report_log : "日志触发"
 
-    goal_category ||--o{ goal : "分类归属"
+    category ||--o{ task : "分类归属"
+    category ||--o{ goal : "分类归属"
     goal ||--o{ goal_month : "月度战役拆解"
     goal_month ||--o{ goal_day : "日计划落地"
 
@@ -24,7 +25,33 @@ erDiagram
 
 ---
 
-## 二、 数据字典
+## 二、 原生枚举类型 (PostgreSQL Enums)
+
+### 1. `habit_repeat_type` 习惯重复类型
+| 枚举值 | 映射标签 | 说明 |
+| :--- | :--- | :--- |
+| `DAILY` | `'daily'` | 每日重复 |
+| `WEEKLY` | `'weekly'` | 每周重复 (搭配 `repeat_days` 记录 1~7) |
+| `MONTHLY` | `'monthly'` | 每月重复 (搭配 `repeat_days` 记录 1~31) |
+
+### 2. `goal_status` 目标状态
+| 枚举值 | 映射标签 | 说明 |
+| :--- | :--- | :--- |
+| `ACTIVE` | `'active'` | 进行中 / 激活 |
+| `COMPLETED` | `'completed'` | 已达成 / 已完成 |
+| `ARCHIVED` | `'archived'` | 已归档 / 已放弃 |
+
+### 3. `summary_period_type` 复盘周期类型
+| 枚举值 | 映射标签 | 说明 |
+| :--- | :--- | :--- |
+| `DAILY` | `'daily'` | 日度复盘 |
+| `WEEKLY` | `'weekly'` | 周度复盘 |
+| `MONTHLY` | `'monthly'` | 月度复盘 |
+| `YEARLY` | `'yearly'` | 年度复盘 |
+
+---
+
+## 三、 数据字典
 
 ### 1. 认证与用户模块
 
@@ -61,9 +88,9 @@ erDiagram
 | :--- | :--- | :---: | :--- | :--- |
 | `id` | `uuid` | NO | `gen_random_uuid()` | 任务ID |
 | `user_id` | `uuid` | NO | - | 用户ID |
+| `category_id` | `uuid` | YES | - | 分类ID |
 | `title` | `text` | NO | - | 任务名称 |
 | `description` | `text` | YES | - | 任务描述 |
-| `category` | `text` | YES | - | 任务分类 |
 | `start_time` | `timestamptz` | YES | - | 计划开始时间 |
 | `end_time` | `timestamptz` | YES | - | 计划结束时间 |
 | `actual_start_time`| `timestamptz` | YES | - | 实际开始时间 |
@@ -72,7 +99,8 @@ erDiagram
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
-- **索引**：`INDEX(user_id, start_time)`、`INDEX(user_id, completed)`
+- **约束**：`FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`, `FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE SET NULL`
+- **索引**：`INDEX(user_id, start_time)`、`INDEX(user_id, completed)`、`INDEX(category_id)`
 
 ---
 
@@ -84,14 +112,15 @@ erDiagram
 | `id` | `uuid` | NO | `gen_random_uuid()` | 习惯ID |
 | `user_id` | `uuid` | NO | - | 用户ID |
 | `title` | `text` | NO | - | 习惯名称 |
-| `frequency_type`| `varchar` | NO | `'daily'` | 频次类型(daily/weekly/monthly) |
-| `frequency_days`| `integer[]` | YES | `[]` | 频次生效天数集合 |
+| `repeat_type` | `habit_repeat_type` | NO | - | 重复类型(daily/weekly/monthly) |
+| `repeat_days` | `integer[]` | YES | `[]` | 频次生效天数集合 (周 1~7 或 月画刷 1~31) |
 | `plan_time` | `time without time zone` | YES | - | 排期时间 |
-| `duration` | `integer` | YES | `30` | 执行时长(分钟) |
+| `duration` | `integer` | YES | - | 执行时长(分钟) |
 | `archived` | `boolean` | NO | `false` | 是否归档 |
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
+- **约束**：`FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`
 - **索引**：`INDEX(user_id, archived)`
 
 #### 3.2 `habit_log` 习惯打卡日志表
@@ -104,13 +133,14 @@ erDiagram
 | `value` | `integer` | YES | - | 完成数值 |
 | `remark` | `text` | YES | - | 打卡心得备注 |
 
-- **约束**：`UNIQUE(habit_id, CAST(completed_at AT TIME ZONE 'Asia/Shanghai' AS date))`
+- **约束**：`FOREIGN KEY (habit_id) REFERENCES habit(id) ON DELETE CASCADE`, `FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`
+- **索引**：`INDEX(habit_id, completed_at)`、`INDEX(user_id, completed_at)`
 
 ---
 
-### 4. 所向与目标拆解模块
+### 4. 分类与目标拆解模块
 
-#### 4.1 `goal_category` 目标分类表
+#### 4.1 `category` 分类表
 | 列名 | 类型 | 可空 | 默认值 | 说明 |
 | :--- | :--- | :---: | :--- | :--- |
 | `id` | `uuid` | NO | `gen_random_uuid()` | 分类ID |
@@ -120,7 +150,7 @@ erDiagram
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
-- **约束**：`UNIQUE(user_id, name)`
+- **约束**：`FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`, `UNIQUE(user_id, name)`
 
 #### 4.2 `goal` 目标表
 | 列名 | 类型 | 可空 | 默认值 | 说明 |
@@ -131,16 +161,17 @@ erDiagram
 | `title` | `text` | NO | - | 目标名称 |
 | `description` | `text` | YES | - | 目标描述 |
 | `year` | `date` | YES | - | 所属年份 |
-| `start_month` | `integer` | NO | `1` | 起始月份 |
-| `end_month` | `integer` | NO | `12` | 结束月份 |
+| `start_month` | `integer` | NO | - | 起始月份 |
+| `end_month` | `integer` | NO | - | 结束月份 |
 | `plan_time` | `time without time zone` | YES | - | 排期时间 |
-| `duration` | `integer` | YES | `45` | 执行时长(分钟) |
-| `carry_over_lookback_days` | `integer` | NO | `3` | 顺延回溯天数 |
+| `duration` | `integer` | YES | - | 执行时长(分钟) |
+| `carry_over_lookback_days` | `integer` | NO | - | 顺延回溯天数 |
 | `priority` | `integer` | YES | `0` | 优先级 |
-| `status` | `varchar` | NO | `'active'` | 状态(active/completed/archived) |
+| `status` | `goal_status` | NO | `'active'` | 状态(active/completed/archived) |
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
+- **约束**：`FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`, `FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE SET NULL`
 - **索引**：`INDEX(user_id, status)`
 
 #### 4.3 `goal_month` 月度目标表
@@ -155,11 +186,12 @@ erDiagram
 | `plan_time` | `time without time zone` | YES | - | 排期时间 |
 | `duration` | `integer` | YES | - | 执行时长(分钟) |
 | `priority` | `integer` | YES | `0` | 优先级 |
-| `status` | `varchar` | NO | `'active'` | 状态(active/completed/archived) |
+| `status` | `goal_status` | NO | `'active'` | 状态(active/completed/archived) |
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
-- **约束**：`FOREIGN KEY (goal_id) REFERENCES goal(id) ON DELETE CASCADE`
+- **约束**：`FOREIGN KEY (goal_id) REFERENCES goal(id) ON DELETE CASCADE`, `FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`
+- **索引**：`INDEX(goal_id)`、`INDEX(user_id)`
 
 #### 4.4 `goal_day` 日度目标表
 | 列名 | 类型 | 可空 | 默认值 | 说明 |
@@ -173,10 +205,11 @@ erDiagram
 | `plan_time` | `time without time zone` | YES | - | 排期时间 |
 | `duration` | `integer` | YES | - | 执行时长(分钟) |
 | `priority` | `integer` | YES | `0` | 优先级 |
-| `status` | `varchar` | NO | `'active'` | 状态(active/completed/archived) |
+| `status` | `goal_status` | NO | `'active'` | 状态(active/completed/archived) |
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
+- **约束**：`FOREIGN KEY (goal_month_id) REFERENCES goal_month(id) ON DELETE CASCADE`, `FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`
 - **索引**：`INDEX(user_id, date)`、`INDEX(goal_month_id)`
 
 ---
@@ -189,14 +222,15 @@ erDiagram
 | `id` | `uuid` | NO | `gen_random_uuid()` | 总结ID |
 | `user_id` | `uuid` | NO | - | 用户ID |
 | `title` | `text` | YES | - | 总结标题 |
-| `period_type` | `text` | NO | `'daily'` | 周期类型(daily/weekly/monthly/yearly) |
+| `period_type` | `summary_period_type` | NO | - | 周期类型(daily/weekly/monthly/yearly) |
 | `period_start` | `timestamptz` | NO | - | 周期开始时间 |
 | `period_end` | `timestamptz` | NO | - | 周期结束时间 |
 | `content` | `jsonb` | NO | `{}` | 结构化复盘内容(JSON) |
 | `created_at` | `timestamptz` | NO | `now()` | 创建时间 |
 | `updated_at` | `timestamptz` | NO | `now()` | 更新时间 |
 
-- **约束**：`INDEX(user_id, period_type, period_start)`
+- **约束**：`FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`
+- **索引**：`INDEX(user_id, period_type, period_start)`
 
 ---
 
@@ -210,4 +244,4 @@ erDiagram
 | `report_date` | `date` | NO | - | 报告日期 |
 | `created_at` | `timestamptz` | NO | `now()` | 生成时间 |
 
-- **约束**：`UNIQUE(user_id, report_date)`
+- **约束**：`FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE`, `UNIQUE(user_id, report_date)`
